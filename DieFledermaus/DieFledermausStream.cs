@@ -465,7 +465,7 @@ namespace DieFledermaus
 
         public override bool CanRead
         {
-            get { return true; }
+            get { return _firstBuffer != null; }
         }
 
         public override bool CanSeek
@@ -475,7 +475,7 @@ namespace DieFledermaus
 
         public override bool CanWrite
         {
-            get { return !_reading; }
+            get { return _firstBuffer != null && !_reading; }
         }
 
         private long _length;
@@ -513,6 +513,7 @@ namespace DieFledermaus
 
         public override int Read(byte[] buffer, int offset, int count)
         {
+            if (_firstBuffer == null) throw new ObjectDisposedException(null);
             if (!_reading) Reset();
 #if DEBUG
             int oldCount = count, oldOffset = offset;
@@ -542,6 +543,7 @@ namespace DieFledermaus
 
         public override void Write(byte[] buffer, int offset, int count)
         {
+            if (_firstBuffer == null) throw new ObjectDisposedException(null);
             if (_reading) throw new NotSupportedException();
 #if DEBUG
             int oldCount = count, oldOffset = offset;
@@ -561,6 +563,20 @@ namespace DieFledermaus
                     _currentBuffer = _currentBuffer.Next;
                     _currentPos = 0;
                 }
+            }
+        }
+
+        public override void Close()
+        {
+            base.Close();
+            _currentBuffer = null;
+
+            _currentPos = 0;
+
+            while (_firstBuffer != null)
+            {
+                _firstBuffer.End = 0;
+                _firstBuffer = _firstBuffer.Next;
             }
         }
     }
