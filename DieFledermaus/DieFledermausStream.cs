@@ -46,6 +46,8 @@ namespace DieFledermaus
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
 
+        private const ushort VersionMajor = 0, VersionMinor = 9, VersionRevision = 0;
+
         private Stream _baseStream;
         private DeflateStream _deflateStream;
         private QuickBufferStream _bufferStream;
@@ -280,6 +282,17 @@ namespace DieFledermaus
         }
         #endregion
 
+        private bool _versionHigher(ushort major, ushort minor, ushort revision)
+        {
+            if (major > VersionMajor) return true;
+            if (major < VersionMajor) return false;
+
+            if (minor > VersionMinor) return true;
+            if (minor < VersionMinor) return false;
+
+            return revision > VersionRevision;
+        }
+
         private bool _headerGotten;
 
         private void _getHeader()
@@ -288,11 +301,14 @@ namespace DieFledermaus
 
             _bufferStream = new QuickBufferStream();
 
-            long length;
             using (BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding(), true))
             {
                 if (reader.ReadInt32() != _head) throw new InvalidDataException();
-                length = reader.ReadInt64();
+
+                if (_versionHigher(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()))
+                    throw new IOException("The version number is higher than the current supported implementation.");
+
+                long length = reader.ReadInt64();
 
                 byte[] buffer = new byte[MaxBuffer];
                 while (length > 0)
@@ -406,6 +422,11 @@ namespace DieFledermaus
                 using (SHA512 hashGenerator = SHA512.Create())
                 {
                     writer.Write(_head);
+
+                    writer.Write(VersionMajor);
+                    writer.Write(VersionMinor);
+                    writer.Write(VersionRevision);
+
                     writer.Write(_bufferStream.Length);
                     _bufferStream.CopyTo(_baseStream);
 
