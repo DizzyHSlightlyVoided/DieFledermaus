@@ -134,6 +134,7 @@ namespace DieFledermaus
         {
         }
 
+#if NET_4_5
         /// <summary>
         /// Creates a new instance in compression mode.
         /// </summary>
@@ -195,6 +196,7 @@ namespace DieFledermaus
             : this(stream, compressionLevel, false)
         {
         }
+#endif
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports reading.
@@ -301,7 +303,11 @@ namespace DieFledermaus
 
             _bufferStream = new QuickBufferStream();
 
+#if NET_4_5
             using (BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding(), true))
+#else
+            BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding());
+#endif
             {
                 if (reader.ReadInt32() != _head) throw new InvalidDataException();
 
@@ -418,7 +424,11 @@ namespace DieFledermaus
                 _deflateStream.Close();
                 _bufferStream.Reset();
 
+#if NET_4_5
                 using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
+#else
+                BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
+#endif
                 using (SHA512 hashGenerator = SHA512.Create())
                 {
                     writer.Write(_head);
@@ -435,6 +445,9 @@ namespace DieFledermaus
                     byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
                     writer.Write(hashChecksum);
                 }
+#if !NET_4_5
+                writer.Flush();
+#endif
             }
             else _deflateStream.Close();
             _bufferStream = null;
@@ -579,5 +592,27 @@ namespace DieFledermaus
                 _firstBuffer = _firstBuffer.Next;
             }
         }
+
+#if NOSTREAMCOPY
+        public void CopyTo(Stream destination)
+        {
+            if (destination == null) throw new ArgumentNullException("destination");
+            if (!destination.CanWrite)
+            {
+                if (destination.CanRead) throw new NotSupportedException("The destination stream does not support writing.");
+                throw new ObjectDisposedException("destination");
+            }
+
+            byte[] buffer = new byte[DieFledermausStream.MaxBuffer];
+
+            int read = Read(buffer, 0, DieFledermausStream.MaxBuffer);
+
+            while (read > 0)
+            {
+                destination.Write(buffer, 0, read);
+                read = Read(buffer, 0, DieFledermausStream.MaxBuffer);
+            }
+        }
+#endif
     }
 }
