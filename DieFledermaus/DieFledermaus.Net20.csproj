@@ -17,7 +17,7 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Net 2.0\Debug\</OutputPath>
     <IntermediateOutputPath>obj\Net 2.0\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_3_5;NOSTREAMCOPY</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_2_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 2.0\Debug\DieFledermaus.XML</DocumentationFile>
@@ -27,7 +27,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Net 2.0\Release\</OutputPath>
     <IntermediateOutputPath>obj\Net 2.0\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;NET_3_5;NOSTREAMCOPY</DefineConstants>
+    <DefineConstants>TRACE;NET_2_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 2.0\Release\DieFledermaus.XML</DocumentationFile>

@@ -132,7 +132,7 @@ namespace DieFledermaus
         {
         }
 
-#if NET_4_5
+#if CLEVEL
         /// <summary>
         /// Creates a new instance in compression mode.
         /// </summary>
@@ -290,7 +290,7 @@ namespace DieFledermaus
 
             _bufferStream = new QuickBufferStream();
 
-#if NET_4_5
+#if LEAVEOPEN
             using (BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding(), true))
 #else
             BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding());
@@ -408,7 +408,7 @@ namespace DieFledermaus
                 _deflateStream.Close();
                 _bufferStream.Reset();
 
-#if NET_4_5
+#if LEAVEOPEN
                 using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
 #else
                 BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
@@ -425,7 +425,7 @@ namespace DieFledermaus
                     byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
                     writer.Write(hashChecksum);
                 }
-#if !NET_4_5
+#if !LEAVEOPEN
                 writer.Flush();
 #endif
             }
@@ -573,7 +573,7 @@ namespace DieFledermaus
             }
         }
 
-#if NOSTREAMCOPY
+#if !STREAMCOPY
         public void CopyTo(Stream destination)
         {
             if (destination == null) throw new ArgumentNullException("destination");
