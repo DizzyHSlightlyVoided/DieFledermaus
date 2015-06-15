@@ -404,46 +404,66 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Releases all resources used by the current instance.
+        /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
         /// </summary>
-        public override void Close()
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources;
+        /// <c>false</c> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
         {
-            base.Close();
+            base.Dispose(disposing);
+
             if (_baseStream == null) return;
-            if (_mode == CompressionMode.Compress && _headerGotten)
+
+            if (disposing)
             {
-                _deflateStream.Close();
-                _bufferStream.Reset();
-
-#if LEAVEOPEN
-                using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
-#else
-                BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
-#endif
-                using (SHA512 hashGenerator = SHA512.Create())
+                if (_mode == CompressionMode.Compress && _headerGotten)
                 {
-                    writer.Write(_head);
-
-                    writer.Write(_bufferStream.Length);
-                    writer.Write(_uncompressedLength);
-
-                    byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
-                    writer.Write(hashChecksum);
-
+                    _deflateStream.Dispose();
                     _bufferStream.Reset();
 
-                    _bufferStream.CopyTo(_baseStream);
-                }
-#if !LEAVEOPEN
-                writer.Flush();
+#if LEAVEOPEN
+                    using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
+#else
+                    BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
 #endif
+                    using (SHA512 hashGenerator = SHA512.Create())
+                    {
+                        writer.Write(_head);
+
+                        writer.Write(_bufferStream.Length);
+                        writer.Write(_uncompressedLength);
+
+                        byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
+                        writer.Write(hashChecksum);
+
+                        _bufferStream.Reset();
+
+                        _bufferStream.CopyTo(_baseStream);
+                    }
+#if !LEAVEOPEN
+                    writer.Flush();
+#endif
+                }
+                else _deflateStream.Dispose();
+
+                if (!_leaveOpen)
+                    _baseStream.Dispose();
             }
-            else _deflateStream.Close();
+            else if (_bufferStream != null)
+                _bufferStream.Dispose();
+
+            _baseStream = null;
+
             _bufferStream = null;
             _deflateStream = null;
-            if (!_leaveOpen)
-                _baseStream.Close();
-            _baseStream = null;
+        }
+
+        /// <summary>
+        /// Destructor.
+        /// </summary>
+        ~DieFledermausStream()
+        {
+            Dispose(false);
         }
     }
 
@@ -568,9 +588,9 @@ namespace DieFledermaus
             }
         }
 
-        public override void Close()
+        protected override void Dispose(bool disposing)
         {
-            base.Close();
+            base.Dispose(disposing);
             _currentBuffer = null;
 
             _currentPos = 0;
