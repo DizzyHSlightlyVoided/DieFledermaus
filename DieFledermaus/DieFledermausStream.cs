@@ -51,6 +51,7 @@ namespace DieFledermaus
         private QuickBufferStream _bufferStream;
         private CompressionMode _mode;
         private bool _leaveOpen;
+        private long _uncompressedLength;
 
         private static void _checkRead(Stream stream)
         {
@@ -299,6 +300,12 @@ namespace DieFledermaus
                 if (reader.ReadInt32() != _head) throw new InvalidDataException();
 
                 long length = reader.ReadInt64();
+                _uncompressedLength = reader.ReadInt64();
+
+                const int hashLength = 64;
+
+                byte[] shaExpected = reader.ReadBytes(hashLength);
+                if (shaExpected.Length < hashLength) throw new EndOfStreamException();
 
                 byte[] buffer = new byte[MaxBuffer];
                 while (length > 0)
@@ -309,11 +316,6 @@ namespace DieFledermaus
                     length -= read;
                 }
                 _bufferStream.Reset();
-
-                const int hashLength = 64;
-
-                byte[] shaExpected = reader.ReadBytes(hashLength);
-                if (shaExpected.Length < hashLength) throw new EndOfStreamException();
 
                 using (SHA512 shaHash = SHA512.Create())
                 {
@@ -361,7 +363,11 @@ namespace DieFledermaus
             if (_mode == CompressionMode.Compress) throw new NotSupportedException("The current stream is in write-mode.");
             ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
             _getHeader();
-            return _deflateStream.Read(array, offset, count);
+            int result = _deflateStream.Read(array, offset, (int)Math.Min(count, _uncompressedLength));
+            if (result == 0 && _uncompressedLength != 0)
+                throw new EndOfStreamException();
+            _uncompressedLength -= result;
+            return result;
         }
 
         /// <summary>
@@ -394,6 +400,7 @@ namespace DieFledermaus
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException("The current stream is in read-mode.");
             _deflateStream.Write(array, offset, count);
             _headerGotten = true;
+            _uncompressedLength += count;
         }
 
         /// <summary>
@@ -418,12 +425,14 @@ namespace DieFledermaus
                     writer.Write(_head);
 
                     writer.Write(_bufferStream.Length);
-                    _bufferStream.CopyTo(_baseStream);
-
-                    _bufferStream.Reset();
+                    writer.Write(_uncompressedLength);
 
                     byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
                     writer.Write(hashChecksum);
+
+                    _bufferStream.Reset();
+
+                    _bufferStream.CopyTo(_baseStream);
                 }
 #if !LEAVEOPEN
                 writer.Flush();
