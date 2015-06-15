@@ -374,9 +374,11 @@ namespace DieFledermaus
             if (_baseStream == null) throw new ObjectDisposedException(null);
             if (_mode == CompressionMode.Compress) throw new NotSupportedException("The current stream is in write-mode.");
             ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
+            if (count == 0) return 0;
             _getHeader();
-            int result = _deflateStream.Read(array, offset, (int)Math.Min(count, _uncompressedLength));
-            if (result < _uncompressedLength)
+            count = (int)Math.Min(count, _uncompressedLength);
+            int result = _deflateStream.Read(array, offset, count);
+            if (result < count)
                 throw new EndOfStreamException();
             _uncompressedLength -= result;
             return result;
