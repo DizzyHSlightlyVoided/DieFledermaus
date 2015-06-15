@@ -39,12 +39,18 @@ namespace DieFledermaus
 {
     /// <summary>
     /// Provides methods and properties for compressing and decompressing streams using the Die Fledermaus algorithm,
-    /// which is just the Deflate algorithm with magic number "<c>mAuS</c>", a length-prefix, and an SHA512 checksum at the end.
+    /// which is just the Deflate algorithm prefixed with magic number "<c>mAuS</c>", a version-number (see <see cref="Version"/>),
+    /// the length of the compressed data, the length of the uncompressed data, and a SHA-512 checksum.
     /// </summary>
     public class DieFledermausStream : Stream
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
+        /// <summary>
+        /// The version number of the current implementation, currently 0.91.
+        /// This field is constant.
+        /// </summary>
+        public const float Version = 0.91f;
 
         private Stream _baseStream;
         private DeflateStream _deflateStream;
@@ -98,6 +104,7 @@ namespace DieFledermaus
                 _checkWrite(stream);
                 _bufferStream = new QuickBufferStream();
                 _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
+                _headerGotten = true;
             }
             else if (compressionMode == CompressionMode.Decompress)
             {
@@ -172,6 +179,7 @@ namespace DieFledermaus
             _baseStream = stream;
             _mode = CompressionMode.Compress;
             _leaveOpen = leaveOpen;
+            _headerGotten = true;
         }
 
         /// <summary>
@@ -257,7 +265,7 @@ namespace DieFledermaus
 
         /// <summary>
         /// Sets the length of the stream.
-        /// This property is not supported and always throws <see cref="NotSupportedException"/>.
+        /// This method is not supported and always throws <see cref="NotSupportedException"/>.
         /// </summary>
         /// <param name="value">This parameter is ignored.</param>
         /// <exception cref="NotSupportedException">
@@ -270,7 +278,7 @@ namespace DieFledermaus
 
         /// <summary>
         /// Seeks within the stream.
-        /// This property is not supported and always throws <see cref="NotSupportedException"/>.
+        /// This method is not supported and always throws <see cref="NotSupportedException"/>.
         /// </summary>
         /// <param name="offset">This parameter is ignored.</param>
         /// <param name="origin">This parameter is ignored.</param>
@@ -297,7 +305,11 @@ namespace DieFledermaus
             BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding());
 #endif
             {
-                if (reader.ReadInt32() != _head) throw new InvalidDataException();
+                if (reader.ReadInt32() != _head)
+                    throw new InvalidDataException("The magic number in the Die Fledermaus stream did not match.");
+                float version = reader.ReadSingle();
+                if (version > Version)
+                    throw new InvalidDataException("The Die Fledermaus version number was higher than the supported value.");
 
                 long length = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -364,7 +376,7 @@ namespace DieFledermaus
             ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
             _getHeader();
             int result = _deflateStream.Read(array, offset, (int)Math.Min(count, _uncompressedLength));
-            if (result == 0 && _uncompressedLength != 0)
+            if (result < _uncompressedLength)
                 throw new EndOfStreamException();
             _uncompressedLength -= result;
             return result;
@@ -396,12 +408,18 @@ namespace DieFledermaus
         /// </exception>
         public override void Write(byte[] array, int offset, int count)
         {
-            if (_baseStream == null) throw new ObjectDisposedException(null);
-            if (_mode == CompressionMode.Decompress) throw new NotSupportedException("The current stream is in read-mode.");
+            _checkWritable();
             _deflateStream.Write(array, offset, count);
             _headerGotten = true;
             _uncompressedLength += count;
         }
+
+        private void _checkWritable()
+        {
+            if (_baseStream == null) throw new ObjectDisposedException(null);
+            if (_mode == CompressionMode.Decompress) throw new NotSupportedException("The current stream is in read-mode.");
+        }
+
 
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
@@ -429,6 +447,8 @@ namespace DieFledermaus
                     using (SHA512 hashGenerator = SHA512.Create())
                     {
                         writer.Write(_head);
+
+                        writer.Write(Version);
 
                         writer.Write(_bufferStream.Length);
                         writer.Write(_uncompressedLength);
