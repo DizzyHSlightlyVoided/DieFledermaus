@@ -438,9 +438,8 @@ namespace DieFledermaus
             if (_baseStream == null) return;
             if (disposing)
             {
-                if (_mode == CompressionMode.Compress && _headerGotten)
+                if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
                 {
-
                     _deflateStream.Dispose();
                     _bufferStream.Reset();
 
