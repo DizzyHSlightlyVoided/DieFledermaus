@@ -311,9 +311,9 @@ namespace DieFledermaus
                 ushort versionVal = reader.ReadUInt16();
                 float version = versionVal / _versionDiv;
                 if (version > Version)
-                    throw new InvalidDataException("The Die Fledermaus version number was higher than the supported value.");
+                    throw new InvalidDataException("The Die Fledermaus version number was higher than the supported maximum.");
                 if (version < _minVersion)
-                    throw new InvalidDataException("The Die Fledermaus version number is less than the minimum value.");
+                    throw new InvalidDataException("The Die Fledermaus version number was lower than the supported minimum.");
 
                 long length = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -333,12 +333,12 @@ namespace DieFledermaus
                 }
                 _bufferStream.Reset();
 
-                using (SHA512 shaHash = SHA512.Create())
+                using (SHA512Managed shaHash = new SHA512Managed())
                 {
                     byte[] shaComputed = shaHash.ComputeHash(_bufferStream);
 
                     for (int i = 0; i < hashLength; i++)
-                        if (shaComputed[i] != shaExpected[i]) throw new IOException("The computed SHA-512 checksum did not match the expected value.");
+                        if (shaComputed[i] != shaExpected[i]) throw new InvalidDataException("The computed SHA-512 checksum did not match the expected value.");
                 }
 
                 _bufferStream.Reset();
@@ -434,50 +434,59 @@ namespace DieFledermaus
         /// <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
             if (_baseStream == null) return;
-            if (disposing)
+            try
             {
-                if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
+                if (disposing)
                 {
-                    _deflateStream.Dispose();
-                    _bufferStream.Reset();
-
-#if LEAVEOPEN
-                    using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
-#else
-                    BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
-#endif
-                    using (SHA512Managed hashGenerator = new SHA512Managed())
+                    try
                     {
-                        writer.Write(_head);
-                        writer.Write(_versionShort);
-                        writer.Write(_bufferStream.Length);
-                        writer.Write(_uncompressedLength);
-
-                        byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
-                        writer.Write(hashChecksum);
-
-                        _bufferStream.Reset();
-
-                        _bufferStream.CopyTo(_baseStream);
-                    }
-#if !LEAVEOPEN
-                    writer.Flush();
+                        if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
+                        {
+                            _deflateStream.Dispose();
+                            _bufferStream.Reset();
+#if LEAVEOPEN
+                            using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
+#else
+                            BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
 #endif
+                            using (SHA512Managed hashGenerator = new SHA512Managed())
+                            {
+                                writer.Write(_head);
+                                writer.Write(_versionShort);
+                                writer.Write(_bufferStream.Length);
+                                writer.Write(_uncompressedLength);
+
+                                byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
+                                writer.Write(hashChecksum);
+
+                                _bufferStream.Reset();
+
+                                _bufferStream.CopyTo(_baseStream);
+                            }
+#if !LEAVEOPEN
+                            writer.Flush();
+#endif
+                        }
+                        else _deflateStream.Dispose();
+                    }
+                    finally
+                    {
+                        if (!_leaveOpen)
+                            _baseStream.Dispose();
+                    }
                 }
-                else _deflateStream.Dispose();
-
-                if (!_leaveOpen)
-                    _baseStream.Dispose();
+                else if (_bufferStream != null)
+                    _bufferStream.Dispose();
             }
-            else if (_bufferStream != null)
-                _bufferStream.Dispose();
+            finally
+            {
+                _baseStream = null;
 
-            _baseStream = null;
-
-            _bufferStream = null;
-            _deflateStream = null;
+                _bufferStream = null;
+                _deflateStream = null;
+                base.Dispose(disposing);
+            }
         }
 
         /// <summary>
