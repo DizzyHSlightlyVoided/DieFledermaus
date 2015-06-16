@@ -39,18 +39,21 @@ namespace DieFledermaus
 {
     /// <summary>
     /// Provides methods and properties for compressing and decompressing streams using the Die Fledermaus algorithm,
-    /// which is just the Deflate algorithm prefixed with magic number "<c>mAuS</c>", a version-number (see <see cref="Version"/>),
-    /// the length of the compressed data, the length of the uncompressed data, and a SHA-512 checksum.
+    /// which is just the Deflate algorithm prefixed with magic number "<c>mAuS</c>" and metadata.
     /// </summary>
     public class DieFledermausStream : Stream
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
+        private const ushort _versionShort = 92;
+        private const float _versionDiv = 100;
         /// <summary>
         /// The version number of the current implementation, currently 0.91.
         /// This field is constant.
         /// </summary>
-        public const float Version = 0.91f;
+        public const float Version = _versionShort / _versionDiv;
+
+        private const float _minVersion = 0.92f;
 
         private Stream _baseStream;
         private DeflateStream _deflateStream;
@@ -107,9 +110,7 @@ namespace DieFledermaus
                 _headerGotten = true;
             }
             else if (compressionMode == CompressionMode.Decompress)
-            {
                 _checkRead(stream);
-            }
             else throw new InvalidEnumArgumentException("compressionMode", (int)compressionMode, typeof(CompressionMode));
             _baseStream = stream;
             _mode = compressionMode;
@@ -307,9 +308,12 @@ namespace DieFledermaus
             {
                 if (reader.ReadInt32() != _head)
                     throw new InvalidDataException("The magic number in the Die Fledermaus stream did not match.");
-                float version = reader.ReadSingle();
+                ushort versionVal = reader.ReadUInt16();
+                float version = versionVal / _versionDiv;
                 if (version > Version)
                     throw new InvalidDataException("The Die Fledermaus version number was higher than the supported value.");
+                if (version < _minVersion)
+                    throw new InvalidDataException("The Die Fledermaus version number is less than the minimum value.");
 
                 long length = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -431,13 +435,12 @@ namespace DieFledermaus
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-
             if (_baseStream == null) return;
-
             if (disposing)
             {
                 if (_mode == CompressionMode.Compress && _headerGotten)
                 {
+
                     _deflateStream.Dispose();
                     _bufferStream.Reset();
 
@@ -446,12 +449,10 @@ namespace DieFledermaus
 #else
                     BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
 #endif
-                    using (SHA512 hashGenerator = SHA512.Create())
+                    using (SHA512Managed hashGenerator = new SHA512Managed())
                     {
                         writer.Write(_head);
-
-                        writer.Write(Version);
-
+                        writer.Write(_versionShort);
                         writer.Write(_bufferStream.Length);
                         writer.Write(_uncompressedLength);
 
