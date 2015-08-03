@@ -36,6 +36,9 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\DieFledermaus.Desktop\DieFledermausStream.ComputeHash.cs">
+      <Link>DieFledermausStream.ComputeHash.cs</Link>
+    </Compile>
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -49,6 +52,7 @@
     <EmbeddedResource Include="Globalization\TextResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

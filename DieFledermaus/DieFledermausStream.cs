@@ -32,7 +32,6 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
@@ -335,13 +334,10 @@ namespace DieFledermaus
                 }
                 _bufferStream.Reset();
 
-                using (SHA512Managed shaHash = new SHA512Managed())
-                {
-                    byte[] shaComputed = shaHash.ComputeHash(_bufferStream);
+                byte[] shaComputed = ComputeHash(_bufferStream);
 
-                    for (int i = 0; i < hashLength; i++)
-                        if (shaComputed[i] != shaExpected[i]) throw new InvalidDataException(TextResources.BadChecksum);
-                }
+                for (int i = 0; i < hashLength; i++)
+                    if (shaComputed[i] != shaExpected[i]) throw new InvalidDataException(TextResources.BadChecksum);
 
                 _bufferStream.Reset();
             }
@@ -452,14 +448,13 @@ namespace DieFledermaus
 #else
                             BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
 #endif
-                            using (SHA512Managed hashGenerator = new SHA512Managed())
                             {
                                 writer.Write(_head);
                                 writer.Write(_versionShort);
                                 writer.Write(_bufferStream.Length);
                                 writer.Write(_uncompressedLength);
 
-                                byte[] hashChecksum = hashGenerator.ComputeHash(_bufferStream);
+                                byte[] hashChecksum = ComputeHash(_bufferStream);
                                 writer.Write(hashChecksum);
 
                                 _bufferStream.Reset();
