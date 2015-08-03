@@ -52,6 +52,7 @@
     <Compile Include="..\DieFledermaus\Properties\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="QuickBufferStream.CopyTo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\DieFledermaus\Globalization\TextResources.resx">

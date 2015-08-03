@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Net 4.6\Debug\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.6\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_6;STREAMCOPY;LEAVEOPEN;CLEVEL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_4_6;LEAVEOPEN;CLEVEL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.6\Debug\DieFledermaus.XML</DocumentationFile>
@@ -28,7 +28,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Net 4.6\Release\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.6\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;NET_4_6;STREAMCOPY;LEAVEOPEN;CLEVEL</DefineConstants>
+    <DefineConstants>TRACE;NET_4_6;LEAVEOPEN;CLEVEL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.6\Release\DieFledermaus.XML</DocumentationFile>

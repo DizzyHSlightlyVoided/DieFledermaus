@@ -169,27 +169,5 @@ namespace DieFledermaus
                 _firstBuffer = _firstBuffer.Next;
             }
         }
-
-#if !STREAMCOPY
-        public void CopyTo(Stream destination)
-        {
-            if (destination == null) throw new ArgumentNullException("destination");
-            if (!destination.CanWrite)
-            {
-                if (destination.CanRead) throw new NotSupportedException(TextResources.StreamNotWritable);
-                throw new ObjectDisposedException("destination");
-            }
-
-            byte[] buffer = new byte[DieFledermausStream.MaxBuffer];
-
-            int read = Read(buffer, 0, DieFledermausStream.MaxBuffer);
-
-            while (read > 0)
-            {
-                destination.Write(buffer, 0, read);
-                read = Read(buffer, 0, DieFledermausStream.MaxBuffer);
-            }
-        }
-#endif
     }
 }
