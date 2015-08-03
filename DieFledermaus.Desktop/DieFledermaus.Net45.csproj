@@ -1,58 +1,64 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E2303BBA-4000-4A01-AEE5-42FBE06BE030}</ProjectGuid>
+    <ProjectGuid>{E2303BBA-4500-4A01-AEE5-42FBE06BE030}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DieFledermaus</RootNamespace>
     <AssemblyName>DieFledermaus</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Net 4.0\Debug\</OutputPath>
-    <IntermediateOutputPath>obj\Net 4.0\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0;STREAMCOPY</DefineConstants>
+    <OutputPath>bin\Net 4.5\Debug\</OutputPath>
+    <IntermediateOutputPath>obj\Net 4.5\Debug\</IntermediateOutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_4_5;STREAMCOPY;LEAVEOPEN;CLEVEL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Net 4.0\Debug\DieFledermaus.XML</DocumentationFile>
+    <DocumentationFile>bin\Net 4.5\Debug\DieFledermaus.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Net 4.0\Release\</OutputPath>
-    <IntermediateOutputPath>obj\Net 4.0\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;NET_4_0;STREAMCOPY</DefineConstants>
+    <OutputPath>bin\Net 4.5\Release\</OutputPath>
+    <IntermediateOutputPath>obj\Net 4.5\Release\</IntermediateOutputPath>
+    <DefineConstants>TRACE;NET_4_5;STREAMCOPY;LEAVEOPEN;CLEVEL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Net 4.0\Release\DieFledermaus.XML</DocumentationFile>
+    <DocumentationFile>bin\Net 4.5\Release\DieFledermaus.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DieFledermaus.Desktop\DieFledermausStream.ComputeHash.cs">
-      <Link>DieFledermausStream.ComputeHash.cs</Link>
+    <Compile Include="..\DieFledermaus\DieFledermausStream.cs">
+      <Link>DieFledermausStream.cs</Link>
     </Compile>
-    <Compile Include="DieFledermausStream.cs" />
-    <Compile Include="Globalization\TextResources.Designer.cs">
+    <Compile Include="..\DieFledermaus\Globalization\TextResources.Designer.cs">
+      <Link>Globalization\TextResources.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuickBufferStream.cs" />
+    <Compile Include="..\DieFledermaus\QuickBufferStream.cs">
+      <Link>QuickBufferStream.cs</Link>
+    </Compile>
+    <Compile Include="DieFledermausStream.ComputeHash.cs" />
+    <Compile Include="..\DieFledermaus\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Globalization\TextResources.resx">
+    <EmbeddedResource Include="..\DieFledermaus\Globalization\TextResources.resx">
+      <Link>Globalization\TextResources.resx</Link>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

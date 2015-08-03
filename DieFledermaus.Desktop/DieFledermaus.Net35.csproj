@@ -36,23 +36,28 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DieFledermaus.Desktop\DieFledermausStream.ComputeHash.cs">
-      <Link>DieFledermausStream.ComputeHash.cs</Link>
+    <Compile Include="..\DieFledermaus\DieFledermausStream.cs">
+      <Link>DieFledermausStream.cs</Link>
     </Compile>
-    <Compile Include="DieFledermausStream.cs" />
-    <Compile Include="Globalization\TextResources.Designer.cs">
+    <Compile Include="..\DieFledermaus\Globalization\TextResources.Designer.cs">
+      <Link>Globalization\TextResources.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuickBufferStream.cs" />
+    <Compile Include="..\DieFledermaus\QuickBufferStream.cs">
+      <Link>QuickBufferStream.cs</Link>
+    </Compile>
+    <Compile Include="DieFledermausStream.ComputeHash.cs" />
+    <Compile Include="..\DieFledermaus\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Globalization\TextResources.resx">
+    <EmbeddedResource Include="..\DieFledermaus\Globalization\TextResources.resx">
+      <Link>Globalization\TextResources.resx</Link>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
