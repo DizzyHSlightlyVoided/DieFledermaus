@@ -35,6 +35,8 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 
+using DieFledermaus.Globalization;
+
 namespace DieFledermaus
 {
     /// <summary>
@@ -66,7 +68,7 @@ namespace DieFledermaus
         {
             if (stream.CanRead) return;
 
-            if (stream.CanWrite) throw new ArgumentException("The stream does not support reading.", "stream");
+            if (stream.CanWrite) throw new ArgumentException(TextResources.StreamNotReadable, "stream");
             throw new ObjectDisposedException("stream");
         }
 
@@ -74,7 +76,7 @@ namespace DieFledermaus
         {
             if (stream.CanWrite) return;
 
-            if (stream.CanRead) throw new ArgumentException("The stream does not support writing.", "stream");
+            if (stream.CanRead) throw new ArgumentException(TextResources.StreamNotWritable, "stream");
             throw new ObjectDisposedException("stream");
         }
 
@@ -307,13 +309,13 @@ namespace DieFledermaus
 #endif
             {
                 if (reader.ReadInt32() != _head)
-                    throw new InvalidDataException("The magic number in the Die Fledermaus stream did not match.");
+                    throw new InvalidDataException(TextResources.InvalidMagicNumber);
                 ushort versionVal = reader.ReadUInt16();
                 float version = versionVal / _versionDiv;
                 if (version > Version)
-                    throw new InvalidDataException("The Die Fledermaus version number was higher than the supported maximum.");
+                    throw new InvalidDataException(TextResources.VersionTooHigh);
                 if (version < _minVersion)
-                    throw new InvalidDataException("The Die Fledermaus version number was lower than the supported minimum.");
+                    throw new InvalidDataException(TextResources.VersionTooLow);
 
                 long length = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -338,7 +340,7 @@ namespace DieFledermaus
                     byte[] shaComputed = shaHash.ComputeHash(_bufferStream);
 
                     for (int i = 0; i < hashLength; i++)
-                        if (shaComputed[i] != shaExpected[i]) throw new InvalidDataException("The computed SHA-512 checksum did not match the expected value.");
+                        if (shaComputed[i] != shaExpected[i]) throw new InvalidDataException(TextResources.BadChecksum);
                 }
 
                 _bufferStream.Reset();
@@ -376,7 +378,7 @@ namespace DieFledermaus
         public override int Read(byte[] array, int offset, int count)
         {
             if (_baseStream == null) throw new ObjectDisposedException(null);
-            if (_mode == CompressionMode.Compress) throw new NotSupportedException("The current stream is in write-mode.");
+            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentRead);
             ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
             if (count == 0) return 0;
             _getHeader();
@@ -423,7 +425,7 @@ namespace DieFledermaus
         private void _checkWritable()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null);
-            if (_mode == CompressionMode.Decompress) throw new NotSupportedException("The current stream is in read-mode.");
+            if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentWrite);
         }
 
 
@@ -639,7 +641,7 @@ namespace DieFledermaus
             if (destination == null) throw new ArgumentNullException("destination");
             if (!destination.CanWrite)
             {
-                if (destination.CanRead) throw new NotSupportedException("The destination stream does not support writing.");
+                if (destination.CanRead) throw new NotSupportedException(TextResources.StreamNotWritable);
                 throw new ObjectDisposedException("destination");
             }
 
