@@ -48,7 +48,7 @@ namespace DieFledermaus
         private const ushort _versionShort = 92;
         private const float _versionDiv = 100;
         /// <summary>
-        /// The version number of the current implementation, currently 0.91.
+        /// The version number of the current implementation, currently 0.92.
         /// This field is constant.
         /// </summary>
         public const float Version = _versionShort / _versionDiv;
