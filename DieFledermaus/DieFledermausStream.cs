@@ -32,7 +32,6 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
-using System.Text;
 
 using DieFledermaus.Globalization;
 
@@ -112,7 +111,7 @@ namespace DieFledermaus
             }
             else if (compressionMode == CompressionMode.Decompress)
                 _checkRead(stream);
-            else throw new InvalidEnumArgumentException("compressionMode", (int)compressionMode, typeof(CompressionMode));
+            else throw InvalidEnumException("compressionMode", (int)compressionMode, typeof(CompressionMode));
             _baseStream = stream;
             _mode = compressionMode;
             _leaveOpen = leaveOpen;
@@ -142,70 +141,6 @@ namespace DieFledermaus
         {
         }
 
-#if CLEVEL
-        /// <summary>
-        /// Creates a new instance in compression mode.
-        /// </summary>
-        /// <param name="stream">The stream to which compressed data will be written.</param>
-        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="stream"/> does not support writing.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        /// <paramref name="stream"/> is closed.
-        /// </exception>
-        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
-        {
-            if (stream == null) throw new ArgumentNullException("stream");
-            _checkWrite(stream);
-            switch (compressionLevel)
-            {
-                case CompressionLevel.Fastest:
-                case CompressionLevel.NoCompression:
-                case CompressionLevel.Optimal:
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException("compressionLevel", (int)compressionLevel, typeof(CompressionLevel));
-            }
-
-            _bufferStream = new QuickBufferStream();
-            _deflateStream = new DeflateStream(_bufferStream, compressionLevel, true);
-            _baseStream = stream;
-            _mode = CompressionMode.Compress;
-            _leaveOpen = leaveOpen;
-            _headerGotten = true;
-        }
-
-        /// <summary>
-        /// Creates a new instance in compression mode.
-        /// </summary>
-        /// <param name="stream">The stream to which compressed data will be written.</param>
-        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="stream"/> does not support writing.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        /// <paramref name="stream"/> is closed.
-        /// </exception>
-        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
-            : this(stream, compressionLevel, false)
-        {
-        }
-#endif
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports reading.
@@ -301,11 +236,7 @@ namespace DieFledermaus
 
             _bufferStream = new QuickBufferStream();
 
-#if LEAVEOPEN
-            using (BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding(), true))
-#else
-            BinaryReader reader = new BinaryReader(_baseStream, new UTF8Encoding());
-#endif
+            using (BinaryReader reader = GetBinaryReader(_baseStream))
             {
                 if (reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidMagicNumber);
@@ -443,11 +374,8 @@ namespace DieFledermaus
                         {
                             _deflateStream.Dispose();
                             _bufferStream.Reset();
-#if LEAVEOPEN
-                            using (BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding(), true))
-#else
-                            BinaryWriter writer = new BinaryWriter(_baseStream, new UTF8Encoding());
-#endif
+
+                            using (BinaryWriter writer = GetBinaryWriter(_baseStream))
                             {
                                 writer.Write(_head);
                                 writer.Write(_versionShort);
@@ -461,9 +389,7 @@ namespace DieFledermaus
 
                                 _bufferStream.CopyTo(_baseStream);
                             }
-#if !LEAVEOPEN
-                            writer.Flush();
-#endif
+
                         }
                         else _deflateStream.Dispose();
                     }

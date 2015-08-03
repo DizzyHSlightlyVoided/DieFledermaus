@@ -39,6 +39,12 @@
     <Compile Include="..\DieFledermaus\DieFledermausStream.cs">
       <Link>DieFledermausStream.cs</Link>
     </Compile>
+    <Compile Include="..\DieFledermaus\DieFledermausStream.InvalidEnum.cs">
+      <Link>DieFledermausStream.InvalidEnum.cs</Link>
+    </Compile>
+    <Compile Include="..\DieFledermaus\DieFledermausStream.ReaderWriter.cs">
+      <Link>DieFledermausStream.ReaderWriter.cs</Link>
+    </Compile>
     <Compile Include="..\DieFledermaus\Globalization\TextResources.Designer.cs">
       <Link>Globalization\TextResources.Designer.cs</Link>
       <AutoGen>True</AutoGen>
