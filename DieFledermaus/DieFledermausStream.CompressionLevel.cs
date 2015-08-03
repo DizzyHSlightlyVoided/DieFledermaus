@@ -47,7 +47,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
-        /// <exception cref="System.ComponentModel.InvalidEnumArgumentException">
+        /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
@@ -67,7 +67,7 @@ namespace DieFledermaus
                 case CompressionLevel.Optimal:
                     break;
                 default:
-                    throw new InvalidEnumArgumentException("compressionLevel", (int)compressionLevel, typeof(CompressionLevel));
+                    throw InvalidEnumException("compressionLevel", (int)compressionLevel, typeof(CompressionLevel));
             }
 
             _bufferStream = new QuickBufferStream();
@@ -86,7 +86,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
-        /// <exception cref="System.ComponentModel.InvalidEnumArgumentException">
+        /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
