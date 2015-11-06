@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net46", "DieFledermaus.Desktop\DieFledermaus.Net46.csproj", "{E2303BBA-4600-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net46", "DieFledermaus\DieFledermaus.Net46.csproj", "{E2303BBA-4600-4A01-AEE5-42FBE06BE030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net45", "DieFledermaus.Desktop\DieFledermaus.Net45.csproj", "{E2303BBA-4500-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net45", "DieFledermaus\DieFledermaus.Net45.csproj", "{E2303BBA-4500-4A01-AEE5-42FBE06BE030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net40", "DieFledermaus.Desktop\DieFledermaus.Net40.csproj", "{E2303BBA-4000-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net40", "DieFledermaus\DieFledermaus.Net40.csproj", "{E2303BBA-4000-4A01-AEE5-42FBE06BE030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net35", "DieFledermaus.Desktop\DieFledermaus.Net35.csproj", "{E2303BBA-3500-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net35", "DieFledermaus\DieFledermaus.Net35.csproj", "{E2303BBA-3500-4A01-AEE5-42FBE06BE030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net20", "DieFledermaus.Desktop\DieFledermaus.Net20.csproj", "{E2303BBA-2000-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net20", "DieFledermaus\DieFledermaus.Net20.csproj", "{E2303BBA-2000-4A01-AEE5-42FBE06BE030}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net46", "DieFledermaus.Tests\DieFledermaus.Tests.Net46.csproj", "{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}"
 EndProject

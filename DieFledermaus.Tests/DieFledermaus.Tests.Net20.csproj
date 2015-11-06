@@ -40,7 +40,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DieFledermaus.Desktop\DieFledermaus.Net20.csproj">
+    <ProjectReference Include="..\DieFledermaus\DieFledermaus.Net20.csproj">
       <Project>{e2303bba-2000-4a01-aee5-42fbe06be030}</Project>
       <Name>DieFledermaus.Net20</Name>
     </ProjectReference>

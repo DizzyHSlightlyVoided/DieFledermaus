@@ -37,35 +37,20 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DieFledermaus\DieFledermausStream.CompressionLevel.cs">
-      <Link>DieFledermausStream.CompressionLevel.cs</Link>
-    </Compile>
-    <Compile Include="..\DieFledermaus\DieFledermausStream.cs">
-      <Link>DieFledermausStream.cs</Link>
-    </Compile>
-    <Compile Include="..\DieFledermaus\DieFledermausStream.InvalidEnum.cs">
-      <Link>DieFledermausStream.InvalidEnum.cs</Link>
-    </Compile>
-    <Compile Include="..\DieFledermaus\DieFledermausStream.ReaderWriter45.cs">
-      <Link>DieFledermausStream.ReaderWriter45.cs</Link>
-    </Compile>
-    <Compile Include="..\DieFledermaus\Globalization\TextResources.Designer.cs">
-      <Link>Globalization\TextResources.Designer.cs</Link>
+    <Compile Include="DieFledermausStream.cs" />
+    <Compile Include="DieFledermausStream.InvalidEnum.cs" />
+    <Compile Include="DieFledermausStream.ReaderWriter45.cs" />
+    <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="..\DieFledermaus\QuickBufferStream.cs">
-      <Link>QuickBufferStream.cs</Link>
-    </Compile>
+    <Compile Include="QuickBufferStream.cs" />
     <Compile Include="DieFledermausStream.ComputeHash.cs" />
-    <Compile Include="..\DieFledermaus\Properties\AssemblyInfo.cs">
-      <Link>Properties\AssemblyInfo.cs</Link>
-    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\DieFledermaus\Globalization\TextResources.resx">
-      <Link>Globalization\TextResources.resx</Link>
+    <EmbeddedResource Include="Globalization\TextResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
