@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net40", "DieF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net35", "DieFledermaus\DieFledermaus.Net35.csproj", "{E2303BBA-3500-4A01-AEE5-42FBE06BE030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net20", "DieFledermaus\DieFledermaus.Net20.csproj", "{E2303BBA-2000-4A01-AEE5-42FBE06BE030}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net46", "DieFledermaus.Tests\DieFledermaus.Tests.Net46.csproj", "{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net45", "DieFledermaus.Tests\DieFledermaus.Tests.Net45.csproj", "{7C2CBD42-4500-41C7-84D2-EC9CE34D0A0B}"
@@ -20,8 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net40", "DieFledermaus.Tests\DieFledermaus.Tests.Net40.csproj", "{7C2CBD42-4000-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net35", "DieFledermaus.Tests\DieFledermaus.Tests.Net35.csproj", "{7C2CBD42-3500-41C7-84D2-EC9CE34D0A0B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net20", "DieFledermaus.Tests\DieFledermaus.Tests.Net20.csproj", "{7C2CBD42-2000-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,10 +41,6 @@ Global
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E2303BBA-2000-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E2303BBA-2000-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E2303BBA-2000-4A01-AEE5-42FBE06BE030}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E2303BBA-2000-4A01-AEE5-42FBE06BE030}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -65,10 +57,6 @@ Global
 		{7C2CBD42-3500-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2CBD42-3500-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C2CBD42-3500-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7C2CBD42-2000-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7C2CBD42-2000-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7C2CBD42-2000-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7C2CBD42-2000-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
