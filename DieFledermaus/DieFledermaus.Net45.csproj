@@ -37,6 +37,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DieFledermausStream.CompressionLevel.cs" />
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="DieFledermausStream.InvalidEnum.cs" />
     <Compile Include="DieFledermausStream.ReaderWriter45.cs" />
