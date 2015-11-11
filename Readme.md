@@ -1,12 +1,12 @@
-﻿DieFledermaus format 
-====================
+﻿DieFledermaus format (.maus file)
+=================================
 Version 0.92
 ------------
 * Extension: `.maus`
 * Byte order: little-endian
 * Signing form: two's complement
 
-The Die Fledermaus algorithm is simply the [DEFLATE algorithm](http://en.wikipedia.org/wiki/DEFLATE) with metadata and a magic number. The name exists solely to be a bilingual pun. A Die Fledermaus stream contains the following :
+The Die Fledermaus algorithm is simply the [DEFLATE algorithm](http://en.wikipedia.org/wiki/DEFLATE) with metadata and a magic number. The name exists solely to be a bilingual pun. A Die Fledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (ASCII `6d 41 75 53`, 4 bytes)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form. Essentially, it's an integer equal to 100 times the version number, so `5c 00` (hex) = integer `92` (decimal) = version 0.92.
