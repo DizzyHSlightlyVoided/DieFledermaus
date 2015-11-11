@@ -69,7 +69,7 @@ namespace DieFledermaus
             if (stream.CanRead) return;
 
             if (stream.CanWrite) throw new ArgumentException(TextResources.StreamNotReadable, "stream");
-            throw new ObjectDisposedException("stream");
+            throw new ObjectDisposedException("stream", TextResources.StreamClosed);
         }
 
         private static void _checkWrite(Stream stream)
@@ -77,7 +77,7 @@ namespace DieFledermaus
             if (stream.CanWrite) return;
 
             if (stream.CanRead) throw new ArgumentException(TextResources.StreamNotWritable, "stream");
-            throw new ObjectDisposedException("stream");
+            throw new ObjectDisposedException("stream", TextResources.StreamClosed);
         }
 
         /// <summary>
@@ -276,7 +276,8 @@ namespace DieFledermaus
             }
             set
             {
-                Flush();
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
                 if (_mode == CompressionMode.Decompress && _headerGotten)
@@ -312,7 +313,7 @@ namespace DieFledermaus
         /// </summary>
         public override void Flush()
         {
-            if (_baseStream == null) throw new ObjectDisposedException(null);
+            if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
         }
 
         #region Not supported
@@ -379,9 +380,9 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidMagicNumber);
                 ushort version = reader.ReadUInt16();
                 if (version > _versionShort)
-                    throw new InvalidDataException(TextResources.VersionTooHigh);
+                    throw new NotSupportedException(TextResources.VersionTooHigh);
                 if (version < _minVersionShort)
-                    throw new InvalidDataException(TextResources.VersionTooLow);
+                    throw new NotSupportedException(TextResources.VersionTooLow);
 
                 if (version > _minVersionShort)
                 {
@@ -426,7 +427,7 @@ namespace DieFledermaus
                 if (_encFmt != MausEncryptionFormat.None)
                 {
                     if (_uncompressedLength < 0 || _uncompressedLength > (int.MaxValue - minPkCount))
-                        throw new InvalidDataException();
+                        throw new InvalidDataException(TextResources.InvalidMagicNumber);
                     _pkCount = (int)_uncompressedLength;
                     _uncompressedLength = 0;
                 }
@@ -530,11 +531,13 @@ namespace DieFledermaus
         /// </exception>
         public override int Read(byte[] array, int offset, int count)
         {
-            if (_baseStream == null) throw new ObjectDisposedException(null);
-            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentRead);
+            _checkReading();
             ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
             if (count == 0) return 0;
-            _readData();
+            lock (_lock)
+            {
+                _readData();
+            }
 
             if (_encFmt == MausEncryptionFormat.None)
                 count = (int)Math.Min(count, _uncompressedLength);
@@ -542,8 +545,38 @@ namespace DieFledermaus
             int result = _deflateStream.Read(array, offset, count);
             if (result < count)
                 throw new EndOfStreamException();
-            _uncompressedLength -= result;
+            if (_encFmt == MausEncryptionFormat.None)
+                _uncompressedLength -= result;
             return result;
+        }
+
+        private object _lock = new object();
+
+        private void _checkReading()
+        {
+            if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentRead);
+        }
+
+        /// <summary>
+        /// Reads a single byte from the stream.
+        /// </summary>
+        /// <returns>The unsigned byte cast to <see cref="int"/>, or -1 if the current instance has reached the end of the stream.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream does not support reading.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        public override int ReadByte()
+        {
+            byte[] singleBuffer = new byte[1];
+            if (Read(singleBuffer, 0, 1) == 0)
+                return -1;
+            return singleBuffer[0];
         }
 
         /// <summary>
@@ -580,10 +613,9 @@ namespace DieFledermaus
 
         private void _checkWritable()
         {
-            if (_baseStream == null) throw new ObjectDisposedException(null);
+            if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentWrite);
         }
-
 
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.

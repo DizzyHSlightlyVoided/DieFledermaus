@@ -126,6 +126,9 @@
   <data name="BadKey" xml:space="preserve">
     <value>The key or password is invalid.</value>
   </data>
+  <data name="CurrentClosed" xml:space="preserve">
+    <value>The current stream is closed.</value>
+  </data>
   <data name="CurrentRead" xml:space="preserve">
     <value>The current stream is in read-mode.</value>
   </data>
@@ -146,6 +149,9 @@
   </data>
   <data name="NotEncrypted" xml:space="preserve">
     <value>The Die Fledermaus stream is not currently encrypted.</value>
+  </data>
+  <data name="StreamClosed" xml:space="preserve">
+    <value>The specified stream is closed.</value>
   </data>
   <data name="StreamNotReadable" xml:space="preserve">
     <value>The specified stream does not support reading.</value>

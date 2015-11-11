@@ -55,7 +55,7 @@ namespace DieFledermaus
 
         public override bool CanRead
         {
-            get { return _firstBuffer != null; }
+            get { return _firstBuffer != null && _reading; }
         }
 
         public override bool CanSeek
@@ -76,9 +76,16 @@ namespace DieFledermaus
 
         public override long Position
         {
-            get { throw new NotSupportedException(); }
+            get
+            {
+                if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (!_reading) throw new NotSupportedException();
+                return _position;
+            }
             set { throw new NotSupportedException(); }
         }
+
+        private long _position = 0;
 
         public override long Seek(long offset, SeekOrigin origin)
         {
@@ -94,6 +101,7 @@ namespace DieFledermaus
         {
             _currentBuffer = _firstBuffer;
             _currentPos = 0;
+            _position = 0;
             _reading = true;
         }
 
@@ -103,8 +111,8 @@ namespace DieFledermaus
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null);
-            if (!_reading) Reset();
+            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (!_reading) throw new NotSupportedException(TextResources.CurrentWrite);
 #if DEBUG
             int oldCount = count, oldOffset = offset;
 #endif
@@ -127,14 +135,16 @@ namespace DieFledermaus
                     _currentPos = 0;
                 }
             }
-
+            _position += bytesRead;
             return bytesRead;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null);
+            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_reading) throw new NotSupportedException(TextResources.CurrentRead);
+
+            _length += count;
 #if DEBUG
             int oldCount = count, oldOffset = offset;
 #endif
@@ -145,7 +155,6 @@ namespace DieFledermaus
                 _currentPos = (_currentBuffer.End += bytesToWrite);
                 offset += bytesToWrite;
                 count -= bytesToWrite;
-                _length += bytesToWrite;
 
                 if (_currentPos == DieFledermausStream.MaxBuffer)
                 {

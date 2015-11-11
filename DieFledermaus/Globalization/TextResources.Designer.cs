@@ -88,6 +88,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The current stream is closed..
+        /// </summary>
+        internal static string CurrentClosed {
+            get {
+                return ResourceManager.GetString("CurrentClosed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current stream is in read-mode..
         /// </summary>
         internal static string CurrentRead {
@@ -147,6 +156,15 @@ namespace DieFledermaus.Globalization {
         internal static string NotEncrypted {
             get {
                 return ResourceManager.GetString("NotEncrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified stream is closed..
+        /// </summary>
+        internal static string StreamClosed {
+            get {
+                return ResourceManager.GetString("StreamClosed", resourceCulture);
             }
         }
         
