@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.IO;
 using System.Security.Cryptography;
+using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
@@ -40,5 +41,94 @@ namespace DieFledermaus
             using (SHA512Managed shaHash = new SHA512Managed())
                 return shaHash.ComputeHash(inputStream);
         }
+
+        private byte[] ComputeHmac(Stream inputStream)
+        {
+            using (HMACSHA512 hmac = new HMACSHA512(_key))
+                return hmac.ComputeHash(inputStream);
+        }
+
+        private byte[] FillBuffer(int length)
+        {
+            byte[] buffer = new byte[length];
+#if NET_3_5
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
+#else
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+#endif
+            {
+                rng.GetBytes(buffer);
+            }
+            return buffer;
+        }
+
+        private void _setKeySizes(int keySize)
+        {
+            if (keySize <= 0)
+                _keySizes = null;
+            else
+                _keySizes = new KeySizes(keySize, keySize, 0);
+        }
+
+        private SymmetricAlgorithm GetAlgorithm()
+        {
+            SymmetricAlgorithm alg;
+            switch (_encFmt)
+            {
+                case MausEncryptionFormat.Aes:
+                    alg = Aes.Create();
+                    break;
+                default:
+                    return null;
+            }
+            alg.Key = _key;
+            alg.IV = _iv;
+            return alg;
+        }
+
+        private QuickBufferStream Decrypt()
+        {
+            QuickBufferStream output = new QuickBufferStream();
+
+            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (ICryptoTransform transform = alg.CreateDecryptor())
+            {
+                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+                _bufferStream.CopyTo(cs);
+                cs.FlushFinalBlock();
+            }
+            output.Reset();
+
+            if (!CompareBytes(ComputeHmac(output)))
+                throw new CryptographicException(TextResources.BadKey);
+            output.Reset();
+            return output;
+        }
+
+        private QuickBufferStream Encrypt()
+        {
+            QuickBufferStream output = new QuickBufferStream();
+            output.Write(_salt, 0, _key.Length);
+
+            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (ICryptoTransform transform = alg.CreateEncryptor())
+            {
+                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+
+                byte[] randomBytes = FillBuffer(_blockByteCount);
+                cs.Write(randomBytes, 0, randomBytes.Length);
+
+                _bufferStream.CopyTo(cs);
+                cs.FlushFinalBlock();
+            }
+            output.Reset();
+            return output;
+        }
+
+        private KeySizes _keySizes;
+        /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes.
+        /// </summary>
+        public KeySizes KeySizes { get { return _keySizes; } }
     }
 }

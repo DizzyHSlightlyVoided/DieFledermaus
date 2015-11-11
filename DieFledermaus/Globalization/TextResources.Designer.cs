@@ -61,11 +61,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The Die Fledermaus stream has already been successfully decrypted..
+        /// </summary>
+        internal static string AlreadyDecrypted {
+            get {
+                return ResourceManager.GetString("AlreadyDecrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The computed SHA-512 checksum did not match the expected value..
         /// </summary>
         internal static string BadChecksum {
             get {
                 return ResourceManager.GetString("BadChecksum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The key or password is invalid..
+        /// </summary>
+        internal static string BadKey {
+            get {
+                return ResourceManager.GetString("BadKey", resourceCulture);
             }
         }
         
@@ -88,11 +106,47 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The Die Fledermaus stream contains an unknown format..
+        /// </summary>
+        internal static string FormatUnknown {
+            get {
+                return ResourceManager.GetString("FormatUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The stream is not a valid Die Fledermaus stream..
         /// </summary>
         internal static string InvalidMagicNumber {
             get {
                 return ResourceManager.GetString("InvalidMagicNumber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified key is the wrong length..
+        /// </summary>
+        internal static string KeyLength {
+            get {
+                return ResourceManager.GetString("KeyLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An encrypted Die Fledermaus stream requires a key or password..
+        /// </summary>
+        internal static string KeyNotSet {
+            get {
+                return ResourceManager.GetString("KeyNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Die Fledermaus stream is not currently encrypted..
+        /// </summary>
+        internal static string NotEncrypted {
+            get {
+                return ResourceManager.GetString("NotEncrypted", resourceCulture);
             }
         }
         

@@ -38,7 +38,7 @@ namespace DieFledermaus
     partial class DieFledermausStream
     {
         /// <summary>
-        /// Creates a new instance in compression mode.
+        /// Creates a new instance in write-mode with the specified compression level.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
@@ -79,7 +79,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance in compression mode.
+        /// Creates a new instance in write-mode with the specified compression level.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
@@ -97,6 +97,59 @@ namespace DieFledermaus
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
             : this(stream, compressionLevel, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the compression mode.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat, bool leaveOpen)
+            : this(stream, compressionLevel, leaveOpen)
+        {
+            _setCompFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
+            : this(stream, compressionLevel, encryptionFormat, false)
         {
         }
     }

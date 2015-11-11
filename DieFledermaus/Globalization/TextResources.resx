@@ -117,8 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AlreadyDecrypted" xml:space="preserve">
+    <value>The Die Fledermaus stream has already been successfully decrypted.</value>
+  </data>
   <data name="BadChecksum" xml:space="preserve">
     <value>The computed SHA-512 checksum did not match the expected value.</value>
+  </data>
+  <data name="BadKey" xml:space="preserve">
+    <value>The key or password is invalid.</value>
   </data>
   <data name="CurrentRead" xml:space="preserve">
     <value>The current stream is in read-mode.</value>
@@ -126,8 +132,20 @@
   <data name="CurrentWrite" xml:space="preserve">
     <value>The current stream is in write-mode.</value>
   </data>
+  <data name="FormatUnknown" xml:space="preserve">
+    <value>The Die Fledermaus stream contains an unknown format.</value>
+  </data>
   <data name="InvalidMagicNumber" xml:space="preserve">
     <value>The stream is not a valid Die Fledermaus stream.</value>
+  </data>
+  <data name="KeyLength" xml:space="preserve">
+    <value>The specified key is the wrong length.</value>
+  </data>
+  <data name="KeyNotSet" xml:space="preserve">
+    <value>An encrypted Die Fledermaus stream requires a key or password.</value>
+  </data>
+  <data name="NotEncrypted" xml:space="preserve">
+    <value>The Die Fledermaus stream is not currently encrypted.</value>
   </data>
   <data name="StreamNotReadable" xml:space="preserve">
     <value>The specified stream does not support reading.</value>
