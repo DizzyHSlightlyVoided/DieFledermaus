@@ -170,7 +170,7 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, MausEncryptionFormat encryptionFormat, bool leaveOpen)
             : this(stream, CompressionMode.Compress, leaveOpen)
         {
-            _setCompFormat(encryptionFormat);
+            _setEncFormat(encryptionFormat);
         }
 
         /// <summary>
@@ -193,10 +193,128 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, MausEncryptionFormat encryptionFormat)
             : this(stream, CompressionMode.Compress, false)
         {
-            _setCompFormat(encryptionFormat);
+            _setEncFormat(encryptionFormat);
         }
 
-        private void _setCompFormat(MausEncryptionFormat encryptionFormat)
+#if COMPLVL
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            _checkWrite(stream);
+            switch (compressionLevel)
+            {
+                case CompressionLevel.Fastest:
+                case CompressionLevel.NoCompression:
+                case CompressionLevel.Optimal:
+                    break;
+                default:
+                    throw InvalidEnumException("compressionLevel", (int)compressionLevel, typeof(CompressionLevel));
+            }
+
+            _bufferStream = new QuickBufferStream();
+            _deflateStream = new DeflateStream(_bufferStream, compressionLevel, true);
+            _baseStream = stream;
+            _mode = CompressionMode.Compress;
+            _leaveOpen = leaveOpen;
+            _headerGotten = true;
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
+            : this(stream, compressionLevel, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the compression mode.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat, bool leaveOpen)
+            : this(stream, compressionLevel, leaveOpen)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
+            : this(stream, compressionLevel, encryptionFormat, false)
+        {
+        }
+#endif
+
+        private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
             switch (encryptionFormat)
             {
@@ -271,12 +389,7 @@ namespace DieFledermaus
             }
             set
             {
-                if (_baseStream == null)
-                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                if (_encFmt == MausEncryptionFormat.None)
-                    throw new NotSupportedException(TextResources.NotEncrypted);
-                if (_mode == CompressionMode.Decompress && _headerGotten)
-                    throw new InvalidOperationException(TextResources.AlreadyDecrypted);
+                _ensureCanSetKey();
                 if (value == null) throw new ArgumentNullException("value");
 
                 int bitCount = value.Length << 3;
@@ -290,6 +403,16 @@ namespace DieFledermaus
                 }
                 throw new ArgumentException(TextResources.KeyLength, "value");
             }
+        }
+
+        private void _ensureCanSetKey()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (_encFmt == MausEncryptionFormat.None)
+                throw new NotSupportedException(TextResources.NotEncrypted);
+            if (_mode == CompressionMode.Decompress && _headerGotten)
+                throw new InvalidOperationException(TextResources.AlreadyDecrypted);
         }
 
         /// <summary>
@@ -307,6 +430,12 @@ namespace DieFledermaus
         /// Sets <see cref="Key"/> to a value derived from the specified password.
         /// </summary>
         /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="password"/> is <c>null</c>.
         /// </exception>
@@ -315,12 +444,20 @@ namespace DieFledermaus
         /// </exception>
         public void SetPassword(string password)
         {
+            _ensureCanSetKey();
             if (password == null)
                 throw new ArgumentNullException("password");
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, "password");
 
-            _key = _setPasswd(password);
+#if NOCRYPTOCLOSE
+            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount);
+#else
+            using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount))
+#endif
+            {
+                _key = pbkdf2.GetBytes(_keySizes.MaxSize >> 3);
+            }
         }
 
         /// <summary>
@@ -520,11 +657,11 @@ namespace DieFledermaus
             _headerGotten = true;
         }
 
-        private bool CompareBytes(byte[] shaComputed)
+        private bool CompareBytes(byte[] hashComputed)
         {
             for (int i = 0; i < hashLength; i++)
             {
-                if (shaComputed[i] != _hashExpected[i])
+                if (hashComputed[i] != _hashExpected[i])
                     return false;
             }
             return true;

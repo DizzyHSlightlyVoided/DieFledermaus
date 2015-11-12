@@ -79,8 +79,8 @@ namespace DieFledermaus
             get
             {
                 if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                if (!_reading) throw new NotSupportedException();
-                return _position;
+                if (_reading) return _position;
+                return _length;
             }
             set { throw new NotSupportedException(); }
         }
