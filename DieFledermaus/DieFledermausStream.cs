@@ -394,7 +394,11 @@ namespace DieFledermaus
 
         private void _getHeader()
         {
-            using (BinaryReader reader = GetBinaryReader(_baseStream))
+#if NOLEAVEOPEN
+            BinaryReader reader = new BinaryReader(_baseStream);
+#else
+            using (BinaryReader reader = new BinaryReader(_baseStream, System.Text.Encoding.UTF8, true))
+#endif
             {
                 if (reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidMagicNumber);
@@ -477,7 +481,11 @@ namespace DieFledermaus
         private void _readData()
         {
             if (_headerGotten) return;
-            using (BinaryReader reader = GetBinaryReader(_baseStream))
+#if NOLEAVEOPEN
+            BinaryReader reader = new BinaryReader(_baseStream);
+#else
+            using (BinaryReader reader = new BinaryReader(_baseStream, System.Text.Encoding.UTF8, true))
+#endif
             {
                 if (_key == null && _encFmt != MausEncryptionFormat.None)
                     throw new CryptographicException(TextResources.KeyNotSet);
@@ -658,8 +666,11 @@ namespace DieFledermaus
 
                             _deflateStream.Dispose();
                             _bufferStream.Reset();
-
-                            using (BinaryWriter writer = GetBinaryWriter(_baseStream))
+#if NOLEAVEOPEN
+                            BinaryWriter writer = new BinaryWriter(_baseStream);
+#else
+                            using (BinaryWriter writer = new BinaryWriter(_baseStream, System.Text.Encoding.UTF8, true))
+#endif
                             {
                                 writer.Write(_head);
                                 writer.Write(_versionShort);
@@ -716,6 +727,9 @@ namespace DieFledermaus
                                     }
                                 }
                             }
+#if NOLEAVEOPEN
+                            writer.Flush();
+#endif
                             _bufferStream.Close();
                         }
                         else _deflateStream.Dispose();

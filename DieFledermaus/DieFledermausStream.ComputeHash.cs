@@ -38,7 +38,7 @@ namespace DieFledermaus
     {
         private byte[] _setPasswd(string password)
         {
-#if NET_3_5
+#if NOCRYPTOCLOSE
             Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount);
 #else
             using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount))
@@ -63,7 +63,7 @@ namespace DieFledermaus
         private byte[] FillBuffer(int length)
         {
             byte[] buffer = new byte[length];
-#if NET_3_5
+#if NOCRYPTOCLOSE
             RandomNumberGenerator rng = RandomNumberGenerator.Create();
 #else
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())

@@ -40,7 +40,6 @@
     <Compile Include="DieFledermausStream.CompressionLevel.cs" />
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="DieFledermausStream.InvalidEnum.cs" />
-    <Compile Include="DieFledermausStream.ReaderWriter45.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

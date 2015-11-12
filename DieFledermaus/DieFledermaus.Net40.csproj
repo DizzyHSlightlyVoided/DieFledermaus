@@ -17,7 +17,7 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Net 4.0\Debug\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.0\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_4_0;NOLEAVEOPEN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.0\Debug\DieFledermaus.XML</DocumentationFile>
@@ -27,7 +27,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Net 4.0\Release\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.0\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;NET_4_0;NOLEAVEOPEN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.0\Release\DieFledermaus.XML</DocumentationFile>
@@ -38,7 +38,6 @@
   <ItemGroup>
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="DieFledermausStream.InvalidEnum.cs" />
-    <Compile Include="DieFledermausStream.ReaderWriter.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
