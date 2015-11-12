@@ -51,11 +51,6 @@ namespace DieFledermaus
         private const int _head = 0x5375416d; //Little-endian "mAuS"
         private const ushort _versionShort = 93, _minVersionShort = 92;
         private const float _versionDiv = 100;
-        /// <summary>
-        /// The version number of the current implementation, currently 0.92.
-        /// This field is constant.
-        /// </summary>
-        public const float Version = _versionShort / _versionDiv;
 
         private Stream _baseStream;
         private DeflateStream _deflateStream;
@@ -390,6 +385,12 @@ namespace DieFledermaus
         }
         #endregion
 
+        private const byte IdAes256 = 1, IdAes128 = 2, IdAes192 = 3;
+        private const int _blockByteCtAes = 16;
+        private const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
+        private const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
+        private const int _keyBitAes192 = 192, _keyByteAes192 = _keyBitAes192 >> 3;
+
         private bool _headerGotten;
 
         private void _getHeader()
@@ -421,20 +422,20 @@ namespace DieFledermaus
                         case 0:
                             _encFmt = MausEncryptionFormat.None;
                             break;
-                        case 1:
+                        case IdAes256:
                             _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = 16;
-                            _setKeySizes(256);
+                            _blockByteCount = _blockByteCtAes;
+                            _setKeySizes(_keyBitAes256);
                             break;
-                        case 2:
+                        case IdAes128:
                             _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = 16;
-                            _setKeySizes(128);
+                            _blockByteCount = _blockByteCtAes;
+                            _setKeySizes(_keyBitAes128);
                             break;
-                        case 3:
+                        case IdAes192:
                             _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = 16;
-                            _setKeySizes(192);
+                            _blockByteCount = _blockByteCtAes;
+                            _setKeySizes(_keyBitAes192);
                             break;
                         default:
                             throw new NotSupportedException(TextResources.FormatUnknown);
@@ -682,14 +683,14 @@ namespace DieFledermaus
                                         case MausEncryptionFormat.Aes:
                                             switch (_key.Length)
                                             {
-                                                case 32:
-                                                    format |= (0x100);
+                                                case _keyByteAes256:
+                                                    format |= ((uint)IdAes256) << 8;
                                                     break;
-                                                case 16:
-                                                    format |= (0x200);
+                                                case _keyByteAes128:
+                                                    format |= ((uint)IdAes128) << 8;
                                                     break;
-                                                case 24:
-                                                    format |= (0x300);
+                                                case _keyByteAes192:
+                                                    format |= ((uint)IdAes192) << 8;
                                                     break;
                                             }
                                             break;
