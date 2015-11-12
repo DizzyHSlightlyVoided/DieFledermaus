@@ -36,6 +36,18 @@ namespace DieFledermaus
 {
     partial class DieFledermausStream
     {
+        private byte[] _setPasswd(string password)
+        {
+#if NET_3_5
+            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount);
+#else
+            using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount))
+#endif
+            {
+                return pbkdf2.GetBytes(_keySizes.MaxSize >> 3);
+            }
+        }
+
         private byte[] ComputeHash(Stream inputStream)
         {
             using (SHA512Managed shaHash = new SHA512Managed())

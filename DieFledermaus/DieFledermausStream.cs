@@ -309,6 +309,26 @@ namespace DieFledermaus
         public int BlockByteCount { get { return _blockByteCount; } }
 
         /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(string password)
+        {
+            if (password == null)
+                throw new ArgumentNullException("password");
+            if (password.Length == 0)
+                throw new ArgumentException(TextResources.PasswordZeroLength, "password");
+
+            _key = _setPasswd(password);
+        }
+
+        /// <summary>
         /// Flushes the contents of the internal buffer of the current stream object to the underlying stream.
         /// </summary>
         public override void Flush()

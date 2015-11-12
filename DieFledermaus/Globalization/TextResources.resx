@@ -150,6 +150,12 @@
   <data name="NotEncrypted" xml:space="preserve">
     <value>The Die Fledermaus stream is not currently encrypted.</value>
   </data>
+  <data name="PasswordInvalidUtf8" xml:space="preserve">
+    <value>The specified password contained invalid UTF-8 characters.</value>
+  </data>
+  <data name="PasswordZeroLength" xml:space="preserve">
+    <value>A password must be at least 1 character long.</value>
+  </data>
   <data name="StreamClosed" xml:space="preserve">
     <value>The specified stream is closed.</value>
   </data>

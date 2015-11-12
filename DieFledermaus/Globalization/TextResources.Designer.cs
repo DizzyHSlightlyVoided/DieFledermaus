@@ -160,6 +160,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified password contained invalid UTF-8 characters..
+        /// </summary>
+        internal static string PasswordInvalidUtf8 {
+            get {
+                return ResourceManager.GetString("PasswordInvalidUtf8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A password must be at least 1 character long..
+        /// </summary>
+        internal static string PasswordZeroLength {
+            get {
+                return ResourceManager.GetString("PasswordZeroLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified stream is closed..
         /// </summary>
         internal static string StreamClosed {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using System.Diagnostics;
 
 namespace DieFledermaus.Tests
 {
@@ -33,7 +34,7 @@ namespace DieFledermaus.Tests
                 using (BinaryWriter writer = new BinaryWriter(ds))
                 {
                     if (mode != MausEncryptionFormat.None)
-                        ds.Key = key;
+                        SetPasswd(ds);
                     Console.WriteLine("Length before writing 9: " + ms.Length);
                     writer.Write(9);
                     Console.WriteLine("Length after writing 9: " + ms.Length);
@@ -47,7 +48,7 @@ namespace DieFledermaus.Tests
                 using (BinaryReader reader = new BinaryReader(ds))
                 {
                     if (mode != MausEncryptionFormat.None)
-                        ds.Key = key;
+                        SetPasswd(ds);
 
                     Console.WriteLine("Position before read: " + ms.Position);
                     Console.WriteLine(reader.ReadInt32());
@@ -79,6 +80,15 @@ namespace DieFledermaus.Tests
 
             Console.WriteLine("Press any key to continue.");
             Console.ReadKey();
+        }
+
+        private static void SetPasswd(DieFledermausStream ds)
+        {
+            const string passwd = "Correct Horse!Battery#Staple69105";
+            Stopwatch sw = Stopwatch.StartNew();
+            ds.SetPassword(passwd);
+            sw.Stop();
+            Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);
         }
     }
 }
