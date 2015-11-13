@@ -8,15 +8,22 @@ Version 0.94
 
 The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Three versions are defined for use: 0.92 (depreciated), 0.93 (depreciated), and 0.94.
 
+Terminology
+-----------
+* **encoder:** Any application, library, or other software which encodes data to a DieFledermaus stream.
+* **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form. These may, of course, refer to the same software.
+
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 Structure
 ---------
+Any encoder or decoder must support version 0.94 at minimum. A decoder may support versions 0.92 and/or 0.93, but this is optional. An encoder should not support versions 0.92 or 0.93.
+
 A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (ASCII `6d 41 75 53`, 4 bytes)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5d 00` (hex) = integer `93` (decimal) = version 0.93.
-3. **Format:** *(Not present in version 0.92)* An array of length-prefixed strings describing the format.
+3. **Format:** An array of length-prefixed strings describing the format.
 3. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
 4. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
 5. **Checksum:** A SHA-512 hash of the decompressed value.
