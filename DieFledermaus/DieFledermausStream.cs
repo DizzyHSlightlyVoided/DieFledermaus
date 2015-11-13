@@ -29,10 +29,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 
 using DieFledermaus.Globalization;
 
@@ -49,11 +51,11 @@ namespace DieFledermaus
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 93, _minVersionShort = 92;
+        private const ushort _versionShort = 94, _minVersionShort = 92;
         private const float _versionDiv = 100;
 
         private Stream _baseStream;
-        private DeflateStream _deflateStream;
+        private Stream _deflateStream;
         private QuickBufferStream _bufferStream;
         private CompressionMode _mode;
         private bool _leaveOpen;
@@ -75,6 +77,7 @@ namespace DieFledermaus
             throw new ObjectDisposedException("stream", TextResources.StreamClosed);
         }
 
+        #region Constructors
         /// <summary>
         /// Creates a new instance with the specified mode.
         /// </summary>
@@ -145,6 +148,126 @@ namespace DieFledermaus
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode)
             : this(stream, compressionMode, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="compressionFormat">Indicates the format of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, MausEncryptionFormat encryptionFormat, bool leaveOpen)
+            : this(stream, compressionFormat, leaveOpen)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="compressionFormat">Indicates the format of the stream.</param>
+        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, MausEncryptionFormat encryptionFormat)
+            : this(stream, compressionFormat, false)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="compressionFormat">Indicates the format of the stream.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            _checkWrite(stream);
+
+            _bufferStream = new QuickBufferStream();
+            switch (compressionFormat)
+            {
+                case MausCompressionFormat.Deflate:
+                    _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
+                    break;
+                case MausCompressionFormat.None:
+                    _deflateStream = _bufferStream;
+                    break;
+                default:
+                    throw InvalidEnumException("compressionFormat", (int)compressionFormat, typeof(MausCompressionFormat));
+            }
+
+            _cmpFmt = compressionFormat;
+            _baseStream = stream;
+            _mode = CompressionMode.Compress;
+            _leaveOpen = leaveOpen;
+            _headerGotten = true;
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="compressionFormat">Indicates the format of the stream.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat)
+            : this(stream, compressionFormat, false)
         {
         }
 
@@ -313,6 +436,7 @@ namespace DieFledermaus
         {
         }
 #endif
+        #endregion
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
@@ -363,6 +487,12 @@ namespace DieFledermaus
         /// Gets the encryption format of the current instance.
         /// </summary>
         public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
+
+        private MausCompressionFormat _cmpFmt;
+        /// <summary>
+        /// Gets the compression format of the current instance.
+        /// </summary>
+        public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
 
         private byte[] _key;
         /// <summary>
@@ -527,15 +657,33 @@ namespace DieFledermaus
         private const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
         private const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
         private const int _keyBitAes192 = 192, _keyByteAes192 = _keyBitAes192 >> 3;
+        private const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
+        private static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
+
+        private const string _cmpNone = "NC", _cmpDef = "DEF";
+        private const string _encAes = "AES";
+        private static readonly byte[] _cmpBNone = Encoding.UTF8.GetBytes(_cmpNone), _cmpBDef = Encoding.UTF8.GetBytes(_cmpDef),
+            _encBAes = Encoding.UTF8.GetBytes(_encAes);
 
         private bool _headerGotten;
+
+        private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>()
+        {
+            { _cmpNone, MausCompressionFormat.None },
+            { _cmpDef, MausCompressionFormat.Deflate }
+        };
+
+        private static readonly Dictionary<string, MausEncryptionFormat> _encDict = new Dictionary<string, MausEncryptionFormat>()
+        {
+            { _encAes, MausEncryptionFormat.Aes }
+        };
 
         private void _getHeader()
         {
 #if NOLEAVEOPEN
             BinaryReader reader = new BinaryReader(_baseStream);
 #else
-            using (BinaryReader reader = new BinaryReader(_baseStream, System.Text.Encoding.UTF8, true))
+            using (BinaryReader reader = new BinaryReader(_baseStream, Encoding.UTF8, true))
 #endif
             {
                 if (reader.ReadInt32() != _head)
@@ -546,7 +694,7 @@ namespace DieFledermaus
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                if (version > _minVersionShort)
+                if (version == 93)
                 {
                     long options = reader.ReadInt64();
                     byte format = (byte)options;
@@ -582,6 +730,85 @@ namespace DieFledermaus
                     if (options != 0)
                         throw new NotSupportedException(TextResources.FormatUnknown);
                 }
+                else if (version > 93)
+                {
+                    bool gotFormat = false, gotEnc = false;
+
+                    byte optLen = reader.ReadByte();
+
+                    for (int i = 0; i < optLen; i++)
+                    {
+                        string curForm = GetString(reader);
+
+                        MausCompressionFormat cmpFmt;
+                        if (_formDict.TryGetValue(curForm, out cmpFmt))
+                        {
+                            if (gotFormat)
+                                throw new NotSupportedException(TextResources.FormatBad);
+                            gotFormat = true;
+                            _cmpFmt = cmpFmt;
+                            continue;
+                        }
+
+                        MausEncryptionFormat encFmt;
+                        if (_encDict.TryGetValue(curForm, out encFmt))
+                        {
+                            if (gotEnc)
+                                throw new NotSupportedException(TextResources.FormatBad);
+                            gotEnc = true;
+                            switch (encFmt)
+                            {
+                                case MausEncryptionFormat.Aes:
+                                    {
+                                        i++;
+                                        if (i >= optLen)
+                                            throw new NotSupportedException(TextResources.FormatBad);
+
+                                        byte[] bytes = GetStringBytes(reader);
+                                        _blockByteCount = _blockByteCtAes;
+                                        if (bytes.Length == 3)
+                                        {
+                                            string strVal = Encoding.UTF8.GetString(bytes);
+                                            switch (strVal)
+                                            {
+                                                case _keyStrAes128:
+                                                    _setKeySizes(_keyBitAes128);
+                                                    break;
+                                                case _keyStrAes192:
+                                                    _setKeySizes(_keyBitAes192);
+                                                    break;
+                                                case _keyStrAes256:
+                                                    _setKeySizes(_keyBitAes256);
+                                                    break;
+                                                default:
+                                                    throw new NotSupportedException(TextResources.FormatUnknown);
+                                            }
+                                        }
+                                        else if (bytes.Length == 2)
+                                        {
+                                            int bitCount = bytes[0] | (bytes[1] << 8);
+
+                                            switch (bitCount)
+                                            {
+                                                case _keyBitAes128:
+                                                case _keyBitAes192:
+                                                case _keyBitAes256:
+                                                    _setKeySizes(bitCount);
+                                                    break;
+                                                default:
+                                                    throw new NotSupportedException(TextResources.FormatUnknown);
+                                            }
+                                        }
+                                        else throw new NotSupportedException(TextResources.FormatUnknown);
+                                    }
+                                    break;
+                            }
+                            _encFmt = encFmt;
+                            continue;
+                        }
+                        throw new NotSupportedException(TextResources.FormatUnknown);
+                    }
+                }
 
                 _compLength = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -611,6 +838,22 @@ namespace DieFledermaus
             }
         }
 
+        private static string GetString(BinaryReader reader)
+        {
+            byte[] strBytes = GetStringBytes(reader);
+
+            return Encoding.UTF8.GetString(strBytes);
+        }
+
+        private static byte[] GetStringBytes(BinaryReader reader)
+        {
+            byte strLen = reader.ReadByte();
+            byte[] strBytes = reader.ReadBytes(strLen);
+            if (strBytes.Length < strLen)
+                throw new EndOfStreamException();
+            return strBytes;
+        }
+
         private byte[] _hashExpected, _salt, _iv;
         private const int hashLength = 64, minPkCount = 9001;
         private long _compLength;
@@ -622,7 +865,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             BinaryReader reader = new BinaryReader(_baseStream);
 #else
-            using (BinaryReader reader = new BinaryReader(_baseStream, System.Text.Encoding.UTF8, true))
+            using (BinaryReader reader = new BinaryReader(_baseStream, Encoding.UTF8, true))
 #endif
             {
                 if (_key == null && _encFmt != MausEncryptionFormat.None)
@@ -653,7 +896,15 @@ namespace DieFledermaus
                 _bufferStream.Reset();
             }
 
-            _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Decompress, false);
+            switch (_cmpFmt)
+            {
+                case MausCompressionFormat.None:
+                    _deflateStream = _bufferStream;
+                    break;
+                default:
+                    _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Decompress, false);
+                    break;
+            }
             _headerGotten = true;
         }
 
@@ -802,38 +1053,59 @@ namespace DieFledermaus
                             if (_encFmt != MausEncryptionFormat.None && _key == null)
                                 throw new InvalidOperationException(TextResources.KeyNotSet);
 
-                            _deflateStream.Dispose();
+                            if (_deflateStream != _bufferStream)
+                                _deflateStream.Dispose();
                             _bufferStream.Reset();
 #if NOLEAVEOPEN
                             BinaryWriter writer = new BinaryWriter(_baseStream);
 #else
-                            using (BinaryWriter writer = new BinaryWriter(_baseStream, System.Text.Encoding.UTF8, true))
+                            using (BinaryWriter writer = new BinaryWriter(_baseStream, Encoding.UTF8, true))
 #endif
                             {
                                 writer.Write(_head);
                                 writer.Write(_versionShort);
                                 {
-                                    long format = 0;
+                                    List<byte[]> formats = new List<byte[]>();
+
+                                    switch (_cmpFmt)
+                                    {
+                                        case MausCompressionFormat.None:
+                                            formats.Add(_cmpBNone);
+                                            break;
+                                        default:
+                                            formats.Add(_cmpBDef);
+                                            break;
+                                    }
 
                                     switch (_encFmt)
                                     {
                                         case MausEncryptionFormat.Aes:
-                                            switch (_key.Length)
                                             {
-                                                case _keyByteAes256:
-                                                    format |= ((uint)IdAes256) << 8;
-                                                    break;
-                                                case _keyByteAes128:
-                                                    format |= ((uint)IdAes128) << 8;
-                                                    break;
-                                                case _keyByteAes192:
-                                                    format |= ((uint)IdAes192) << 8;
-                                                    break;
+                                                formats.Add(_encBAes);
+                                                switch (_key.Length)
+                                                {
+                                                    case _keyByteAes256:
+                                                        formats.Add(_keyBAes256);
+                                                        break;
+                                                    case _keyByteAes192:
+                                                        formats.Add(_keyBAes192);
+                                                        break;
+                                                    case _keyByteAes128:
+                                                        formats.Add(_keyBAes256);
+                                                        break;
+                                                }
                                             }
                                             break;
                                     }
 
-                                    writer.Write(format);
+                                    writer.Write((byte)formats.Count);
+
+                                    for (int i = 0; i < formats.Count; i++)
+                                    {
+                                        byte[] curForm = formats[i];
+                                        writer.Write((byte)curForm.Length);
+                                        writer.Write(curForm);
+                                    }
                                 }
                                 _bufferStream.Reset();
                                 if (_encFmt == MausEncryptionFormat.None)
@@ -901,9 +1173,9 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// Gets the encryption format.
+    /// Options indicating the format used to encrypt the DieFledermaus stream.
     /// </summary>
-    public enum MausEncryptionFormat : byte
+    public enum MausEncryptionFormat
     {
         /// <summary>
         /// The DieFledermaus stream is not encrypted.
@@ -913,5 +1185,20 @@ namespace DieFledermaus
         /// The DieFledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
         /// </summary>
         Aes,
+    }
+
+    /// <summary>
+    /// Options indicating the format used to compress the DieFledermaus stream.
+    /// </summary>
+    public enum MausCompressionFormat
+    {
+        /// <summary>
+        /// The file is DEFLATE-compressed.
+        /// </summary>
+        Deflate,
+        /// <summary>
+        /// The file is not compressed.
+        /// </summary>
+        None,
     }
 }

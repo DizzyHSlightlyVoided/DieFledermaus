@@ -168,15 +168,8 @@ namespace DieFledermaus
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            _currentBuffer = null;
-
+            _firstBuffer = _currentBuffer = null;
             _currentPos = 0;
-
-            while (_firstBuffer != null)
-            {
-                _firstBuffer.End = 0;
-                _firstBuffer = _firstBuffer.Next;
-            }
         }
     }
 }

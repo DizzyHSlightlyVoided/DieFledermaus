@@ -115,6 +115,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DieFledermaus stream contains invalid or contradictory formats..
+        /// </summary>
+        internal static string FormatBad {
+            get {
+                return ResourceManager.GetString("FormatBad", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DieFledermaus stream contains an unknown format..
         /// </summary>
         internal static string FormatUnknown {

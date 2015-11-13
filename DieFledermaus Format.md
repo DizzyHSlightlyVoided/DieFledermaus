@@ -1,12 +1,12 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 0.93
+Version 0.94
 ------------
-* Extension: `.maus`
+* File Extension: ".maus"
 * Byte order: little-endian
 * Signing form: two's complement
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Two versions are defined for use: 0.92 (which is depreciated), and 0.93.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Three versions are defined for use: 0.92 (depreciated), 0.93 (depreciated), and 0.94.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -16,25 +16,32 @@ A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (ASCII `6d 41 75 53`, 4 bytes)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5d 00` (hex) = integer `93` (decimal) = version 0.93.
-3. **Format:** *(Not present in version 0.92)* An unsigned 64-bit value which defines boolean flags and options for the format and compression, to the extent that this is not included in the DEFLATE data itself.
+3. **Format:** *(Not present in version 0.92)* An array of length-prefixed strings describing the format.
 3. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
 4. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
 5. **Checksum:** A SHA-512 hash of the decompressed value.
 6. **Data:** The DEFLATE-compressed data itself.
 
 ### Format
-The bits of the **Format** field are divided into three regions (in lsb-0 format):
-* Bits 0-7 contain the **compression method** used. Currently, the only value this field contains is `00`, for the DEFLATE algorithm.
-* Bits 8-15 contain the **encryption method** used. The following values are defined:
- - `00` - No encryption.
- - `01` - AES-256 encryption.
- - `02` - AES-128 encryption.
- - `03` - AES-192 encryption.
-* Bits 16-63 contain other options and flags; none are currently defined.
+The value of **Format** is an array of strings. The field starts with a single unsigned byte specifying the number of elements in the array; each element in the array is is a string of bytes, each prefixed with an unsigned byte specifying the length, defining the format and how the file is stored. The elements are usually UTF-8 text.
 
-A decoder must not attempt to decode an archive if it finds any unexpected values in the **Format** field. That doesn't make sense. It should, however, attempt to decode any *known* format, regardless of version number.
+If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
 
-Version 0.92 does not have the **Format** field, and is therefore merely DEFLATE compressed and unencrypted, with no other changes.
+The following values are supported for strings in the array:
+* `NC` (2 bytes) - The contents of the file are not compressed.
+* `DEF` (3 bytes) - The contents of the file are DEFLATE-compressed.
+* `AES` (3 bytes) - The file is AES-encrypted. To indicate the key length, the next element in the array must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
+
+If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file, rather than trying to guess what to use, and should clearly inform the user of this error. A decoder must not attempt to decode an archive if it finds any unexpected or unknown values in the **Format** field; that doesn't make sense. It should, however, attempt to decode any *known* format, regardless of the file's version number.
+
+#### Version 0.93
+In version 0.93, **Format** was an unsigned 64-bit value. Only the bits 8 and 9 (in LSB-0 order) were used, and four values were defined:
+ - `0x000` - DEFLATE compressed, no encryption.
+ - `0x100` - DEFLATE compressed, AES-256 encryption.
+ - `0x200` - DEFLATE compressed, AES-128 encryption.
+ - `0x300` - DEFLATE compressed, AES-192 encryption.
+
+Version 0.92 did not have the **Format** field, and only supported DEFLATE compression with no encryption.
 
 Encryption
 ----------

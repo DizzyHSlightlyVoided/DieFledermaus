@@ -15,22 +15,21 @@ namespace DieFledermaus.Tests
             for (int i = 0; i < bigBufferLength; i++)
                 bigBuffer[i] = (byte)(i + 1);
 
-            byte[] key = new byte[32];
-            Random rng = new Random(32);
-            rng.NextBytes(key);
-
-            GetMode(bigBuffer, key, MausEncryptionFormat.None);
+            GetMode(bigBuffer, MausEncryptionFormat.None, MausCompressionFormat.Deflate);
             Console.WriteLine();
-            GetMode(bigBuffer, key, MausEncryptionFormat.Aes);
+            GetMode(bigBuffer, MausEncryptionFormat.Aes, MausCompressionFormat.Deflate);
+            Console.WriteLine();
+            GetMode(bigBuffer, MausEncryptionFormat.None, MausCompressionFormat.None);
         }
 
-        private static void GetMode(byte[] bigBuffer, byte[] key, MausEncryptionFormat mode)
+        private static void GetMode(byte[] bigBuffer, MausEncryptionFormat mode, MausCompressionFormat format)
         {
             Console.WriteLine("Encryption: " + mode);
+            Console.WriteLine("Compression Format: " + format);
             Console.WriteLine("Initializing MemoryStream.");
             using (MemoryStream ms = new MemoryStream())
             {
-                using (DieFledermausStream ds = new DieFledermausStream(ms, mode, true))
+                using (DieFledermausStream ds = new DieFledermausStream(ms, format, mode, true))
                 using (BinaryWriter writer = new BinaryWriter(ds))
                 {
                     if (mode != MausEncryptionFormat.None)

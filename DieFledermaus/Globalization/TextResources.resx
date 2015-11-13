@@ -135,6 +135,9 @@
   <data name="CurrentWrite" xml:space="preserve">
     <value>The current stream is in write-mode.</value>
   </data>
+  <data name="FormatBad" xml:space="preserve">
+    <value>The DieFledermaus stream contains invalid or contradictory formats.</value>
+  </data>
   <data name="FormatUnknown" xml:space="preserve">
     <value>The DieFledermaus stream contains an unknown format.</value>
   </data>
