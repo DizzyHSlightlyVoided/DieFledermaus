@@ -115,11 +115,74 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified filename contains an unpaired surrogate character: {0}.
+        /// </summary>
+        internal static string FilenameBadSurrogate {
+            get {
+                return ResourceManager.GetString("FilenameBadSurrogate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename contained a non-whitespace control character..
+        /// </summary>
+        internal static string FilenameControl {
+            get {
+                return ResourceManager.GetString("FilenameControl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value &quot;{0}&quot; is not a valid filename..
+        /// </summary>
+        internal static string FilenameDot {
+            get {
+                return ResourceManager.GetString("FilenameDot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename has a length greater than 256 UTF-8 bytes..
+        /// </summary>
+        internal static string FilenameLengthLong {
+            get {
+                return ResourceManager.GetString("FilenameLengthLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename is empty..
+        /// </summary>
+        internal static string FilenameLengthZero {
+            get {
+                return ResourceManager.GetString("FilenameLengthZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename contained only whitespace characters..
+        /// </summary>
+        internal static string FilenameWhitespace {
+            get {
+                return ResourceManager.GetString("FilenameWhitespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DieFledermaus stream contains invalid or contradictory formats..
         /// </summary>
         internal static string FormatBad {
             get {
                 return ResourceManager.GetString("FormatBad", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DieFledermaus stream contains an invalid filename..
+        /// </summary>
+        internal static string FormatFilename {
+            get {
+                return ResourceManager.GetString("FormatFilename", resourceCulture);
             }
         }
         

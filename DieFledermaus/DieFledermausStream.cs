@@ -556,6 +556,119 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
+        private string _filename;
+        /// <summary>
+        /// Gets and sets a filename for the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance does not support writing.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and is invalid.
+        /// </exception>
+        /// <seealso cref="IsValidFilename(string)"/>
+        public string Filename
+        {
+            get { return _filename; }
+            set
+            {
+                _checkWritable();
+                if (value == null || IsValidFilename(value, true))
+                    _filename = value;
+            }
+        }
+
+        private static bool IsValidFilename(string value, bool throwOnInvalid)
+        {
+            if (value == null) throw new ArgumentNullException("value");
+
+            if (value.Length == 0)
+            {
+                if (throwOnInvalid)
+                    throw new ArgumentException(TextResources.FilenameLengthZero, "value");
+                return false;
+            }
+            if (Encoding.UTF8.GetByteCount(value) > maxLen)
+            {
+                if (throwOnInvalid)
+                    throw new ArgumentException(TextResources.FilenameLengthLong, "value");
+            }
+
+            bool seenNotWhite = false;
+            int dotCount = 0;
+            int add;
+            for (int i = 0; i < value.Length; i += add)
+            {
+                char c = value[i];
+
+                if (char.IsSurrogate(c))
+                {
+                    if (char.IsSurrogatePair(value, i))
+                    {
+                        add = 2;
+                        dotCount = -1;
+                        seenNotWhite = true;
+                        continue;
+                    }
+
+                    if (throwOnInvalid)
+                        throw new ArgumentException(string.Format(TextResources.FilenameBadSurrogate, string.Format("\\u{0:x4} {1}", (int)c, c)), "value");
+                    return false;
+                }
+                add = 1;
+
+                if (c == '.' && dotCount >= 0)
+                {
+                    if (++dotCount == 3)
+                        dotCount = -1;
+                    seenNotWhite = true;
+                    continue;
+                }
+                else dotCount = -1;
+
+                if (char.IsWhiteSpace(c))
+                    continue;
+                seenNotWhite = true;
+
+                if (c < ' ' || (c > '~' && c <= '\u009f'))
+                {
+                    if (throwOnInvalid)
+                        throw new ArgumentException(TextResources.FilenameControl, "value");
+                    return false;
+                }
+            }
+
+            if (throwOnInvalid)
+            {
+                if (!seenNotWhite)
+                    throw new ArgumentException(TextResources.FilenameWhitespace, "value");
+                if (dotCount > 0)
+                    throw new ArgumentException(string.Format(TextResources.FilenameWhitespace, value), "value");
+                return true;
+            }
+
+            return seenNotWhite && dotCount <= 0;
+        }
+
+        /// <summary>
+        /// Determines if the specified value is a valid value for the <see cref="Filename"/> property.
+        /// </summary>
+        /// <param name="value">The value to set.</param>
+        /// <returns><c>true</c> if <paramref name="value"/> is a valid filename; <c>false</c> if <paramref name="value"/> has a length of 0, has a length
+        /// greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
+        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace, or is "." or
+        /// ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="value"/> is <c>null</c>.
+        /// </exception>
+        public static bool IsValidFilename(string value)
+        {
+            return IsValidFilename(value, false);
+        }
+
         /// <summary>
         /// Sets <see cref="Key"/> to a value derived from the specified password.
         /// </summary>
@@ -660,15 +773,18 @@ namespace DieFledermaus
         private const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
         private static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
-        private const string _cmpNone = "NC", _cmpDef = "DEF";
+        private const string _cmpNone = "NK", _cmpDef = "DEF";
         private const string _encAes = "AES";
         private static readonly byte[] _cmpBNone = Encoding.UTF8.GetBytes(_cmpNone), _cmpBDef = Encoding.UTF8.GetBytes(_cmpDef),
             _encBAes = Encoding.UTF8.GetBytes(_encAes);
 
         private bool _headerGotten;
 
+        private const int maxLen = 256;
+
         private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>()
         {
+            { "NC", MausCompressionFormat.None },
             { _cmpNone, MausCompressionFormat.None },
             { _cmpDef, MausCompressionFormat.Deflate }
         };
@@ -677,6 +793,9 @@ namespace DieFledermaus
         {
             { _encAes, MausEncryptionFormat.Aes }
         };
+
+        private const string _kFilename = "Name";
+        private static readonly byte[] _bFilename = Encoding.UTF8.GetBytes(_kFilename);
 
         private void _getHeader()
         {
@@ -744,7 +863,12 @@ namespace DieFledermaus
                         if (_formDict.TryGetValue(curForm, out cmpFmt))
                         {
                             if (gotFormat)
-                                throw new NotSupportedException(TextResources.FormatBad);
+                            {
+                                if (_cmpFmt == cmpFmt)
+                                    continue;
+
+                                throw new InvalidDataException(TextResources.FormatBad);
+                            }
                             gotFormat = true;
                             _cmpFmt = cmpFmt;
                             continue;
@@ -753,8 +877,8 @@ namespace DieFledermaus
                         MausEncryptionFormat encFmt;
                         if (_encDict.TryGetValue(curForm, out encFmt))
                         {
-                            if (gotEnc)
-                                throw new NotSupportedException(TextResources.FormatBad);
+                            if (gotEnc && _encFmt != encFmt)
+                                throw new InvalidDataException(TextResources.FormatBad);
                             gotEnc = true;
                             switch (encFmt)
                             {
@@ -762,23 +886,24 @@ namespace DieFledermaus
                                     {
                                         i++;
                                         if (i >= optLen)
-                                            throw new NotSupportedException(TextResources.FormatBad);
+                                            throw new InvalidDataException(TextResources.FormatBad);
 
                                         byte[] bytes = GetStringBytes(reader);
                                         _blockByteCount = _blockByteCtAes;
+                                        int keyBits;
                                         if (bytes.Length == 3)
                                         {
                                             string strVal = Encoding.UTF8.GetString(bytes);
                                             switch (strVal)
                                             {
                                                 case _keyStrAes128:
-                                                    _setKeySizes(_keyBitAes128);
+                                                    keyBits = _keyBitAes128;
                                                     break;
                                                 case _keyStrAes192:
-                                                    _setKeySizes(_keyBitAes192);
+                                                    keyBits = _keyBitAes192;
                                                     break;
                                                 case _keyStrAes256:
-                                                    _setKeySizes(_keyBitAes256);
+                                                    keyBits = _keyBitAes256;
                                                     break;
                                                 default:
                                                     throw new NotSupportedException(TextResources.FormatUnknown);
@@ -786,25 +911,39 @@ namespace DieFledermaus
                                         }
                                         else if (bytes.Length == 2)
                                         {
-                                            int bitCount = bytes[0] | (bytes[1] << 8);
+                                            keyBits = bytes[0] | (bytes[1] << 8);
 
-                                            switch (bitCount)
+                                            switch (keyBits)
                                             {
                                                 case _keyBitAes128:
                                                 case _keyBitAes192:
                                                 case _keyBitAes256:
-                                                    _setKeySizes(bitCount);
                                                     break;
                                                 default:
                                                     throw new NotSupportedException(TextResources.FormatUnknown);
                                             }
                                         }
                                         else throw new NotSupportedException(TextResources.FormatUnknown);
+
+                                        if (gotEnc && keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
+                                            throw new InvalidDataException(TextResources.FormatBad);
                                     }
                                     break;
                             }
                             _encFmt = encFmt;
                             continue;
+                        }
+
+                        if (curForm.Equals(_kFilename, StringComparison.OrdinalIgnoreCase))
+                        {
+                            i++;
+                            string filename = GetString(reader);
+
+                            if (_filename != null && _filename.Equals(filename, StringComparison.OrdinalIgnoreCase))
+                                throw new InvalidDataException(TextResources.FormatBad);
+
+                            if (!IsValidFilename(filename, false))
+                                throw new InvalidDataException(TextResources.FormatFilename);
                         }
                         throw new NotSupportedException(TextResources.FormatUnknown);
                     }
@@ -847,7 +986,8 @@ namespace DieFledermaus
 
         private static byte[] GetStringBytes(BinaryReader reader)
         {
-            byte strLen = reader.ReadByte();
+            int strLen = reader.ReadByte();
+            if (strLen == 0) strLen = maxLen;
             byte[] strBytes = reader.ReadBytes(strLen);
             if (strBytes.Length < strLen)
                 throw new EndOfStreamException();
@@ -862,39 +1002,33 @@ namespace DieFledermaus
         private void _readData()
         {
             if (_headerGotten) return;
-#if NOLEAVEOPEN
-            BinaryReader reader = new BinaryReader(_baseStream);
-#else
-            using (BinaryReader reader = new BinaryReader(_baseStream, Encoding.UTF8, true))
-#endif
+
+            if (_key == null && _encFmt != MausEncryptionFormat.None)
+                throw new CryptographicException(TextResources.KeyNotSet);
+
+            if (_bufferStream == null)
             {
-                if (_key == null && _encFmt != MausEncryptionFormat.None)
-                    throw new CryptographicException(TextResources.KeyNotSet);
-
-                if (_bufferStream == null)
+                _bufferStream = new QuickBufferStream();
+                byte[] buffer = new byte[MaxBuffer];
+                long length = _compLength;
+                while (length > 0)
                 {
-                    _bufferStream = new QuickBufferStream();
-                    byte[] buffer = new byte[MaxBuffer];
-                    long length = _compLength;
-                    while (length > 0)
-                    {
-                        int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
-                        if (read == 0) throw new EndOfStreamException();
-                        _bufferStream.Write(buffer, 0, read);
-                        length -= read;
-                    }
+                    int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
+                    if (read == 0) throw new EndOfStreamException();
+                    _bufferStream.Write(buffer, 0, read);
+                    length -= read;
                 }
-                _bufferStream.Reset();
-
-                if (_encFmt == MausEncryptionFormat.None)
-                {
-                    if (!CompareBytes(ComputeHash(_bufferStream)))
-                        throw new InvalidDataException(TextResources.BadChecksum);
-                }
-                else _bufferStream = Decrypt();
-
-                _bufferStream.Reset();
             }
+            _bufferStream.Reset();
+
+            if (_encFmt == MausEncryptionFormat.None)
+            {
+                if (!CompareBytes(ComputeHash(_bufferStream)))
+                    throw new InvalidDataException(TextResources.BadChecksum);
+            }
+            else _bufferStream = Decrypt();
+
+            _bufferStream.Reset();
 
             switch (_cmpFmt)
             {
@@ -1067,6 +1201,12 @@ namespace DieFledermaus
                                 {
                                     List<byte[]> formats = new List<byte[]>();
 
+                                    if (_filename != null)
+                                    {
+                                        formats.Add(_bFilename);
+                                        formats.Add(Encoding.UTF8.GetBytes(_filename));
+                                    }
+
                                     switch (_cmpFmt)
                                     {
                                         case MausCompressionFormat.None:
@@ -1091,7 +1231,7 @@ namespace DieFledermaus
                                                         formats.Add(_keyBAes192);
                                                         break;
                                                     case _keyByteAes128:
-                                                        formats.Add(_keyBAes256);
+                                                        formats.Add(_keyBAes128);
                                                         break;
                                                 }
                                             }

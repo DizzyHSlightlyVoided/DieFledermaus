@@ -19,6 +19,8 @@ Structure
 ---------
 Any encoder or decoder must support version 0.94 at minimum. A decoder may support versions 0.92 and/or 0.93, but this is optional. An encoder should not support versions 0.92 or 0.93.
 
+When encoding a file to a DieFledermaus file, the encoder should save it to the same filename but with the extension ".maus" added to the end, unless specified otherwise by the user.
+
 A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (ASCII `6d 41 75 53`, 4 bytes)
@@ -32,14 +34,17 @@ A DieFledermaus stream contains the following fields:
 ### Format
 The value of **Format** is an array of strings. The field starts with a single unsigned byte specifying the number of elements in the array; each element in the array is is a string of bytes, each prefixed with an unsigned byte specifying the length, defining the format and how the file is stored. The elements are usually UTF-8 text.
 
+Each element in the array must contain at least one byte. If the length-byte prefix for an element has a value of `00`, the length is 256.
+
 If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
 
 The following values are supported for strings in the array:
-* `NC` (2 bytes) - The contents of the file are not compressed.
+* `Name` (9 bytes) - Indicates a specified filename. The next element in the array must be used as the filename. Filenames cannot use forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
+* `NC` (2 bytes) or `NK` (2 bytes) - The contents of the file are not compressed.
 * `DEF` (3 bytes) - The contents of the file are DEFLATE-compressed.
 * `AES` (3 bytes) - The file is AES-encrypted. To indicate the key length, the next element in the array must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
 
-If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file, rather than trying to guess what to use, and should clearly inform the user of this error. A decoder must not attempt to decode an archive if it finds any unexpected or unknown values in the **Format** field; that doesn't make sense. It should, however, attempt to decode any *known* format, regardless of the file's version number.
+If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file, rather than trying to guess what to use, and should clearly inform the user of this error. If a decoder encounters redundant values (i.e. both `NC` and `NK`), the duplicates should be ignored. A decoder must not attempt to decode an archive if it finds any unexpected or unknown values in the **Format** field; that doesn't make sense. It should, however, attempt to decode any *known* format, regardless of the file's version number.
 
 #### Version 0.93
 In version 0.93, **Format** was an unsigned 64-bit value. Only the bits 8 and 9 (in LSB-0 order) were used, and four values were defined:
