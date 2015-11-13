@@ -6,13 +6,13 @@ Version 0.93
 * Byte order: little-endian
 * Signing form: two's complement
 
-The Die Fledermaus algorithm is simply the [DEFLATE algorithm](http://en.wikipedia.org/wiki/DEFLATE) with metadata and a magic number. The name exists solely to be a bilingual pun. Two versions are defined for use: 0.92, and 0.93.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Two versions are defined for use: 0.92, and 0.93.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 Structure
 ---------
-A Die Fledermaus stream contains the following fields:
+A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (ASCII `6d 41 75 53`, 4 bytes)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5d 00` (hex) = integer `93` (decimal) = version 0.93.
@@ -38,10 +38,10 @@ Version 0.92 does not have the **Format** field, and is therefore merely DEFLATE
 
 Encryption
 ----------
-Starting with version 0.93, Die Fledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. Both text-based passwords and raw binary keys are supported. An encoder may use only text-based passwords without any options for setting binary keys, but a decoder must allow both passwords and binary keys.
+Starting with version 0.93, DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. Both text-based passwords and raw binary keys are supported. An encoder may use only text-based passwords without any options for setting binary keys, but a decoder must allow both passwords and binary keys.
 
 ### Changes to the format
-When a Die Fledermaus archive is encrypted, the following Die Fledermaus fields behave slightly differently:
+When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
 * **Decompressed Length** contains the number of PBKDF2 cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the "Decompressed Length" field must have a value between 0 and 2147474646 inclusive. Since no uncompressed length is specified, the DEFLATE data is simply read to the end.
 * **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the binary key used and the (compressed) plaintext.
 * **Data** has the following structure:
@@ -52,7 +52,7 @@ When a Die Fledermaus archive is encrypted, the following Die Fledermaus fields 
 ### Text-based passwords
 Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. (Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document.) For the purposes of a BSON pack file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 interations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
 
-9001 is chosen because it wastes a few tenths of a second on a modern machine. This number is intended to increase as computers become more powerful; therefore, a Die Fledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
+9001 is chosen because it wastes a few tenths of a second on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
 The random **Salt** value must be included in the **Data** field even if a binary key is used rather than a text-based password. This is for two reasons: 1. in order to simplify the specification so that it only has a single format, and 2. to avoid revealing anything about the key to an attacker.
 
@@ -62,7 +62,7 @@ AES is a **block cipher**, which divides the data in to *blocks* of a certain si
 If the decrypted value has invalid padding (i.e. the last two bytes in the last block are `0x0304`), this probably means that the key or password is invalid. However, there is a 1 in 256 chance that the last byte will be `0x01`, which is technically valid padding; therefore, the decrypted value must still be compared against the transmitted HMAC.
 
 ### Formats
-The implementation of AES used by Die Fledermaus is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.aes.aspx), and operates using **cipher block chaining**. In cipher block chaining, before each block is encrypted, the plaintext version of the current block is XORed with the immediately previous encrypted block; this has the effect that each block has been mixed with the data from *all previous blocks*. The result of this is that 1. multiple identical plaintext blocks will look completely different after encrypting (even in a file which is the same 16 bytes repeated a million times), thus adding to the security; 2. *any* change in the plaintext will also result in a change to every subsequent block, and 3. to decrypt a given block, you need both the current block and the previous block.
+The implementation of AES used by DieFledermaus is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.aes.aspx), and operates using **cipher block chaining**. In cipher block chaining, before each block is encrypted, the plaintext version of the current block is XORed with the immediately previous encrypted block; this has the effect that each block has been mixed with the data from *all previous blocks*. The result of this is that 1. multiple identical plaintext blocks will look completely different after encrypting (even in a file which is the same 16 bytes repeated a million times), thus adding to the security; 2. *any* change in the plaintext will also result in a change to every subsequent block, and 3. to decrypt a given block, you need both the current block and the previous block.
 
 Because the first block doesn't have any previous blocks to XOR with, cipher block chaining also includes an [initialization vector](https://en.wikipedia.org/wiki/Initialization_vector) or IV, which is the same size as the block. Without an IV (or with identical IVs), identical encrypted files with identical keys will have identical encrypted binary values, which may lead to a security hole if anyone knows anything about the structure of the unencrypted file.
 

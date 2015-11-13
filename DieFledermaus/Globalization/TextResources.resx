@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
-    <value>The Die Fledermaus stream has already been successfully decrypted.</value>
+    <value>The DieFledermaus stream has already been successfully decrypted.</value>
   </data>
   <data name="BadChecksum" xml:space="preserve">
     <value>The computed SHA-512 checksum did not match the expected value.</value>
@@ -136,19 +136,19 @@
     <value>The current stream is in write-mode.</value>
   </data>
   <data name="FormatUnknown" xml:space="preserve">
-    <value>The Die Fledermaus stream contains an unknown format.</value>
+    <value>The DieFledermaus stream contains an unknown format.</value>
   </data>
   <data name="InvalidMagicNumber" xml:space="preserve">
-    <value>The stream is not a valid Die Fledermaus stream.</value>
+    <value>The stream is not a valid DieFledermaus stream.</value>
   </data>
   <data name="KeyLength" xml:space="preserve">
     <value>The specified key is the wrong length.</value>
   </data>
   <data name="KeyNotSet" xml:space="preserve">
-    <value>An encrypted Die Fledermaus stream requires a key or password.</value>
+    <value>An encrypted DieFledermaus stream requires a key or password.</value>
   </data>
   <data name="NotEncrypted" xml:space="preserve">
-    <value>The Die Fledermaus stream is not currently encrypted.</value>
+    <value>The DieFledermaus stream is not currently encrypted.</value>
   </data>
   <data name="PasswordInvalidUtf8" xml:space="preserve">
     <value>The specified password contained invalid UTF-8 characters.</value>
@@ -166,9 +166,9 @@
     <value>The specified stream does not support writing.</value>
   </data>
   <data name="VersionTooHigh" xml:space="preserve">
-    <value>The Die Fledermaus version number was higher than the supported maximum of the current implementation.</value>
+    <value>The DieFledermaus version number was higher than the supported maximum of the current implementation.</value>
   </data>
   <data name="VersionTooLow" xml:space="preserve">
-    <value>The Die Fledermaus version number was lower than the supported minimum.</value>
+    <value>The DieFledermaus version number was lower than the supported minimum.</value>
   </data>
 </root>

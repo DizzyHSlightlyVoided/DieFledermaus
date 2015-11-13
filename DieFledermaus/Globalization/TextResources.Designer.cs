@@ -61,7 +61,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Die Fledermaus stream has already been successfully decrypted..
+        ///   Looks up a localized string similar to The DieFledermaus stream has already been successfully decrypted..
         /// </summary>
         internal static string AlreadyDecrypted {
             get {
@@ -115,7 +115,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Die Fledermaus stream contains an unknown format..
+        ///   Looks up a localized string similar to The DieFledermaus stream contains an unknown format..
         /// </summary>
         internal static string FormatUnknown {
             get {
@@ -124,7 +124,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The stream is not a valid Die Fledermaus stream..
+        ///   Looks up a localized string similar to The stream is not a valid DieFledermaus stream..
         /// </summary>
         internal static string InvalidMagicNumber {
             get {
@@ -142,7 +142,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An encrypted Die Fledermaus stream requires a key or password..
+        ///   Looks up a localized string similar to An encrypted DieFledermaus stream requires a key or password..
         /// </summary>
         internal static string KeyNotSet {
             get {
@@ -151,7 +151,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Die Fledermaus stream is not currently encrypted..
+        ///   Looks up a localized string similar to The DieFledermaus stream is not currently encrypted..
         /// </summary>
         internal static string NotEncrypted {
             get {
@@ -205,7 +205,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Die Fledermaus version number was higher than the supported maximum of the current implementation..
+        ///   Looks up a localized string similar to The DieFledermaus version number was higher than the supported maximum of the current implementation..
         /// </summary>
         internal static string VersionTooHigh {
             get {
@@ -214,7 +214,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The Die Fledermaus version number was lower than the supported minimum..
+        ///   Looks up a localized string similar to The DieFledermaus version number was lower than the supported minimum..
         /// </summary>
         internal static string VersionTooLow {
             get {

@@ -1,5 +1,5 @@
 ﻿# Type: `public class DieFledermaus.DieFledermausStream`
-Provides methods and properties for compressing and decompressing streams using the Die Fledermaus algorithm, which is just the DEFLATE algorithm prefixed with magic number " `mAuS`" and metadata.
+Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format, which is just the DEFLATE algorithm prefixed with magic number " `mAuS`" and metadata.
 
 ### Remarks
 Unlike [`DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx), this method reads part of the stream during the constructor, rather than the first call to [`DieFledermausStream.Read(System.Byte[],System.Int32,System.Int32)`](#method-diefledermausdiefledermausstreamreadsystembytesystemint32systemint32).
@@ -215,7 +215,7 @@ Gets the encryption format of the current instance.
 --------------------------------------------------
 
 ## Property: `System.Byte[] Key { get; set; }`
-Gets and sets the key used to encrypt the Die Fledermaus stream.
+Gets and sets the key used to encrypt the DieFledermaus stream.
 
 ### Exceptions
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
@@ -398,9 +398,9 @@ Gets the encryption format.
 --------------------------------------------------
 
 ## `MausEncryptionFormat.None = 0`
-The Die Fledermaus stream is not encrypted.
+The DieFledermaus stream is not encrypted.
 
 --------------------------------------------------
 
 ## `MausEncryptionFormat.Aes = 1`
-The Die Fledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
+The DieFledermaus stream is encrypted using the Advanced Encryption Standard algorithm.

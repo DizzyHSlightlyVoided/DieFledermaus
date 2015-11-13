@@ -39,7 +39,7 @@ using DieFledermaus.Globalization;
 namespace DieFledermaus
 {
     /// <summary>
-    /// Provides methods and properties for compressing and decompressing streams using the Die Fledermaus algorithm,
+    /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format,
     /// which is just the DEFLATE algorithm prefixed with magic number "<c>mAuS</c>" and metadata.
     /// </summary>
     /// <remarks>
@@ -366,7 +366,7 @@ namespace DieFledermaus
 
         private byte[] _key;
         /// <summary>
-        /// Gets and sets the key used to encrypt the Die Fledermaus stream.
+        /// Gets and sets the key used to encrypt the DieFledermaus stream.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
@@ -906,11 +906,11 @@ namespace DieFledermaus
     public enum MausEncryptionFormat : byte
     {
         /// <summary>
-        /// The Die Fledermaus stream is not encrypted.
+        /// The DieFledermaus stream is not encrypted.
         /// </summary>
         None,
         /// <summary>
-        /// The Die Fledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
+        /// The DieFledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
         /// </summary>
         Aes,
     }
