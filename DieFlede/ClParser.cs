@@ -313,33 +313,27 @@ namespace DieFledermaus.Cli
 
     internal class ClParam
     {
-        public ClParam(char shortName, params string[] longNames)
+        public ClParam(string helpMessage, char shortName, params string[] longNames)
         {
             ShortName = shortName;
-            LongNames = longNames ?? new string[0];
+            LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim().ToLower()).Distinct().ToArray();
+            HelpMessage = helpMessage;
         }
 
-        public ClParam(params string[] longNames)
-            : this('\0', longNames)
+        public ClParam(string helpMessage, string argName, char shortName, params string[] longNames)
+            : this(helpMessage, shortName, longNames)
         {
+            TakesValue = true;
+            ArgName = argName;
         }
 
-        public ClParam(bool hasValue, char shortName, params string[] longNames)
-            : this(shortName, longNames)
-        {
-            TakesValue = SetOnce = hasValue;
-        }
-
-        public ClParam(bool hasValue, params string[] longNames)
-            : this(hasValue, '\0', longNames)
-        {
-        }
+        public readonly string HelpMessage, ArgName;
 
         public readonly char ShortName;
 
         public readonly string[] LongNames;
 
-        public readonly bool TakesValue, SetOnce;
+        public readonly bool TakesValue;
 
         private bool _isSet;
         public bool IsSet

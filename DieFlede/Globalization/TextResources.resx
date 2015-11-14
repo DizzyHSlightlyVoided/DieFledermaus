@@ -219,4 +219,71 @@
     <value>Archive file is the same as the input file! {0}</value>
     <comment>{0} = archive file</comment>
   </data>
+  <data name="HelpMArchive" xml:space="preserve">
+    <value>The archive file to extract from or create.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMCreate" xml:space="preserve">
+    <value>Set to create a new archive.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMEntry" xml:space="preserve">
+    <value>The file to compress.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMExtract" xml:space="preserve">
+    <value>Set to extract from an existing archive.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMHelp" xml:space="preserve">
+    <value>Displays this extended help.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMOut" xml:space="preserve">
+    <value>The output filename of the compressed file.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="Parameters" xml:space="preserve">
+    <value>Parameters:</value>
+  </data>
+  <data name="PNameArchive" xml:space="preserve">
+    <value>archive</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameArchiveFile" xml:space="preserve">
+    <value>archivefile</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameCreate" xml:space="preserve">
+    <value>create</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameEntry" xml:space="preserve">
+    <value>entry</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameExtract" xml:space="preserve">
+    <value>extract</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameFile" xml:space="preserve">
+    <value>file</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameHelp" xml:space="preserve">
+    <value>help</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameOut" xml:space="preserve">
+    <value>out</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameOutput" xml:space="preserve">
+    <value>output</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameInput" xml:space="preserve">
+    <value>input</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
 </root>

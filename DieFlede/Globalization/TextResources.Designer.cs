@@ -142,6 +142,60 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive file to extract from or create..
+        /// </summary>
+        internal static string HelpMArchive {
+            get {
+                return ResourceManager.GetString("HelpMArchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set to create a new archive..
+        /// </summary>
+        internal static string HelpMCreate {
+            get {
+                return ResourceManager.GetString("HelpMCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The file to compress..
+        /// </summary>
+        internal static string HelpMEntry {
+            get {
+                return ResourceManager.GetString("HelpMEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set to extract from an existing archive..
+        /// </summary>
+        internal static string HelpMExtract {
+            get {
+                return ResourceManager.GetString("HelpMExtract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Displays this extended help..
+        /// </summary>
+        internal static string HelpMHelp {
+            get {
+                return ResourceManager.GetString("HelpMHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The output filename of the compressed file..
+        /// </summary>
+        internal static string HelpMOut {
+            get {
+                return ResourceManager.GetString("HelpMOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to output filename.
         /// </summary>
         internal static string HelpOutput {
@@ -250,6 +304,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parameters:.
+        /// </summary>
+        internal static string Parameters {
+            get {
+                return ResourceManager.GetString("Parameters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid parameter format: {0}.
         /// </summary>
         internal static string ParamInvalid {
@@ -282,6 +345,96 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string ParamUnknown {
             get {
                 return ResourceManager.GetString("ParamUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to archive.
+        /// </summary>
+        internal static string PNameArchive {
+            get {
+                return ResourceManager.GetString("PNameArchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to archivefile.
+        /// </summary>
+        internal static string PNameArchiveFile {
+            get {
+                return ResourceManager.GetString("PNameArchiveFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to create.
+        /// </summary>
+        internal static string PNameCreate {
+            get {
+                return ResourceManager.GetString("PNameCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to entry.
+        /// </summary>
+        internal static string PNameEntry {
+            get {
+                return ResourceManager.GetString("PNameEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to extract.
+        /// </summary>
+        internal static string PNameExtract {
+            get {
+                return ResourceManager.GetString("PNameExtract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file.
+        /// </summary>
+        internal static string PNameFile {
+            get {
+                return ResourceManager.GetString("PNameFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to help.
+        /// </summary>
+        internal static string PNameHelp {
+            get {
+                return ResourceManager.GetString("PNameHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to input.
+        /// </summary>
+        internal static string PNameInput {
+            get {
+                return ResourceManager.GetString("PNameInput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to out.
+        /// </summary>
+        internal static string PNameOut {
+            get {
+                return ResourceManager.GetString("PNameOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to output.
+        /// </summary>
+        internal static string PNameOutput {
+            get {
+                return ResourceManager.GetString("PNameOutput", resourceCulture);
             }
         }
         

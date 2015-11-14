@@ -51,16 +51,18 @@ namespace DieFledermaus.Cli
             Console.WriteLine(TextResources.Disclaimer);
             Console.WriteLine();
 
-            ClParam help = new ClParam('h', "help");
-            ClParam extract = new ClParam('x', "extract");
-            ClParam create = new ClParam('c', "create");
-            create.MutualExclusives.Add(extract);
+            ClParam help = new ClParam(TextResources.HelpMHelp, 'h', "help", TextResources.PNameHelp);
+            ClParam create = new ClParam(TextResources.HelpMCreate, 'c', "create", TextResources.PNameCreate);
+            ClParam extract = new ClParam(TextResources.HelpMExtract, 'x', "extract", TextResources.PNameExtract);
             extract.MutualExclusives.Add(create);
+            create.MutualExclusives.Add(extract);
 
-            ClParam archiveFile = new ClParam(true, 'f', "file", "archive", "archivefile");
+            ClParam archiveFile = new ClParam(TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
+                TextResources.PNameFile, TextResources.PNameArchive);
             archiveFile.ConvertValue = Path.GetFullPath;
 
-            ClParam entryFile = new ClParam(true, 'e', "entry", "entryfile");
+            ClParam entryFile = new ClParam(TextResources.HelpMEntry, TextResources.HelpInput, 'e', "entry", "input",
+                TextResources.PNameEntry, TextResources.PNameInput);
             entryFile.ConvertValue = Path.GetFullPath;
             entryFile.MutualExclusives.Add(extract);
             entryFile.OtherMessages.Add(extract, delegate (ClParam xtr)
@@ -68,7 +70,8 @@ namespace DieFledermaus.Cli
                 return string.Format(TextResources.NoEntryExtract, entryFile.Key);
             });
 
-            ClParam outFile = new ClParam(true, 'o', "outfile", "out");
+            ClParam outFile = new ClParam(TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
+                TextResources.PNameOut, TextResources.PNameOutput);
             outFile.ConvertValue = Path.GetFullPath;
             outFile.MutualExclusives.Add(create);
             outFile.OtherMessages.Add(create, delegate (ClParam crt)
@@ -95,7 +98,7 @@ namespace DieFledermaus.Cli
 
             bool _failed;
 
-            ClParam[] clParams = { extract, create, help, entryFile, archiveFile, outFile };
+            ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -150,6 +153,7 @@ namespace DieFledermaus.Cli
 
             if (help.IsSet || args.Length == 0 || _failed)
             {
+                Console.Write('\t');
                 Console.WriteLine(TextResources.Usage);
 
                 StringBuilder commandName = new StringBuilder();
@@ -169,8 +173,38 @@ namespace DieFledermaus.Cli
 
                 if (!_failed && help.IsSet && !acting)
                 {
-                    //TODO: Extended help
+                    Console.Write('\t');
+                    Console.WriteLine(TextResources.Parameters);
 
+                    for (int i = 0; i < clParams.Length; i++)
+                    {
+                        var curParam = clParams[i];
+
+                        IEnumerable<string> paramList;
+
+                        if (curParam.TakesValue)
+                        {
+                            paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", curParam.ArgName, ">") }.
+                                Concat(new ArraySegment<string>(curParam.LongNames, 1, curParam.LongNames.Length - 1));
+                        }
+                        else paramList = curParam.LongNames;
+
+                        paramList = paramList.Select((n, index) => "--" + n);
+                        if (curParam.ShortName != '\0')
+                        {
+                            string shortName = "-" + curParam.ShortName;
+
+                            if (curParam.TakesValue)
+                                shortName += " <" + curParam.ArgName + ">";
+
+                            paramList = new string[] { shortName }.Concat(paramList);
+                        }
+
+                        Console.WriteLine(string.Join(", ", paramList));
+                        Console.Write("  ");
+                        Console.WriteLine(curParam.HelpMessage);
+                        Console.WriteLine();
+                    }
 
                     return 0;
                 }
