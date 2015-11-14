@@ -925,6 +925,8 @@ namespace DieFledermaus
                                         }
                                         else throw new NotSupportedException(TextResources.FormatUnknown);
 
+                                        _setKeySizes(keyBits);
+
                                         if (gotEnc && keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
                                             throw new InvalidDataException(TextResources.FormatBad);
                                     }
