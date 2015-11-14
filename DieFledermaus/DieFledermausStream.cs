@@ -1176,13 +1176,21 @@ namespace DieFledermaus
         /// <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            if (_baseStream == null) return;
+            if (_baseStream == null)
+            {
+                base.Dispose(disposing);
+                return;
+            }
+
             try
             {
                 if (disposing)
                 {
                     try
                     {
+                        if (_deflateStream == null || _bufferStream == null)
+                            return;
+
                         if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
                         {
                             if (_encFmt != MausEncryptionFormat.None && _key == null)
