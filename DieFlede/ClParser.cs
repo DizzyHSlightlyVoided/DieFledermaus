@@ -35,7 +35,6 @@ using DieFledermaus.Cli.Globalization;
 
 namespace DieFledermaus.Cli
 {
-
     internal class ClParser : IDisposable
     {
         private List<ClParam> _params = new List<ClParam>();
@@ -286,9 +285,17 @@ namespace DieFledermaus.Cli
                 }
             }
 
-            Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", badParams.Select(i => i.Key)));
+            Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", ConcatParams(badParams, curParam).Select(i => i.Key)));
 
             return true;
+        }
+
+        private static IEnumerable<ClParam> ConcatParams(IEnumerable<ClParam> paramList, ClParam curParam)
+        {
+            foreach (ClParam cParam in paramList)
+                yield return cParam;
+
+            yield return curParam;
         }
 
         private bool _disposed;

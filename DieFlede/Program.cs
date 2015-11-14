@@ -95,6 +95,8 @@ namespace DieFledermaus.Cli
 
             bool _failed;
 
+            ClParam[] clParams = { extract, create, help, entryFile, archiveFile, outFile };
+
             if (args.Length == 1 && args[0][0] != '-')
             {
                 _failed = false;
@@ -104,7 +106,7 @@ namespace DieFledermaus.Cli
             }
             else
             {
-                using (ClParser parser = new ClParser(0, entryFile, archiveFile, outFile, help, extract, create))
+                using (ClParser parser = new ClParser(Array.IndexOf(clParams, entryFile), clParams))
                     _failed = parser.Parse(args);
             }
             bool acting = false;
@@ -133,6 +135,11 @@ namespace DieFledermaus.Cli
                         _failed = true;
                     }
                     else acting = true;
+                }
+                else if (archiveFile.IsSet || entryFile.IsSet || outFile.IsSet)
+                {
+                    Console.Error.WriteLine(TextResources.RequireAtLeastOne, "-c, -x");
+                    _failed = true;
                 }
                 else if (!help.IsSet)
                 {
