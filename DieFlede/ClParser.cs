@@ -47,7 +47,6 @@ namespace DieFledermaus.Cli
         }
 
         private ClParam _rawParam;
-
         public ClParam RawParam
         {
             get { return _rawParam; }
@@ -56,7 +55,7 @@ namespace DieFledermaus.Cli
                 if (_disposed)
                     throw new ObjectDisposedException(null);
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 _rawParam = value;
             }
         }

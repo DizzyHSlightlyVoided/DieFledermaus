@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
@@ -175,6 +175,13 @@
   </data>
   <data name="NotEncrypted" xml:space="preserve">
     <value>The DieFledermaus stream is not currently encrypted.</value>
+  </data>
+  <data name="OutOfRangeLength" xml:space="preserve">
+    <value>The sum of the parameters "{0}" and "{1}" is greater than the length of the specified array.</value>
+    <comment>{0} = offset parameter, {1} = count parameter</comment>
+  </data>
+  <data name="OutOfRangeLessThanZero" xml:space="preserve">
+    <value>The specified value is less than 0.</value>
   </data>
   <data name="PasswordInvalidUtf8" xml:space="preserve">
     <value>The specified password contained invalid UTF-8 characters.</value>

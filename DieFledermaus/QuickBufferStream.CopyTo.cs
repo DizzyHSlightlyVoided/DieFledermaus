@@ -39,11 +39,11 @@ namespace DieFledermaus
     {
         public void CopyTo(Stream destination)
         {
-            if (destination == null) throw new ArgumentNullException("destination");
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
             if (!destination.CanWrite)
             {
                 if (destination.CanRead) throw new NotSupportedException(TextResources.StreamNotWritable);
-                throw new ObjectDisposedException("destination");
+                throw new ObjectDisposedException(nameof(destination));
             }
 
             byte[] buffer = new byte[DieFledermausStream.MaxBuffer];

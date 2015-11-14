@@ -113,10 +113,10 @@ namespace DieFledermaus
         {
             if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (!_reading) throw new NotSupportedException(TextResources.CurrentWrite);
-#if DEBUG
-            int oldCount = count, oldOffset = offset;
-#endif
-            if (_currentBuffer == null) return 0;
+            DieFledermausStream.CheckSegment(buffer, offset, count);
+
+            if (_currentBuffer == null)
+                return 0;
             int bytesRead = 0;
 
             while (count > 0 && _currentBuffer != null)
@@ -143,11 +143,10 @@ namespace DieFledermaus
         {
             if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_reading) throw new NotSupportedException(TextResources.CurrentRead);
+            DieFledermausStream.CheckSegment(buffer, offset, count);
 
             _length += count;
-#if DEBUG
-            int oldCount = count, oldOffset = offset;
-#endif
+
             while (count > 0)
             {
                 int bytesToWrite = Math.Min(count, DieFledermausStream.MaxBuffer - _currentBuffer.End);

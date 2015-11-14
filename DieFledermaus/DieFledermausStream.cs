@@ -65,16 +65,16 @@ namespace DieFledermaus
         {
             if (stream.CanRead) return;
 
-            if (stream.CanWrite) throw new ArgumentException(TextResources.StreamNotReadable, "stream");
-            throw new ObjectDisposedException("stream", TextResources.StreamClosed);
+            if (stream.CanWrite) throw new ArgumentException(TextResources.StreamNotReadable, nameof(stream));
+            throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
         private static void _checkWrite(Stream stream)
         {
             if (stream.CanWrite) return;
 
-            if (stream.CanRead) throw new ArgumentException(TextResources.StreamNotWritable, "stream");
-            throw new ObjectDisposedException("stream", TextResources.StreamClosed);
+            if (stream.CanRead) throw new ArgumentException(TextResources.StreamNotWritable, nameof(stream));
+            throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
         #region Constructors
@@ -107,7 +107,7 @@ namespace DieFledermaus
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode, bool leaveOpen)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (compressionMode == CompressionMode.Compress)
             {
                 _checkWrite(stream);
@@ -122,7 +122,7 @@ namespace DieFledermaus
                 _baseStream = stream;
                 _getHeader();
             }
-            else throw InvalidEnumException("compressionMode", (int)compressionMode, typeof(CompressionMode));
+            else throw InvalidEnumException(nameof(compressionMode), (int)compressionMode, typeof(CompressionMode));
             _mode = compressionMode;
             _leaveOpen = leaveOpen;
         }
@@ -226,7 +226,7 @@ namespace DieFledermaus
         /// </exception>
         public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
             _checkWrite(stream);
 
             _bufferStream = new QuickBufferStream();
@@ -239,7 +239,7 @@ namespace DieFledermaus
                     _deflateStream = _bufferStream;
                     break;
                 default:
-                    throw InvalidEnumException("compressionFormat", (int)compressionFormat, typeof(MausCompressionFormat));
+                    throw InvalidEnumException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
             }
 
             _cmpFmt = compressionFormat;
@@ -341,7 +341,7 @@ namespace DieFledermaus
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
             _checkWrite(stream);
             switch (compressionLevel)
             {
@@ -350,7 +350,7 @@ namespace DieFledermaus
                 case CompressionLevel.Optimal:
                     break;
                 default:
-                    throw InvalidEnumException("compressionLevel", (int)compressionLevel, typeof(CompressionLevel));
+                    throw InvalidEnumException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
             }
 
             _bufferStream = new QuickBufferStream();
@@ -449,7 +449,7 @@ namespace DieFledermaus
                     _blockByteCount = 16;
                     break;
                 default:
-                    throw new InvalidEnumArgumentException("encryptionFormat", (int)encryptionFormat, typeof(MausEncryptionFormat));
+                    throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
             }
             _encFmt = encryptionFormat;
             _key = FillBuffer(_keySizes.MaxSize >> 3);
@@ -520,7 +520,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                if (value == null) throw new ArgumentNullException("value");
+                if (value == null) throw new ArgumentNullException(nameof(value));
 
                 int bitCount = value.Length << 3;
                 for (int i = _keySizes.MinSize; i <= _keySizes.MaxSize; i += _keySizes.SkipSize)
@@ -531,7 +531,7 @@ namespace DieFledermaus
                         return;
                     }
                 }
-                throw new ArgumentException(TextResources.KeyLength, "value");
+                throw new ArgumentException(TextResources.KeyLength, nameof(value));
             }
         }
 
@@ -583,18 +583,18 @@ namespace DieFledermaus
 
         private static bool IsValidFilename(string value, bool throwOnInvalid)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             if (value.Length == 0)
             {
                 if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameLengthZero, "value");
+                    throw new ArgumentException(TextResources.FilenameLengthZero, nameof(value));
                 return false;
             }
             if (Encoding.UTF8.GetByteCount(value) > maxLen)
             {
                 if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameLengthLong, "value");
+                    throw new ArgumentException(TextResources.FilenameLengthLong, nameof(value));
             }
 
             bool seenNotWhite = false;
@@ -615,7 +615,10 @@ namespace DieFledermaus
                     }
 
                     if (throwOnInvalid)
-                        throw new ArgumentException(string.Format(TextResources.FilenameBadSurrogate, string.Format("\\u{0:x4} {1}", (int)c, c)), "value");
+                    {
+                        throw new ArgumentException(string.Format(TextResources.FilenameBadSurrogate,
+                            string.Format("\\u{0:x4} {1}", (int)c, c)), nameof(value));
+                    }
                     return false;
                 }
                 add = 1;
@@ -636,7 +639,7 @@ namespace DieFledermaus
                 if (c < ' ' || (c > '~' && c <= '\u009f'))
                 {
                     if (throwOnInvalid)
-                        throw new ArgumentException(TextResources.FilenameControl, "value");
+                        throw new ArgumentException(TextResources.FilenameControl, nameof(value));
                     return false;
                 }
             }
@@ -644,9 +647,9 @@ namespace DieFledermaus
             if (throwOnInvalid)
             {
                 if (!seenNotWhite)
-                    throw new ArgumentException(TextResources.FilenameWhitespace, "value");
+                    throw new ArgumentException(TextResources.FilenameWhitespace, nameof(value));
                 if (dotCount > 0)
-                    throw new ArgumentException(string.Format(TextResources.FilenameWhitespace, value), "value");
+                    throw new ArgumentException(string.Format(TextResources.FilenameDot, value), nameof(value));
                 return true;
             }
 
@@ -689,9 +692,9 @@ namespace DieFledermaus
         {
             _ensureCanSetKey();
             if (password == null)
-                throw new ArgumentNullException("password");
+                throw new ArgumentNullException(nameof(password));
             if (password.Length == 0)
-                throw new ArgumentException(TextResources.PasswordZeroLength, "password");
+                throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
 #if NOCRYPTOCLOSE
             Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount);
@@ -701,7 +704,19 @@ namespace DieFledermaus
             {
                 _key = pbkdf2.GetBytes(_keySizes.MaxSize >> 3);
             }
+#if NOCRYPTOCLOSE
+            Dispose(pbkdf2);
+#endif
         }
+
+#if NOCRYPTOCLOSE
+        private static void Dispose(object o)
+        {
+            IDisposable disposable = o as IDisposable;
+            if (disposable != null)
+                disposable.Dispose();
+        }
+#endif
 
         /// <summary>
         /// Flushes the contents of the internal buffer of the current stream object to the underlying stream.
@@ -1055,11 +1070,23 @@ namespace DieFledermaus
             return true;
         }
 
+        internal static void CheckSegment(byte[] buffer, int offset, int count)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0)
+                throw new ArgumentOutOfRangeException(nameof(offset), offset, TextResources.OutOfRangeLessThanZero);
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), count, TextResources.OutOfRangeLessThanZero);
+            if (offset + count > buffer.Length)
+                throw new ArgumentException(string.Format(TextResources.OutOfRangeLength, nameof(offset), nameof(count)));
+        }
+
         /// <summary>
         /// Reads from the stream into the specified array.
         /// </summary>
-        /// <param name="array">The array containing the bytes to write.</param>
-        /// <param name="offset">The index in <paramref name="array"/> at which copying begins.</param>
+        /// <param name="buffer">The array containing the bytes to write.</param>
+        /// <param name="offset">The index in <paramref name="buffer"/> at which copying begins.</param>
         /// <param name="count">The maximum number of bytes to read.</param>
         /// <returns>The number of bytes which were read.</returns>
         /// <exception cref="ObjectDisposedException">
@@ -1072,21 +1099,21 @@ namespace DieFledermaus
         /// <see cref="Key"/> is not set to the correct value.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="array"/> is <c>null</c>.
+        /// <paramref name="buffer"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="offset"/> or <paramref name="count"/> is less than 0.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="offset"/> plus <paramref name="count"/> is greater than the length of <paramref name="array"/>.
+        /// <paramref name="offset"/> plus <paramref name="count"/> is greater than the length of <paramref name="buffer"/>.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
-        public override int Read(byte[] array, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             _checkReading();
-            ArraySegment<byte> segment = new ArraySegment<byte>(array, offset, count);
+            CheckSegment(buffer, offset, count);
             if (count == 0) return 0;
             lock (_lock)
             {
@@ -1096,7 +1123,7 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.None)
                 count = (int)Math.Min(count, _uncompressedLength);
 
-            int result = _deflateStream.Read(array, offset, count);
+            int result = _deflateStream.Read(buffer, offset, count);
             if (result < count)
                 throw new EndOfStreamException();
             if (_encFmt == MausEncryptionFormat.None)
@@ -1136,8 +1163,8 @@ namespace DieFledermaus
         /// <summary>
         /// Writes the specified byte array into the stream.
         /// </summary>
-        /// <param name="array">The array containing the bytes to write.</param>
-        /// <param name="offset">The index in <paramref name="array"/> at which writing begins.</param>
+        /// <param name="buffer">The array containing the bytes to write.</param>
+        /// <param name="offset">The index in <paramref name="buffer"/> at which writing begins.</param>
         /// <param name="count">The number of bytes to write.</param>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
@@ -1146,21 +1173,21 @@ namespace DieFledermaus
         /// The current stream does not support writing.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="array"/> is <c>null</c>.
+        /// <paramref name="buffer"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="offset"/> or <paramref name="count"/> is less than 0.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="offset"/> plus <paramref name="count"/> is greater than the length of <paramref name="array"/>.
+        /// <paramref name="offset"/> plus <paramref name="count"/> is greater than the length of <paramref name="buffer"/>.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
-        public override void Write(byte[] array, int offset, int count)
+        public override void Write(byte[] buffer, int offset, int count)
         {
             _checkWritable();
-            _deflateStream.Write(array, offset, count);
+            _deflateStream.Write(buffer, offset, count);
             _headerGotten = true;
             _uncompressedLength += count;
         }

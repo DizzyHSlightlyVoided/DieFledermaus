@@ -232,6 +232,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The sum of the parameters &quot;{0}&quot; and &quot;{1}&quot; is greater than the length of the specified array..
+        /// </summary>
+        internal static string OutOfRangeLength {
+            get {
+                return ResourceManager.GetString("OutOfRangeLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value is less than 0..
+        /// </summary>
+        internal static string OutOfRangeLessThanZero {
+            get {
+                return ResourceManager.GetString("OutOfRangeLessThanZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified password contained invalid UTF-8 characters..
         /// </summary>
         internal static string PasswordInvalidUtf8 {

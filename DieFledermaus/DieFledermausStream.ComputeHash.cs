@@ -59,6 +59,9 @@ namespace DieFledermaus
             {
                 rng.GetBytes(buffer);
             }
+#if NOCRYPTOCLOSE
+            Dispose(rng);
+#endif
             return buffer;
         }
 
