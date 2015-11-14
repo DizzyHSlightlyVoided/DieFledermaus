@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DieFledermaus.Cli</RootNamespace>
     <AssemblyName>DieFled</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -44,9 +44,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DieFledermaus\DieFledermaus.Net40.csproj">
-      <Project>{e2303bba-4000-4a01-aee5-42fbe06be030}</Project>
-      <Name>DieFledermaus.Net40</Name>
+    <ProjectReference Include="..\DieFledermaus\DieFledermaus.Net45.csproj">
+      <Project>{e2303bba-4500-4a01-aee5-42fbe06be030}</Project>
+      <Name>DieFledermaus.Net45</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
