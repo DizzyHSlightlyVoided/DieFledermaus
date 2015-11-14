@@ -240,10 +240,13 @@ namespace DieFledermaus.Cli
                 {
                     //TODO: Extended help
                 }
-
-                if (_failed)
-                    return -1;
             }
+
+            if (_failed)
+                return -1;
+
+            if (_help && !extract && entryFile == null)
+                return 0;
 
             const string mausExt = ".maus";
             const int extLen = 5;
