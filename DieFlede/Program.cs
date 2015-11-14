@@ -51,176 +51,97 @@ namespace DieFledermaus.Cli
             Console.WriteLine(TextResources.Disclaimer);
             Console.WriteLine();
 
-            string entryFile = null, entryParam = null, archiveFile = null, outFile = null, outParam = null;
+            ClParam help = new ClParam('h', "help");
+            ClParam extract = new ClParam('x', "extract");
+            ClParam create = new ClParam('c', "create");
+            create.MutualExclusives.Add(extract);
+            extract.MutualExclusives.Add(create);
 
-            bool _failed = false, _help = false, extract = false;
+            ClParam archiveFile = new ClParam(true, 'f', "file", "archive", "archivefile");
+            archiveFile.ConvertValue = Path.GetFullPath;
 
-            for (int i = 0; !_failed && i < args.Length; i++)
+            ClParam entryFile = new ClParam(true, 'e', "entry", "entryfile");
+            entryFile.ConvertValue = Path.GetFullPath;
+            entryFile.MutualExclusives.Add(extract);
+            entryFile.OtherMessages.Add(extract, delegate (ClParam xtr)
             {
-                string curArg = args[i];
+                return string.Format(TextResources.NoEntryExtract, entryFile.Key);
+            });
 
-                if (curArg.StartsWith("--"))
+            ClParam outFile = new ClParam(true, 'o', "outfile", "out");
+            outFile.ConvertValue = Path.GetFullPath;
+            outFile.MutualExclusives.Add(create);
+            outFile.OtherMessages.Add(create, delegate (ClParam crt)
+            {
+                return string.Format(TextResources.NoOutputCreate, outFile.Key);
+            });
+            outFile.MutualExclusives.Add(entryFile);
+
+            extract.SetAction = delegate (ClParser p)
+            {
+                p.RawParam = outFile;
+                if (entryFile.IsSet && string.IsNullOrEmpty(entryFile.Key))
                 {
-                    switch (CheckFlag(curArg, "--help", true))
-                    {
-                        case FlagResult.Failed:
-                            _failed = true;
-                            continue;
-                        case FlagResult.Yes:
-                            _help = true;
-                            continue;
-                    }
-
-                    switch (CheckFlag(curArg, "--extract", true))
-                    {
-                        case FlagResult.Failed:
-                            _failed = true;
-                            continue;
-                        case FlagResult.Yes:
-                            _failed = ExtractSwitch(entryParam, ref entryFile, ref outFile);
-                            extract = true;
-                            continue;
-                    }
-
-                    if (CheckFileArg(curArg, ref _failed, ref archiveFile, "--archive", "--file"))
-                        continue;
-
-                    string curName;
-                    if (CheckFileArg(curArg, ref _failed, ref entryFile, out curName, "--entry"))
-                    {
-                        if (extract && !_failed)
-                        {
-                            _failed = true;
-                            Console.WriteLine(TextResources.NoEntryExtract, curName);
-                        }
-                        else if (entryParam == null) entryParam = curName;
-                        continue;
-                    }
-
-                    if (CheckFileArg(curArg, ref _failed, ref outFile, out curName, "--output", "--out"))
-                    {
-                        if (outParam == null) outParam = curName;
-                        continue;
-                    }
-
-                    int dex = curArg.IndexOf('=');
-
-                    if (dex >= 0)
-                        curArg = curArg.Substring(0, dex);
-
-                    Console.Error.WriteLine(TextResources.ParamUnknown, curArg);
-                    continue;
+                    outFile.Key = string.Empty;
+                    if (outFile.SetValue(entryFile.Value))
+                        return true;
+                    outFile.IsSet = true;
+                    entryFile.Value = null;
+                    entryFile.Key = null;
+                    entryFile.IsSet = false;
                 }
+                return false;
+            };
 
-                if (curArg.StartsWith("-"))
-                {
-                    char prevLetter = '-', curLetter;
-                    for (int j = 1; !_failed && j < curArg.Length; j++, prevLetter = curLetter)
-                    {
-                        curLetter = curArg[j];
+            bool _failed;
 
-                        if (curLetter == '=')
-                        {
-                            switch (prevLetter)
-                            {
-                                case '-':
-                                    Console.WriteLine(TextResources.ParamInvalid, curArg);
-                                    break;
-                                case 'h':
-                                case 'x':
-                                    Console.WriteLine(TextResources.ParamNoArg, "-" + prevLetter);
-                                    break;
-                                case 'o':
-                                case 'e':
-                                case 'f':
-                                    break;
-                                default:
-                                    _failed = true;
-                                    break;
-                            }
-                            break;
-                        }
-
-                        switch (curLetter)
-                        {
-                            case '-':
-                                curArg = curArg.Substring(j);
-                                continue;
-                            case 'h':
-                                _help = true;
-                                continue;
-                            case 'x':
-                                _failed = ExtractSwitch(entryParam, ref entryFile, ref outFile);
-                                extract = true;
-                                continue;
-                            case 'o':
-                                _failed = CheckSingleLetterFile(args, curArg, j, ref i, "-o", ref outFile);
-                                if (outParam == null) outParam = "-o";
-                                continue;
-                            case 'e':
-                                _failed = CheckSingleLetterFile(args, curArg, j, ref i, "-e", ref entryFile);
-                                if (extract && !_failed)
-                                {
-                                    _failed = true;
-                                    Console.WriteLine(TextResources.NoEntryExtract, "-e");
-                                }
-                                else if (entryParam == null) entryParam = "-e";
-                                continue;
-                            case 'f':
-                                _failed = CheckSingleLetterFile(args, curArg, j, ref i, "-f", ref archiveFile);
-                                continue;
-                        }
-                        Console.Error.WriteLine(TextResources.ParamUnknown, '-' + curLetter);
-                    }
-
-                    continue;
-                }
-
-                if (extract)
-                    CheckFilename(null, curArg, ref outFile);
-                else
-                    CheckFilename(null, curArg, ref entryFile);
+            if (args.Length == 1 && args[0][0] != '-')
+            {
+                _failed = false;
+                archiveFile.IsSet = true;
+                archiveFile.Value = args[0];
+                extract.IsSet = true;
             }
-
-            if (!_failed)
+            else
             {
-                if (extract)
-                {
-                    if (outFile != null)
-                    {
-                        if (archiveFile == null)
-                        {
-                            Console.Error.WriteLine(TextResources.ExtractNoArchive);
-                            _failed = true;
-                        }
-                        else if (!File.Exists(archiveFile))
-                        {
-                            Console.Error.WriteLine(TextResources.FileNotFound, archiveFile);
-                            return -1;
-                        }
-                    }
-                }
-                else if ((args.Length > 0 && !_help) || archiveFile != null || outFile != null)
-                {
-                    if (outFile != null)
-                    {
-                        Console.Error.WriteLine(TextResources.NoOutputExtract, outParam);
-                    }
+                using (ClParser parser = new ClParser(0, entryFile, archiveFile, outFile, help, extract, create))
+                    _failed = parser.Parse(args);
+            }
+            bool acting = false;
 
-                    if (entryFile == null)
+            if (!_failed && args.Length > 0)
+            {
+                if (extract.IsSet)
+                {
+                    if (!archiveFile.IsSet)
+                    {
+                        Console.Error.WriteLine(TextResources.ExtractNoArchive);
+                        _failed = true;
+                    }
+                    else if (!File.Exists(archiveFile.Value))
+                    {
+                        Console.Error.WriteLine(TextResources.FileNotFound, archiveFile.Value);
+                        _failed = true;
+                    }
+                    else acting = true;
+                }
+                else if (create.IsSet)
+                {
+                    if (!entryFile.IsSet)
                     {
                         Console.Error.WriteLine(TextResources.CreateNoEntry);
                         _failed = true;
                     }
-                    else if (!File.Exists(entryFile))
-                    {
-                        Console.Error.WriteLine(TextResources.FileNotFound, entryFile);
-                        return -1;
-                    }
+                    else acting = true;
+                }
+                else if (!help.IsSet)
+                {
+                    Console.Error.WriteLine(TextResources.RequireAtLeastOne, "-c, -x, --help");
+                    _failed = true;
                 }
             }
 
-            if (_help || args.Length == 0 || _failed)
+            if (help.IsSet || args.Length == 0 || _failed)
             {
                 Console.WriteLine(TextResources.Usage);
 
@@ -230,257 +151,137 @@ namespace DieFledermaus.Cli
                 commandName.Append(Path.GetFileName(typeof(Program).Assembly.Location));
 
                 Console.WriteLine(TextResources.HelpCompress);
-                Console.WriteLine(" > {0} -f [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpInput);
+                Console.WriteLine(" > {0} -cf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpInput);
                 Console.WriteLine();
                 Console.WriteLine(TextResources.HelpDecompress);
                 Console.WriteLine(" > {0} -xf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpOutput);
                 Console.WriteLine();
+                Console.WriteLine(TextResources.HelpHelp);
+                Console.WriteLine(" > {0} --help", commandName);
+                Console.WriteLine();
 
-                if (_help)
+                if (!_failed && help.IsSet && !acting)
                 {
                     //TODO: Extended help
+
+
+                    return 0;
                 }
             }
 
             if (_failed)
                 return -1;
 
-            if (_help && !extract && entryFile == null)
-                return 0;
-
             const string mausExt = ".maus";
             const int extLen = 5;
-#if !DEBUG
             try
-#endif
             {
-                if (extract)
+                if (extract.IsSet)
                 {
-                    using (FileStream fs = File.OpenRead(archiveFile))
+                    using (FileStream fs = File.OpenRead(archiveFile.Value))
                     using (DieFledermausStream ds = new DieFledermausStream(fs, CompressionMode.Decompress))
                     {
-                        if (outFile == null)
+                        if (outFile.Value == null)
                         {
                             if (ds.Filename != null)
                             {
-                                outFile = Path.GetFullPath(ds.Filename);
+                                outFile.Value = Path.GetFullPath(ds.Filename);
                             }
-                            else if (archiveFile.Length > extLen && mausExt.Equals(Path.GetExtension(archiveFile), StringComparison.OrdinalIgnoreCase))
+                            else if (archiveFile.Value.Length > extLen && mausExt.Equals(Path.GetExtension(archiveFile.Value), StringComparison.OrdinalIgnoreCase))
                             {
-                                outFile = archiveFile.Substring(0, archiveFile.Length - extLen);
+                                outFile.Value = archiveFile.Value.Substring(0, archiveFile.Value.Length - extLen);
                             }
                             else
                             {
-                                outFile = archiveFile + ".out";
-                                Console.WriteLine(TextResources.RenameExtract, outFile);
+                                outFile.Value = archiveFile.Value + ".out";
+                                Console.WriteLine(TextResources.RenameExtract, outFile.Value);
                             }
                         }
 
-                        if (File.Exists(outFile))
+                        if (File.Exists(outFile.Value))
                         {
-                            if (outFile.Equals(archiveFile))
-                                Console.WriteLine(TextResources.OverwriteSameFile, archiveFile);
+                            if (outFile.Value.Equals(archiveFile.Value, StringComparison.Ordinal))
+                                Console.WriteLine(TextResources.OverwriteSameArchive, archiveFile.Value);
                             else
-                                Console.WriteLine(TextResources.OverwriteAlert, outFile);
+                                Console.WriteLine(TextResources.OverwriteAlert, outFile.Value);
 
-                            bool notFound = true;
-                            do
-                            {
-                                Console.Write(TextResources.OverwritePrompt + "> ");
-
-                                var line = Console.ReadLine().Trim();
-                                const string oYes = "yes", oNo = "no";
-
-                                if (string.IsNullOrEmpty(line)) continue;
-
-                                if (oYes.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
-                                    line.StartsWith(oYes, StringComparison.OrdinalIgnoreCase) ||
-                                    TextResources.OverYes.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
-                                    line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    notFound = false;
-                                }
-                                else if (oNo.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
-                                    line.StartsWith(oNo, StringComparison.OrdinalIgnoreCase) ||
-                                    TextResources.OverNo.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
-                                    line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    return 0;
-                                }
-                            }
-                            while (notFound);
+                            if (OverwritePrompt())
+                                return 0;
                         }
 
-                        using (FileStream outStream = File.Create(outFile))
+                        using (FileStream outStream = File.Create(outFile.Value))
                             ds.CopyTo(outStream);
                         return 0;
                     }
                 }
 
-                using (FileStream fs = File.OpenRead(entryFile))
+                using (FileStream fs = File.OpenRead(entryFile.Value))
                 {
-                    if (archiveFile == null)
-                        archiveFile = entryFile + mausExt;
+                    if (archiveFile.Value == null)
+                        archiveFile.Value = entryFile.Value + mausExt;
 
-                    using (Stream arStream = File.Create(archiveFile))
+                    if (File.Exists(archiveFile.Value))
+                    {
+                        if (archiveFile.Value.Equals(entryFile.Value, StringComparison.Ordinal))
+                            Console.WriteLine(TextResources.OverwriteSameEntry, entryFile.Value);
+                        else
+                            Console.WriteLine(TextResources.OverwriteAlert, archiveFile.Value);
+
+                        if (!OverwritePrompt())
+                            return 0;
+                    }
+
+                    using (Stream arStream = File.Create(archiveFile.Value))
                     using (DieFledermausStream ds = new DieFledermausStream(arStream, CompressionMode.Compress))
                     {
-                        ds.Filename = Path.GetFileName(archiveFile);
+                        ds.Filename = Path.GetFileName(entryFile.Value);
                         fs.CopyTo(ds);
                         return 0;
                     }
                 }
             }
-#if !DEBUG
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
+#if DEBUG
+                Console.Error.WriteLine("Throw? Y/N> ");
+                if (Console.ReadKey().Key == ConsoleKey.Y)
+                    throw new Exception(e.Message, e);
+#endif
                 return e.HResult;
             }
-#endif
         }
 
-        private enum FlagResult
+        private static bool OverwritePrompt()
         {
-            Yes,
-            NoMatch,
-            Failed,
-            ValueSet = Failed
-        }
-
-        private static bool ExtractSwitch(string entryParam, ref string entryFile, ref string outFile)
-        {
-            if (entryFile == null)
-                return false;
-
-            if (string.IsNullOrEmpty(entryParam))
+            bool notFound = true;
+            do
             {
-                outFile = entryFile;
-                entryFile = null;
-                return false;
-            }
+                Console.Write(TextResources.OverwritePrompt + "> ");
 
-            Console.Error.WriteLine(TextResources.NoEntryExtract, entryParam);
-            return true;
-        }
+                string line = Console.ReadLine().Trim();
+                const string oYes = "yes", oNo = "no";
 
-        private static bool CheckFileArg(string curArg, ref bool _failed, ref string filename, out string name, params string[] names)
-        {
-            string curVal;
-            switch (CheckVal(curArg, out curVal, out name, names))
-            {
-                case FlagResult.Failed:
-                    _failed = true;
-                    return true;
-                case FlagResult.Yes:
-                    _failed = CheckFilename(name, curVal, ref filename);
-                    return true;
-            }
-            return false;
-        }
+                if (string.IsNullOrEmpty(line))
+                    continue;
 
-        private static bool CheckFileArg(string curArg, ref bool _failed, ref string filename, params string[] names)
-        {
-            string name;
-            return CheckFileArg(curArg, ref _failed, ref filename, out name, names);
-        }
-
-        private static bool CheckSingleLetterFile(string[] args, string curArg, int j, ref int i, string name, ref string filePath)
-        {
-            int iNext = i + 1, jNext = j + 1;
-
-            if (jNext == curArg.Length)
-            {
-                if (iNext == args.Length || args[iNext].StartsWith("-"))
+                if (oYes.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(oYes, StringComparison.OrdinalIgnoreCase) ||
+                    TextResources.OverYes.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.Error.WriteLine(TextResources.ParamReqArg, name);
+                    notFound = false;
+                }
+                else if (oNo.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(oNo, StringComparison.OrdinalIgnoreCase) ||
+                    TextResources.OverNo.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
+                {
                     return true;
                 }
-
-                i += iNext;
-                curArg = args[i];
-                return CheckFilename(name, curArg, ref filePath);
             }
-
-            if (curArg[jNext] != '=')
-            {
-                Console.Error.WriteLine(TextResources.ParamReqArg, name);
-                return true;
-            }
-
-            curArg = curArg.Substring(jNext + 1);
-            return CheckFilename(name, curArg, ref filePath);
-        }
-
-        private static bool CheckFilename(string curName, string curVal, ref string filename)
-        {
-            curVal = Path.GetFullPath(curVal);
-            if (filename == null)
-            {
-                filename = curVal;
-                return false;
-            }
-
-            if (!filename.Equals(curVal, StringComparison.Ordinal))
-            {
-                if (string.IsNullOrEmpty(curName))
-                    Console.Error.WriteLine(TextResources.ParamDupLit, curVal);
-                else
-                    Console.Error.WriteLine(TextResources.ParamDup, curName, curVal);
-                return true;
-            }
+            while (notFound);
             return false;
-        }
-
-        private static FlagResult CheckFlag(string curArg, string name, bool messageOnFail)
-        {
-            if (name.Equals(curArg, StringComparison.OrdinalIgnoreCase))
-                return FlagResult.Yes;
-
-            if (curArg.StartsWith(name + '=', StringComparison.OrdinalIgnoreCase))
-            {
-                if (messageOnFail)
-                    Console.Error.WriteLine(TextResources.ParamNoArg, name);
-                return FlagResult.Failed;
-            }
-
-            return FlagResult.NoMatch;
-        }
-
-        private static FlagResult CheckVal(string curArg, out string value, out string name, params string[] names)
-        {
-            foreach (string curName in names)
-            {
-                var result = CheckVal(curArg, curName, out value);
-                if (result != FlagResult.NoMatch)
-                {
-                    name = curName;
-                    return result;
-                }
-            }
-            value = name = null;
-            return FlagResult.NoMatch;
-        }
-
-        private static FlagResult CheckVal(string curArg, string name, out string value)
-        {
-            FlagResult result = CheckFlag(curArg, name, false);
-
-            if (result == FlagResult.ValueSet)
-            {
-                value = curArg.Substring(name.Length + 1);
-                return FlagResult.Yes;
-            }
-
-            if (result == FlagResult.NoMatch)
-            {
-                value = null;
-                return FlagResult.NoMatch;
-            }
-
-            Console.Error.WriteLine(TextResources.ParamNoArg, name);
-            value = null;
-            return FlagResult.Failed;
         }
     }
 }

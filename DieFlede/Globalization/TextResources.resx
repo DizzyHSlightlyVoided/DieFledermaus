@@ -149,14 +149,11 @@
     <value>output filename</value>
   </data>
   <data name="NoEntryExtract" xml:space="preserve">
-    <value>Parameter "{0}" doesn't make sense in extract mode.</value>
+    <value>Parameter "{0}" doesn't make sense in extract-mode.</value>
     <comment>{0} = param name</comment>
   </data>
-  <data name="NoInput" xml:space="preserve">
-    <value>Input filename is required.</value>
-  </data>
-  <data name="NoOutputExtract" xml:space="preserve">
-    <value>Parameter "{0}" doesn't make sense unless DieFlede is in extract mode.</value>
+  <data name="NoOutputCreate" xml:space="preserve">
+    <value>Parameter "{0}" doesn't make sense in create-mode.</value>
     <comment>{0} = param name</comment>
   </data>
   <data name="OverNo" xml:space="preserve">
@@ -169,7 +166,7 @@
   <data name="OverwritePrompt" xml:space="preserve">
     <value>Overwrite? (Y)es/(N)o</value>
   </data>
-  <data name="OverwriteSameFile" xml:space="preserve">
+  <data name="OverwriteSameArchive" xml:space="preserve">
     <value>Output file is the same as the archive file! {0}</value>
     <comment>{0} = output filename</comment>
   </data>
@@ -209,5 +206,17 @@
   </data>
   <data name="Usage" xml:space="preserve">
     <value>Usage:</value>
+  </data>
+  <data name="MutuallyExclusive" xml:space="preserve">
+    <value>The following parameters are mutually exclusive: {0}</value>
+    <comment>{0} = params</comment>
+  </data>
+  <data name="RequireAtLeastOne" xml:space="preserve">
+    <value>At least one of the following arguments are required: {0}</value>
+    <comment>{0} = list of param names</comment>
+  </data>
+  <data name="OverwriteSameEntry" xml:space="preserve">
+    <value>Archive file is the same as the input file! {0}</value>
+    <comment>{0} = archive file</comment>
   </data>
 </root>

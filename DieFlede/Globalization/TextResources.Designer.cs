@@ -151,7 +151,16 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Parameter &quot;{0}&quot; doesn&apos;t make sense in extract mode..
+        ///   Looks up a localized string similar to The following parameters are mutually exclusive: {0}.
+        /// </summary>
+        internal static string MutuallyExclusive {
+            get {
+                return ResourceManager.GetString("MutuallyExclusive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter &quot;{0}&quot; doesn&apos;t make sense in extract-mode..
         /// </summary>
         internal static string NoEntryExtract {
             get {
@@ -160,20 +169,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Input filename is required..
+        ///   Looks up a localized string similar to Parameter &quot;{0}&quot; doesn&apos;t make sense in create-mode..
         /// </summary>
-        internal static string NoInput {
+        internal static string NoOutputCreate {
             get {
-                return ResourceManager.GetString("NoInput", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parameter &quot;{0}&quot; doesn&apos;t make sense unless DieFlede is in extract mode..
-        /// </summary>
-        internal static string NoOutputExtract {
-            get {
-                return ResourceManager.GetString("NoOutputExtract", resourceCulture);
+                return ResourceManager.GetString("NoOutputCreate", resourceCulture);
             }
         }
         
@@ -207,9 +207,18 @@ namespace DieFledermaus.Cli.Globalization {
         /// <summary>
         ///   Looks up a localized string similar to Output file is the same as the archive file! {0}.
         /// </summary>
-        internal static string OverwriteSameFile {
+        internal static string OverwriteSameArchive {
             get {
-                return ResourceManager.GetString("OverwriteSameFile", resourceCulture);
+                return ResourceManager.GetString("OverwriteSameArchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Archive file is the same as the input file! {0}.
+        /// </summary>
+        internal static string OverwriteSameEntry {
+            get {
+                return ResourceManager.GetString("OverwriteSameEntry", resourceCulture);
             }
         }
         
@@ -282,6 +291,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string RenameExtract {
             get {
                 return ResourceManager.GetString("RenameExtract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to At least one of the following arguments are required: {0}.
+        /// </summary>
+        internal static string RequireAtLeastOne {
+            get {
+                return ResourceManager.GetString("RequireAtLeastOne", resourceCulture);
             }
         }
         
