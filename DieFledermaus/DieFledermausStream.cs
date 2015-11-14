@@ -939,11 +939,12 @@ namespace DieFledermaus
                             i++;
                             string filename = GetString(reader);
 
-                            if (_filename != null && _filename.Equals(filename, StringComparison.OrdinalIgnoreCase))
+                            if (_filename != null && !_filename.Equals(filename, StringComparison.OrdinalIgnoreCase))
                                 throw new InvalidDataException(TextResources.FormatBad);
 
                             if (!IsValidFilename(filename, false))
                                 throw new InvalidDataException(TextResources.FormatFilename);
+                            continue;
                         }
                         throw new NotSupportedException(TextResources.FormatUnknown);
                     }
