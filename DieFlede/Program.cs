@@ -280,7 +280,7 @@ namespace DieFledermaus.Cli
                             else
                                 Console.WriteLine(TextResources.OverwriteAlert, outFile);
 
-                            bool notFound = true, overwriting = false;
+                            bool notFound = true;
                             do
                             {
                                 Console.Write(TextResources.OverwritePrompt + "> ");
