@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Diagnostics;
+using System.Security;
 
 namespace DieFledermaus.Tests
 {
@@ -91,8 +92,14 @@ namespace DieFledermaus.Tests
         private static void SetPasswd(DieFledermausStream ds)
         {
             const string passwd = "Correct Horse!Battery#Staple69105";
+
             Stopwatch sw = Stopwatch.StartNew();
-            ds.SetPassword(passwd);
+            using (SecureString passwdSS = new SecureString())
+            {
+                foreach (char c in passwd)
+                    passwdSS.AppendChar(c);
+                ds.SetPassword(passwdSS);
+            }
             sw.Stop();
             ds.EncryptFilename = true;
             Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);

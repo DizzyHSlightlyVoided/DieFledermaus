@@ -415,6 +415,25 @@ The current stream is in read-mode and the stream has already been successfully 
 
 --------------------------------------------------
 
+## Method: `public void SetPassword(System.Security.SecureString password)`
+Sets [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to a value derived from the specified password.
+* `password`: The password to set.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current stream is closed.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+The current stream is in read-mode and the stream has already been successfully decrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`password` is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`password` has a length of 0.
+
+--------------------------------------------------
+
 ## Method: `public override void Flush()`
 Flushes the contents of the internal buffer of the current stream object to the underlying stream.
 

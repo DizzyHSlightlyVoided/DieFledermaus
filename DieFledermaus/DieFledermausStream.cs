@@ -34,6 +34,8 @@ using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -746,13 +748,67 @@ namespace DieFledermaus
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-#if NOCRYPTOCLOSE
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount);
-#else
-            using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, _salt, _pkCount + minPkCount))
-#endif
+            SetPassword(Encoding.UTF8.GetBytes(password));
+        }
+
+        private void SetPassword(byte[] data)
+        {
+            try
             {
-                _key = pbkdf2.GetBytes(_keySizes.MaxSize >> 3);
+#if NOCRYPTOCLOSE
+                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount);
+#else
+                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount))
+#endif
+                {
+                    _key = pbkdf2.GetBytes(_salt.Length);
+                }
+            }
+            finally
+            {
+                Array.Clear(data, 0, data.Length);
+            }
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(SecureString password)
+        {
+            _ensureCanSetKey();
+            if (password == null)
+                throw new ArgumentNullException(nameof(password));
+            if (password.Length == 0)
+                throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
+
+            char[] data = new char[password.Length];
+            IntPtr pData = IntPtr.Zero;
+            byte[] bytes = null;
+            try
+            {
+                pData = Marshal.SecureStringToGlobalAllocUnicode(password);
+                Marshal.Copy(pData, data, 0, data.Length);
+                bytes = Encoding.UTF8.GetBytes(data);
+                SetPassword(bytes);
+            }
+            finally
+            {
+                if (pData != IntPtr.Zero)
+                    Marshal.FreeHGlobal(pData);
+                Array.Clear(data, 0, data.Length);
             }
         }
 
