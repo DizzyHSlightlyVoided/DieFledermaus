@@ -201,7 +201,8 @@ namespace DieFledermaus.Cli
                             continue;
                         }
 
-                        curParam.Key = "-" + curChar;
+                        string curKey = "-" + curChar;
+                        curParam.Key = curKey;
 
                         string curVal = null;
                         if (j == curEnd)
@@ -222,7 +223,7 @@ namespace DieFledermaus.Cli
                         {
                             if (curParam.TakesValue)
                             {
-                                Console.Error.WriteLine(TextResources.ParamReqArg, curParam.Key);
+                                Console.Error.WriteLine(TextResources.ParamReqArg, curKey);
                                 return true;
                             }
                         }
@@ -315,7 +316,7 @@ namespace DieFledermaus.Cli
         public ClParam(string helpMessage, char shortName, params string[] longNames)
         {
             ShortName = shortName;
-            LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim().ToLower()).Distinct().ToArray();
+            LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             HelpMessage = helpMessage;
         }
 

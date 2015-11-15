@@ -61,6 +61,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Press any key to continue..
+        /// </summary>
+        internal static string AnyKey {
+            get {
+                return ResourceManager.GetString("AnyKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No entry file set..
         /// </summary>
         internal static string CreateNoEntry {
@@ -187,11 +196,47 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Run in interactive mode, ask for user input..
+        /// </summary>
+        internal static string HelpMInteractive {
+            get {
+                return ResourceManager.GetString("HelpMInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The output filename of the compressed file..
         /// </summary>
         internal static string HelpMOut {
             get {
                 return ResourceManager.GetString("HelpMOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Overwite all existing files..
+        /// </summary>
+        internal static string HelpMOverwrite {
+            get {
+                return ResourceManager.GetString("HelpMOverwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Skip existing files..
+        /// </summary>
+        internal static string HelpMSkip {
+            get {
+                return ResourceManager.GetString("HelpMSkip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Display more information..
+        /// </summary>
+        internal static string HelpMVerbose {
+            get {
+                return ResourceManager.GetString("HelpMVerbose", resourceCulture);
             }
         }
         
@@ -241,6 +286,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Overwriting ....
+        /// </summary>
+        internal static string Overwrite {
+            get {
+                return ResourceManager.GetString("Overwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to File already exists: {0}.
         /// </summary>
         internal static string OverwriteAlert {
@@ -273,6 +327,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string OverwriteSameEntry {
             get {
                 return ResourceManager.GetString("OverwriteSameEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Skipping..
+        /// </summary>
+        internal static string OverwriteSkip {
+            get {
+                return ResourceManager.GetString("OverwriteSkip", resourceCulture);
             }
         }
         
@@ -358,15 +421,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to archivefile.
-        /// </summary>
-        internal static string PNameArchiveFile {
-            get {
-                return ResourceManager.GetString("PNameArchiveFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to create.
         /// </summary>
         internal static string PNameCreate {
@@ -421,6 +475,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to interactive.
+        /// </summary>
+        internal static string PNameInteractive {
+            get {
+                return ResourceManager.GetString("PNameInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to out.
         /// </summary>
         internal static string PNameOut {
@@ -435,6 +498,42 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameOutput {
             get {
                 return ResourceManager.GetString("PNameOutput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to overWrite.
+        /// </summary>
+        internal static string PNameOverwrite {
+            get {
+                return ResourceManager.GetString("PNameOverwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to skip.
+        /// </summary>
+        internal static string PNameSkip {
+            get {
+                return ResourceManager.GetString("PNameSkip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to skip-existing.
+        /// </summary>
+        internal static string PNameSkipExisting {
+            get {
+                return ResourceManager.GetString("PNameSkipExisting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to verbose.
+        /// </summary>
+        internal static string PNameVerbose {
+            get {
+                return ResourceManager.GetString("PNameVerbose", resourceCulture);
             }
         }
         

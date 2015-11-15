@@ -57,6 +57,15 @@ namespace DieFledermaus.Cli
             extract.MutualExclusives.Add(create);
             create.MutualExclusives.Add(extract);
 
+            ClParam interactive = new ClParam(TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
+
+            ClParam overwrite = new ClParam(TextResources.HelpMOverwrite, 'w', "overWrite", TextResources.PNameOverwrite);
+            ClParam skipexist = new ClParam(TextResources.HelpMSkip, 's', "skip", "skip-existing",
+                TextResources.PNameSkip, TextResources.PNameSkipExisting);
+            skipexist.MutualExclusives.Add(overwrite);
+
+            ClParam verbose = new ClParam(TextResources.HelpMVerbose, 'v', "verbose", TextResources.PNameVerbose);
+
             ClParam archiveFile = new ClParam(TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
                 TextResources.PNameFile, TextResources.PNameArchive);
             archiveFile.ConvertValue = Path.GetFullPath;
@@ -98,7 +107,7 @@ namespace DieFledermaus.Cli
 
             bool _failed;
 
-            ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile };
+            ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -206,12 +215,12 @@ namespace DieFledermaus.Cli
                         Console.WriteLine();
                     }
 
-                    return 0;
+                    return Return(0, interactive);
                 }
             }
 
             if (_failed)
-                return -1;
+                return Return(-1, interactive);
 
             const string mausExt = ".maus";
             const int extLen = 5;
@@ -241,18 +250,21 @@ namespace DieFledermaus.Cli
 
                         if (File.Exists(outFile.Value))
                         {
-                            if (outFile.Value.Equals(archiveFile.Value, StringComparison.Ordinal))
-                                Console.WriteLine(TextResources.OverwriteSameArchive, archiveFile.Value);
-                            else
-                                Console.WriteLine(TextResources.OverwriteAlert, outFile.Value);
+                            if (verbose.IsSet || skipexist.IsSet || interactive.IsSet)
+                            {
+                                if (outFile.Value.Equals(archiveFile.Value, StringComparison.Ordinal))
+                                    Console.WriteLine(TextResources.OverwriteSameArchive, archiveFile.Value);
+                                else
+                                    Console.WriteLine(TextResources.OverwriteAlert, outFile.Value);
+                            }
 
-                            if (OverwritePrompt())
-                                return 0;
+                            if (OverwritePrompt(interactive, overwrite, skipexist))
+                                return Return(-3, interactive);
                         }
 
                         using (FileStream outStream = File.Create(outFile.Value))
                             ds.CopyTo(outStream);
-                        return 0;
+                        return Return(0, interactive);
                     }
                 }
 
@@ -263,13 +275,16 @@ namespace DieFledermaus.Cli
 
                     if (File.Exists(archiveFile.Value))
                     {
-                        if (archiveFile.Value.Equals(entryFile.Value, StringComparison.Ordinal))
-                            Console.WriteLine(TextResources.OverwriteSameEntry, entryFile.Value);
-                        else
-                            Console.WriteLine(TextResources.OverwriteAlert, archiveFile.Value);
+                        if (verbose.IsSet || skipexist.IsSet || interactive.IsSet)
+                        {
+                            if (archiveFile.Value.Equals(entryFile.Value, StringComparison.Ordinal))
+                                Console.WriteLine(TextResources.OverwriteSameEntry, entryFile.Value);
+                            else
+                                Console.WriteLine(TextResources.OverwriteAlert, archiveFile.Value);
+                        }
 
-                        if (!OverwritePrompt())
-                            return 0;
+                        if (OverwritePrompt(interactive, overwrite, skipexist))
+                            return Return(-3, interactive);
                     }
 
                     using (Stream arStream = File.Create(archiveFile.Value))
@@ -277,7 +292,7 @@ namespace DieFledermaus.Cli
                     {
                         ds.Filename = Path.GetFileName(entryFile.Value);
                         fs.CopyTo(ds);
-                        return 0;
+                        return Return(0, interactive);
                     }
                 }
             }
@@ -289,8 +304,30 @@ namespace DieFledermaus.Cli
                 if (Console.ReadKey().Key == ConsoleKey.Y)
                     throw new Exception(e.Message, e);
 #endif
-                return e.HResult;
+                return Return(e.HResult, interactive);
             }
+        }
+
+        private static bool OverwritePrompt(ClParam interactive, ClParam overwrite, ClParam skipexist)
+        {
+            if (skipexist.IsSet || (!overwrite.IsSet && interactive.IsSet && OverwritePrompt()))
+            {
+                Console.WriteLine(TextResources.OverwriteSkip);
+                return true;
+            }
+
+            Console.WriteLine(TextResources.Overwrite);
+            return false;
+        }
+
+        private static int Return(int value, ClParam interactive)
+        {
+            if (interactive.IsSet)
+            {
+                Console.WriteLine(TextResources.AnyKey);
+                Console.ReadKey();
+            }
+            return value;
         }
 
         private static bool OverwritePrompt()

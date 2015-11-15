@@ -250,10 +250,6 @@
     <value>archive</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
-  <data name="PNameArchiveFile" xml:space="preserve">
-    <value>archivefile</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
   <data name="PNameCreate" xml:space="preserve">
     <value>create</value>
     <comment>Localized parameter name, keep this unique</comment>
@@ -285,5 +281,50 @@
   <data name="PNameInput" xml:space="preserve">
     <value>input</value>
     <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="HelpMInteractive" xml:space="preserve">
+    <value>Run in interactive mode, ask for user input.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMOverwrite" xml:space="preserve">
+    <value>Overwite all existing files.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMSkip" xml:space="preserve">
+    <value>Skip existing files.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMVerbose" xml:space="preserve">
+    <value>Display more information.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameInteractive" xml:space="preserve">
+    <value>interactive</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameOverwrite" xml:space="preserve">
+    <value>overWrite</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameSkip" xml:space="preserve">
+    <value>skip</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameSkipExisting" xml:space="preserve">
+    <value>skip-existing</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameVerbose" xml:space="preserve">
+    <value>verbose</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="AnyKey" xml:space="preserve">
+    <value>Press any key to continue.</value>
+  </data>
+  <data name="Overwrite" xml:space="preserve">
+    <value>Overwriting ...</value>
+  </data>
+  <data name="OverwriteSkip" xml:space="preserve">
+    <value>Skipping.</value>
   </data>
 </root>
