@@ -443,7 +443,7 @@ namespace DieFledermaus
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
-            _keySizes = GetKeySizes(encryptionFormat, out _blockByteCount);
+            _keySizes = _getKeySizes(encryptionFormat, out _blockByteCount);
             _encFmt = encryptionFormat;
             if (_encFmt == MausEncryptionFormat.None) return;
             _key = FillBuffer(_keySizes.MaxSize >> 3);
@@ -451,7 +451,35 @@ namespace DieFledermaus
             _salt = FillBuffer(_key.Length);
         }
 
-        private static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
+        /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for the specified encryption scheme.
+        /// </summary>
+        /// <param name="encryptionFormat">The encryption format to check.</param>
+        /// <param name="blockBitCount">When this method returns, contains the number of bits in a single block of encrypted data,
+        /// or <c>none</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>. This parameter is
+        /// passed uninitialized.</param>
+        /// <returns>A <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for <paramref name="encryptionFormat"/>,
+        /// or <c>null</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/></returns>
+        public static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat, out int blockBitCount)
+        {
+            KeySizes sizes = _getKeySizes(encryptionFormat, out blockBitCount);
+            blockBitCount <<= 3;
+            return sizes;
+        }
+
+        /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for the specified encryption scheme.
+        /// </summary>
+        /// <param name="encryptionFormat">The encryption format to check.</param>
+        /// <returns>A <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for <paramref name="encryptionFormat"/>,
+        /// or <c>null</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/></returns>
+        public static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat)
+        {
+            int blockByteCount;
+            return _getKeySizes(encryptionFormat, out blockByteCount);
+        }
+
+        private static KeySizes _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
         {
             switch (encryptionFormat)
             {
@@ -585,9 +613,9 @@ namespace DieFledermaus
         public static bool IsValidKeyByteSize(int byteCount, MausEncryptionFormat encryptionFormat)
         {
             int blockByteCount;
-            var keySizes = GetKeySizes(encryptionFormat, out blockByteCount);
+            var keySizes = _getKeySizes(encryptionFormat, out blockByteCount);
             if (keySizes == null || byteCount > int.MaxValue >> 3) return false;
-            return IsValidKeyBitSize(byteCount >> 3, keySizes);
+            return IsValidKeyBitSize(byteCount << 3, keySizes);
         }
 
         /// <summary>
@@ -603,7 +631,7 @@ namespace DieFledermaus
         public static bool IsValidKeyBitSize(int bitCount, MausEncryptionFormat encryptionFormat)
         {
             int blockByteCount;
-            var keySizes = GetKeySizes(encryptionFormat, out blockByteCount);
+            var keySizes = _getKeySizes(encryptionFormat, out blockByteCount);
             return keySizes != null && IsValidKeyBitSize(bitCount, keySizes);
         }
 

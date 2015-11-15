@@ -30,10 +30,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Security;
+using System.Security.Cryptography;
+using System.Text;
 using DieFledermaus.Cli.Globalization;
 
 namespace DieFledermaus.Cli
@@ -74,20 +77,16 @@ namespace DieFledermaus.Cli
                 TextResources.PNameEntry, TextResources.PNameInput);
             entryFile.ConvertValue = Path.GetFullPath;
             entryFile.MutualExclusives.Add(extract);
-            entryFile.OtherMessages.Add(extract, delegate (ClParam xtr)
-            {
-                return string.Format(TextResources.NoEntryExtract, entryFile.Key);
-            });
+            extract.OtherMessages.Add(entryFile, NoEntryExtract);
 
             ClParam outFile = new ClParam(TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
                 TextResources.PNameOut, TextResources.PNameOutput);
             outFile.ConvertValue = Path.GetFullPath;
             outFile.MutualExclusives.Add(create);
-            outFile.OtherMessages.Add(create, delegate (ClParam crt)
-            {
-                return string.Format(TextResources.NoOutputCreate, outFile.Key);
-            });
+            create.OtherMessages.Add(outFile, NoOutputCreate);
+
             outFile.MutualExclusives.Add(entryFile);
+            entryFile.MutualExclusives.Add(outFile);
 
             extract.SetAction = delegate (ClParser p)
             {
@@ -105,9 +104,27 @@ namespace DieFledermaus.Cli
                 return false;
             };
 
+            ClParam encAes = new ClParam(TextResources.HelpMAes, '\0', "AES");
+            encAes.MutualExclusives.Add(extract);
+            extract.OtherMessages.Add(encAes, NoEntryExtract);
+
+            ClParam encKey = new ClParam(TextResources.HelpMKey, TextResources.PNameKey, '\0', "key", TextResources.PNameKey);
+            ClParam encKey64 = new ClParam(TextResources.HelpMKeyBase64, TextResources.PNameKey, '\0', "keybase64", "base64key",
+                TextResources.PNameKeyBase64, TextResources.PNameBase64Key);
+            encKey64.MutualExclusives.Add(encKey);
+            ClParam encKeyFile = new ClParam(TextResources.HelpMKeyFile, TextResources.HelpInput, '\0', "keyfile", TextResources.PNameKeyFile);
+            encKeyFile.MutualExclusives.Add(encKey64);
+            ClParam encPassword = new ClParam(TextResources.HelpMPassword, TextResources.PNamePassword, '\0', "password", TextResources.PNamePassword);
+            encPassword.MutualExclusives.Add(encKeyFile);
+
+            ClParam encSaveKey = new ClParam(TextResources.HelpMSaveKey, TextResources.HelpOutput, '\0', "savekey", TextResources.PNameSaveKey);
+            encSaveKey.MutualExclusives.Add(extract);
+            extract.OtherMessages.Add(encSaveKey, NoEntryExtract);
+
             bool _failed;
 
-            ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite };
+            ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite,
+                encAes, encKey, encKey64, encKeyFile, encSaveKey };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -122,6 +139,8 @@ namespace DieFledermaus.Cli
                     _failed = parser.Parse(args);
             }
             bool acting = false;
+
+            bool hasEncryptionOptions = (encKey.IsSet || encKey64.IsSet || encKeyFile.IsSet || encPassword.IsSet || encSaveKey.IsSet);
 
             if (!_failed && args.Length > 0)
             {
@@ -146,6 +165,17 @@ namespace DieFledermaus.Cli
                         Console.Error.WriteLine(TextResources.CreateNoEntry);
                         _failed = true;
                     }
+                    else if (!encAes.IsSet && hasEncryptionOptions)
+                    {
+                        Console.Error.WriteLine(TextResources.EncryptionNoEncryption);
+                        _failed = true;
+                    }
+                    else if (encAes.IsSet && !interactive.IsSet && !hasEncryptionOptions)
+                    {
+                        Console.Error.WriteLine(TextResources.EncryptionNoOpts);
+                        Console.Error.WriteLine(TextResources.EncryptionNoOpts2);
+                        _failed = true;
+                    }
                     else acting = true;
                 }
                 else if (archiveFile.IsSet || entryFile.IsSet || outFile.IsSet)
@@ -160,6 +190,49 @@ namespace DieFledermaus.Cli
                 }
             }
 
+            byte[] key = null;
+
+            if (encKey.IsSet)
+            {
+                if (!TryGetKeyHex(encKey.Value, out key))
+                    _failed = true;
+            }
+            else if (encKey64.IsSet)
+            {
+                try
+                {
+                    key = Convert.FromBase64String(encKey64.Value);
+                }
+                catch
+                {
+                    Console.Error.WriteLine(TextResources.EncryptInvalidBase64);
+                    _failed = true;
+                }
+            }
+            else if (encKeyFile.IsSet)
+            {
+                try
+                {
+                    key = File.ReadAllBytes(encKeyFile.Value);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine(e.Message);
+#if DEBUG
+                    GoThrow(e);
+#endif
+                    return e.HResult;
+                }
+            }
+
+            if (key != null && !DieFledermausStream.IsValidKeyByteSize(key.Length, MausEncryptionFormat.Aes))
+            {
+                Console.Error.WriteLine(encKeyFile.IsSet ? TextResources.EncryptInvalidFileLength : TextResources.EncryptInvalidKeyLength);
+                Console.Error.WriteLine(TextResources.EncryptKeyLengthAes);
+                _failed = true;
+            }
+
+            #region Help
             if (help.IsSet || args.Length == 0 || _failed)
             {
                 Console.Write('\t');
@@ -218,6 +291,9 @@ namespace DieFledermaus.Cli
                     return Return(0, interactive);
                 }
             }
+            #endregion
+
+            SecureString ssPassword = null;
 
             if (_failed)
                 return Return(-1, interactive);
@@ -226,11 +302,56 @@ namespace DieFledermaus.Cli
             const int extLen = 5;
             try
             {
+                #region Extract
                 if (extract.IsSet)
                 {
                     using (FileStream fs = File.OpenRead(archiveFile.Value))
                     using (DieFledermausStream ds = new DieFledermausStream(fs, CompressionMode.Decompress))
                     {
+                        if (ds.EncryptionFormat != MausEncryptionFormat.None)
+                        {
+                            if (!hasEncryptionOptions)
+                            {
+                                if (interactive.IsSet)
+                                {
+                                    Console.WriteLine(TextResources.EncryptionNoOptsExtract);
+                                    if (EncryptionPrompt(ds, out ssPassword))
+                                        return Return(-4, interactive);
+                                    if (ssPassword != null)
+                                        ds.SetPassword(ssPassword);
+                                }
+                                else
+                                {
+                                    Console.Error.WriteLine(TextResources.EncryptionNoOptsExtract);
+                                    return -4;
+                                }
+                            }
+                            if (encPassword.IsSet)
+                                ds.SetPassword(encPassword.Value);
+                            else if (key != null)
+                            {
+                                if (!ds.IsValidKeyByteSize(key.Length))
+                                {
+                                    Console.Error.WriteLine(encKeyFile.IsSet ? TextResources.EncryptInvalidFileLength :
+                                        TextResources.EncryptInvalidKeyLength);
+                                }
+
+                                ds.Key = key;
+                            }
+
+                            try
+                            {
+                                ds.LoadData();
+                            }
+                            catch (CryptographicException)
+                            {
+                                Console.Error.WriteLine(TextResources.EncryptedBadKey);
+                                return Return(-4, interactive);
+                            }
+                        }
+                        else if (hasEncryptionOptions && verbose.IsSet)
+                            Console.WriteLine(TextResources.EncryptionNot);
+
                         if (outFile.Value == null)
                         {
                             if (ds.Filename != null)
@@ -252,13 +373,21 @@ namespace DieFledermaus.Cli
                         {
                             if (verbose.IsSet || skipexist.IsSet || interactive.IsSet)
                             {
+                                string message;
                                 if (outFile.Value.Equals(archiveFile.Value, StringComparison.Ordinal))
-                                    Console.WriteLine(TextResources.OverwriteSameArchive, archiveFile.Value);
+                                {
+                                    Console.Error.WriteLine(TextResources.OverwriteSameArchive, archiveFile.Value);
+                                    return Return(-3, interactive);
+                                }
+                                else message = string.Format(TextResources.OverwriteAlert, outFile.Value);
+
+                                if (!skipexist.IsSet)
+                                    Console.WriteLine(message);
                                 else
-                                    Console.WriteLine(TextResources.OverwriteAlert, outFile.Value);
+                                    Console.Error.WriteLine(message);
                             }
 
-                            if (OverwritePrompt(interactive, overwrite, skipexist))
+                            if (OverwritePrompt(interactive, overwrite, skipexist, ref outFile.Value))
                                 return Return(-3, interactive);
                         }
 
@@ -267,56 +396,315 @@ namespace DieFledermaus.Cli
                         return Return(0, interactive);
                     }
                 }
+                #endregion
 
+                #region Create
                 using (FileStream fs = File.OpenRead(entryFile.Value))
                 {
+                    MausEncryptionFormat encFormat = MausEncryptionFormat.Aes;
+                    MausCompressionFormat compFormat = MausCompressionFormat.Deflate;
+
+                    if (encAes.IsSet)
+                        encFormat = MausEncryptionFormat.Aes;
+
                     if (archiveFile.Value == null)
                         archiveFile.Value = entryFile.Value + mausExt;
+
+                    if (archiveFile.Value.Equals(entryFile.Value, StringComparison.Ordinal))
+                    {
+                        Console.WriteLine(TextResources.OverwriteSameEntry, entryFile.Value);
+                        return Return(-3, interactive);
+                    }
 
                     if (File.Exists(archiveFile.Value))
                     {
                         if (verbose.IsSet || skipexist.IsSet || interactive.IsSet)
                         {
-                            if (archiveFile.Value.Equals(entryFile.Value, StringComparison.Ordinal))
-                                Console.WriteLine(TextResources.OverwriteSameEntry, entryFile.Value);
-                            else
+                            if (!skipexist.IsSet || interactive.IsSet)
                                 Console.WriteLine(TextResources.OverwriteAlert, archiveFile.Value);
+                            else
+                                Console.Error.WriteLine(TextResources.OverwriteAlert, archiveFile.Value);
                         }
 
-                        if (OverwritePrompt(interactive, overwrite, skipexist))
+                        if (OverwritePrompt(interactive, overwrite, skipexist, ref archiveFile.Value))
                             return Return(-3, interactive);
                     }
 
-                    using (Stream arStream = File.Create(archiveFile.Value))
-                    using (DieFledermausStream ds = new DieFledermausStream(arStream, CompressionMode.Compress))
+                    if (encAes.IsSet && key == null && !encPassword.IsSet && ssPassword == null)
                     {
+                        key = new byte[DieFledermausStream.GetKeySizes(MausEncryptionFormat.Aes).MaxSize >> 3];
+                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                            rng.GetBytes(key);
+                    }
+
+                    if (encSaveKey.IsSet)
+                    {
+                        if (encSaveKey.Value.Equals(archiveFile.Value))
+                        {
+                            Console.Error.WriteLine(TextResources.OverwriteEncryptSameArchive, encSaveKey.Value);
+                            return Return(-3, interactive);
+                        }
+
+                        if (encSaveKey.Value.Equals(entryFile.Value))
+                        {
+                            Console.Error.WriteLine(TextResources.OverwriteEncryptSameEntry, encSaveKey.Value);
+                            return Return(-3, interactive);
+                        }
+
+                        if (File.Exists(encSaveKey.Value))
+                        {
+                            if (interactive.IsSet)
+                                Console.WriteLine(TextResources.OverwriteAlert, encSaveKey.Value);
+                            else
+                            {
+                                Console.Error.WriteLine(TextResources.OverwriteAlert, encSaveKey.Value);
+                                return -3;
+                            }
+
+                            if (OverwritePrompt(interactive, overwrite, skipexist, ref encSaveKey.Value))
+                                return Return(-3, interactive);
+                        }
+
+                        File.WriteAllBytes(encSaveKey.Value, key);
+                        if (verbose.IsSet)
+                        {
+                            Console.WriteLine(TextResources.EncryptionSaved, verbose.Value);
+                            Console.WriteLine(TextResources.KeepSecret);
+                        }
+                    }
+
+                    using (Stream arStream = File.Create(archiveFile.Value))
+                    using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
+                    {
+                        if (key != null)
+                            ds.Key = key;
+                        else if (encPassword.IsSet)
+                            ds.SetPassword(encPassword.Value);
+                        else if (ssPassword != null)
+                            ds.SetPassword(ssPassword);
+
                         ds.Filename = Path.GetFileName(entryFile.Value);
                         fs.CopyTo(ds);
                         return Return(0, interactive);
                     }
                 }
+                #endregion
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
 #if DEBUG
-                Console.Error.WriteLine("Throw? Y/N> ");
-                if (Console.ReadKey().Key == ConsoleKey.Y)
-                    throw new Exception(e.Message, e);
+                GoThrow(e);
 #endif
                 return Return(e.HResult, interactive);
             }
+            finally
+            {
+                if (ssPassword != null)
+                    ssPassword.Dispose();
+            }
         }
 
-        private static bool OverwritePrompt(ClParam interactive, ClParam overwrite, ClParam skipexist)
+        private static bool TryGetKeyHex(string s, out byte[] key)
         {
-            if (skipexist.IsSet || (!overwrite.IsSet && interactive.IsSet && OverwritePrompt()))
+            string hexVal = new string(s.Where(i => !char.IsWhiteSpace(i)).ToArray());
+            key = new byte[(int)Math.Ceiling(hexVal.Length / 2.0)];
+            for (int i = 0; i < key.Length; i++)
+            {
+                byte curByte;
+                if (byte.TryParse(hexVal.Substring(i << 1, Math.Min(2, hexVal.Length - i)), NumberStyles.HexNumber,
+                    NumberFormatInfo.InvariantInfo, out curByte))
+                {
+                    key[i] = curByte;
+                }
+                else
+                {
+                    key = null;
+                    Console.Error.WriteLine(TextResources.EncryptInvalidHex);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+#if DEBUG
+        private static void GoThrow(Exception e)
+        {
+            Console.Error.WriteLine("Throw? Y/N> ");
+            if (Console.ReadKey().Key == ConsoleKey.Y)
+                throw new Exception(e.Message, e);
+        }
+#endif
+
+        private static bool EncryptionPrompt(DieFledermausStream ds, out SecureString ss)
+        {
+            bool notFound1 = true;
+            ss = null;
+            do
+            {
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine("1. " + TextResources.EncryptedPrompt1Pwd);
+                Console.WriteLine("2. " + TextResources.EncryptedPrompt2KeyHex);
+                Console.WriteLine("3. " + TextResources.EncryptedPrompt3KeyB64);
+                Console.WriteLine("4. " + TextResources.EncryptedPrompt4KeyFile);
+                Console.WriteLine("5. " + TextResources.Cancel);
+                Console.Write("> ");
+
+                string line = Console.ReadLine().Trim(' ', '.');
+                byte[] key = null;
+                if (line.Length != 1) continue;
+
+                switch (line[0])
+                {
+                    case '1':
+                        Console.Write(TextResources.EncryptedPrompt1Pwd + ":");
+
+                        ConsoleKeyInfo cKey;
+                        do
+                        {
+                            cKey = Console.ReadKey();
+
+                            if (cKey.Key == ConsoleKey.Backspace)
+                            {
+                                if (ss.Length > 0)
+                                    ss.RemoveAt(ss.Length - 1);
+                            }
+                            else if (cKey.Key != ConsoleKey.Enter)
+                                ss.AppendChar(cKey.KeyChar);
+                        }
+                        while (cKey.Key != ConsoleKey.Enter);
+                        Console.WriteLine();
+                        ss.MakeReadOnly();
+                        if (ds != null)
+                        {
+                            ds.SetPassword(ss);
+                            ss.Dispose();
+                            ss = null;
+                        }
+                        break;
+                    case '2':
+                        PromptKeyLength(ds);
+                        Console.Write(TextResources.EncryptedPrompt2KeyHex + "> ");
+
+                        if (!TryGetKeyHex(Console.ReadLine(), out key))
+                        {
+                            Console.Error.WriteLine(TextResources.EncryptInvalidHex);
+                            continue;
+                        }
+
+                        if (CheckKeyLength(ds, key))
+                            break;
+
+                        continue;
+                    case '3':
+                        PromptKeyLength(ds);
+                        Console.Write(TextResources.EncryptedPrompt3KeyB64 + "> ");
+                        try
+                        {
+                            key = Convert.FromBase64String(Console.ReadLine());
+                        }
+                        catch (FormatException)
+                        {
+                            Console.Error.WriteLine(TextResources.EncryptInvalidBase64);
+                            continue;
+                        }
+
+                        if (CheckKeyLength(ds, key))
+                            break;
+
+                        continue;
+                    case '4':
+                        PromptKeyLength(ds);
+                        Console.Write(TextResources.EncryptedPrompt4KeyFile + "> ");
+
+                        line = Console.ReadLine().Trim();
+
+                        if (!File.Exists(line))
+                        {
+                            Console.Error.WriteLine(TextResources.FileNotFound, line);
+                            continue;
+                        }
+
+                        try
+                        {
+                            key = File.ReadAllBytes(line);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+#if DEBUG
+                            GoThrow(e);
+#endif
+                            continue;
+                        }
+
+                        if (CheckKeyLength(ds, key))
+                            break;
+
+                        continue;
+                    case '5':
+                        return true;
+                    default:
+                        continue;
+                }
+                if (ds == null)
+                    notFound1 = false;
+                else
+                {
+                    try
+                    {
+                        ds.LoadData();
+                        return false;
+                    }
+                    catch (CryptographicException)
+                    {
+                        Console.Error.WriteLine(TextResources.EncryptedBadKey);
+                        continue;
+                    }
+                }
+            }
+            while (notFound1);
+            return false;
+        }
+
+        private static void PromptKeyLength(DieFledermausStream ds)
+        {
+            if (ds == null)
+                Console.WriteLine(TextResources.EncryptKeyLengthAes);
+            else
+                Console.WriteLine(TextResources.EncryptKeyLengthKnown, ds.KeySizes.MaxSize, ds.KeySizes.MaxSize >> 3);
+        }
+
+        private static bool CheckKeyLength(DieFledermausStream ds, byte[] key)
+        {
+            if (ds == null)
+                return DieFledermausStream.IsValidKeyByteSize(key.Length, MausEncryptionFormat.Aes);
+
+            if (!ds.IsValidKeyByteSize(key.Length))
+                return false;
+            ds.Key = key;
+            return true;
+        }
+
+        private static string NoOutputCreate(ClParam param)
+        {
+            return string.Format(TextResources.NoOutputCreate, param.Key);
+        }
+
+        private static string NoEntryExtract(ClParam param)
+        {
+            return string.Format(TextResources.NoEntryExtract, param.Key);
+        }
+
+        private static bool OverwritePrompt(ClParam interactive, ClParam overwrite, ClParam skipexist, ref string filename)
+        {
+            if (skipexist.IsSet || (!overwrite.IsSet && interactive.IsSet && OverwritePrompt(ref filename)))
             {
                 Console.WriteLine(TextResources.OverwriteSkip);
                 return true;
             }
 
-            Console.WriteLine(TextResources.Overwrite);
             return false;
         }
 
@@ -330,7 +718,7 @@ namespace DieFledermaus.Cli
             return value;
         }
 
-        private static bool OverwritePrompt()
+        private static bool OverwritePrompt(ref string filename)
         {
             bool notFound = true;
             do
@@ -338,7 +726,7 @@ namespace DieFledermaus.Cli
                 Console.Write(TextResources.OverwritePrompt + "> ");
 
                 string line = Console.ReadLine().Trim();
-                const string oYes = "yes", oNo = "no";
+                const string oYes = "yes", oNo = "no", oRen = "rename";
 
                 if (string.IsNullOrEmpty(line))
                     continue;
@@ -348,6 +736,7 @@ namespace DieFledermaus.Cli
                     TextResources.OverYes.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
                     line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
                 {
+                    Console.WriteLine(TextResources.Overwrite);
                     notFound = false;
                 }
                 else if (oNo.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
@@ -356,6 +745,38 @@ namespace DieFledermaus.Cli
                     line.StartsWith(TextResources.OverNo, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
+                }
+                else if (oRen.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(oRen, StringComparison.OrdinalIgnoreCase) ||
+                    TextResources.OverRename.StartsWith(line, StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(TextResources.OverRename, StringComparison.OrdinalIgnoreCase))
+                {
+                    string ext = Path.GetExtension(filename);
+                    string newPath = string.IsNullOrEmpty(ext) ? filename + ".out" : Path.ChangeExtension(filename, ".out" + ext);
+                    if (!File.Exists(newPath))
+                    {
+                        filename = newPath;
+                        Console.WriteLine(TextResources.OverwriteRename, newPath);
+                        return false;
+                    }
+
+                    checked
+                    {
+                        for (ulong i = 1; i != 0; i++)
+                        {
+                            string longText = i.ToString(NumberFormatInfo.InvariantInfo);
+
+                            string longPath = string.IsNullOrEmpty(ext) ? string.Concat(filename, ".out", longText) :
+                                Path.ChangeExtension(filename, string.Concat(filename, ".out", longText, ext));
+
+                            if (!File.Exists(longPath))
+                            {
+                                Console.WriteLine(TextResources.OverwriteRename, longPath);
+                                filename = longPath;
+                                return false;
+                            }
+                        }
+                    }
                 }
             }
             while (notFound);

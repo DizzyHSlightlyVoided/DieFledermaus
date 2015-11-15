@@ -120,11 +120,13 @@ namespace DieFledermaus
         {
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int originalOffset, int originalCount)
         {
             if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (!_reading) throw new NotSupportedException(TextResources.CurrentWrite);
-            DieFledermausStream.CheckSegment(buffer, offset, count);
+            DieFledermausStream.CheckSegment(buffer, originalOffset, originalCount);
+
+            int offset = originalOffset, count = originalCount;
 
             if (_currentBuffer == null)
                 return 0;
@@ -149,11 +151,13 @@ namespace DieFledermaus
             return bytesRead;
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
+        public override void Write(byte[] buffer, int originalOffset, int originalCount)
         {
             if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_reading) throw new NotSupportedException(TextResources.CurrentRead);
-            DieFledermausStream.CheckSegment(buffer, offset, count);
+            DieFledermausStream.CheckSegment(buffer, originalOffset, originalCount);
+
+            int offset = originalOffset, count = originalCount;
 
             _length += count;
 

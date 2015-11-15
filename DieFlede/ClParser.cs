@@ -98,7 +98,7 @@ namespace DieFledermaus.Cli
                     if (dex >= 0)
                     {
                         curVal = curArg.Substring(dex + 1);
-                        curArg = curArg.Substring(dex);
+                        curArg = curArg.Substring(0, dex);
                     }
 
                     ClParam curParam;
@@ -285,7 +285,7 @@ namespace DieFledermaus.Cli
                 }
             }
 
-            Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", ConcatParams(badParams, curParam).Select(i => i.Key)));
+            Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", badParams.Select(i => i.Key)));
 
             return true;
         }

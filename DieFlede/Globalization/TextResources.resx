@@ -143,10 +143,10 @@
     <value>Show extended help:</value>
   </data>
   <data name="HelpInput" xml:space="preserve">
-    <value>input filename</value>
+    <value>input</value>
   </data>
   <data name="HelpOutput" xml:space="preserve">
-    <value>output filename</value>
+    <value>output</value>
   </data>
   <data name="NoEntryExtract" xml:space="preserve">
     <value>Parameter "{0}" doesn't make sense in extract-mode.</value>
@@ -164,7 +164,7 @@
     <comment>{0} = output filename</comment>
   </data>
   <data name="OverwritePrompt" xml:space="preserve">
-    <value>Overwrite? (Y)es/(N)o</value>
+    <value>Overwrite? (Y)es/(N)o/(R)ename</value>
   </data>
   <data name="OverwriteSameArchive" xml:space="preserve">
     <value>Output file is the same as the archive file! {0}</value>
@@ -322,9 +322,139 @@
     <value>Press any key to continue.</value>
   </data>
   <data name="Overwrite" xml:space="preserve">
-    <value>Overwriting ...</value>
+    <value>Overwriting.</value>
   </data>
   <data name="OverwriteSkip" xml:space="preserve">
     <value>Skipping.</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="EncryptedAlert" xml:space="preserve">
+    <value>File is encrypted and no key or password was specified!</value>
+  </data>
+  <data name="EncryptedPrompt1Pwd" xml:space="preserve">
+    <value>Enter password</value>
+  </data>
+  <data name="EncryptedPrompt2KeyHex" xml:space="preserve">
+    <value>Enter encryption key (hexadecimal)</value>
+  </data>
+  <data name="EncryptedPrompt3KeyB64" xml:space="preserve">
+    <value>Enter encryption key (base64)</value>
+  </data>
+  <data name="EncryptedPrompt4KeyFile" xml:space="preserve">
+    <value>Enter path to a key file</value>
+  </data>
+  <data name="EncryptionKey" xml:space="preserve">
+    <value>Encryption key: {0} / base64: {1}</value>
+    <comment>{0} = hexadecimal key, {1} = base64 key</comment>
+  </data>
+  <data name="EncryptionNoEncryption" xml:space="preserve">
+    <value>Encryption options are specified, but no encryption is set.</value>
+  </data>
+  <data name="EncryptionNoOpts" xml:space="preserve">
+    <value>Encryption is specified, but no encryption options are set.</value>
+  </data>
+  <data name="EncryptionNoOptsExtract" xml:space="preserve">
+    <value>The file is encrypted, but no options are set.</value>
+  </data>
+  <data name="EncryptionSaved" xml:space="preserve">
+    <value>Saved key to: {0}</value>
+    <comment>{0} = file path.</comment>
+  </data>
+  <data name="HelpMAes" xml:space="preserve">
+    <value>Encrypt using AES encryption.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMKey" xml:space="preserve">
+    <value>Encryption key (hex format)</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMKeyBase64" xml:space="preserve">
+    <value>Encryption key (base64)</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMKeyFile" xml:space="preserve">
+    <value>The path to a file containing the encryption key.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMPassword" xml:space="preserve">
+    <value>Encryption password</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMSaveKey" xml:space="preserve">
+    <value>The path to a file to which the encryption key will be saved.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameBase64Key" xml:space="preserve">
+    <value>base64key</value>
+    <comment>Localized parameter name, keep this unique (unless only one order for "base64key/keybase64" makes sense)</comment>
+  </data>
+  <data name="PNameKey" xml:space="preserve">
+    <value>key</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameKeyBase64" xml:space="preserve">
+    <value>keybase64</value>
+    <comment>PNameBase64Key	base64key	Localized parameter name, keep this unique (unless only one order for "base64key/keybase64" makes sense)</comment>
+  </data>
+  <data name="PNameKeyFile" xml:space="preserve">
+    <value>keyfile</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNamePassword" xml:space="preserve">
+    <value>password</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameSaveKey" xml:space="preserve">
+    <value>savekey</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="EncryptedBadKey" xml:space="preserve">
+    <value>The key or password is incorrect!</value>
+  </data>
+  <data name="EncryptInvalidBase64" xml:space="preserve">
+    <value>The specified key is not a valid Base64 value.</value>
+  </data>
+  <data name="EncryptInvalidFileLength" xml:space="preserve">
+    <value>The number of bytes in the specified file is invalid.</value>
+  </data>
+  <data name="EncryptInvalidHex" xml:space="preserve">
+    <value>The specified key is not a valid hexadecimal value.</value>
+  </data>
+  <data name="EncryptInvalidKeyLength" xml:space="preserve">
+    <value>The number of bytes in the specified key is invalid.</value>
+  </data>
+  <data name="KeepSecret" xml:space="preserve">
+    <value>Keep it secret. Keep it safe.</value>
+    <comment>A quote from Gandalf in "Lord of the Rings."</comment>
+  </data>
+  <data name="EncryptionNoOpts2" xml:space="preserve">
+    <value>You must set a password, a key, or a file to which the key is saved.</value>
+  </data>
+  <data name="EncryptionNot" xml:space="preserve">
+    <value>File is not encrypted. Skipping options.</value>
+  </data>
+  <data name="EncryptKeyLengthAes" xml:space="preserve">
+    <value>Key size must be equal to 128, 192, or 256 bits (16, 24, or 32 bytes).</value>
+  </data>
+  <data name="EncryptKeyLengthKnown" xml:space="preserve">
+    <value>Key size must be equal to {0} bits ({1} bytes).</value>
+    <comment>{0} = bit count, {1} bit count.</comment>
+  </data>
+  <data name="OverRename" xml:space="preserve">
+    <value>rename</value>
+  </data>
+  <data name="OverwriteEncryptSameArchive" xml:space="preserve">
+    <value>Key output file is the same as the archive file! {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="OverwriteEncryptSameEntry" xml:space="preserve">
+    <value>Key output file is the same as the entry file! {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="OverwriteRename" xml:space="preserve">
+    <value>Renaming to {0}</value>
+    <comment>{0} = filename</comment>
   </data>
 </root>
