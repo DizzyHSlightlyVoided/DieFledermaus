@@ -443,23 +443,28 @@ namespace DieFledermaus
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
-            switch (encryptionFormat)
-            {
-                case MausEncryptionFormat.None:
-                    return;
-                case MausEncryptionFormat.Aes:
-                    _keySizes = new KeySizes(128, 256, 64);
-                    _blockByteCount = 16;
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
-            }
+            _keySizes = GetKeySizes(encryptionFormat, out _blockByteCount);
             _encFmt = encryptionFormat;
+            if (_encFmt == MausEncryptionFormat.None) return;
             _key = FillBuffer(_keySizes.MaxSize >> 3);
             _iv = FillBuffer(_blockByteCount);
             _salt = FillBuffer(_key.Length);
         }
 
+        private static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
+        {
+            switch (encryptionFormat)
+            {
+                case MausEncryptionFormat.None:
+                    blockByteCount = 0;
+                    return null;
+                case MausEncryptionFormat.Aes:
+                    blockByteCount = _blockByteCtAes;
+                    return new KeySizes(128, 256, 64);
+                default:
+                    throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
+            }
+        }
 
         /// <summary>
         /// Gets a value indicating whether the current stream supports reading.
@@ -552,6 +557,57 @@ namespace DieFledermaus
         /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
         /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyBitSize(int bitCount)
+        {
+            if (_keySizes == null) return false;
+
+            if (bitCount < _keySizes.MinSize || bitCount > _keySizes.MaxSize) return false;
+
+            if (bitCount == _keySizes.MaxSize) return true;
+
+            for (int i = _keySizes.MinSize; i <= bitCount; i++)
+            {
+                if (i == bitCount)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes to test.</param>
+        /// <param name="encryptionFormat">The encryption format to test for.</param>
+        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <paramref name="encryptionFormat"/>;
+        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        public static bool IsValidKeyByteSize(int byteCount, MausEncryptionFormat encryptionFormat)
+        {
+            int blockByteCount;
+            var keySizes = GetKeySizes(encryptionFormat, out blockByteCount);
+            if (keySizes == null || byteCount > int.MaxValue >> 3) return false;
+            return IsValidKeyBitSize(byteCount >> 3, keySizes);
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// </summary>
+        /// <param name="bitCount">The number of bits to test.</param>
+        /// <param name="encryptionFormat">The encryption format to test for.</param>
+        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        public static bool IsValidKeyBitSize(int bitCount, MausEncryptionFormat encryptionFormat)
+        {
+            int blockByteCount;
+            var keySizes = GetKeySizes(encryptionFormat, out blockByteCount);
+            return keySizes != null && IsValidKeyBitSize(bitCount, keySizes);
+        }
+
+        private static bool IsValidKeyBitSize(int bitCount, KeySizes _keySizes)
         {
             if (_keySizes == null) return false;
 

@@ -345,6 +345,32 @@ Determines whether the specified value is a valid length for [`DieFledermausStre
 
 --------------------------------------------------
 
+## Method: `public static System.Boolean IsValidKeyByteSize(System.Int32 byteCount, DieFledermaus.MausEncryptionFormat encryptionFormat)`
+Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bytes.
+* `byteCount`: The number of bytes to test.
+* `encryptionFormat`: The encryption format to test for.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `byteCount` is a valid byte count according to `encryptionFormat`; `false` if `byteCount` is invalid, or if the current instance is not encrypted.
+
+### Exceptions
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`encryptionFormat` is not a valid [`MausEncryptionFormat`](#type-public-enum-diefledermausmausencryptionformat) value.
+
+--------------------------------------------------
+
+## Method: `public static System.Boolean IsValidKeyBitSize(System.Int32 bitCount, DieFledermaus.MausEncryptionFormat encryptionFormat)`
+Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bits.
+* `bitCount`: The number of bits to test.
+* `encryptionFormat`: The encryption format to test for.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
+
+### Exceptions
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`encryptionFormat` is not a valid [`MausEncryptionFormat`](#type-public-enum-diefledermausmausencryptionformat) value.
+
+--------------------------------------------------
+
 ## Property: `System.Int32 BlockSize { get; }`
 Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
 
