@@ -39,7 +39,8 @@ Each element in the array must contain at least one byte. If the length-byte pre
 If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
 
 The following values are supported for strings in the array:
-* `Name` (9 bytes) - Indicates a specified filename. The next element in the array must be used as the filename. Filenames cannot use forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
+* `Name` (9 bytes) - Indicates that the compressed file has a specified filename. The next element in the array must be used as the filename. Filenames cannot use forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
+* `KName` (5 bytes) - Indicates that the compressed file has a specified filename, and that the filename is encrypted. The filename is concatenated to the beginning of the compressed data to encrypt, and is used to compute the HMAC value. This is only valid if the file itself is encrypted.
 * `NC` (2 bytes) or `NK` (2 bytes) - The contents of the file are not compressed.
 * `DEF` (3 bytes) - The contents of the file are DEFLATE-compressed.
 * `AES` (3 bytes) - The file is AES-encrypted. To indicate the key length, the next element in the array must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
@@ -67,13 +68,13 @@ When a DieFledermaus archive is encrypted, the following DieFledermaus fields be
 * **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the binary key used and the (compressed) plaintext.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
- 1. **IV:** the initialization vector (128 bits, the same size as a single encrypted block) 
- 1. **Encrypted Data:** The encrypted data itself.
+ 2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
+ 3. **Encrypted Data:** The encrypted data itself.
 
 ### Text-based passwords
 Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. (Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document.) For the purposes of a BSON pack file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 interations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
 
-9001 is chosen because it wastes a few tenths of a second on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
+9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
 The random **Salt** value must be included in the **Data** field even if a binary key is used rather than a text-based password. This is for two reasons: 1. in order to simplify the specification so that it only has a single format, and 2. to avoid revealing anything about the key to an attacker.
 

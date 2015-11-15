@@ -33,6 +33,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -556,6 +557,26 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
+        private bool _encryptName;
+        /// <summary>
+        /// Gets and sets a value indicating whether <see cref="Filename"/> should be encrypted.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        public bool EncryptFilename
+        {
+            get { return _encryptName; }
+            set
+            {
+                _ensureCanSetKey();
+                _encryptName = value;
+            }
+        }
+
         private string _filename;
         /// <summary>
         /// Gets and sets a filename for the current instance.
@@ -564,7 +585,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance does not support writing.
+        /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value is not <c>null</c> and is invalid.
@@ -704,19 +725,7 @@ namespace DieFledermaus
             {
                 _key = pbkdf2.GetBytes(_keySizes.MaxSize >> 3);
             }
-#if NOCRYPTOCLOSE
-            Dispose(pbkdf2);
-#endif
         }
-
-#if NOCRYPTOCLOSE
-        private static void Dispose(object o)
-        {
-            IDisposable disposable = o as IDisposable;
-            if (disposable != null)
-                disposable.Dispose();
-        }
-#endif
 
         /// <summary>
         /// Flushes the contents of the internal buffer of the current stream object to the underlying stream.
@@ -809,8 +818,8 @@ namespace DieFledermaus
             { _encAes, MausEncryptionFormat.Aes }
         };
 
-        private const string _kFilename = "Name";
-        private static readonly byte[] _bFilename = Encoding.UTF8.GetBytes(_kFilename);
+        private const string _kFilename = "Name", _kEncFilename = "KName";
+        private static readonly byte[] _bFilename = Encoding.UTF8.GetBytes(_kFilename), _bEncFilename = Encoding.UTF8.GetBytes(_kEncFilename);
 
         private void _getHeader()
         {
@@ -951,20 +960,33 @@ namespace DieFledermaus
                             continue;
                         }
 
-                        if (curForm.Equals(_kFilename, StringComparison.OrdinalIgnoreCase))
+                        if (curForm.Equals(_kFilename, StringComparison.Ordinal))
                         {
                             i++;
                             string filename = GetString(reader);
 
-                            if (_filename != null && !_filename.Equals(filename, StringComparison.OrdinalIgnoreCase))
+                            if (_encryptName || (_filename != null && !_filename.Equals(filename, StringComparison.Ordinal)))
                                 throw new InvalidDataException(TextResources.FormatBad);
 
                             if (!IsValidFilename(filename, false))
                                 throw new InvalidDataException(TextResources.FormatFilename);
                             continue;
                         }
+
+                        if (curForm.Equals(_kEncFilename, StringComparison.Ordinal))
+                        {
+                            if (_filename != null)
+                                throw new InvalidDataException(TextResources.FormatBad);
+
+                            _encryptName = true;
+                            continue;
+                        }
+
                         throw new NotSupportedException(TextResources.FormatUnknown);
                     }
+
+                    if (_encryptName && _encFmt == MausEncryptionFormat.None)
+                        throw new InvalidDataException(TextResources.FormatBad);
                 }
 
                 _compLength = reader.ReadInt64();
@@ -1017,6 +1039,35 @@ namespace DieFledermaus
         private long _compLength;
         private int _pkCount;
 
+        /// <summary>
+        /// Attempts to pre-load the data in the current instance, and test whether <see cref="Key"/> is set to the correct value
+        /// if the current stream is encrypted and to decrypt <see cref="Filename"/> if <see cref="EncryptFilename"/> is <c>true</c>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// again if this exception is caught.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        public void LoadData()
+        {
+            _checkReading();
+            lock (_lock)
+            {
+                _readData();
+            }
+        }
+
         private void _readData()
         {
             if (_headerGotten) return;
@@ -1043,10 +1094,36 @@ namespace DieFledermaus
             {
                 if (!CompareBytes(ComputeHash(_bufferStream)))
                     throw new InvalidDataException(TextResources.BadChecksum);
+                _bufferStream.Reset();
             }
-            else _bufferStream = Decrypt();
+            else
+            {
+                var bufferStream = Decrypt();
 
-            _bufferStream.Reset();
+                if (!CompareBytes(ComputeHmac(bufferStream)))
+                    throw new CryptographicException(TextResources.BadKey);
+                bufferStream.Reset();
+
+                if (_encryptName)
+                {
+                    string filename;
+#if NOLEAVEOPEN
+                    BinaryReader reader = new BinaryReader(bufferStream);
+#else
+                    using (BinaryReader reader = new BinaryReader(bufferStream, Encoding.UTF8, true))
+#endif
+                    {
+                        filename = GetString(reader);
+                    }
+
+                    if (!IsValidFilename(filename, false))
+                        throw new InvalidDataException(TextResources.FormatFilename);
+                    _filename = filename;
+                }
+
+                _bufferStream.Close();
+                _bufferStream = bufferStream;
+            }
 
             switch (_cmpFmt)
             {
@@ -1093,10 +1170,11 @@ namespace DieFledermaus
         /// The current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current stream does not support reading.
+        /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="Key"/> is not set to the correct value.
+        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// again if this exception is caught.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="buffer"/> is <c>null</c>.
@@ -1106,6 +1184,9 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="offset"/> plus <paramref name="count"/> is greater than the length of <paramref name="buffer"/>.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
@@ -1124,10 +1205,13 @@ namespace DieFledermaus
                 count = (int)Math.Min(count, _uncompressedLength);
 
             int result = _deflateStream.Read(buffer, offset, count);
-            if (result < count)
-                throw new EndOfStreamException();
+
             if (_encFmt == MausEncryptionFormat.None)
+            {
+                if (result < count)
+                    throw new EndOfStreamException();
                 _uncompressedLength -= result;
+            }
             return result;
         }
 
@@ -1136,7 +1220,7 @@ namespace DieFledermaus
         private void _checkReading()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentRead);
+            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentWrite);
         }
 
         /// <summary>
@@ -1147,17 +1231,14 @@ namespace DieFledermaus
         /// The current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current stream does not support reading.
+        /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
         public override int ReadByte()
         {
-            byte[] singleBuffer = new byte[1];
-            if (Read(singleBuffer, 0, 1) == 0)
-                return -1;
-            return singleBuffer[0];
+            return base.ReadByte();
         }
 
         /// <summary>
@@ -1170,7 +1251,7 @@ namespace DieFledermaus
         /// The current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current stream does not support writing.
+        /// The current stream is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="buffer"/> is <c>null</c>.
@@ -1195,7 +1276,7 @@ namespace DieFledermaus
         private void _checkWritable()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-            if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentWrite);
+            if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
 
         /// <summary>
@@ -1241,8 +1322,15 @@ namespace DieFledermaus
 
                                     if (_filename != null)
                                     {
-                                        formats.Add(_bFilename);
-                                        formats.Add(Encoding.UTF8.GetBytes(_filename));
+                                        if (_encryptName)
+                                        {
+                                            formats.Add(_bEncFilename);
+                                        }
+                                        else
+                                        {
+                                            formats.Add(_bFilename);
+                                            formats.Add(Encoding.UTF8.GetBytes(_filename));
+                                        }
                                     }
 
                                     switch (_cmpFmt)
@@ -1300,6 +1388,13 @@ namespace DieFledermaus
                                 }
                                 else
                                 {
+                                    if (_encryptName && _filename != null)
+                                    {
+                                        byte[] fBytes = Encoding.UTF8.GetBytes(_filename);
+
+                                        _bufferStream.Prepend(new byte[] { (byte)fBytes.Length }.Concat(fBytes).ToArray());
+                                    }
+
                                     using (QuickBufferStream output = Encrypt())
                                     {
                                         writer.Write(output.Length);
@@ -1308,8 +1403,6 @@ namespace DieFledermaus
                                         _bufferStream.Reset();
                                         byte[] hashHmac = ComputeHmac(_bufferStream);
                                         _baseStream.Write(hashHmac, 0, hashLength);
-
-                                        output.Reset();
 
                                         output.CopyTo(_baseStream);
                                     }

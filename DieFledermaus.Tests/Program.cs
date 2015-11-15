@@ -32,6 +32,9 @@ namespace DieFledermaus.Tests
                 using (DieFledermausStream ds = new DieFledermausStream(ms, format, mode, true))
                 using (BinaryWriter writer = new BinaryWriter(ds))
                 {
+                    ds.Filename = mode.ToString() + format.ToString();
+                    Console.Write("Filename: ");
+                    Console.WriteLine(ds.Filename);
                     if (mode != MausEncryptionFormat.None)
                         SetPasswd(ds);
                     Console.WriteLine("Length before writing 9: " + ms.Length);
@@ -50,6 +53,10 @@ namespace DieFledermaus.Tests
                         SetPasswd(ds);
 
                     Console.WriteLine("Position before read: " + ms.Position);
+                    ds.LoadData();
+                    Console.Write("Filename: ");
+                    Console.WriteLine(ds.Filename);
+                    Console.Write("Read number: ");
                     Console.WriteLine(reader.ReadInt32());
                     Console.WriteLine("Position during read: " + ms.Position);
                     byte[] readBigBuffer = reader.ReadBytes(bigBufferLength);
@@ -87,6 +94,7 @@ namespace DieFledermaus.Tests
             Stopwatch sw = Stopwatch.StartNew();
             ds.SetPassword(passwd);
             sw.Stop();
+            ds.EncryptFilename = true;
             Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);
         }
     }

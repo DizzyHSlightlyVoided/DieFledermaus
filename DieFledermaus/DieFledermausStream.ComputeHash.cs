@@ -59,9 +59,6 @@ namespace DieFledermaus
             {
                 rng.GetBytes(buffer);
             }
-#if NOCRYPTOCLOSE
-            Dispose(rng);
-#endif
             return buffer;
         }
 
@@ -100,10 +97,6 @@ namespace DieFledermaus
                 _bufferStream.CopyTo(cs);
                 cs.FlushFinalBlock();
             }
-            output.Reset();
-
-            if (!CompareBytes(ComputeHmac(output)))
-                throw new CryptographicException(TextResources.BadKey);
             output.Reset();
             return output;
         }
