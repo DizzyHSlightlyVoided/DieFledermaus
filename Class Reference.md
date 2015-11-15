@@ -329,6 +329,22 @@ In a set operation, the specified value is an invalid length according to [`DieF
 
 --------------------------------------------------
 
+## Method: `public System.Boolean IsValidKeyByteSize(System.Int32 byteCount)`
+Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bytes.
+* `byteCount`: The number of bytes to test.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `byteCount` is a valid byte count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `byteCount` is invalid, or if the current instance is not encrypted.
+
+--------------------------------------------------
+
+## Method: `public System.Boolean IsValidKeyBitSize(System.Int32 bitCount)`
+Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bits.
+* `bitCount`: The number of bits to test.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
+
+--------------------------------------------------
+
 ## Property: `System.Int32 BlockSize { get; }`
 Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
 
@@ -454,7 +470,7 @@ The current stream is closed.
 The current stream is in write-mode.
 
 ##### [`CryptographicException`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.cryptographicexception.aspx)
-[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value.
+[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value. It is safe to attempt to call [`DieFledermausStream.LoadData()`](#method-public-void-loaddata) or [`DieFledermausStream.Read(System.Byte[],System.Int32,System.Int32)`](#method-diefledermausdiefledermausstreamreadsystembytesystemint32systemint32) again if this exception is caught.
 
 ##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
 The stream contains invalid data.
@@ -480,7 +496,7 @@ The current stream is closed.
 The current stream is in write-mode.
 
 ##### [`CryptographicException`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.cryptographicexception.aspx)
-[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value.
+[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value. It is safe to attempt to call [`DieFledermausStream.LoadData()`](#method-public-void-loaddata) or [`DieFledermausStream.Read(System.Byte[],System.Int32,System.Int32)`](#method-diefledermausdiefledermausstreamreadsystembytesystemint32systemint32) again if this exception is caught.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
 `buffer` is `null`.

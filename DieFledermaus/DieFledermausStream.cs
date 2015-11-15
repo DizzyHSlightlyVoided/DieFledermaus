@@ -523,17 +523,46 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 if (value == null) throw new ArgumentNullException(nameof(value));
 
-                int bitCount = value.Length << 3;
-                for (int i = _keySizes.MinSize; i <= _keySizes.MaxSize; i += _keySizes.SkipSize)
-                {
-                    if (i == bitCount)
-                    {
-                        _key = value;
-                        return;
-                    }
-                }
-                throw new ArgumentException(TextResources.KeyLength, nameof(value));
+                if (!IsValidKeyByteSize(value.Length))
+                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
+                _key = value;
             }
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes to test.</param>
+        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyByteSize(int byteCount)
+        {
+            if (byteCount > int.MaxValue >> 3)
+                return false;
+
+            return IsValidKeyBitSize(byteCount << 3);
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// </summary>
+        /// <param name="bitCount">The number of bits to test.</param>
+        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyBitSize(int bitCount)
+        {
+            if (_keySizes == null) return false;
+
+            if (bitCount < _keySizes.MinSize || bitCount > _keySizes.MaxSize) return false;
+
+            if (bitCount == _keySizes.MaxSize) return true;
+
+            for (int i = _keySizes.MinSize; i <= bitCount; i++)
+            {
+                if (i == bitCount)
+                    return true;
+            }
+            return false;
         }
 
         private void _ensureCanSetKey()
