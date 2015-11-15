@@ -4,6 +4,12 @@
 
 The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Three versions are defined for use: 0.92 (depreciated), 0.93 (depreciated), and 0.94. The file format is specified in [DieFledermaus Format.md](DieFledermaus Format.md).
 
+Features
+--------
+* DEFLATE compression. You can also specify that it's not compressed at all.
+* Storing the filename of the original file.
+* AES encryption, using either a binary key or a password. This includes encrypting the filename.
+
 DieFlede
 ========
 * Version 0.0.2.0
