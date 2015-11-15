@@ -61,6 +61,98 @@ Creates a new instance with the specified mode.
 
 --------------------------------------------------
 
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat, DieFledermaus.MausEncryptionFormat encryptionFormat, System.Boolean leaveOpen)`
+Creates a new instance in write-mode, with the specified compression and encryption formats.
+* `stream`: The stream containing compressed data.
+* `compressionFormat`: Indicates the format of the stream.
+* `encryptionFormat`: Indicates the format of the encryption.
+* `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`compressionFormat` is not a valid [`MausCompressionFormat`](#type-public-enum-diefledermausmauscompressionformat) value.
+
+-OR-
+
+`encryptionFormat` is not a valid [`MausEncryptionFormat`](#type-public-enum-diefledermausmausencryptionformat) value.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat, DieFledermaus.MausEncryptionFormat encryptionFormat)`
+Creates a new instance in write-mode, with the specified compression and encryption formats.
+* `stream`: The stream containing compressed data.
+* `compressionFormat`: Indicates the format of the stream.
+* `encryptionFormat`: Indicates the format of the encryption.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`compressionFormat` is not a valid [`MausCompressionFormat`](#type-public-enum-diefledermausmauscompressionformat) value.
+
+-OR-
+
+`encryptionFormat` is not a valid [`MausEncryptionFormat`](#type-public-enum-diefledermausmausencryptionformat) value.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat, System.Boolean leaveOpen)`
+Creates a new instance in write-mode, with the specified compression and encryption formats.
+* `stream`: The stream containing compressed data.
+* `compressionFormat`: Indicates the format of the stream.
+* `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`compressionFormat` is not a valid [`MausCompressionFormat`](#type-public-enum-diefledermausmauscompressionformat) value.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat)`
+Creates a new instance in write-mode, with the specified compression and encryption formats.
+* `stream`: The stream containing compressed data.
+* `compressionFormat`: Indicates the format of the stream.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
+`compressionFormat` is not a valid [`MausCompressionFormat`](#type-public-enum-diefledermausmauscompressionformat) value.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausEncryptionFormat encryptionFormat, System.Boolean leaveOpen)`
 Creates a new instance in write-mode with the specified encryption format.
 * `stream`: The stream containing compressed data.
@@ -214,6 +306,11 @@ Gets the encryption format of the current instance.
 
 --------------------------------------------------
 
+## Property: `DieFledermaus.MausCompressionFormat CompressionFormat { get; }`
+Gets the compression format of the current instance.
+
+--------------------------------------------------
+
 ## Property: `System.Byte[] Key { get; set; }`
 Gets and sets the key used to encrypt the DieFledermaus stream.
 
@@ -239,6 +336,47 @@ Gets the number of bits in a single block of encrypted data, or 0 if the current
 
 ## Property: `System.Int32 BlockByteCount { get; }`
 Gets the number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
+
+--------------------------------------------------
+
+## Property: `System.Boolean EncryptFilename { get; set; }`
+Gets and sets a value indicating whether [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) should be encrypted.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current instance is in read-mode.
+
+--------------------------------------------------
+
+## Property: `System.String Filename { get; set; }`
+Gets and sets a filename for the current instance.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current instance is in read-mode.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the specified value is not `null` and is invalid.
+### See Also
+* [`DieFledermausStream.IsValidFilename(System.String)`](#method-public-static-systemboolean-isvalidfilenamesystemstring-value)
+
+--------------------------------------------------
+
+## Method: `public static System.Boolean IsValidFilename(System.String value)`
+Determines if the specified value is a valid value for the [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) property.
+* `value`: The value to set.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `value` is a valid filename; `false` if `value` has a length of 0, has a length greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters between `\u0000` and `\u001f` inclusive, or between `\u007f` and `\u009f` inclusive), contains only whitespace, or is "." or ".." (the "current directory" and "parent directory" identifiers).
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`value` is `null`.
 
 --------------------------------------------------
 
@@ -305,10 +443,31 @@ Always.
 
 --------------------------------------------------
 
-## Method: `public override System.Int32 Read(System.Byte[] array, System.Int32 offset, System.Int32 count)`
+## Method: `public void LoadData()`
+Attempts to pre-load the data in the current instance, and test whether [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is set to the correct value if the current stream is encrypted and to decrypt [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) if [`DieFledermausStream.EncryptFilename`](#property-systemboolean-encryptfilename--get-set-) is `true`.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current stream is in write-mode.
+
+##### [`CryptographicException`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.cryptographicexception.aspx)
+[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value.
+
+##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
+The stream contains invalid data.
+
+##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
+An I/O error occurred.
+
+--------------------------------------------------
+
+## Method: `public override System.Int32 Read(System.Byte[] buffer, System.Int32 offset, System.Int32 count)`
 Reads from the stream into the specified array.
-* `array`: The array containing the bytes to write.
-* `offset`: The index in `array` at which copying begins.
+* `buffer`: The array containing the bytes to write.
+* `offset`: The index in `buffer` at which copying begins.
 * `count`: The maximum number of bytes to read.
 
 **Returns:**  Type [`Int32`](https://msdn.microsoft.com/en-us/library/system.int32.aspx): The number of bytes which were read.
@@ -318,19 +477,22 @@ Reads from the stream into the specified array.
 The current stream is closed.
 
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-The current stream does not support reading.
+The current stream is in write-mode.
 
 ##### [`CryptographicException`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.cryptographicexception.aspx)
 [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
-`array` is `null`.
+`buffer` is `null`.
 
 ##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
 `offset` or `count` is less than 0.
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
-`offset` plus `count` is greater than the length of `array`.
+`offset` plus `count` is greater than the length of `buffer`.
+
+##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
+The stream contains invalid data.
 
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
@@ -347,17 +509,17 @@ Reads a single byte from the stream.
 The current stream is closed.
 
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-The current stream does not support reading.
+The current stream is in write-mode.
 
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
 
 --------------------------------------------------
 
-## Method: `public override void Write(System.Byte[] array, System.Int32 offset, System.Int32 count)`
+## Method: `public override void Write(System.Byte[] buffer, System.Int32 offset, System.Int32 count)`
 Writes the specified byte array into the stream.
-* `array`: The array containing the bytes to write.
-* `offset`: The index in `array` at which writing begins.
+* `buffer`: The array containing the bytes to write.
+* `offset`: The index in `buffer` at which writing begins.
 * `count`: The number of bytes to write.
 
 ### Exceptions
@@ -365,16 +527,16 @@ Writes the specified byte array into the stream.
 The current stream is closed.
 
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-The current stream does not support writing.
+The current stream is in read-mode.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
-`array` is `null`.
+`buffer` is `null`.
 
 ##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
 `offset` or `count` is less than 0.
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
-`offset` plus `count` is greater than the length of `array`.
+`offset` plus `count` is greater than the length of `buffer`.
 
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
@@ -393,7 +555,7 @@ Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cry
 --------------------------------------------------
 
 # Type: `public enum DieFledermaus.MausEncryptionFormat`
-Gets the encryption format.
+Options indicating the format used to encrypt the DieFledermaus stream.
 
 --------------------------------------------------
 
@@ -404,3 +566,18 @@ The DieFledermaus stream is not encrypted.
 
 ## `MausEncryptionFormat.Aes = 1`
 The DieFledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
+
+--------------------------------------------------
+
+# Type: `public enum DieFledermaus.MausCompressionFormat`
+Options indicating the format used to compress the DieFledermaus stream.
+
+--------------------------------------------------
+
+## `MausCompressionFormat.Deflate = 0`
+The file is DEFLATE-compressed.
+
+--------------------------------------------------
+
+## `MausCompressionFormat.None = 1`
+The file is not compressed.
