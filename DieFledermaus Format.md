@@ -6,7 +6,7 @@ Version 0.94
 * Byte order: little-endian
 * Signing form: two's complement
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Three versions are defined for use: 0.92 (depreciated), 0.93 (depreciated), and 0.94.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. 0.94 is the minimum defined and supported version number.
 
 Terminology
 -----------
@@ -17,7 +17,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Structure
 ---------
-Any encoder or decoder must support version 0.94 at minimum. A decoder may support versions 0.92 and/or 0.93, but this is optional. An encoder should not support versions 0.92 or 0.93. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version.
+Any encoder or decoder must support version 0.94 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder which only supports one version for encoding should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless specified otherwise by the user.
 
@@ -51,18 +51,9 @@ If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it shou
 
 A decoder must not attempt to decode an archive if it finds any unexpected or unknown values in the **Format** field; that doesn't make sense. It should, however, attempt to decode any *known* format, regardless of the file's version number.
 
-#### Version 0.93
-In version 0.93, **Format** was an unsigned 64-bit value. Only the bits 8 and 9 (in LSB-0 order) were used, and four values were defined:
- - `0x000` - DEFLATE compressed, no encryption.
- - `0x100` - DEFLATE compressed, AES-256 encryption.
- - `0x200` - DEFLATE compressed, AES-128 encryption.
- - `0x300` - DEFLATE compressed, AES-192 encryption.
-
-Version 0.92 did not have the **Format** field, and only supported DEFLATE compression with no encryption.
-
 Encryption
 ----------
-Starting with version 0.93, DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. Both text-based passwords and raw binary keys are supported. An encoder may use only text-based passwords without any options for setting binary keys, but a decoder must allow both passwords and binary keys.
+DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. Both text-based passwords and raw binary keys are supported. An encoder may use only text-based passwords without any options for setting binary keys, but a decoder must allow both passwords and binary keys.
 
 An encoder should use 256-bit keys, as they are the most secure. A decoder must be able to decode all key sizes, of course.
 

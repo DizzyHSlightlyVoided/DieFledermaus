@@ -54,7 +54,7 @@ namespace DieFledermaus
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 94, _minVersionShort = 92;
+        private const ushort _versionShort = 94, _minVersionShort = 94;
         private const float _versionDiv = 100;
 
         private Stream _baseStream;
@@ -958,7 +958,6 @@ namespace DieFledermaus
         }
         #endregion
 
-        private const byte IdAes256 = 1, IdAes128 = 2, IdAes192 = 3;
         private const int _blockByteCtAes = 16;
         private const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
         private const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
@@ -1006,43 +1005,6 @@ namespace DieFledermaus
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                if (version == 93)
-                {
-                    long options = reader.ReadInt64();
-                    byte format = (byte)options;
-                    if (format != 0)
-                        throw new NotSupportedException(TextResources.FormatUnknown);
-                    byte encryption = (byte)(options >> 8);
-
-                    switch (encryption)
-                    {
-                        case 0:
-                            _encFmt = MausEncryptionFormat.None;
-                            break;
-                        case IdAes256:
-                            _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = _blockByteCtAes;
-                            _setKeySizes(_keyBitAes256);
-                            break;
-                        case IdAes128:
-                            _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = _blockByteCtAes;
-                            _setKeySizes(_keyBitAes128);
-                            break;
-                        case IdAes192:
-                            _encFmt = MausEncryptionFormat.Aes;
-                            _blockByteCount = _blockByteCtAes;
-                            _setKeySizes(_keyBitAes192);
-                            break;
-                        default:
-                            throw new NotSupportedException(TextResources.FormatUnknown);
-                    }
-
-                    options &= ~0xFFFF;
-                    if (options != 0)
-                        throw new NotSupportedException(TextResources.FormatUnknown);
-                }
-                else if (version > 93)
                 {
                     bool gotFormat = false, gotEnc = false;
 
