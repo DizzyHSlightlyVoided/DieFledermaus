@@ -121,14 +121,11 @@ namespace DieFledermaus.Cli
             encSaveKey.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(encSaveKey, NoEntryExtract);
 
-            bool _failed;
-
             ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite,
                 encAes, encKey, encKey64, encKeyFile, encSaveKey };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
-                _failed = false;
                 archiveFile.IsSet = true;
                 archiveFile.Value = args[0];
                 extract.IsSet = true;
@@ -136,25 +133,33 @@ namespace DieFledermaus.Cli
             else
             {
                 using (ClParser parser = new ClParser(Array.IndexOf(clParams, entryFile), clParams))
-                    _failed = parser.Parse(args);
+                {
+                    if (!parser.Parse(args))
+                    {
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
+                    }
+                }
             }
             bool acting = false;
 
             bool hasEncryptionOptions = (encKey.IsSet || encKey64.IsSet || encKeyFile.IsSet || encPassword.IsSet || encSaveKey.IsSet);
 
-            if (!_failed && args.Length > 0)
+            if (args.Length > 0)
             {
                 if (extract.IsSet)
                 {
                     if (!archiveFile.IsSet)
                     {
                         Console.Error.WriteLine(TextResources.ExtractNoArchive);
-                        _failed = true;
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
                     }
                     else if (!File.Exists(archiveFile.Value))
                     {
                         Console.Error.WriteLine(TextResources.FileNotFound, archiveFile.Value);
-                        _failed = true;
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
                     }
                     else acting = true;
                 }
@@ -163,30 +168,35 @@ namespace DieFledermaus.Cli
                     if (!entryFile.IsSet)
                     {
                         Console.Error.WriteLine(TextResources.CreateNoEntry);
-                        _failed = true;
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
                     }
                     else if (!encAes.IsSet && hasEncryptionOptions)
                     {
                         Console.Error.WriteLine(TextResources.EncryptionNoEncryption);
-                        _failed = true;
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
                     }
                     else if (encAes.IsSet && !interactive.IsSet && !hasEncryptionOptions)
                     {
                         Console.Error.WriteLine(TextResources.EncryptionNoOpts);
                         Console.Error.WriteLine(TextResources.EncryptionNoOpts2);
-                        _failed = true;
+                        ShowHelp(clParams, false);
+                        return Return(-1, interactive);
                     }
                     else acting = true;
                 }
                 else if (archiveFile.IsSet || entryFile.IsSet || outFile.IsSet)
                 {
                     Console.Error.WriteLine(TextResources.RequireAtLeastOne, "-c, -x");
-                    _failed = true;
+                    ShowHelp(clParams, false);
+                    return Return(-1, interactive);
                 }
                 else if (!help.IsSet)
                 {
                     Console.Error.WriteLine(TextResources.RequireAtLeastOne, "-c, -x, --help");
-                    _failed = true;
+                    ShowHelp(clParams, false);
+                    return Return(-1, interactive);
                 }
             }
 
@@ -195,7 +205,7 @@ namespace DieFledermaus.Cli
             if (encKey.IsSet)
             {
                 if (!TryGetKeyHex(encKey.Value, out key))
-                    _failed = true;
+                    return Return(-1, interactive);
             }
             else if (encKey64.IsSet)
             {
@@ -206,22 +216,30 @@ namespace DieFledermaus.Cli
                 catch
                 {
                     Console.Error.WriteLine(TextResources.EncryptInvalidBase64);
-                    _failed = true;
+                    return Return(-1, interactive);
                 }
             }
             else if (encKeyFile.IsSet)
             {
-                try
+                if (!File.Exists(encKeyFile.Value))
                 {
-                    key = File.ReadAllBytes(encKeyFile.Value);
+                    Console.Error.WriteLine(TextResources.FileNotFound, encKeyFile.Value);
+                    return Return(-1, interactive);
                 }
-                catch (Exception e)
+                else
                 {
-                    Console.Error.WriteLine(e.Message);
+                    try
+                    {
+                        key = File.ReadAllBytes(encKeyFile.Value);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.Error.WriteLine(e.Message);
 #if DEBUG
-                    GoThrow(e);
+                        GoThrow(e);
 #endif
-                    return e.HResult;
+                        return e.HResult;
+                    }
                 }
             }
 
@@ -229,74 +247,19 @@ namespace DieFledermaus.Cli
             {
                 Console.Error.WriteLine(encKeyFile.IsSet ? TextResources.EncryptInvalidFileLength : TextResources.EncryptInvalidKeyLength);
                 Console.Error.WriteLine(TextResources.EncryptKeyLengthAes);
-                _failed = true;
+                return Return(-1, interactive);
             }
 
-            #region Help
-            if (help.IsSet || args.Length == 0 || _failed)
+            if ((help.IsSet && !acting) || args.Length == 0)
             {
-                Console.Write('\t');
-                Console.WriteLine(TextResources.Usage);
+                bool showFull = help.IsSet && !acting;
 
-                StringBuilder commandName = new StringBuilder();
-                if (Type.GetType("Mono.Runtime") != null)
-                    commandName.Append("mono ");
-                commandName.Append(Path.GetFileName(typeof(Program).Assembly.Location));
-
-                Console.WriteLine(TextResources.HelpCompress);
-                Console.WriteLine(" > {0} -cf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpInput);
-                Console.WriteLine();
-                Console.WriteLine(TextResources.HelpDecompress);
-                Console.WriteLine(" > {0} -xf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpOutput);
-                Console.WriteLine();
-                Console.WriteLine(TextResources.HelpHelp);
-                Console.WriteLine(" > {0} --help", commandName);
-                Console.WriteLine();
-
-                if (!_failed && help.IsSet && !acting)
-                {
-                    Console.Write('\t');
-                    Console.WriteLine(TextResources.Parameters);
-
-                    for (int i = 0; i < clParams.Length; i++)
-                    {
-                        var curParam = clParams[i];
-
-                        IEnumerable<string> paramList;
-
-                        if (curParam.TakesValue)
-                        {
-                            paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", curParam.ArgName, ">") }.
-                                Concat(new ArraySegment<string>(curParam.LongNames, 1, curParam.LongNames.Length - 1));
-                        }
-                        else paramList = curParam.LongNames;
-
-                        paramList = paramList.Select((n, index) => "--" + n);
-                        if (curParam.ShortName != '\0')
-                        {
-                            string shortName = "-" + curParam.ShortName;
-
-                            if (curParam.TakesValue)
-                                shortName += " <" + curParam.ArgName + ">";
-
-                            paramList = new string[] { shortName }.Concat(paramList);
-                        }
-
-                        Console.WriteLine(string.Join(", ", paramList));
-                        Console.Write("  ");
-                        Console.WriteLine(curParam.HelpMessage);
-                        Console.WriteLine();
-                    }
-
+                ShowHelp(clParams, showFull);
+                if (showFull)
                     return Return(0, interactive);
-                }
             }
-            #endregion
 
             SecureString ssPassword = null;
-
-            if (_failed)
-                return Return(-1, interactive);
 
             const string mausExt = ".maus";
             const int extLen = 5;
@@ -393,6 +356,10 @@ namespace DieFledermaus.Cli
 
                         using (FileStream outStream = File.Create(outFile.Value))
                             ds.CopyTo(outStream);
+
+                        if (verbose.IsSet)
+                            Console.Write(TextResources.Completed);
+
                         return Return(0, interactive);
                     }
                 }
@@ -401,7 +368,7 @@ namespace DieFledermaus.Cli
                 #region Create
                 using (FileStream fs = File.OpenRead(entryFile.Value))
                 {
-                    MausEncryptionFormat encFormat = MausEncryptionFormat.Aes;
+                    MausEncryptionFormat encFormat = MausEncryptionFormat.None;
                     MausCompressionFormat compFormat = MausCompressionFormat.Deflate;
 
                     if (encAes.IsSet)
@@ -435,6 +402,20 @@ namespace DieFledermaus.Cli
                         key = new byte[DieFledermausStream.GetKeySizes(MausEncryptionFormat.Aes).MaxSize >> 3];
                         using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
                             rng.GetBytes(key);
+                    }
+
+                    using (Stream arStream = File.Create(archiveFile.Value))
+                    using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
+                    {
+                        if (key != null)
+                            ds.Key = key;
+                        else if (encPassword.IsSet)
+                            ds.SetPassword(encPassword.Value);
+                        else if (ssPassword != null)
+                            ds.SetPassword(ssPassword);
+
+                        ds.Filename = Path.GetFileName(entryFile.Value);
+                        fs.CopyTo(ds);
                     }
 
                     if (encSaveKey.IsSet)
@@ -472,23 +453,12 @@ namespace DieFledermaus.Cli
                             Console.WriteLine(TextResources.KeepSecret);
                         }
                     }
-
-                    using (Stream arStream = File.Create(archiveFile.Value))
-                    using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
-                    {
-                        if (key != null)
-                            ds.Key = key;
-                        else if (encPassword.IsSet)
-                            ds.SetPassword(encPassword.Value);
-                        else if (ssPassword != null)
-                            ds.SetPassword(ssPassword);
-
-                        ds.Filename = Path.GetFileName(entryFile.Value);
-                        fs.CopyTo(ds);
-                        return Return(0, interactive);
-                    }
                 }
                 #endregion
+
+                if (verbose.IsSet)
+                    Console.Write(TextResources.Completed);
+                return Return(0, interactive);
             }
             catch (Exception e)
             {
@@ -502,6 +472,64 @@ namespace DieFledermaus.Cli
             {
                 if (ssPassword != null)
                     ssPassword.Dispose();
+            }
+        }
+
+        private static void ShowHelp(ClParam[] clParams, bool showFull)
+        {
+            Console.Write('\t');
+            Console.WriteLine(TextResources.Usage);
+
+            StringBuilder commandName = new StringBuilder();
+            if (Type.GetType("Mono.Runtime") != null)
+                commandName.Append("mono ");
+            commandName.Append(Path.GetFileName(typeof(Program).Assembly.Location));
+
+            Console.WriteLine(TextResources.HelpCompress);
+            Console.WriteLine(" > {0} -cf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpInput);
+            Console.WriteLine();
+            Console.WriteLine(TextResources.HelpDecompress);
+            Console.WriteLine(" > {0} -xf [{1}.maus] [{2}]", commandName, TextResources.HelpArchive, TextResources.HelpOutput);
+            Console.WriteLine();
+            Console.WriteLine(TextResources.HelpHelp);
+            Console.WriteLine(" > {0} --help", commandName);
+            Console.WriteLine();
+
+            if (showFull)
+            {
+                Console.Write('\t');
+                Console.WriteLine(TextResources.Parameters);
+
+                for (int i = 0; i < clParams.Length; i++)
+                {
+                    var curParam = clParams[i];
+
+                    IEnumerable<string> paramList;
+
+                    if (curParam.TakesValue)
+                    {
+                        paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", curParam.ArgName, ">") }.
+                            Concat(new ArraySegment<string>(curParam.LongNames, 1, curParam.LongNames.Length - 1));
+                    }
+                    else paramList = curParam.LongNames;
+
+                    paramList = paramList.Select((n, index) => "--" + n);
+                    if (curParam.ShortName != '\0')
+                    {
+                        string shortName = "-" + curParam.ShortName;
+
+                        if (curParam.TakesValue)
+                            shortName += " <" + curParam.ArgName + ">";
+
+                        paramList = new string[] { shortName }.Concat(paramList);
+                    }
+
+                    Console.WriteLine(string.Join(", ", paramList));
+                    Console.Write("  ");
+                    Console.WriteLine(curParam.HelpMessage);
+                    Console.WriteLine();
+                }
+
             }
         }
 

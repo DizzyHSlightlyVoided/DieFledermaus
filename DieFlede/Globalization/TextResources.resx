@@ -457,4 +457,7 @@
     <value>Renaming to {0}</value>
     <comment>{0} = filename</comment>
   </data>
+  <data name="Completed" xml:space="preserve">
+    <value>All operations completed successfully.</value>
+  </data>
 </root>
