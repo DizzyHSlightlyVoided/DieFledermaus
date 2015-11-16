@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -54,7 +55,7 @@ namespace DieFledermaus
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 94, _minVersionShort = 94;
+        private const ushort _versionShort = 95, _minVersionShort = 94;
         private const float _versionDiv = 100;
 
         private Stream _baseStream;
@@ -449,6 +450,7 @@ namespace DieFledermaus
             _key = FillBuffer(_keySizes.MaxSize >> 3);
             _iv = FillBuffer(_blockByteCount);
             _salt = FillBuffer(_key.Length);
+            _encryptedOptions = new SettableOptions(this);
         }
 
         /// <summary>
@@ -672,25 +674,11 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
-        private bool _encryptName;
+        private SettableOptions _encryptedOptions;
         /// <summary>
-        /// Gets and sets a value indicating whether <see cref="Filename"/> should be encrypted.
+        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current instance is not encrypted.
         /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        public bool EncryptFilename
-        {
-            get { return _encryptName; }
-            set
-            {
-                _ensureCanSetKey();
-                _encryptName = value;
-            }
-        }
+        public SettableOptions EncryptedOptions { get { return _encryptedOptions; } }
 
         private string _filename;
         /// <summary>
@@ -967,8 +955,8 @@ namespace DieFledermaus
 
         private const string _cmpNone = "NK", _cmpDef = "DEF";
         private const string _encAes = "AES";
-        private static readonly byte[] _cmpBNone = Encoding.UTF8.GetBytes(_cmpNone), _cmpBDef = Encoding.UTF8.GetBytes(_cmpDef),
-            _encBAes = Encoding.UTF8.GetBytes(_encAes);
+        private static readonly byte[] _cmpBNone = { (byte)'N', (byte)'K' }, _cmpBDef = { (byte)'D', (byte)'E', (byte)'F' },
+            _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
         private bool _headerGotten;
 
@@ -987,8 +975,9 @@ namespace DieFledermaus
         };
 
         private const string _kFilename = "Name", _kEncFilename = "KName";
-        private static readonly byte[] _bFilename = Encoding.UTF8.GetBytes(_kFilename), _bEncFilename = Encoding.UTF8.GetBytes(_kEncFilename);
+        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bEncFilename = { (byte)'K', (byte)'N', (byte)'a', (byte)'m', (byte)'e' };
 
+        private ushort version = _versionShort;
         private void _getHeader()
         {
 #if NOLEAVEOPEN
@@ -999,126 +988,13 @@ namespace DieFledermaus
             {
                 if (reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidMagicNumber);
-                ushort version = reader.ReadUInt16();
+                version = reader.ReadUInt16();
                 if (version > _versionShort)
                     throw new NotSupportedException(TextResources.VersionTooHigh);
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                {
-                    bool gotFormat = false, gotEnc = false;
-
-                    byte optLen = reader.ReadByte();
-
-                    for (int i = 0; i < optLen; i++)
-                    {
-                        string curForm = GetString(reader);
-
-                        MausCompressionFormat cmpFmt;
-                        if (_formDict.TryGetValue(curForm, out cmpFmt))
-                        {
-                            if (gotFormat)
-                            {
-                                if (_cmpFmt == cmpFmt)
-                                    continue;
-
-                                throw new InvalidDataException(TextResources.FormatBad);
-                            }
-                            gotFormat = true;
-                            _cmpFmt = cmpFmt;
-                            continue;
-                        }
-
-                        MausEncryptionFormat encFmt;
-                        if (_encDict.TryGetValue(curForm, out encFmt))
-                        {
-                            if (gotEnc && _encFmt != encFmt)
-                                throw new InvalidDataException(TextResources.FormatBad);
-                            gotEnc = true;
-                            switch (encFmt)
-                            {
-                                case MausEncryptionFormat.Aes:
-                                    {
-                                        i++;
-                                        if (i >= optLen)
-                                            throw new InvalidDataException(TextResources.FormatBad);
-
-                                        byte[] bytes = GetStringBytes(reader);
-                                        _blockByteCount = _blockByteCtAes;
-                                        int keyBits;
-                                        if (bytes.Length == 3)
-                                        {
-                                            string strVal = Encoding.UTF8.GetString(bytes);
-                                            switch (strVal)
-                                            {
-                                                case _keyStrAes128:
-                                                    keyBits = _keyBitAes128;
-                                                    break;
-                                                case _keyStrAes192:
-                                                    keyBits = _keyBitAes192;
-                                                    break;
-                                                case _keyStrAes256:
-                                                    keyBits = _keyBitAes256;
-                                                    break;
-                                                default:
-                                                    throw new NotSupportedException(TextResources.FormatUnknown);
-                                            }
-                                        }
-                                        else if (bytes.Length == 2)
-                                        {
-                                            keyBits = bytes[0] | (bytes[1] << 8);
-
-                                            switch (keyBits)
-                                            {
-                                                case _keyBitAes128:
-                                                case _keyBitAes192:
-                                                case _keyBitAes256:
-                                                    break;
-                                                default:
-                                                    throw new NotSupportedException(TextResources.FormatUnknown);
-                                            }
-                                        }
-                                        else throw new NotSupportedException(TextResources.FormatUnknown);
-
-                                        _setKeySizes(keyBits);
-
-                                        if (gotEnc && keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
-                                            throw new InvalidDataException(TextResources.FormatBad);
-                                    }
-                                    break;
-                            }
-                            _encFmt = encFmt;
-                            continue;
-                        }
-
-                        if (curForm.Equals(_kFilename, StringComparison.Ordinal))
-                        {
-                            i++;
-                            string filename = GetString(reader);
-
-                            if (_encryptName || (_filename != null && !_filename.Equals(filename, StringComparison.Ordinal)))
-                                throw new InvalidDataException(TextResources.FormatBad);
-
-                            if (!IsValidFilename(filename, false))
-                                throw new InvalidDataException(TextResources.FormatFilename);
-                            continue;
-                        }
-
-                        if (curForm.Equals(_kEncFilename, StringComparison.Ordinal))
-                        {
-                            if (_filename != null)
-                                throw new InvalidDataException(TextResources.FormatBad);
-
-                            _encryptName = true;
-                            continue;
-                        }
-
-                        throw new NotSupportedException(TextResources.FormatUnknown);
-                    }
-
-                    if (_encryptName && _encFmt == MausEncryptionFormat.None)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                }
+                ReadOptions(reader, false);
 
                 _compLength = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -1148,6 +1024,136 @@ namespace DieFledermaus
             }
         }
 
+        bool gotFormat = false, gotEnc = false;
+        private void ReadOptions(BinaryReader reader, bool fromEncrypted)
+        {
+            int optLen = version == _minVersionShort ? reader.ReadByte() : reader.ReadUInt16();
+
+            SettableOptions options = fromEncrypted ? _encryptedOptions : new SettableOptions(this);
+
+            for (int i = 0; i < optLen; i++)
+            {
+                string curForm = GetString(reader);
+
+                MausCompressionFormat cmpFmt;
+                if (_formDict.TryGetValue(curForm, out cmpFmt))
+                {
+                    if (gotFormat)
+                    {
+                        if (_cmpFmt != cmpFmt)
+                            throw new InvalidDataException(TextResources.FormatBad);
+                        continue;
+                    }
+                    else if (fromEncrypted)
+                        options.Add(MausOptionToEncrypt.Compression);
+
+                    gotFormat = true;
+                    _cmpFmt = cmpFmt;
+                    continue;
+                }
+
+                MausEncryptionFormat encFmt;
+                if (_encDict.TryGetValue(curForm, out encFmt))
+                {
+                    if (gotEnc && _encFmt != encFmt)
+                        throw new InvalidDataException(TextResources.FormatBad);
+
+                    _encryptedOptions = options;
+                    gotEnc = true;
+                    switch (encFmt)
+                    {
+                        case MausEncryptionFormat.Aes:
+                            {
+                                CheckAdvance(optLen, ref i);
+
+                                byte[] bytes = GetStringBytes(reader);
+                                _blockByteCount = _blockByteCtAes;
+                                int keyBits;
+                                if (bytes.Length == 3)
+                                {
+                                    string strVal = Encoding.UTF8.GetString(bytes);
+                                    switch (strVal)
+                                    {
+                                        case _keyStrAes128:
+                                            keyBits = _keyBitAes128;
+                                            break;
+                                        case _keyStrAes192:
+                                            keyBits = _keyBitAes192;
+                                            break;
+                                        case _keyStrAes256:
+                                            keyBits = _keyBitAes256;
+                                            break;
+                                        default:
+                                            throw new NotSupportedException(TextResources.FormatUnknown);
+                                    }
+                                }
+                                else if (bytes.Length == 2)
+                                {
+                                    keyBits = bytes[0] | (bytes[1] << 8);
+
+                                    switch (keyBits)
+                                    {
+                                        case _keyBitAes128:
+                                        case _keyBitAes192:
+                                        case _keyBitAes256:
+                                            break;
+                                        default:
+                                            throw new NotSupportedException(TextResources.FormatUnknown);
+                                    }
+                                }
+                                else throw new NotSupportedException(TextResources.FormatUnknown);
+                                if (_keySizes == null)
+                                    _setKeySizes(keyBits);
+                                else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
+                                    throw new InvalidDataException(TextResources.FormatBad);
+                            }
+                            break;
+                    }
+                    _encFmt = encFmt;
+                    continue;
+                }
+
+                if (curForm.Equals(_kFilename, StringComparison.Ordinal))
+                {
+                    CheckAdvance(optLen, ref i);
+
+                    string filename = GetString(reader);
+
+                    if (_filename == null)
+                    {
+                        if (fromEncrypted)
+                            options.Add(MausOptionToEncrypt.Filename);
+                    }
+                    else if (!filename.Equals(_filename, StringComparison.Ordinal))
+                        throw new InvalidDataException(TextResources.FormatBad);
+
+                    if (!IsValidFilename(filename, false))
+                        throw new InvalidDataException(TextResources.FormatFilename);
+                    continue;
+                }
+
+                if (version == _minVersionShort && curForm.Equals(_kEncFilename, StringComparison.Ordinal))
+                {
+                    if (_filename != null)
+                        throw new InvalidDataException(TextResources.FormatBad);
+
+                    options.Add(MausOptionToEncrypt.Filename);
+                    continue;
+                }
+
+                throw new NotSupportedException(TextResources.FormatUnknown);
+            }
+
+            if (_minVersionShort == version && options.Contains(MausOptionToEncrypt.Filename) && _encFmt == MausEncryptionFormat.None)
+                throw new InvalidDataException(TextResources.FormatBad);
+        }
+
+        private static void CheckAdvance(int optLen, ref int i)
+        {
+            if (++i >= optLen)
+                throw new InvalidDataException(TextResources.FormatBad);
+        }
+
         private static string GetString(BinaryReader reader)
         {
             byte[] strBytes = GetStringBytes(reader);
@@ -1172,7 +1178,7 @@ namespace DieFledermaus
 
         /// <summary>
         /// Attempts to pre-load the data in the current instance, and test whether <see cref="Key"/> is set to the correct value
-        /// if the current stream is encrypted and to decrypt <see cref="Filename"/> if <see cref="EncryptFilename"/> is <c>true</c>.
+        /// if the current stream is encrypted and to decrypt any encrypted options.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
@@ -1235,7 +1241,18 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.BadKey);
                 bufferStream.Reset();
 
-                if (_encryptName)
+                if (version > _minVersionShort)
+                {
+#if NOLEAVEOPEN
+                    BinaryReader reader = new BinaryReader(bufferStream);
+#else
+                    using (BinaryReader reader = new BinaryReader(bufferStream, Encoding.UTF8, true))
+#endif
+                    {
+                        ReadOptions(reader, true);
+                    }
+                }
+                else if (_encryptedOptions.Contains(MausOptionToEncrypt.Filename))
                 {
                     string filename;
 #if NOLEAVEOPEN
@@ -1425,135 +1442,133 @@ namespace DieFledermaus
 
             try
             {
-                if (disposing)
+                if (!disposing)
+                    return;
+
+                try
                 {
-                    try
+                    if (_deflateStream == null || _bufferStream == null)
+                        return;
+
+                    if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
                     {
-                        if (_deflateStream == null || _bufferStream == null)
-                            return;
+                        if (_encFmt != MausEncryptionFormat.None && _key == null)
+                            throw new InvalidOperationException(TextResources.KeyNotSet);
 
-                        if (_mode == CompressionMode.Compress && _uncompressedLength != 0)
+                        if (_deflateStream != _bufferStream)
                         {
-                            if (_encFmt != MausEncryptionFormat.None && _key == null)
-                                throw new InvalidOperationException(TextResources.KeyNotSet);
-
-                            if (_deflateStream != _bufferStream)
-                                _deflateStream.Dispose();
-                            _bufferStream.Reset();
+                            _deflateStream.Dispose();
+                            _deflateStream = null;
+                        }
+                        _bufferStream.Reset();
 #if NOLEAVEOPEN
-                            BinaryWriter writer = new BinaryWriter(_baseStream);
+                        BinaryWriter writer = new BinaryWriter(_baseStream);
 #else
-                            using (BinaryWriter writer = new BinaryWriter(_baseStream, Encoding.UTF8, true))
+                        using (BinaryWriter writer = new BinaryWriter(_baseStream, Encoding.UTF8, true))
 #endif
+                        {
+                            writer.Write(_head);
+                            writer.Write(_versionShort);
                             {
-                                writer.Write(_head);
-                                writer.Write(_versionShort);
+                                List<byte[]> formats = new List<byte[]>();
+
+                                if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Filename))
+                                    FormatSetFilename(formats);
+
+                                if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Compression))
+                                    FormatSetCompression(formats);
+
+                                switch (_encFmt)
+                                {
+                                    case MausEncryptionFormat.Aes:
+                                        {
+                                            formats.Add(_encBAes);
+                                            switch (_key.Length)
+                                            {
+                                                case _keyByteAes256:
+                                                    formats.Add(_keyBAes256);
+                                                    break;
+                                                case _keyByteAes192:
+                                                    formats.Add(_keyBAes192);
+                                                    break;
+                                                case _keyByteAes128:
+                                                    formats.Add(_keyBAes128);
+                                                    break;
+                                            }
+                                        }
+                                        break;
+                                }
+
+                                WriteFormats(writer, formats);
+                            }
+
+                            if (_encFmt == MausEncryptionFormat.None)
+                            {
+                                writer.Write(_bufferStream.Length);
+                                writer.Write(_uncompressedLength);
+
+                                _bufferStream.Reset();
+                                byte[] hashChecksum = ComputeHash(_bufferStream);
+                                writer.Write(hashChecksum);
+
+                                _bufferStream.Reset();
+
+                                _bufferStream.CopyTo(_baseStream);
+                            }
+                            else
+                            {
+                                using (QuickBufferStream opts = new QuickBufferStream())
                                 {
                                     List<byte[]> formats = new List<byte[]>();
 
-                                    if (_filename != null)
+                                    foreach (MausOptionToEncrypt opt in _encryptedOptions)
                                     {
-                                        if (_encryptName)
+                                        switch (opt)
                                         {
-                                            formats.Add(_bEncFilename);
+                                            case MausOptionToEncrypt.Filename:
+                                                FormatSetFilename(formats);
+                                                continue;
+                                            case MausOptionToEncrypt.Compression:
+                                                FormatSetCompression(formats);
+                                                continue;
                                         }
-                                        else
-                                        {
-                                            formats.Add(_bFilename);
-                                            formats.Add(Encoding.UTF8.GetBytes(_filename));
-                                        }
                                     }
 
-                                    switch (_cmpFmt)
+                                    using (BinaryWriter formatWriter = new BinaryWriter(opts))
                                     {
-                                        case MausCompressionFormat.None:
-                                            formats.Add(_cmpBNone);
-                                            break;
-                                        default:
-                                            formats.Add(_cmpBDef);
-                                            break;
-                                    }
-
-                                    switch (_encFmt)
-                                    {
-                                        case MausEncryptionFormat.Aes:
-                                            {
-                                                formats.Add(_encBAes);
-                                                switch (_key.Length)
-                                                {
-                                                    case _keyByteAes256:
-                                                        formats.Add(_keyBAes256);
-                                                        break;
-                                                    case _keyByteAes192:
-                                                        formats.Add(_keyBAes192);
-                                                        break;
-                                                    case _keyByteAes128:
-                                                        formats.Add(_keyBAes128);
-                                                        break;
-                                                }
-                                            }
-                                            break;
-                                    }
-
-                                    writer.Write((byte)formats.Count);
-
-                                    for (int i = 0; i < formats.Count; i++)
-                                    {
-                                        byte[] curForm = formats[i];
-                                        writer.Write((byte)curForm.Length);
-                                        writer.Write(curForm);
+                                        WriteFormats(formatWriter, formats);
+                                        _bufferStream.Prepend(opts);
                                     }
                                 }
-                                _bufferStream.Reset();
-                                if (_encFmt == MausEncryptionFormat.None)
-                                {
-                                    writer.Write(_bufferStream.Length);
-                                    writer.Write(_uncompressedLength);
 
-                                    byte[] hashChecksum = ComputeHash(_bufferStream);
-                                    writer.Write(hashChecksum);
+                                using (QuickBufferStream output = Encrypt())
+                                {
+                                    writer.Write(output.Length);
+                                    writer.Write((long)_pkCount);
 
                                     _bufferStream.Reset();
+                                    byte[] hashHmac = ComputeHmac(_bufferStream);
+                                    _baseStream.Write(hashHmac, 0, hashLength);
 
-                                    _bufferStream.CopyTo(_baseStream);
-                                }
-                                else
-                                {
-                                    if (_encryptName && _filename != null)
-                                    {
-                                        byte[] fBytes = Encoding.UTF8.GetBytes(_filename);
-
-                                        _bufferStream.Prepend(new byte[] { (byte)fBytes.Length }.Concat(fBytes).ToArray());
-                                    }
-
-                                    using (QuickBufferStream output = Encrypt())
-                                    {
-                                        writer.Write(output.Length);
-                                        writer.Write((long)_pkCount);
-
-                                        _bufferStream.Reset();
-                                        byte[] hashHmac = ComputeHmac(_bufferStream);
-                                        _baseStream.Write(hashHmac, 0, hashLength);
-
-                                        output.CopyTo(_baseStream);
-                                    }
+                                    output.CopyTo(_baseStream);
                                 }
                             }
-#if NOLEAVEOPEN
-                            writer.Flush();
-#endif
-                            _bufferStream.Close();
                         }
-                        else _deflateStream.Dispose();
-                    }
-                    finally
-                    {
-                        if (!_leaveOpen)
-                            _baseStream.Dispose();
+#if NOLEAVEOPEN
+                        _baseStream.Flush();
+#endif
                     }
                 }
-                else if (_bufferStream != null)
-                    _bufferStream.Dispose();
+                finally
+                {
+                    if (_bufferStream != null)
+                        _bufferStream.Dispose();
+                    if (_deflateStream != null)
+                        _deflateStream.Dispose();
+
+                    if (!_leaveOpen)
+                        _baseStream.Dispose();
+                }
             }
             finally
             {
@@ -1565,12 +1580,271 @@ namespace DieFledermaus
             }
         }
 
+        private void FormatSetFilename(List<byte[]> formats)
+        {
+            if (_filename != null)
+            {
+                formats.Add(_bFilename);
+                formats.Add(Encoding.UTF8.GetBytes(_filename));
+            }
+        }
+
+        private void FormatSetCompression(List<byte[]> formats)
+        {
+            switch (_cmpFmt)
+            {
+                case MausCompressionFormat.None:
+                    formats.Add(_cmpBNone);
+                    break;
+                default:
+                    formats.Add(_cmpBDef);
+                    break;
+            }
+        }
+
+        private static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
+        {
+            writer.Write((ushort)formats.Count);
+
+            for (int i = 0; i < formats.Count; i++)
+            {
+                byte[] curForm = formats[i];
+                writer.Write((byte)curForm.Length);
+                writer.Write(curForm);
+            }
+        }
+
         /// <summary>
         /// Destructor.
         /// </summary>
         ~DieFledermausStream()
         {
             Dispose(false);
+        }
+
+        /// <summary>
+        /// Represents a collection of <see cref="MausOptionToEncrypt"/> options.
+        /// </summary>
+        public class SettableOptions : ICollection<MausOptionToEncrypt>, ICollection
+#if IREADONLY
+            , IReadOnlyCollection<MausOptionToEncrypt>
+#endif
+        {
+            private static readonly HashSet<MausOptionToEncrypt> _allVals = new HashSet<MausOptionToEncrypt>(Enum.GetValues(typeof(MausOptionToEncrypt))
+                .OfType<MausOptionToEncrypt>());
+
+            private HashSet<MausOptionToEncrypt> _set;
+            private DieFledermausStream _stream;
+
+            internal SettableOptions(DieFledermausStream stream)
+            {
+                _stream = stream;
+                _set = new HashSet<MausOptionToEncrypt>();
+            }
+
+            /// <summary>
+            /// Gets the number of elements contained in the collection.
+            /// </summary>
+            public int Count { get { return _set.Count; } }
+
+            /// <summary>
+            /// Gets a value indicating whether the current instance is read-only.
+            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode; <c>false</c> otherwise.
+            /// </summary>
+            /// <remarks>
+            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
+            /// however, 
+            /// </remarks>
+            public bool IsReadOnly
+            {
+                get { return _stream._baseStream == null || _stream._mode == CompressionMode.Decompress; }
+            }
+
+            /// <summary>
+            /// Gets a value indicating whether the current instance is entirely immutable.
+            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
+            /// <c>false</c> otherwise.
+            /// </summary>
+            private bool IsFrozen
+            {
+                get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && (_minVersionShort == _stream.version || _stream._headerGotten)); }
+            }
+            bool ICollection.IsSynchronized { get { return IsFrozen; } }
+
+            /// <summary>
+            /// Adds the specified value to the collection.
+            /// </summary>
+            /// <param name="option">The option to add.</param>
+            /// <returns><c>true</c> if <paramref name="option"/> was successfully added; <c>false</c> if <paramref name="option"/>
+            /// already exists in the collection, or is not a valid <see cref="MausOptionToEncrypt"/> value.</returns>
+            /// <exception cref="NotSupportedException">
+            /// <see cref="IsReadOnly"/> is <c>true</c>.
+            /// </exception>
+            public bool Add(MausOptionToEncrypt option)
+            {
+                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+                return _set.Add(option);
+            }
+
+            void ICollection<MausOptionToEncrypt>.Add(MausOptionToEncrypt item)
+            {
+                Add(item);
+            }
+
+            /// <summary>
+            /// Removes the specified value from the collection.
+            /// </summary>
+            /// <param name="option">The option to remove.</param>
+            /// <returns><c>true</c> if <paramref name="option"/> was found and successfully removed; <c>false</c> otherwise.</returns>
+            /// <exception cref="NotSupportedException">
+            /// <see cref="IsReadOnly"/> is <c>true</c>.
+            /// </exception>
+            public bool Remove(MausOptionToEncrypt option)
+            {
+                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+                return _set.Remove(option);
+            }
+
+            /// <summary>
+            /// Adds all elements in the specified collection to the current instance (excluding duplicates and values already in the current collection).
+            /// </summary>
+            /// <param name="other">A collection containing other values to add.</param>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="other"/> is <c>null</c>.
+            /// </exception>
+            /// <exception cref="NotSupportedException">
+            /// <see cref="IsReadOnly"/> is <c>true</c>.
+            /// </exception>
+            public void AddRange(IEnumerable<MausOptionToEncrypt> other)
+            {
+                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+                _set.UnionWith(other);
+            }
+
+            /// <summary>
+            /// Adds all available values to the collection.
+            /// </summary>
+            /// <exception cref="NotSupportedException">
+            /// <see cref="IsReadOnly"/> is <c>true</c>.
+            /// </exception>
+            public void AddAll()
+            {
+                AddRange(_allVals);
+            }
+
+            /// <summary>
+            /// Removes all elements matching the specified predicate from the list.
+            /// </summary>
+            /// <param name="match">A predicate defining the elements to remove.</param>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="match"/> is <c>null</c>.
+            /// </exception>
+            public void RemoveWhere(Predicate<MausOptionToEncrypt> match)
+            {
+                _set.RemoveWhere(match);
+            }
+
+            /// <summary>
+            /// Removes all elements from the collection.
+            /// </summary>
+            public void Clear()
+            {
+                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+                _set.Clear();
+            }
+
+            /// <summary>
+            /// Determines if the specified value exists in the collection.
+            /// </summary>
+            /// <param name="option">The option to search for in the collection.</param>
+            /// <returns><c>true</c> if <paramref name="option"/> was found; <c>false</c> otherwise.</returns>
+            public bool Contains(MausOptionToEncrypt option)
+            {
+                return _set.Contains(option);
+            }
+
+            /// <summary>
+            /// Copies all elements in the collection to the specified array, starting at the specified index.
+            /// </summary>
+            /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
+            /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="array"/> is <c>null</c>.
+            /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <paramref name="arrayIndex"/> is less than 0.
+            /// </exception>
+            /// <exception cref="ArgumentException">
+            /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
+            /// </exception>
+            public void CopyTo(MausOptionToEncrypt[] array, int arrayIndex)
+            {
+                _set.CopyTo(array, arrayIndex);
+            }
+
+            /// <summary>
+            /// Returns an enumerator which iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator which iterates through the collection.</returns>
+            public IEnumerator<MausOptionToEncrypt> GetEnumerator()
+            {
+                return _set.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            [NonSerialized]
+            private object _syncRoot;
+            object ICollection.SyncRoot
+            {
+                get
+                {
+                    if (_syncRoot == null)
+                        System.Threading.Interlocked.CompareExchange<object>(ref _syncRoot, new object(), null);
+
+                    return _syncRoot;
+                }
+            }
+
+            void ICollection.CopyTo(Array array, int index)
+            {
+                if (array == null) throw new ArgumentNullException(nameof(array));
+                if (array.Rank != 1 || array.GetLowerBound(0) != 0)
+                    throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
+                if (index < 0) throw new ArgumentOutOfRangeException(TextResources.OutOfRangeLessThanZero, index, nameof(index));
+
+                MausOptionToEncrypt[] mArray = array as MausOptionToEncrypt[];
+
+                if (mArray != null)
+                {
+                    _set.CopyTo(mArray, index);
+                    return;
+                }
+
+                try
+                {
+                    object[] oArray = array as object[];
+                    int i = index;
+
+                    if (oArray == null)
+                    {
+                        foreach (MausOptionToEncrypt opt in _set)
+                            mArray.SetValue(opt, i++);
+                    }
+                    else
+                    {
+                        foreach (MausOptionToEncrypt opt in _set)
+                            oArray[i++] = opt;
+                    }
+                }
+                catch (InvalidCastException x)
+                {
+                    throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array), x);
+                }
+            }
         }
     }
 
@@ -1602,5 +1876,20 @@ namespace DieFledermaus
         /// The file is not compressed.
         /// </summary>
         None,
+    }
+
+    /// <summary>
+    /// Indicates values to encrypt.
+    /// </summary>
+    public enum MausOptionToEncrypt
+    {
+        /// <summary>
+        /// Indicates that the filename should be encrypted.
+        /// </summary>
+        Filename,
+        /// <summary>
+        /// Indicates that the compression format should be encrypted.
+        /// </summary>
+        Compression,
     }
 }

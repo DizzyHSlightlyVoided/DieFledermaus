@@ -1,17 +1,21 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 0.94
+Version 0.95
 ------------
 * File Extension: ".maus"
 * Byte order: little-endian
 * Signing form: two's complement
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. 0.94 is the minimum defined and supported version number.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Two version numbers are defined for use: 0.94 (depreciated) and 0.95.
 
 Terminology
 -----------
+* **decompressed file** or **decompressed data:** The file as it originally existed before compression.
+* **compressed file** or **compressed data:** The file as it exists after compression, but before encryption. This is referred to as such even if the compression-mode is *none*.
 * **encoder:** Any application, library, or other software which encodes data to a DieFledermaus stream.
-* **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form. These may, of course, refer to the same software.
+* **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form.
+* **re-encoder:** Any software which functions as both an encoder and a decoder.
+* **length-prefixed string:** In the DieFledermaus format, a sequence of bytes, usually UTF-8 text, which is prefixed by a single unsigned byte indicating the length (not including the length-byte itself). If the length-byte has a value of 0, the length of the string is 256.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -24,25 +28,20 @@ When encoding a file to a DieFledermaus archive, the filename of the DieFlederma
 A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (`6d 41 75 53`)
-2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5d 00` (hex) = integer `93` (decimal) = version 0.93.
+2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5f 00` (hex) = integer `95` (decimal) = version 0.95.
 3. **Format:** An array of length-prefixed strings describing the format.
 3. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
 4. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
 5. **Checksum:** A SHA-512 hash of the decompressed value.
-6. **Data:** The DEFLATE-compressed data itself.
+6. **Data:** The compressed data itself.
 
 ### Format
-The value of **Format** is an array of strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, a single unsigned byte specifying the number of elements in the array.
-
-Each element in the array has the following structure:
-* **Format Item Length:** a single unsigned byte specifying the number of bytes in the item (not counting the **Format Item Length** itself). If the Format Item Length is `00`, the length is 256. In other words, each item in the array has between 1 and 256 bytes inclusive (or between 2 and 257 bytes, counting the length-byte).
-* **Format Item Value:** a string, usually of UTF-8 text.
+The value of **Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer (in version 0.94, it was an unsigned byte) specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
 
 If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
 
 The following values are defined for the default implementation:
 * `Name` (4 bytes) - Indicates that the compressed file has a specified filename. The next element in the array must be used as the filename. Filenames cannot use forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
-* `KName` (5 bytes) - Indicates that the compressed file has a specified filename, and that the filename is encrypted. The filename is concatenated to the beginning of the compressed data to encrypt, and is used to compute the HMAC value. This is only valid if the file itself is encrypted.
 * `NC` (2 bytes) or `NK` (2 bytes) - The contents of the file are not compressed.
 * `DEF` (3 bytes) - The contents of the file are DEFLATE-compressed.
 * `AES` (3 bytes) - The file is AES-encrypted. To indicate the key length, the next element in the array must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
@@ -60,11 +59,18 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 ### Changes to the format
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
 * **Decompressed Length** contains the number of PBKDF2 cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the "Decompressed Length" field must have a value between 0 and 2147474646 inclusive. Since no uncompressed length is specified, the DEFLATE data is simply read to the end.
-* **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the binary key used and the (compressed) plaintext.
+* **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the plaintext to be incrypted.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
  2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
  3. **Encrypted Data:** The encrypted data itself.
+
+The encrypted data contains:
+1. **Encrypted Options:** A second **Options** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename (`Name`). This may contain values which are already present in the unencrypted **Options**, as long as they have the same value. **Encrypted Options** must be prepended to the data before compression, but before the HMAC is calculated.
+2. The **Data** field as it exists when unencrypted; the compressed data.
+
+#### Version 0.94
+In version 0.94, there was no **Encrypted Options** field. Instead, there was only an entry in **Options**, `KName`, for encrypting the filename, which specified that only the encrypted **Filename** was prepended to the **Encrypted Data*
 
 ### Text-based passwords
 Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. (Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document.) For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 interations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).

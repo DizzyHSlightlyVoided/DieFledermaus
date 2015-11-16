@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Net 4.5\Debug\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.5\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_5;COMPLVL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_4_5;COMPLVL;IREADONLY</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.5\Debug\DieFledermaus.XML</DocumentationFile>
@@ -28,7 +28,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Net 4.5\Release\</OutputPath>
     <IntermediateOutputPath>obj\Net 4.5\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;NET_4_5;COMPLVL</DefineConstants>
+    <DefineConstants>TRACE;NET_4_5;COMPLVL;IREADONLY</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Net 4.5\Release\DieFledermaus.XML</DocumentationFile>

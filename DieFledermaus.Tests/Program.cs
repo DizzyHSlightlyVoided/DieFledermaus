@@ -101,7 +101,8 @@ namespace DieFledermaus.Tests
                 ds.SetPassword(passwdSS);
             }
             sw.Stop();
-            ds.EncryptFilename = true;
+            if (ds.EncryptedOptions != null && ds.CanWrite)
+                ds.EncryptedOptions.AddAll();
             Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);
         }
     }
