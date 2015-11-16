@@ -12,7 +12,7 @@ Features
 
 DieFlede
 ========
-* Version 0.0.2.0
+* Version 0.0.3.0
 
 A command-line utility for creating DieFledermaus files. The name is an even worse pun.
 

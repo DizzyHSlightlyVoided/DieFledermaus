@@ -259,15 +259,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Key size must be equal to 128, 192, or 256 bits (16, 24, or 32 bytes)..
-        /// </summary>
-        internal static string EncryptKeyLengthAes {
-            get {
-                return ResourceManager.GetString("EncryptKeyLengthAes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Key size must be equal to {0} bits ({1} bytes)..
         /// </summary>
         internal static string EncryptKeyLengthKnown {

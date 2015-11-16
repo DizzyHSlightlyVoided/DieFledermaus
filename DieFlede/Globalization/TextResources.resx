@@ -435,9 +435,6 @@
   <data name="EncryptionNot" xml:space="preserve">
     <value>File is not encrypted. Skipping options.</value>
   </data>
-  <data name="EncryptKeyLengthAes" xml:space="preserve">
-    <value>Key size must be equal to 128, 192, or 256 bits (16, 24, or 32 bytes).</value>
-  </data>
   <data name="EncryptKeyLengthKnown" xml:space="preserve">
     <value>Key size must be equal to {0} bits ({1} bytes).</value>
     <comment>{0} = bit count, {1} bit count.</comment>
