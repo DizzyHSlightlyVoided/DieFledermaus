@@ -35,6 +35,8 @@ DieFled.exe --help
 
 On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http://www.mono-project.com/) installed.
 
+Bat icon adapted from an icon created by [Marianna Nardella](https://thenounproject.com/term/bat/216021/), and released under the [Creative Commons 3.0 Attribution](http://creativecommons.org/licenses/by/3.0/us/) license.	
+
 Class Library
 =============
 * Version 0.1.0.0
