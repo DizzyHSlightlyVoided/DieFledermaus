@@ -330,9 +330,6 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="EncryptedAlert" xml:space="preserve">
-    <value>File is encrypted and no key or password was specified!</value>
-  </data>
   <data name="EncryptedPrompt1Pwd" xml:space="preserve">
     <value>Enter password</value>
   </data>
@@ -344,10 +341,6 @@
   </data>
   <data name="EncryptedPrompt4KeyFile" xml:space="preserve">
     <value>Enter path to a key file</value>
-  </data>
-  <data name="EncryptionKey" xml:space="preserve">
-    <value>Encryption key: {0} / base64: {1}</value>
-    <comment>{0} = hexadecimal key, {1} = base64 key</comment>
   </data>
   <data name="EncryptionNoEncryption" xml:space="preserve">
     <value>Encryption options are specified, but no encryption is set.</value>
@@ -366,20 +359,8 @@
     <value>Encrypt using AES encryption.</value>
     <comment>Help description.</comment>
   </data>
-  <data name="HelpMKey" xml:space="preserve">
-    <value>Encryption key (hex format)</value>
-    <comment>Help description.</comment>
-  </data>
-  <data name="HelpMKeyBase64" xml:space="preserve">
-    <value>Encryption key (base64)</value>
-    <comment>Help description.</comment>
-  </data>
   <data name="HelpMKeyFile" xml:space="preserve">
     <value>The path to a file containing the encryption key.</value>
-    <comment>Help description.</comment>
-  </data>
-  <data name="HelpMPassword" xml:space="preserve">
-    <value>Encryption password</value>
     <comment>Help description.</comment>
   </data>
   <data name="HelpMSaveKey" xml:space="preserve">
@@ -390,20 +371,8 @@
     <value>base64key</value>
     <comment>Localized parameter name, keep this unique (unless only one order for "base64key/keybase64" makes sense)</comment>
   </data>
-  <data name="PNameKey" xml:space="preserve">
-    <value>key</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
-  <data name="PNameKeyBase64" xml:space="preserve">
-    <value>keybase64</value>
-    <comment>PNameBase64Key	base64key	Localized parameter name, keep this unique (unless only one order for "base64key/keybase64" makes sense)</comment>
-  </data>
   <data name="PNameKeyFile" xml:space="preserve">
     <value>keyfile</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
-  <data name="PNamePassword" xml:space="preserve">
-    <value>password</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="PNameSaveKey" xml:space="preserve">
@@ -430,12 +399,12 @@
     <comment>A quote from Gandalf in "Lord of the Rings."</comment>
   </data>
   <data name="EncryptionNoOpts2" xml:space="preserve">
-    <value>You must set a password, a key, or a file to which the key is saved.</value>
+    <value>You must set a key file or run in interactive mode.</value>
   </data>
   <data name="EncryptionNot" xml:space="preserve">
     <value>File is not encrypted. Skipping options.</value>
   </data>
-  <data name="EncryptKeyLengthKnown" xml:space="preserve">
+  <data name="EncryptKeyLength" xml:space="preserve">
     <value>Key size must be equal to {0} bits ({1} bytes).</value>
     <comment>{0} = bit count, {1} bit count.</comment>
   </data>
@@ -456,5 +425,14 @@
   </data>
   <data name="Completed" xml:space="preserve">
     <value>All operations completed successfully.</value>
+  </data>
+  <data name="EncryptedPrompt5SaveKey" xml:space="preserve">
+    <value>Generate random, save to file</value>
+  </data>
+  <data name="EncryptionSave" xml:space="preserve">
+    <value>Enter filename</value>
+  </data>
+  <data name="PasswordZeroLength" xml:space="preserve">
+    <value>The password must have at least one character.</value>
   </data>
 </root>

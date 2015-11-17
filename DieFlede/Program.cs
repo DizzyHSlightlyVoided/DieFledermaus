@@ -108,14 +108,7 @@ namespace DieFledermaus.Cli
             encAes.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(encAes, NoEntryExtract);
 
-            ClParam encKey = new ClParam(TextResources.HelpMKey, TextResources.PNameKey, '\0', "key", TextResources.PNameKey);
-            ClParam encKey64 = new ClParam(TextResources.HelpMKeyBase64, TextResources.PNameKey, '\0', "keybase64", "base64key",
-                TextResources.PNameKeyBase64, TextResources.PNameBase64Key);
-            encKey64.MutualExclusives.Add(encKey);
             ClParam encKeyFile = new ClParam(TextResources.HelpMKeyFile, TextResources.HelpInput, '\0', "keyfile", TextResources.PNameKeyFile);
-            encKeyFile.MutualExclusives.Add(encKey64);
-            ClParam encPassword = new ClParam(TextResources.HelpMPassword, TextResources.PNamePassword, '\0', "password", TextResources.PNamePassword);
-            encPassword.MutualExclusives.Add(encKeyFile);
 
             ClParam encSaveKey = new ClParam(TextResources.HelpMSaveKey, TextResources.HelpOutput, '\0', "savekey", TextResources.PNameSaveKey);
             encSaveKey.MutualExclusives.Add(extract);
@@ -123,7 +116,7 @@ namespace DieFledermaus.Cli
             extract.OtherMessages.Add(encSaveKey, NoEntryExtract);
 
             ClParam[] clParams = { create, extract, help, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite,
-                encAes, encKey, encKey64, encKeyFile, encSaveKey };
+                encAes, encKeyFile, encSaveKey };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -144,7 +137,7 @@ namespace DieFledermaus.Cli
             }
             bool acting = false;
 
-            bool hasEncryptionOptions = (encKey.IsSet || encKey64.IsSet || encKeyFile.IsSet || encPassword.IsSet || encSaveKey.IsSet);
+            bool hasEncryptionOptions = (encKeyFile.IsSet || encSaveKey.IsSet);
 
             if (args.Length > 0)
             {
@@ -203,24 +196,7 @@ namespace DieFledermaus.Cli
 
             byte[] key = null;
 
-            if (encKey.IsSet)
-            {
-                if (!TryGetKeyHex(encKey.Value, out key))
-                    return Return(-1, interactive);
-            }
-            else if (encKey64.IsSet)
-            {
-                try
-                {
-                    key = Convert.FromBase64String(encKey64.Value);
-                }
-                catch
-                {
-                    Console.Error.WriteLine(TextResources.EncryptInvalidBase64);
-                    return Return(-1, interactive);
-                }
-            }
-            else if (encKeyFile.IsSet)
+            if (encKeyFile.IsSet)
             {
                 if (!File.Exists(encKeyFile.Value))
                 {
@@ -282,7 +258,7 @@ namespace DieFledermaus.Cli
                                 if (interactive.IsSet)
                                 {
                                     Console.WriteLine(TextResources.EncryptionNoOptsExtract);
-                                    if (EncryptionPrompt(ds, ds.EncryptionFormat, out ssPassword))
+                                    if (EncryptionPrompt(ds, ds.EncryptionFormat, null, out key, out ssPassword))
                                         return Return(-4, interactive);
                                     if (ssPassword != null)
                                         ds.SetPassword(ssPassword);
@@ -290,12 +266,11 @@ namespace DieFledermaus.Cli
                                 else
                                 {
                                     Console.Error.WriteLine(TextResources.EncryptionNoOptsExtract);
+                                    Console.Error.WriteLine(TextResources.EncryptionNoOpts2);
                                     return -4;
                                 }
                             }
-                            if (encPassword.IsSet)
-                                ds.SetPassword(encPassword.Value);
-                            else if (key != null)
+                            if (key != null)
                             {
                                 if (!ds.IsValidKeyByteSize(key.Length))
                                 {
@@ -355,7 +330,7 @@ namespace DieFledermaus.Cli
                             }
 
                             if (OverwritePrompt(interactive, overwrite, skipexist, ref outFile.Value))
-                                return Return(-3, interactive);
+                                return -3;
                         }
 
                         using (FileStream outStream = File.Create(outFile.Value))
@@ -382,9 +357,8 @@ namespace DieFledermaus.Cli
                         if (interactive.IsSet && !hasEncryptionOptions)
                         {
                             Console.WriteLine(TextResources.EncryptionNoOpts);
-                            Console.WriteLine(TextResources.EncryptionNoOpts2);
 
-                            if (EncryptionPrompt(null, encFormat, out ssPassword))
+                            if (EncryptionPrompt(null, encFormat, encSaveKey, out key, out ssPassword))
                                 return Return(-4, interactive);
                         }
                     }
@@ -409,28 +383,14 @@ namespace DieFledermaus.Cli
                         }
 
                         if (OverwritePrompt(interactive, overwrite, skipexist, ref archiveFile.Value))
-                            return Return(-3, interactive);
+                            return -3;
                     }
 
-                    if (encAes.IsSet && key == null && !encPassword.IsSet && ssPassword == null)
+                    if (encAes.IsSet && key == null && ssPassword == null)
                     {
                         key = new byte[GetKeyLength(encFormat) >> 3];
                         using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
                             rng.GetBytes(key);
-                    }
-
-                    using (Stream arStream = File.Create(archiveFile.Value))
-                    using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
-                    {
-                        if (key != null)
-                            ds.Key = key;
-                        else if (encPassword.IsSet)
-                            ds.SetPassword(encPassword.Value);
-                        else if (ssPassword != null)
-                            ds.SetPassword(ssPassword);
-
-                        ds.Filename = Path.GetFileName(entryFile.Value);
-                        fs.CopyTo(ds);
                     }
 
                     if (encSaveKey.IsSet)
@@ -458,15 +418,27 @@ namespace DieFledermaus.Cli
                             }
 
                             if (OverwritePrompt(interactive, overwrite, skipexist, ref encSaveKey.Value))
-                                return Return(-3, interactive);
+                                return -3;
                         }
 
                         File.WriteAllBytes(encSaveKey.Value, key);
                         if (verbose.IsSet)
                         {
-                            Console.WriteLine(TextResources.EncryptionSaved, verbose.Value);
+                            Console.WriteLine(TextResources.EncryptionSaved, encSaveKey.Value);
                             Console.WriteLine(TextResources.KeepSecret);
                         }
+                    }
+
+                    using (Stream arStream = File.Create(archiveFile.Value))
+                    using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
+                    {
+                        if (key != null)
+                            ds.Key = key;
+                        else if (ssPassword != null)
+                            ds.SetPassword(ssPassword);
+
+                        ds.Filename = Path.GetFileName(entryFile.Value);
+                        fs.CopyTo(ds);
                     }
                 }
                 #endregion
@@ -579,7 +551,7 @@ namespace DieFledermaus.Cli
         }
 #endif
 
-        private static bool EncryptionPrompt(DieFledermausStream ds, MausEncryptionFormat encFormat, out SecureString ss)
+        private static bool EncryptionPrompt(DieFledermausStream ds, MausEncryptionFormat encFormat, ClParam encSaveKey, out byte[] key, out SecureString ss)
         {
             bool notFound1 = true;
             ss = null;
@@ -591,18 +563,23 @@ namespace DieFledermaus.Cli
                 Console.WriteLine("2. " + TextResources.EncryptedPrompt2KeyHex);
                 Console.WriteLine("3. " + TextResources.EncryptedPrompt3KeyB64);
                 Console.WriteLine("4. " + TextResources.EncryptedPrompt4KeyFile);
-                Console.WriteLine("5. " + TextResources.Cancel);
+                if (ds == null)
+                {
+                    Console.WriteLine("5. " + TextResources.EncryptedPrompt5SaveKey);
+                    Console.WriteLine("6. " + TextResources.Cancel);
+                }
+                else Console.WriteLine("5. " + TextResources.Cancel);
                 Console.Write("> ");
 
                 string line = Console.ReadLine().Trim(' ', '.');
-                byte[] key = null;
                 if (line.Length != 1) continue;
 
                 switch (line[0])
                 {
                     case '1':
                         Console.Write(TextResources.EncryptedPrompt1Pwd + ":");
-
+                        key = null;
+                        ss = new SecureString();
                         ConsoleKeyInfo cKey;
                         do
                         {
@@ -614,11 +591,22 @@ namespace DieFledermaus.Cli
                                     ss.RemoveAt(ss.Length - 1);
                             }
                             else if (cKey.Key != ConsoleKey.Enter)
+                            {
+                                Console.Write("\b \b");
                                 ss.AppendChar(cKey.KeyChar);
+                            }
                         }
                         while (cKey.Key != ConsoleKey.Enter);
                         Console.WriteLine();
                         ss.MakeReadOnly();
+
+                        if (ss.Length == 0)
+                        {
+                            Console.WriteLine(TextResources.PasswordZeroLength);
+                            ss.Dispose();
+                            continue;
+                        }
+
                         if (ds != null)
                         {
                             ds.SetPassword(ss);
@@ -687,7 +675,23 @@ namespace DieFledermaus.Cli
 
                         continue;
                     case '5':
-                        return true;
+                        key = null;
+                        if (ds != null)
+                            return true;
+
+                        Console.Write(TextResources.EncryptionSave + "> ");
+                        encSaveKey.Value = Console.ReadLine();
+                        encSaveKey.IsSet = true;
+
+                        break;
+                    case '6':
+                        if (ds == null)
+                        {
+                            key = null;
+                            return true;
+                        }
+
+                        continue;
                     default:
                         continue;
                 }
@@ -708,6 +712,7 @@ namespace DieFledermaus.Cli
                 }
             }
             while (notFound1);
+            key = null;
             return false;
         }
 
@@ -724,9 +729,9 @@ namespace DieFledermaus.Cli
             {
                 int keyMax = GetKeyLength(encFormat);
 
-                return string.Format(TextResources.EncryptKeyLengthKnown, keyMax, keyMax >> 3);
+                return string.Format(TextResources.EncryptKeyLength, keyMax, keyMax >> 3);
             }
-            else return string.Format(TextResources.EncryptKeyLengthKnown, ds.KeySizes.MaxSize, ds.KeySizes.MaxSize >> 3);
+            else return string.Format(TextResources.EncryptKeyLength, ds.KeySizes.MaxSize, ds.KeySizes.MaxSize >> 3);
         }
 
         private static bool CheckKeyLength(DieFledermausStream ds, MausEncryptionFormat encFormat, byte[] key)
