@@ -111,8 +111,7 @@ namespace DieFledermaus
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
 
-                byte[] randomBytes = FillBuffer(_blockByteCount);
-                cs.Write(randomBytes, 0, randomBytes.Length);
+                cs.Write(alg.IV, 0, alg.IV.Length);
 
                 _bufferStream.CopyTo(cs);
                 cs.FlushFinalBlock();
