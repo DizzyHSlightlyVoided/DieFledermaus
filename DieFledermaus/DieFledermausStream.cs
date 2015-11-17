@@ -1786,9 +1786,14 @@ namespace DieFledermaus
             /// Returns an enumerator which iterates through the collection.
             /// </summary>
             /// <returns>An enumerator which iterates through the collection.</returns>
-            public IEnumerator<MausOptionToEncrypt> GetEnumerator()
+            public Enumerator GetEnumerator()
             {
-                return _set.GetEnumerator();
+                return new Enumerator(this);
+            }
+
+            IEnumerator<MausOptionToEncrypt> IEnumerable<MausOptionToEncrypt>.GetEnumerator()
+            {
+                return GetEnumerator();
             }
 
             IEnumerator IEnumerable.GetEnumerator()
@@ -1843,6 +1848,68 @@ namespace DieFledermaus
                 catch (InvalidCastException x)
                 {
                     throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array), x);
+                }
+            }
+
+            /// <summary>
+            /// An enumerator which iterates through the collection.
+            /// </summary>
+            public struct Enumerator : IEnumerator<MausOptionToEncrypt>
+            {
+                private IEnumerator<MausOptionToEncrypt> _enum;
+
+                internal Enumerator(SettableOptions sOpts)
+                {
+                    _enum = sOpts._set.GetEnumerator();
+                    _current = 0;
+                }
+
+                private MausOptionToEncrypt _current;
+                /// <summary>
+                /// Gets the element at the current position in the enumerator.
+                /// </summary>
+                public MausOptionToEncrypt Current
+                {
+                    get { return _current; }
+                }
+
+                object IEnumerator.Current
+                {
+                    get { return _enum.Current; }
+                }
+
+                /// <summary>
+                /// Disposes of the current instance.
+                /// </summary>
+                public void Dispose()
+                {
+                    if (_enum == null)
+                        return;
+                    _current = 0;
+                    _enum.Dispose();
+                    _enum = null;
+                }
+
+                /// <summary>
+                /// Advances the enumerator to the next position in the collection.
+                /// </summary>
+                /// <returns><c>true</c> if the enumerator was successfully advanced; 
+                /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                public bool MoveNext()
+                {
+                    if (_enum == null) return false;
+                    if (!_enum.MoveNext())
+                    {
+                        Dispose();
+                        return false;
+                    }
+                    _current = _enum.Current;
+                    return true;
+                }
+
+                void IEnumerator.Reset()
+                {
+                    _enum.Reset();
                 }
             }
         }

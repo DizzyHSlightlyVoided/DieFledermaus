@@ -286,6 +286,23 @@ Creates a new instance in write-mode with the specified compression level and en
 
 --------------------------------------------------
 
+## Method: `DieFledermausStream.GetKeySizes(DieFledermaus.MausEncryptionFormat encryptionFormat, out System.Int32 blockBitCount)`
+Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) value indicating the valid key sizes for the specified encryption scheme.
+* `encryptionFormat`: The encryption format to check.
+* `blockBitCount`: When this method returns, contains the number of bits in a single block of encrypted data, or `none` if `encryptionFormat` is [`MausEncryptionFormat.None`](#mausencryptionformatnone--0). This parameter is passed uninitialized.
+
+**Returns:** A [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) value indicating the valid key sizes for `encryptionFormat`, or `null` if `encryptionFormat` is [`MausEncryptionFormat.None`](#mausencryptionformatnone--0)
+
+--------------------------------------------------
+
+## Method: `public static System.Security.Cryptography.KeySizes GetKeySizes(DieFledermaus.MausEncryptionFormat encryptionFormat)`
+Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) value indicating the valid key sizes for the specified encryption scheme.
+* `encryptionFormat`: The encryption format to check.
+
+**Returns:**  Type [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx): A [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) value indicating the valid key sizes for `encryptionFormat`, or `null` if `encryptionFormat` is [`MausEncryptionFormat.None`](#mausencryptionformatnone--0)
+
+--------------------------------------------------
+
 ## Property: `override System.Boolean CanRead { get; }`
 Gets a value indicating whether the current stream supports reading.
 
@@ -325,7 +342,7 @@ In a set operation, the current stream is in read-mode and the stream has alread
 In a set operation, the specified value is `null`.
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
-In a set operation, the specified value is an invalid length according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-).
+In a set operation, the specified value is an invalid length according to [`DieFledermausStream.KeySizes`](#property-override-systemsecuritycryptographykeysizes-keysizes--get-).
 
 --------------------------------------------------
 
@@ -333,7 +350,7 @@ In a set operation, the specified value is an invalid length according to [`DieF
 Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bytes.
 * `byteCount`: The number of bytes to test.
 
-**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `byteCount` is a valid byte count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `byteCount` is invalid, or if the current instance is not encrypted.
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `byteCount` is a valid byte count according to [`DieFledermausStream.KeySizes`](#property-override-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `byteCount` is invalid, or if the current instance is not encrypted.
 
 --------------------------------------------------
 
@@ -341,7 +358,7 @@ Determines whether the specified value is a valid length for [`DieFledermausStre
 Determines whether the specified value is a valid length for [`DieFledermausStream.Key`](#property-systembyte-key--get-set-), in bits.
 * `bitCount`: The number of bits to test.
 
-**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-override-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
 
 --------------------------------------------------
 
@@ -363,7 +380,7 @@ Determines whether the specified value is a valid length for [`DieFledermausStre
 * `bitCount`: The number of bits to test.
 * `encryptionFormat`: The encryption format to test for.
 
-**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `bitCount` is a valid bit count according to [`DieFledermausStream.KeySizes`](#property-override-systemsecuritycryptographykeysizes-keysizes--get-); `false` if `bitCount` is invalid, or if the current instance is not encrypted.
 
 ### Exceptions
 ##### [`InvalidEnumArgumentException`](https://msdn.microsoft.com/en-us/library/system.componentmodel.invalidenumargumentexception.aspx)
@@ -381,15 +398,8 @@ Gets the number of bytes in a single block of encrypted data, or 0 if the curren
 
 --------------------------------------------------
 
-## Property: `System.Boolean EncryptFilename { get; set; }`
-Gets and sets a value indicating whether [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) should be encrypted.
-
-### Exceptions
-##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
-In a set operation, the current instance is disposed.
-
-##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-In a set operation, the current instance is in read-mode.
+## Property: `DieFledermaus.DieFledermausStream.SettableOptions EncryptedOptions { get; }`
+Gets a collection containing options which should be encrypted, or `null` if the current instance is not encrypted.
 
 --------------------------------------------------
 
@@ -505,7 +515,7 @@ Always.
 --------------------------------------------------
 
 ## Method: `public void LoadData()`
-Attempts to pre-load the data in the current instance, and test whether [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is set to the correct value if the current stream is encrypted and to decrypt [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) if [`DieFledermausStream.EncryptFilename`](#property-systemboolean-encryptfilename--get-set-) is `true`.
+Attempts to pre-load the data in the current instance, and test whether [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is set to the correct value if the current stream is encrypted and to decrypt any encrypted options.
 
 ### Exceptions
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
@@ -610,7 +620,140 @@ Releases all unmanaged resources used by the current instance, and optionally re
 
 --------------------------------------------------
 
-## Property: `System.Security.Cryptography.KeySizes KeySizes { get; }`
+# Type: `public class DieFledermaus.DieFledermausStream.SettableOptions`
+Represents a collection of [`MausOptionToEncrypt`](#type-public-enum-diefledermausmausoptiontoencrypt) options.
+
+--------------------------------------------------
+
+## Property: `virtual System.Int32 Count { get; }`
+Gets the number of elements contained in the collection.
+
+--------------------------------------------------
+
+## Property: `virtual System.Boolean IsReadOnly { get; }`
+Gets a value indicating whether the current instance is read-only. Returns `true` if the underlying stream is closed or is in read-mode; `false` otherwise.
+
+### Remarks
+This property indicates that the collection cannot be changed externally. If [`SettableOptions.IsFrozen`](#property-diefledermausdiefledermausstreamsettableoptionsisfrozen) is `false`, however,
+
+--------------------------------------------------
+
+## Method: `public System.Boolean Add(DieFledermaus.MausOptionToEncrypt option)`
+Adds the specified value to the collection.
+* `option`: The option to add.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `option` was successfully added; `false` if `option` already exists in the collection, or is not a valid [`MausOptionToEncrypt`](#type-public-enum-diefledermausmausoptiontoencrypt) value.
+
+### Exceptions
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+[`SettableOptions.IsReadOnly`](#property-virtual-systemboolean-isreadonly--get-) is `true`.
+
+--------------------------------------------------
+
+## Method: `public System.Boolean Remove(DieFledermaus.MausOptionToEncrypt option)`
+Removes the specified value from the collection.
+* `option`: The option to remove.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `option` was found and successfully removed; `false` otherwise.
+
+### Exceptions
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+[`SettableOptions.IsReadOnly`](#property-virtual-systemboolean-isreadonly--get-) is `true`.
+
+--------------------------------------------------
+
+## Method: `public void AddRange(System.Collections.Generic.IEnumerable<DieFledermaus.MausOptionToEncrypt> other)`
+Adds all elements in the specified collection to the current instance (excluding duplicates and values already in the current collection).
+* `other`: A collection containing other values to add.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`other` is `null`.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+[`SettableOptions.IsReadOnly`](#property-virtual-systemboolean-isreadonly--get-) is `true`.
+
+--------------------------------------------------
+
+## Method: `public void AddAll()`
+Adds all available values to the collection.
+
+### Exceptions
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+[`SettableOptions.IsReadOnly`](#property-virtual-systemboolean-isreadonly--get-) is `true`.
+
+--------------------------------------------------
+
+## Method: `public void RemoveWhere(System.Predicate<DieFledermaus.MausOptionToEncrypt> match)`
+Removes all elements matching the specified predicate from the list.
+* `match`: A predicate defining the elements to remove.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`match` is `null`.
+
+--------------------------------------------------
+
+## Method: `public void Clear()`
+Removes all elements from the collection.
+
+--------------------------------------------------
+
+## Method: `public System.Boolean Contains(DieFledermaus.MausOptionToEncrypt option)`
+Determines if the specified value exists in the collection.
+* `option`: The option to search for in the collection.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `option` was found; `false` otherwise.
+
+--------------------------------------------------
+
+## Method: `public void CopyTo(DieFledermaus.MausOptionToEncrypt[] array, System.Int32 arrayIndex)`
+Copies all elements in the collection to the specified array, starting at the specified index.
+* `array`: The array to which the collection will be copied. The array must have zero-based indexing.
+* `arrayIndex`: The index in `array` at which copying begins.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`array` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`arrayIndex` is less than 0.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`arrayIndex` plus [`SettableOptions.Count`](#property-virtual-systemint32-count--get-) is greater than the length of `array`.
+
+--------------------------------------------------
+
+## Method: `public DieFledermaus.DieFledermausStream.SettableOptions.Enumerator GetEnumerator()`
+Returns an enumerator which iterates through the collection.
+
+**Returns:**  Type [`Enumerator`](#type-public-struct-diefledermausdiefledermausstreamsettableoptionsenumerator): An enumerator which iterates through the collection.
+
+--------------------------------------------------
+
+# Type: `public struct DieFledermaus.DieFledermausStream.SettableOptions.Enumerator`
+An enumerator which iterates through the collection.
+
+--------------------------------------------------
+
+## Property: `DieFledermaus.MausOptionToEncrypt Current { get; }`
+Gets the element at the current position in the enumerator.
+
+--------------------------------------------------
+
+## Method: `public void Dispose()`
+Disposes of the current instance.
+
+--------------------------------------------------
+
+## Method: `public System.Boolean MoveNext()`
+Advances the enumerator to the next position in the collection.
+
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if the enumerator was successfully advanced; `false` if the enumerator has passed the end of the collection.
+
+--------------------------------------------------
+
+## Property: `override System.Security.Cryptography.KeySizes KeySizes { get; }`
 Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) object indicating all valid key sizes.
 
 --------------------------------------------------
@@ -642,3 +785,18 @@ The file is DEFLATE-compressed.
 
 ## `MausCompressionFormat.None = 1`
 The file is not compressed.
+
+--------------------------------------------------
+
+# Type: `public enum DieFledermaus.MausOptionToEncrypt`
+Indicates values to encrypt.
+
+--------------------------------------------------
+
+## `MausOptionToEncrypt.Filename = 0`
+Indicates that the filename should be encrypted.
+
+--------------------------------------------------
+
+## `MausOptionToEncrypt.Compression = 1`
+Indicates that the compression format should be encrypted.
