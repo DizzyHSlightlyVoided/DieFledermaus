@@ -290,14 +290,6 @@ namespace DieFledermaus.Cli
             return true;
         }
 
-        private static IEnumerable<ClParam> ConcatParams(IEnumerable<ClParam> paramList, ClParam curParam)
-        {
-            foreach (ClParam cParam in paramList)
-                yield return cParam;
-
-            yield return curParam;
-        }
-
         private bool _disposed;
         public void Dispose()
         {

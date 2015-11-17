@@ -10,7 +10,7 @@ namespace DieFledermaus.Tests
     {
         const int bigBufferLength = 70000;
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
             byte[] bigBuffer = new byte[bigBufferLength];
             for (int i = 0; i < bigBufferLength; i++)
