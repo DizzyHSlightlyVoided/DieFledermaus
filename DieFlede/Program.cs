@@ -587,6 +587,7 @@ namespace DieFledermaus.Cli
 
                             if (cKey.Key == ConsoleKey.Backspace)
                             {
+                                Console.Write(":");
                                 if (ss.Length > 0)
                                     ss.RemoveAt(ss.Length - 1);
                             }
