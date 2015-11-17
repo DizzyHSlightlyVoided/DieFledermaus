@@ -1046,7 +1046,7 @@ namespace DieFledermaus
                         continue;
                     }
                     else if (fromEncrypted)
-                        options.Add(MausOptionToEncrypt.Compression);
+                        options.InternalAdd(MausOptionToEncrypt.Compression);
 
                     gotFormat = true;
                     _cmpFmt = cmpFmt;
@@ -1123,7 +1123,7 @@ namespace DieFledermaus
                     if (_filename == null)
                     {
                         if (fromEncrypted)
-                            options.Add(MausOptionToEncrypt.Filename);
+                            options.InternalAdd(MausOptionToEncrypt.Filename);
                     }
                     else if (!filename.Equals(_filename, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -1138,7 +1138,7 @@ namespace DieFledermaus
                     if (_filename != null)
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    options.Add(MausOptionToEncrypt.Filename);
+                    options.InternalAdd(MausOptionToEncrypt.Filename);
                     continue;
                 }
 
@@ -1686,6 +1686,11 @@ namespace DieFledermaus
             public bool Add(MausOptionToEncrypt option)
             {
                 if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+                return _set.Add(option);
+            }
+
+            internal bool InternalAdd(MausOptionToEncrypt option)
+            {
                 return _set.Add(option);
             }
 
