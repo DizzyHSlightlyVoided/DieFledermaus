@@ -30,13 +30,13 @@ A DieFledermaus stream contains the following fields:
 1. **Magic Number:** "`mAuS`" (`6d 41 75 53`)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5f 00` (hex) = integer `95` (decimal) = version 0.95.
 3. **Format:** An array of length-prefixed strings describing the format.
-3. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
-4. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
-5. **Checksum:** A SHA-512 hash of the decompressed value.
-6. **Data:** The compressed data itself.
+4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
+5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
+6. **Checksum:** A SHA-512 hash of the decompressed value.
+7. **Data:** The compressed data itself.
 
 ### Format
-The value of **Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer (in version 0.94, it was an unsigned byte) specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
+The value of **Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer (8-bit in version 0.94) specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
 
 If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
 
