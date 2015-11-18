@@ -65,7 +65,7 @@ Creates a new instance with the specified mode.
 Creates a new instance in write-mode, with the specified compression and encryption formats.
 * `stream`: The stream containing compressed data.
 * `compressionFormat`: Indicates the format of the stream.
-* `encryptionFormat`: Indicates the format of the encryption.
+* `encryptionFormat`: Indicates the encryption format.
 * `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
 
 ### Exceptions
@@ -91,7 +91,7 @@ Creates a new instance in write-mode, with the specified compression and encrypt
 Creates a new instance in write-mode, with the specified compression and encryption formats.
 * `stream`: The stream containing compressed data.
 * `compressionFormat`: Indicates the format of the stream.
-* `encryptionFormat`: Indicates the format of the encryption.
+* `encryptionFormat`: Indicates the encryption format.
 
 ### Exceptions
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
@@ -113,7 +113,7 @@ Creates a new instance in write-mode, with the specified compression and encrypt
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat, System.Boolean leaveOpen)`
-Creates a new instance in write-mode, with the specified compression and encryption formats.
+Creates a new instance in write-mode, with the specified compression and no encryption.
 * `stream`: The stream containing compressed data.
 * `compressionFormat`: Indicates the format of the stream.
 * `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
@@ -134,7 +134,7 @@ Creates a new instance in write-mode, with the specified compression and encrypt
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausCompressionFormat compressionFormat)`
-Creates a new instance in write-mode, with the specified compression and encryption formats.
+Creates a new instance in write-mode, with the specified compression format and no encryption.
 * `stream`: The stream containing compressed data.
 * `compressionFormat`: Indicates the format of the stream.
 
@@ -156,7 +156,7 @@ Creates a new instance in write-mode, with the specified compression and encrypt
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausEncryptionFormat encryptionFormat, System.Boolean leaveOpen)`
 Creates a new instance in write-mode with the specified encryption format.
 * `stream`: The stream containing compressed data.
-* `encryptionFormat`: Indicates the format of the encryption.
+* `encryptionFormat`: Indicates the encryption format.
 * `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
 
 ### Exceptions
@@ -177,7 +177,7 @@ Creates a new instance in write-mode with the specified encryption format.
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.MausEncryptionFormat encryptionFormat)`
 Creates a new instance in write-mode with the specified encryption format.
 * `stream`: The stream containing compressed data.
-* `encryptionFormat`: Indicates the format of the encryption.
+* `encryptionFormat`: Indicates the encryption format.
 
 ### Exceptions
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
@@ -195,7 +195,7 @@ Creates a new instance in write-mode with the specified encryption format.
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, System.Boolean leaveOpen)`
-Creates a new instance in write-mode with the specified compression level.
+Creates a new instance in write-mode using DEFLATE with the specified compression level.
 * `stream`: The stream to which compressed data will be written.
 * `compressionLevel`: Indicates the compression level of the stream.
 * `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
@@ -216,7 +216,7 @@ Creates a new instance in write-mode with the specified compression level.
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel)`
-Creates a new instance in write-mode with the specified compression level.
+Creates a new instance in write-mode using DEFLATE with the specified compression level.
 * `stream`: The stream to which compressed data will be written.
 * `compressionLevel`: Indicates the compression level of the stream.
 
@@ -236,10 +236,10 @@ Creates a new instance in write-mode with the specified compression level.
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, DieFledermaus.MausEncryptionFormat encryptionFormat, System.Boolean leaveOpen)`
-Creates a new instance in write-mode with the specified compression level and encryption format.
+Creates a new instance in write-mode using DEFLATE with the specified compression level and encryption format.
 * `stream`: The stream to which compressed data will be written.
 * `compressionLevel`: Indicates the compression level of the stream.
-* `encryptionFormat`: Indicates the format of the compression mode.
+* `encryptionFormat`: Indicates the encryption format.
 * `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
 
 ### Exceptions
@@ -262,10 +262,10 @@ Creates a new instance in write-mode with the specified compression level and en
 --------------------------------------------------
 
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, DieFledermaus.MausEncryptionFormat encryptionFormat)`
-Creates a new instance in write-mode with the specified compression level and encryption format.
+Creates a new instance in write-mode using DEFLATE with the specified compression level and encryption format.
 * `stream`: The stream to which compressed data will be written.
 * `compressionLevel`: Indicates the compression level of the stream.
-* `encryptionFormat`: Indicates the format of the encryption.
+* `encryptionFormat`: Indicates the encryption format.
 
 ### Exceptions
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
@@ -620,7 +620,7 @@ Releases all unmanaged resources used by the current instance, and optionally re
 
 --------------------------------------------------
 
-# Type: `public class DieFledermaus.DieFledermausStream.SettableOptions`
+# Type: `public sealed class DieFledermaus.DieFledermausStream.SettableOptions`
 Represents a collection of [`MausOptionToEncrypt`](#type-public-enum-diefledermausmausoptiontoencrypt) options.
 
 --------------------------------------------------
@@ -788,15 +788,20 @@ The file is not compressed.
 
 --------------------------------------------------
 
+## `MausCompressionFormat.Lzma = 2`
+The file is compressed using the Lempel-Ziv-Markov chain algorithm
+
+--------------------------------------------------
+
 # Type: `public enum DieFledermaus.MausOptionToEncrypt`
 Indicates values to encrypt.
 
 --------------------------------------------------
 
 ## `MausOptionToEncrypt.Filename = 0`
-Indicates that the filename should be encrypted.
+Indicates that [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) will be encrypted.
 
 --------------------------------------------------
 
 ## `MausOptionToEncrypt.Compression = 1`
-Indicates that the compression format should be encrypted.
+Indicates that [`DieFledermausStream.CompressionFormat`](#property-diefledermausmauscompressionformat-compressionformat--get-) will be encrypted.

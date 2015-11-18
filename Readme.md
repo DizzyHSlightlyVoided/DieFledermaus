@@ -2,11 +2,11 @@
 =================================
 * Version 0.95
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. The file format is specified in [DieFledermaus Format.md](DieFledermaus Format.md). Two version numbers are defined: 0.94 (depreciated) and 0.95.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)- or [Lempel-Ziv-Markov chain](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. The file format is specified in [DieFledermaus Format.md](DieFledermaus Format.md). Two version numbers are defined: 0.94 (depreciated) and 0.95.
 
 Features
 --------
-* DEFLATE compression. You can also specify that it's not compressed at all.
+* DEFLATE compression, LZMA compression, or no compressoin at all.
 * Storing the filename of the original file.
 * AES encryption, using either a binary key or a password. This includes encrypting the filename.
 
@@ -34,8 +34,6 @@ DieFled.exe --help
 ```
 
 On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http://www.mono-project.com/) installed.
-
-Bat icon adapted from an icon created by [Marianna Nardella](https://thenounproject.com/term/bat/216021/), and released under the [Creative Commons 3.0 Attribution](http://creativecommons.org/licenses/by/3.0/us/) license.	
 
 Class Library
 =============

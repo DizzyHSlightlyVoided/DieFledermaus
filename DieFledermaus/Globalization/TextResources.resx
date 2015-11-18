@@ -185,6 +185,10 @@
   <data name="NotEncrypted" xml:space="preserve">
     <value>The DieFledermaus stream is not currently encrypted.</value>
   </data>
+  <data name="OutOfRange" xml:space="preserve">
+    <value>The specified value must be greater than or equal to {0} and less than or equal to {1}.</value>
+    <comment>{0} = minimum value, {1} = maximum value</comment>
+  </data>
   <data name="OutOfRangeLength" xml:space="preserve">
     <value>The sum of the parameters "{0}" and "{1}" is greater than the length of the specified array.</value>
     <comment>{0} = offset parameter, {1} = count parameter</comment>

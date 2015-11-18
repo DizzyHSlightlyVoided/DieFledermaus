@@ -42,8 +42,9 @@ If no element in **Format** specifies the compression format, the file is DEFLAT
 
 The following values are defined for the default implementation:
 * `Name` (4 bytes) - Indicates that the compressed file has a specified filename. The next element in the array must be used as the filename. Filenames cannot use forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
-* `NC` (2 bytes) or `NK` (2 bytes) - The contents of the file are not compressed.
-* `DEF` (3 bytes) - The contents of the file are DEFLATE-compressed.
+* `NC` (2 bytes) or `NK` (2 bytes) - The file is not compressed.
+* `DEF` (3 bytes) - The file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
+* `LZMA` (4 bytes) - The file is compressed using the [Lempel-Ziv-Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the nature of the implementation, the dictionary size must be less than or equal to 64 megabytes.
 * `AES` (3 bytes) - The file is AES-encrypted. To indicate the key length, the next element in the array must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
 
 If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file, rather than trying to guess what to use, and should clearly inform the user of this error. If a decoder encounters redundant values (i.e. both `NC` and `NK`, or two `Name` items which are each followed by the same filename), the duplicates should be ignored.
@@ -58,7 +59,7 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 
 ### Changes to the format
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
-* **Decompressed Length** contains the number of PBKDF2 cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the "Decompressed Length" field must have a value between 0 and 2147474646 inclusive. Since no uncompressed length is specified, the DEFLATE data is simply read to the end.
+* **Decompressed Length** contains the number of PBKDF2 cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the "Decompressed Length" field must have a value between 0 and 2147474646 inclusive. Since no uncompressed length is specified, the compressed data is simply read to the end.
 * **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the plaintext to be incrypted.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.

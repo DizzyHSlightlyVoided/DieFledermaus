@@ -41,6 +41,8 @@ using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
+using SevenZip;
+using SevenZip.Compression.LZMA;
 
 namespace DieFledermaus
 {
@@ -161,7 +163,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
-        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
@@ -189,7 +191,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
-        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
@@ -211,7 +213,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// Creates a new instance in write-mode, with the specified compression and no encryption.
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
@@ -241,6 +243,7 @@ namespace DieFledermaus
                     _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
                     break;
                 case MausCompressionFormat.None:
+                case MausCompressionFormat.Lzma:
                     _deflateStream = _bufferStream;
                     break;
                 default:
@@ -255,7 +258,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance in write-mode, with the specified compression and encryption formats.
+        /// Creates a new instance in write-mode, with the specified compression format and no encryption.
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
@@ -280,7 +283,7 @@ namespace DieFledermaus
         /// Creates a new instance in write-mode with the specified encryption format.
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
-        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
@@ -305,7 +308,7 @@ namespace DieFledermaus
         /// Creates a new instance in write-mode with the specified encryption format.
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
-        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
@@ -326,7 +329,7 @@ namespace DieFledermaus
 
 #if COMPLVL
         /// <summary>
-        /// Creates a new instance in write-mode with the specified compression level.
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
@@ -367,7 +370,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance in write-mode with the specified compression level.
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
@@ -384,16 +387,16 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
-            : this(stream, compressionLevel, false)
+                : this(stream, compressionLevel, false)
         {
         }
 
         /// <summary>
-        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level and encryption format.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <param name="encryptionFormat">Indicates the format of the compression mode.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
@@ -417,11 +420,11 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance in write-mode with the specified compression level and encryption format.
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level and encryption format.
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <param name="encryptionFormat">Indicates the format of the encryption.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
@@ -700,7 +703,7 @@ namespace DieFledermaus
             get { return _filename; }
             set
             {
-                _checkWritable();
+                _ensureCanWrite();
                 if (value == null || IsValidFilename(value, true))
                     _filename = value;
             }
@@ -954,9 +957,10 @@ namespace DieFledermaus
         private const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
         private static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
-        private const string _cmpNone = "NK", _cmpDef = "DEF";
+        private const string _cmpNone = "NK", _cmpDef = "DEF", _cmpLzma = "LZMA";
         private const string _encAes = "AES";
         private static readonly byte[] _cmpBNone = { (byte)'N', (byte)'K' }, _cmpBDef = { (byte)'D', (byte)'E', (byte)'F' },
+            _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' },
             _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
         private bool _headerGotten;
@@ -967,6 +971,7 @@ namespace DieFledermaus
         {
             { "NC", MausCompressionFormat.None },
             { _cmpNone, MausCompressionFormat.None },
+            { _cmpLzma, MausCompressionFormat.Lzma },
             { _cmpDef, MausCompressionFormat.Deflate }
         };
 
@@ -1199,12 +1204,14 @@ namespace DieFledermaus
         /// </exception>
         public void LoadData()
         {
-            _checkReading();
+            _ensureCanRead();
             lock (_lock)
             {
                 _readData();
             }
         }
+
+        private const int _lzmaMaxDictSize = 1 << 26;
 
         private void _readData()
         {
@@ -1276,6 +1283,29 @@ namespace DieFledermaus
 
             switch (_cmpFmt)
             {
+                case MausCompressionFormat.Lzma:
+                    _deflateStream = _bufferStream;
+                    _bufferStream = new QuickBufferStream();
+                    const int optLen = 5;
+
+                    byte[] opts = new byte[optLen];
+                    if (_deflateStream.Read(opts, 0, optLen) < optLen) throw new EndOfStreamException();
+                    LzmaDecoder decoder = new LzmaDecoder();
+                    decoder.SetDecoderProperties(opts);
+                    if (decoder.DictionarySize < 1 || decoder.DictionarySize > _lzmaMaxDictSize)
+                        throw new InvalidDataException();
+                    try
+                    {
+                        decoder.Code(_deflateStream, _bufferStream, _deflateStream.Length - optLen, -1);
+                    }
+                    catch (DataErrorException)
+                    {
+                        throw new InvalidDataException();
+                    }
+                    _bufferStream.Reset();
+                    _deflateStream.Close();
+                    _deflateStream = _bufferStream;
+                    break;
                 case MausCompressionFormat.None:
                     _deflateStream = _bufferStream;
                     break;
@@ -1342,7 +1372,7 @@ namespace DieFledermaus
         /// </exception>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            _checkReading();
+            _ensureCanRead();
             CheckSegment(buffer, offset, count);
             if (count == 0) return 0;
             lock (_lock)
@@ -1366,7 +1396,7 @@ namespace DieFledermaus
 
         private object _lock = new object();
 
-        private void _checkReading()
+        private void _ensureCanRead()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentWrite);
@@ -1416,13 +1446,13 @@ namespace DieFledermaus
         /// </exception>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            _checkWritable();
+            _ensureCanWrite();
             _deflateStream.Write(buffer, offset, count);
             _headerGotten = true;
             _uncompressedLength += count;
         }
 
-        private void _checkWritable()
+        private void _ensureCanWrite()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
@@ -1468,6 +1498,18 @@ namespace DieFledermaus
             }
         }
 
+        private static readonly CoderPropID[] ids = new CoderPropID[]
+        {
+            CoderPropID.DictionarySize,
+            CoderPropID.PosStateBits,
+            CoderPropID.LitContextBits,
+            CoderPropID.LitPosBits,
+            CoderPropID.NumFastBytes,
+            CoderPropID.Algorithm,
+            CoderPropID.MatchFinder,
+            CoderPropID.EndMarker,
+        };
+
         private void WriteFile()
         {
             if (_deflateStream == null || _bufferStream == null)
@@ -1483,6 +1525,31 @@ namespace DieFledermaus
                     _deflateStream.Dispose();
                     _deflateStream = null;
                 }
+                else if (_cmpFmt == MausCompressionFormat.Lzma)
+                {
+                    _bufferStream.Reset();
+                    _bufferStream = new QuickBufferStream();
+
+                    LzmaEncoder encoder = new LzmaEncoder();
+                    object[] props = new object[]
+                    {
+                        1 << 23,
+                        2,
+                        3,
+                        0,
+                        128,
+                        2,
+                        "BT4",
+                        true,
+                    };
+                    encoder.SetCoderProperties(ids, props);
+
+                    encoder.WriteCoderProperties(_bufferStream);
+                    encoder.Code(_deflateStream, _bufferStream, _deflateStream.Length, -1);
+                    _deflateStream.Dispose();
+                    _deflateStream = null;
+                }
+
                 _bufferStream.Reset();
 #if NOLEAVEOPEN
                 BinaryWriter writer = new BinaryWriter(_baseStream);
@@ -1598,6 +1665,9 @@ namespace DieFledermaus
             {
                 case MausCompressionFormat.None:
                     formats.Add(_cmpBNone);
+                    break;
+                case MausCompressionFormat.Lzma:
+                    formats.Add(_cmpBLzma);
                     break;
                 default:
                     formats.Add(_cmpBDef);
@@ -1951,6 +2021,10 @@ namespace DieFledermaus
         /// The file is not compressed.
         /// </summary>
         None,
+        /// <summary>
+        /// The file is compressed using the Lempel-Ziv-Markov chain algorithm
+        /// </summary>
+        Lzma,
     }
 
     /// <summary>
@@ -1959,11 +2033,11 @@ namespace DieFledermaus
     public enum MausOptionToEncrypt
     {
         /// <summary>
-        /// Indicates that the filename should be encrypted.
+        /// Indicates that <see cref="DieFledermausStream.Filename"/> will be encrypted.
         /// </summary>
         Filename,
         /// <summary>
-        /// Indicates that the compression format should be encrypted.
+        /// Indicates that <see cref="DieFledermausStream.CompressionFormat"/> will be encrypted.
         /// </summary>
         Compression,
     }
