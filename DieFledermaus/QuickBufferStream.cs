@@ -100,7 +100,6 @@ namespace DieFledermaus
         public void Reset()
         {
             _currentBuffer = _firstBuffer;
-            _currentPos = 0;
             _position = 0;
             _reading = true;
         }
@@ -154,24 +153,23 @@ namespace DieFledermaus
             {
                 int bytesToWrite = Math.Min(count, DieFledermausStream.MaxBuffer - _currentBuffer.End);
                 Array.Copy(buffer, offset, _currentBuffer.Data, _currentBuffer.End, bytesToWrite);
-                _currentPos = (_currentBuffer.End += bytesToWrite);
+                _currentBuffer.End += bytesToWrite;
                 offset += bytesToWrite;
                 count -= bytesToWrite;
 
-                if (_currentPos == DieFledermausStream.MaxBuffer)
+                if (_currentBuffer.End == DieFledermausStream.MaxBuffer)
                 {
                     _currentBuffer.Next = new MiniBuffer();
                     _currentBuffer = _currentBuffer.Next;
-                    _currentPos = 0;
                 }
             }
         }
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
             _firstBuffer = _currentBuffer = null;
             _currentPos = 0;
+            base.Dispose(disposing);
         }
 
         internal void Prepend(QuickBufferStream other)
