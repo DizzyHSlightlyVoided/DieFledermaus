@@ -129,7 +129,7 @@ namespace DieFledermaus
                 _baseStream = stream;
                 _getHeader();
             }
-            else throw InvalidEnumException(nameof(compressionMode), (int)compressionMode, typeof(CompressionMode));
+            else throw new InvalidEnumArgumentException(nameof(compressionMode), (int)compressionMode, typeof(CompressionMode));
             _mode = compressionMode;
             _leaveOpen = leaveOpen;
         }
@@ -247,7 +247,7 @@ namespace DieFledermaus
                     _deflateStream = _bufferStream;
                     break;
                 default:
-                    throw InvalidEnumException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
+                    throw new InvalidEnumArgumentException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
             }
 
             _cmpFmt = compressionFormat;
@@ -358,7 +358,7 @@ namespace DieFledermaus
                 case CompressionLevel.Optimal:
                     break;
                 default:
-                    throw InvalidEnumException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
+                    throw new InvalidEnumArgumentException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
             }
 
             _bufferStream = new QuickBufferStream();

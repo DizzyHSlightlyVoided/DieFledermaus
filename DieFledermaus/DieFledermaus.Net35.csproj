@@ -51,7 +51,6 @@
     <Compile Include="7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
     <Compile Include="7zip\ICoder.cs" />
     <Compile Include="DieFledermausStream.cs" />
-    <Compile Include="DieFledermausStream.InvalidEnum.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
