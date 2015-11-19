@@ -1603,7 +1603,7 @@ namespace DieFledermaus
 
                         _bufferStream.Reset();
 
-                        _bufferStream.CopyTo(_baseStream);
+                        _bufferStream.BufferCopyTo(_baseStream);
                     }
                     else
                     {
@@ -1640,7 +1640,7 @@ namespace DieFledermaus
                             byte[] hashHmac = ComputeHmac(_bufferStream);
                             _baseStream.Write(hashHmac, 0, hashLength);
 
-                            output.CopyTo(_baseStream);
+                            output.BufferCopyTo(_baseStream);
                         }
                     }
                 }

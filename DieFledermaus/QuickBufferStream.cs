@@ -44,7 +44,18 @@ namespace DieFledermaus
 
         private class MiniBuffer
         {
-            public byte[] Data = new byte[DieFledermausStream.MaxBuffer];
+            public MiniBuffer()
+            {
+                Data = new byte[DieFledermausStream.MaxBuffer];
+            }
+
+            public MiniBuffer(byte[] buffer)
+            {
+                Data = buffer;
+                End = buffer.Length;
+            }
+
+            public byte[] Data;
             public int End;
             public MiniBuffer Next;
         }
@@ -165,6 +176,21 @@ namespace DieFledermaus
             }
         }
 
+        public void BufferCopyTo(Stream destination)
+        {
+            if (_currentPos != 0)
+            {
+                destination.Write(_currentBuffer.Data, _currentPos, _currentBuffer.End - _currentPos);
+                _currentBuffer = _currentBuffer.Next;
+            }
+
+            while (_currentBuffer != null)
+            {
+                destination.Write(_currentBuffer.Data, 0, _currentBuffer.End);
+                _currentBuffer = _currentBuffer.Next;
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             _firstBuffer = _currentBuffer = null;
@@ -178,6 +204,14 @@ namespace DieFledermaus
             other._currentBuffer.Next = _firstBuffer;
             _firstBuffer = other._firstBuffer;
             Reset();
+        }
+
+        internal void Prepend(byte[] buffer)
+        {
+            _length += buffer.Length;
+            MiniBuffer newFirst = new MiniBuffer(buffer);
+            newFirst.Next = _firstBuffer;
+            _firstBuffer = newFirst;
         }
     }
 }

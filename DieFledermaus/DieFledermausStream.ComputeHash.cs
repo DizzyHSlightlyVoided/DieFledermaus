@@ -28,9 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
+using System;
 using System.IO;
 using System.Security.Cryptography;
-using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
@@ -94,7 +94,7 @@ namespace DieFledermaus
             using (ICryptoTransform transform = alg.CreateDecryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
-                _bufferStream.CopyTo(cs);
+                _bufferStream.BufferCopyTo(cs);
                 cs.FlushFinalBlock();
             }
             output.Reset();
@@ -104,16 +104,18 @@ namespace DieFledermaus
         private QuickBufferStream Encrypt()
         {
             QuickBufferStream output = new QuickBufferStream();
-            output.Write(_salt, 0, _key.Length);
 
             using (SymmetricAlgorithm alg = GetAlgorithm())
             using (ICryptoTransform transform = alg.CreateEncryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+                byte[] iv = alg.IV, firstBuffer = new byte[_key.Length + iv.Length];
+                Array.Copy(_salt, firstBuffer, _key.Length);
+                Array.Copy(iv, 0, firstBuffer, _key.Length, iv.Length);
 
-                cs.Write(alg.IV, 0, alg.IV.Length);
+                output.Prepend(firstBuffer);
 
-                _bufferStream.CopyTo(cs);
+                _bufferStream.BufferCopyTo(cs);
                 cs.FlushFinalBlock();
             }
             output.Reset();
