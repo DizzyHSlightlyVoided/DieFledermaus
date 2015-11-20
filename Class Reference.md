@@ -194,6 +194,90 @@ Creates a new instance in write-mode with the specified encryption format.
 
 --------------------------------------------------
 
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.LzmaDictionarySize dictionarySize, System.Boolean leaveOpen)`
+Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+* `stream`: The stream containing compressed data.
+* `dictionarySize`: Indicates the size of the dictionary, in bytes.
+* `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`dictionarySize` is an integer value less than [`LzmaDictionarySize.MinValue`](#lzmadictionarysizeminvalue--16384) or greater than [`LzmaDictionarySize.MaxValue`](#lzmadictionarysizemaxvalue--67108864).
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.LzmaDictionarySize dictionarySize)`
+Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+* `stream`: The stream containing compressed data.
+* `dictionarySize`: Indicates the size of the dictionary, in bytes.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`dictionarySize` is an integer value less than [`LzmaDictionarySize.MinValue`](#lzmadictionarysizeminvalue--16384) or greater than [`LzmaDictionarySize.MaxValue`](#lzmadictionarysizemaxvalue--67108864).
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.LzmaDictionarySize dictionarySize, DieFledermaus.MausEncryptionFormat encryptionFormat, System.Boolean leaveOpen)`
+Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+* `stream`: The stream containing compressed data.
+* `dictionarySize`: Indicates the size of the dictionary, in bytes.
+* `encryptionFormat`: Indicates the encryption format.
+* `leaveOpen`: `true` to leave open `stream` when the current instance is disposed; `false` to close `stream`.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`dictionarySize` is an integer value less than [`LzmaDictionarySize.MinValue`](#lzmadictionarysizeminvalue--16384) or greater than [`LzmaDictionarySize.MaxValue`](#lzmadictionarysizemaxvalue--67108864).
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
+## Constructor: `public DieFledermausStream(System.IO.Stream stream, DieFledermaus.LzmaDictionarySize dictionarySize, DieFledermaus.MausEncryptionFormat encryptionFormat)`
+Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+* `stream`: The stream containing compressed data.
+* `dictionarySize`: Indicates the size of the dictionary, in bytes.
+* `encryptionFormat`: Indicates the encryption format.
+
+### Exceptions
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`stream` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`dictionarySize` is an integer value less than [`LzmaDictionarySize.MinValue`](#lzmadictionarysizeminvalue--16384) or greater than [`LzmaDictionarySize.MaxValue`](#lzmadictionarysizemaxvalue--67108864).
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`stream` does not support writing.
+
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+`stream` is closed.
+
+--------------------------------------------------
+
 ## Constructor: `public DieFledermausStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, System.Boolean leaveOpen)`
 Creates a new instance in write-mode using DEFLATE with the specified compression level.
 * `stream`: The stream to which compressed data will be written.
@@ -860,3 +944,93 @@ Indicates that [`DieFledermausStream.CreatedTime`](#property-systemnullablet-cre
 
 ## `MausOptionToEncrypt.Comment = 3`
 Indicates that [`DieFledermausStream.Comment`](#property-systemstring-comment--get-set-) will be encrypted.
+
+--------------------------------------------------
+
+# Type: `public enum DieFledermaus.LzmaDictionarySize`
+Options for setting the LZMA dictionary size. A larger value alows a smaller compression size, but results in a higher memory usage when encoding and decoding and a longer encoding time.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Default = 0`
+The default value, [`LzmaDictionarySize.Size8m`](#lzmadictionarysizesize8m--8388608)
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size16k = 16384`
+16 kilobytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size64k = 65536`
+64 kilobytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size1m = 1048576`
+1 megabyte.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size2m = 2097152`
+2 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size3m = 3145728`
+3 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size4m = 4194304`
+4 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size6m = 6291456`
+6 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size8m = 8388608`
+8 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size12m = 12582912`
+12 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size16m = 16777216`
+16 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size24m = 25165824`
+24 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size32m = 33554432`
+32 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size48m = 50331648`
+48 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.Size64m = 67108864`
+64 megabytes.
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.MinValue = 16384`
+The minimum value, equal to [`LzmaDictionarySize.Size16k`](#lzmadictionarysizesize16k--16384)
+
+--------------------------------------------------
+
+## `LzmaDictionarySize.MaxValue = 67108864`
+The maximum value, equal to [`LzmaDictionarySize.Size64m`](#lzmadictionarysizesize64m--67108864).

@@ -329,6 +329,114 @@ namespace DieFledermaus
             _setEncFormat(encryptionFormat);
         }
 
+        /// <summary>
+        /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
+        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, LzmaDictionarySize dictionarySize, bool leaveOpen)
+            : this(stream, MausCompressionFormat.Lzma, leaveOpen)
+        {
+            if (dictionarySize == 0)
+                dictionarySize = LzmaDictionarySize.Size8m;
+            else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize,
+                    string.Format(TextResources.OutOfRange, LzmaDictionarySize.MinValue, LzmaDictionarySize.MaxValue));
+            }
+            _lzmaDictSize = dictionarySize;
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
+        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, LzmaDictionarySize dictionarySize)
+            : this(stream, dictionarySize, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
+        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, LzmaDictionarySize dictionarySize, MausEncryptionFormat encryptionFormat, bool leaveOpen)
+            : this(stream, dictionarySize, leaveOpen)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
+        /// </summary>
+        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
+        /// <param name="encryptionFormat">Indicates the encryption format.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
+        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, LzmaDictionarySize dictionarySize, MausEncryptionFormat encryptionFormat)
+            : this(stream, dictionarySize, false)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
 #if COMPLVL
         /// <summary>
         /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
@@ -1340,6 +1448,7 @@ namespace DieFledermaus
         private const int hashLength = 64, minPkCount = 9001;
         private long _compLength;
         private int _pkCount;
+        private LzmaDictionarySize _lzmaDictSize;
 
         /// <summary>
         /// Attempts to pre-load the data in the current instance, and test whether <see cref="Key"/> is set to the correct value
@@ -1369,8 +1478,6 @@ namespace DieFledermaus
                 _readData();
             }
         }
-
-        private const int _lzmaMaxDictSize = 1 << 26;
 
         private void _readData()
         {
@@ -1451,7 +1558,7 @@ namespace DieFledermaus
                     if (_deflateStream.Read(opts, 0, optLen) < optLen) throw new EndOfStreamException();
                     LzmaDecoder decoder = new LzmaDecoder();
                     decoder.SetDecoderProperties(opts);
-                    if (decoder.DictionarySize < 1 || decoder.DictionarySize > _lzmaMaxDictSize)
+                    if (decoder.DictionarySize < 1 || decoder.DictionarySize > (uint)LzmaDictionarySize.MaxValue)
                         throw new InvalidDataException();
                     try
                     {
@@ -1696,7 +1803,7 @@ namespace DieFledermaus
                 LzmaEncoder encoder = new LzmaEncoder();
                 object[] props = new object[]
                 {
-                        1 << 23,
+                        (int)_lzmaDictSize,
                         2,
                         3,
                         0,
@@ -2265,5 +2372,81 @@ namespace DieFledermaus
         /// Indicates that <see cref="DieFledermausStream.Comment"/> will be encrypted.
         /// </summary>
         Comment,
+    }
+
+    /// <summary>
+    /// Options for setting the LZMA dictionary size.
+    /// A larger value alows a smaller compression size, but results in a higher memory usage when encoding and decoding and a longer encoding time. 
+    /// </summary>
+    public enum LzmaDictionarySize
+    {
+        /// <summary>
+        /// The default value, <see cref="Size8m"/>
+        /// </summary>
+        Default = 0,
+        /// <summary>
+        /// 16 kilobytes.
+        /// </summary>
+        Size16k = 1 << 14,
+        /// <summary>
+        /// 64 kilobytes.
+        /// </summary>
+        Size64k = 1 << 16,
+        /// <summary>
+        /// 1 megabyte.
+        /// </summary>
+        Size1m = 1 << 20,
+        /// <summary>
+        /// 2 megabytes.
+        /// </summary>
+        Size2m = 1 << 21,
+        /// <summary>
+        /// 3 megabytes.
+        /// </summary>
+        Size3m = Size1m + Size2m,
+        /// <summary>
+        /// 4 megabytes.
+        /// </summary>
+        Size4m = 1 << 22,
+        /// <summary>
+        /// 6 megabytes.
+        /// </summary>
+        Size6m = Size3m * 2,
+        /// <summary>
+        /// 8 megabytes.
+        /// </summary>
+        Size8m = 1 << 23,
+        /// <summary>
+        /// 12 megabytes.
+        /// </summary>
+        Size12m = Size6m * 2,
+        /// <summary>
+        /// 16 megabytes.
+        /// </summary>
+        Size16m = 1 << 24,
+        /// <summary>
+        /// 24 megabytes.
+        /// </summary>
+        Size24m = Size12m * 2,
+        /// <summary>
+        /// 32 megabytes.
+        /// </summary>
+        Size32m = 1 << 25,
+        /// <summary>
+        /// 48 megabytes.
+        /// </summary>
+        Size48m = Size24m * 2,
+        /// <summary>
+        /// 64 megabytes.
+        /// </summary>
+        Size64m = 1 << 26,
+        /// <summary>
+        /// The minimum value, equal to <see cref="Size16k"/>
+        /// </summary>
+        MinValue = Size16k,
+        /// <summary>
+        /// The maximum value, equal to <see cref="Size64m"/>.
+        /// </summary>
+        MaxValue = Size64m,
     }
 }
