@@ -30,8 +30,8 @@ A DieFledermaus stream contains the following fields:
 1. **Magic Number:** "`mAuS`" (`6d 41 75 53`)
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5f 00` (hex) = integer `95` (decimal) = version 0.95.
 3. **Format:** An array of length-prefixed strings describing the format.
-4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the DEFLATE stream (that is, the length of the stream *after* compression).
-5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the stream *before* compression. If the DEFLATE stream decodes to a length greater than this value, the extra data is discarded.
+4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
+5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded.
 6. **Checksum:** A SHA-512 hash of the decompressed value.
 7. **Data:** The compressed data itself.
 
@@ -40,14 +40,16 @@ A DieFledermaus stream contains the following fields:
 
 Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for the element; the original element is thus a *parameterized element*.
 
-If no element in **Format** specifies the compression format, the file is DEFLATE-compressed.
+If no element in **Format** specifies the compression format, the decoder must use the DEFLATE algorithm.
 
 The following values are defined for the default implementation:
 * `Name` (4 bytes) - *One parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
-* `NC` (2 bytes) or `NK` (2 bytes) - *No parameters.* Indicates that the file is not compressed.
+* `NK` (2 bytes) - *No parameters.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
 * `DEF` (3 bytes) - *No parameters.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
-* `LZMA` (4 bytes) - *No parameters.* Indicates that the file is compressed using the [Lempel-Ziv-Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the nature of the implementation, the dictionary size must be less than or equal to 64 megabytes.
+* `LZMA` (4 bytes) - *No parameters.* Indicates that the file is compressed using the [Lempel-Ziv-Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size must be less than or equal to 64 megabytes.
 * `AES` (3 bytes) - *One parameter.* The file is AES-encrypted. To indicate the key length, the parameter must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256.
+* `DeL` (4 bytes) - *One parameter.* **De**compressed **L**ength, or 
+**De**komprimierte **L**änge. The parameter is a signed 64-bit integer containing the number of bytes in the uncompressed data. If the archive is not encrypted, this value must be equal to **Decompressed Length**. This value should be included in the **Encrypted Format** array when the archive is encrypted.
 
 If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file, rather than trying to guess what to use, and should clearly inform the user of this error. If a decoder encounters redundant values (i.e. both `NC` and `NK`, or two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 
@@ -69,7 +71,7 @@ When a DieFledermaus archive is encrypted, the following DieFledermaus fields be
  3. **Encrypted Data:** The encrypted data itself.
 
 The encrypted data contains:
-1. **Encrypted Options:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename (`Name`). This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
+1. **Encrypted Format:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename (`Name`). This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 #### Version 0.94
