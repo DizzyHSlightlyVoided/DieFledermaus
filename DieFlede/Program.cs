@@ -260,7 +260,7 @@ namespace DieFledermaus.Cli
                                 {
                                     Console.WriteLine(TextResources.EncryptionNoOptsExtract);
                                     if (EncryptionPrompt(ds, ds.EncryptionFormat, null, out key, out ssPassword))
-                                        return Return(-4, interactive);
+                                        return -4;
                                     if (ssPassword != null)
                                         ds.SetPassword(ssPassword);
                                 }
@@ -391,7 +391,7 @@ namespace DieFledermaus.Cli
                             Console.WriteLine(TextResources.EncryptionNoOpts);
 
                             if (EncryptionPrompt(null, encFormat, encSaveKey, out key, out ssPassword))
-                                return Return(-4, interactive);
+                                return -4;
                         }
                     }
 
