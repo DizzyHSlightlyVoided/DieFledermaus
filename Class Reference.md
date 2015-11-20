@@ -621,6 +621,12 @@ The current stream is closed.
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
 The current stream is in write-mode.
 
+##### [`CryptographicException`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.cryptographicexception.aspx)
+[`DieFledermausStream.Key`](#property-systembyte-key--get-set-) is not set to the correct value. It is safe to attempt to call [`DieFledermausStream.LoadData()`](#method-public-void-loaddata) or [`DieFledermausStream.Read(System.Byte[],System.Int32,System.Int32)`](#method-diefledermausdiefledermausstreamreadsystembytesystemint32systemint32) again if this exception is caught.
+
+##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
+The stream contains invalid data.
+
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
 

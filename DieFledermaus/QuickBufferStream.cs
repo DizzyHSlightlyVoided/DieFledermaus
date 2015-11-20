@@ -182,6 +182,7 @@ namespace DieFledermaus
             {
                 destination.Write(_currentBuffer.Data, _currentPos, _currentBuffer.End - _currentPos);
                 _currentBuffer = _currentBuffer.Next;
+                _currentPos = 0;
             }
 
             while (_currentBuffer != null)
@@ -189,12 +190,17 @@ namespace DieFledermaus
                 destination.Write(_currentBuffer.Data, 0, _currentBuffer.End);
                 _currentBuffer = _currentBuffer.Next;
             }
+
+            _position = _length;
         }
 
         protected override void Dispose(bool disposing)
         {
+            if (_firstBuffer == null)
+                return;
+
             _firstBuffer = _currentBuffer = null;
-            _currentPos = 0;
+            _length = _position = _currentPos = 0;
             base.Dispose(disposing);
         }
 
@@ -203,6 +209,7 @@ namespace DieFledermaus
             _length += other._length;
             other._currentBuffer.Next = _firstBuffer;
             _firstBuffer = other._firstBuffer;
+            other.Dispose();
             Reset();
         }
 

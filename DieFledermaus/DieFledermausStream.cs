@@ -1571,6 +1571,13 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// again if this exception is caught.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
