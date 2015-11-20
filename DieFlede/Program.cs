@@ -248,6 +248,7 @@ namespace DieFledermaus.Cli
                 #region Extract
                 if (extract.IsSet)
                 {
+                    DateTime? cTime, mTime;
                     using (FileStream fs = File.OpenRead(archiveFile.Value))
                     using (DieFledermausStream ds = new DieFledermausStream(fs, CompressionMode.Decompress))
                     {
@@ -339,12 +340,43 @@ namespace DieFledermaus.Cli
                         if (verbose.IsSet)
                             Console.WriteLine(TextResources.Completed);
 
-                        return Return(0, interactive);
+                        cTime = ds.CreatedTime;
+                        mTime = ds.ModifiedTime;
                     }
+
+                    FileInfo fInfo = new FileInfo(outFile.Value);
+
+                    if (cTime.HasValue)
+                    {
+                        try
+                        {
+                            fInfo.CreationTimeUtc = cTime.Value;
+                        }
+                        catch
+                        {
+                            if (verbose.IsSet)
+                                Console.Error.WriteLine(TextResources.TimeCSet);
+                        }
+                    }
+                    if (mTime.HasValue)
+                    {
+                        try
+                        {
+                            fInfo.LastWriteTimeUtc = mTime.Value;
+                        }
+                        catch
+                        {
+                            if (verbose.IsSet)
+                                Console.Error.WriteLine(TextResources.TimeMSet);
+                        }
+                    }
+
+                    return Return(0, interactive);
                 }
                 #endregion
 
                 #region Create
+                FileInfo entryInfo = new FileInfo(entryFile.Value);
                 using (FileStream fs = File.OpenRead(entryFile.Value))
                 {
                     MausEncryptionFormat encFormat = MausEncryptionFormat.None;
@@ -436,6 +468,26 @@ namespace DieFledermaus.Cli
                             ds.Key = key;
                         else if (ssPassword != null)
                             ds.SetPassword(ssPassword);
+
+                        try
+                        {
+                            ds.CreatedTime = entryInfo.CreationTimeUtc;
+                        }
+                        catch
+                        {
+                            if (verbose.IsSet)
+                                Console.WriteLine(TextResources.TimeCGet);
+                        }
+
+                        try
+                        {
+                            ds.ModifiedTime = entryInfo.LastWriteTimeUtc;
+                        }
+                        catch
+                        {
+                            if (verbose.IsSet)
+                                Console.WriteLine(TextResources.TimeMGet);
+                        }
 
                         ds.Filename = Path.GetFileName(entryFile.Value);
                         fs.CopyTo(ds);

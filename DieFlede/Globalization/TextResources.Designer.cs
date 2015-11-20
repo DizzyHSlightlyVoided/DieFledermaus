@@ -844,6 +844,42 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to read file&apos;s creation time..
+        /// </summary>
+        internal static string TimeCGet {
+            get {
+                return ResourceManager.GetString("TimeCGet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to set file&apos;s creation time..
+        /// </summary>
+        internal static string TimeCSet {
+            get {
+                return ResourceManager.GetString("TimeCSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to read file&apos;s last modified time..
+        /// </summary>
+        internal static string TimeMGet {
+            get {
+                return ResourceManager.GetString("TimeMGet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to set file&apos;s last modified time..
+        /// </summary>
+        internal static string TimeMSet {
+            get {
+                return ResourceManager.GetString("TimeMSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DieFlede command-line utility.
         /// </summary>
         internal static string Title {

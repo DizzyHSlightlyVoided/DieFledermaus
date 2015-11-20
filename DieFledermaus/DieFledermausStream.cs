@@ -536,6 +536,47 @@ namespace DieFledermaus
         /// </summary>
         public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
 
+        private DateTime? _timeC;
+        /// <summary>
+        /// Gets and sets the time at which the underlying file was created, or <c>null</c> to specify no creation time.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode.
+        /// </exception>
+        public DateTime? CreatedTime
+        {
+            get { return _timeC; }
+            set
+            {
+                _ensureCanWrite();
+                _timeC = value;
+            }
+        }
+
+        private DateTime? _timeM;
+        /// <summary>
+        /// Gets and sets the time at which the underlying file was last modified prior to being archived,
+        /// or <c>null</c> to specify no modification time.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode.
+        /// </exception>
+        public DateTime? ModifiedTime
+        {
+            get { return _timeM; }
+            set
+            {
+                _ensureCanWrite();
+                _timeM = value;
+            }
+        }
+
         private byte[] _key;
         /// <summary>
         /// Gets and sets the key used to encrypt the DieFledermaus stream.
@@ -963,6 +1004,10 @@ namespace DieFledermaus
             _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' },
             _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
+
+        private const string _kTimeC = "Ers", _kTimeM = "Mod";
+        private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
+
         private bool _headerGotten;
 
         private const int maxLen = 256;
@@ -1144,19 +1189,25 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
 
-                    byte[] buffer = GetStringBytes(reader);
-
-                    if (buffer.Length != sizeof(long))
-                        throw new InvalidDataException(TextResources.FormatBad);
-
-                    long uLen = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24) |
-                        (buffer[4] << 32) | (buffer[5] << 40) | (buffer[6] << 48) | (buffer[7] << 56);
+                    long uLen = GetValueInt64(reader);
 
                     if (uLen <= 0 || (gotULen && uLen != _uncompressedLength))
                         throw new InvalidDataException(TextResources.FormatBad);
 
                     _uncompressedLength = uLen;
                     gotULen = true;
+                    continue;
+                }
+
+                if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
+                {
+                    GetDate(reader, ref _timeC, optLen, ref i);
+                    continue;
+                }
+
+                if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
+                {
+                    GetDate(reader, ref _timeM, optLen, ref i);
                     continue;
                 }
 
@@ -1174,6 +1225,33 @@ namespace DieFledermaus
 
             if (_minVersionShort == version && options.Contains(MausOptionToEncrypt.Filename) && _encFmt == MausEncryptionFormat.None)
                 throw new InvalidDataException(TextResources.FormatBad);
+        }
+
+        private static readonly long maxTicks = DateTime.MaxValue.Ticks;
+
+        private void GetDate(BinaryReader reader, ref DateTime? curTime, int optLen, ref int i)
+        {
+            CheckAdvance(optLen, ref i);
+
+            long value = GetValueInt64(reader);
+
+            if (value < 0 || value > maxTicks)
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            DateTime newVal = new DateTime(value, DateTimeKind.Utc);
+
+            if (curTime.HasValue && curTime.Value != newVal)
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            curTime = newVal;
+        }
+
+        private static long GetValueInt64(BinaryReader reader)
+        {
+            if (reader.ReadByte() != sizeof(long))
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            return reader.ReadInt64();
         }
 
         private static void CheckAdvance(int optLen, ref int i)
@@ -1587,6 +1665,9 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Compression))
                         FormatSetCompression(formats);
 
+                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
+                        FormatSetTimes(formats);
+
                     switch (_encFmt)
                     {
                         case MausEncryptionFormat.Aes:
@@ -1640,13 +1721,14 @@ namespace DieFledermaus
                                 case MausOptionToEncrypt.Compression:
                                     FormatSetCompression(formats);
                                     continue;
+                                case MausOptionToEncrypt.ModTime:
+                                    FormatSetTimes(formats);
+                                    continue;
                             }
                         }
 
                         formats.Add(_bULen);
-                        formats.Add(new byte[] { (byte)_uncompressedLength, (byte)(_uncompressedLength >> 8), (byte)(_uncompressedLength >> 16),
-                            (byte)(_uncompressedLength >> 24), (byte)(_uncompressedLength >> 32), (byte)(_uncompressedLength >> 40),
-                            (byte)(_uncompressedLength >> 48), (byte)(_uncompressedLength >> 56) });
+                        formats.Add(GetBytes(_uncompressedLength));
 
                         using (BinaryWriter formatWriter = new BinaryWriter(opts))
                         {
@@ -1673,6 +1755,12 @@ namespace DieFledermaus
 #endif
         }
 
+        private byte[] GetBytes(long value)
+        {
+            return new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
+                (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) };
+        }
+
         private void FormatSetFilename(List<byte[]> formats)
         {
             if (_filename != null)
@@ -1695,6 +1783,21 @@ namespace DieFledermaus
                 default:
                     formats.Add(_cmpBDef);
                     break;
+            }
+        }
+
+        private void FormatSetTimes(List<byte[]> formats)
+        {
+            if (_timeC.HasValue)
+            {
+                formats.Add(_bTimeC);
+                formats.Add(GetBytes(_timeC.Value.ToUniversalTime().Ticks));
+            }
+
+            if (_timeM.HasValue)
+            {
+                formats.Add(_bTimeM);
+                formats.Add(GetBytes(_timeM.Value.ToUniversalTime().Ticks));
             }
         }
 
@@ -2063,5 +2166,9 @@ namespace DieFledermaus
         /// Indicates that <see cref="DieFledermausStream.CompressionFormat"/> will be encrypted.
         /// </summary>
         Compression,
+        /// <summary>
+        /// Indicates that <see cref="DieFledermausStream.CreatedTime"/> and <see cref="DieFledermausStream.ModifiedTime"/> will be encrypted.
+        /// </summary>
+        ModTime,
     }
 }

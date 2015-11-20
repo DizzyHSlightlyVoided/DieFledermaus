@@ -435,4 +435,16 @@
   <data name="PasswordZeroLength" xml:space="preserve">
     <value>The password must have at least one character.</value>
   </data>
+  <data name="TimeCGet" xml:space="preserve">
+    <value>Unable to read file's creation time.</value>
+  </data>
+  <data name="TimeCSet" xml:space="preserve">
+    <value>Unable to set file's creation time.</value>
+  </data>
+  <data name="TimeMGet" xml:space="preserve">
+    <value>Unable to read file's last modified time.</value>
+  </data>
+  <data name="TimeMSet" xml:space="preserve">
+    <value>Unable to set file's last modified time.</value>
+  </data>
 </root>

@@ -40,6 +40,9 @@ namespace DieFledermaus.Tests
                     ds.Filename = mode.ToString() + format.ToString();
                     Console.Write("Filename: ");
                     Console.WriteLine(ds.Filename);
+                    ds.ModifiedTime = DateTime.UtcNow;
+                    Console.Write("Modified time: ");
+                    Console.WriteLine(ds.ModifiedTime.Value.ToString("o"));
                     if (mode != MausEncryptionFormat.None)
                         SetPasswd(ds);
                     writer.Write(9);
@@ -64,6 +67,8 @@ namespace DieFledermaus.Tests
                     Console.WriteLine(" (Time to decompress: {0}ms)", sw.Elapsed.TotalMilliseconds);
                     Console.Write("Filename: ");
                     Console.WriteLine(ds.Filename);
+                    Console.Write("Modified time: ");
+                    Console.WriteLine(ds.ModifiedTime.Value.ToString("o"));
                     Console.Write("Read number: ");
                     Console.WriteLine(reader.ReadInt32());
                     byte[] readBigBuffer = reader.ReadBytes(bigBufferLength);
@@ -84,7 +89,6 @@ namespace DieFledermaus.Tests
                         }
                     }
                     if (!changed) Console.WriteLine("Array is also the same!");
-
                 }
             }
 
