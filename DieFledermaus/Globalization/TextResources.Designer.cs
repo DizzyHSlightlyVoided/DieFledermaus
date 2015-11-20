@@ -115,6 +115,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The length of a comment must be greater than 0 and less than or equal to 65536..
+        /// </summary>
+        internal static string CommentLength {
+            get {
+                return ResourceManager.GetString("CommentLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current stream is closed..
         /// </summary>
         internal static string CurrentClosed {

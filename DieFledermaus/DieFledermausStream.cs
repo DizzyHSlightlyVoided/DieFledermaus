@@ -61,6 +61,8 @@ namespace DieFledermaus
         private const ushort _versionShort = 95, _minVersionShort = 94;
         private const float _versionDiv = 100;
 
+        private static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
+
         private Stream _baseStream;
         private Stream _deflateStream;
         private QuickBufferStream _bufferStream;
@@ -719,6 +721,33 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
+        private const int _maxComment = 65536;
+
+        private string _comment;
+        /// <summary>
+        /// Gets and sets a comment on the file.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length of either 0 or which is greater than 65536.
+        /// </exception>
+        public string Comment
+        {
+            get { return _comment; }
+            set
+            {
+                _ensureCanWrite();
+                if (value != null && (value.Length <= 0 || value.Length > _maxComment))
+                    throw new ArgumentException(TextResources.CommentLength, nameof(value));
+                _comment = value;
+            }
+        }
+
         private SettableOptions _encryptedOptions;
         /// <summary>
         /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current instance is not encrypted.
@@ -760,7 +789,7 @@ namespace DieFledermaus
                     throw new ArgumentException(TextResources.FilenameLengthZero, nameof(value));
                 return false;
             }
-            if (Encoding.UTF8.GetByteCount(value) > maxLen)
+            if (_textEncoding.GetByteCount(value) > maxLen)
             {
                 if (throwOnInvalid)
                     throw new ArgumentException(TextResources.FilenameLengthLong, nameof(value));
@@ -865,7 +894,7 @@ namespace DieFledermaus
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-            SetPassword(Encoding.UTF8.GetBytes(password));
+            SetPassword(_textEncoding.GetBytes(password));
         }
 
         private void SetPassword(byte[] data)
@@ -918,7 +947,7 @@ namespace DieFledermaus
             {
                 pData = Marshal.SecureStringToGlobalAllocUnicode(password);
                 Marshal.Copy(pData, data, 0, data.Length);
-                bytes = Encoding.UTF8.GetBytes(data);
+                bytes = _textEncoding.GetBytes(data);
                 SetPassword(bytes);
             }
             finally
@@ -1024,8 +1053,9 @@ namespace DieFledermaus
             { _encAes, MausEncryptionFormat.Aes }
         };
 
-        private const string _kFilename = "Name", _kEncFilename = "KName", _kULen = "DeL";
-        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' };
+        private const string _kFilename = "Name", _kEncFilename = "KName", _kULen = "DeL", _kComment = "Kom";
+        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' },
+            _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
         private ushort version = _versionShort;
         private void _getHeader()
@@ -1033,7 +1063,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             BinaryReader reader = new BinaryReader(_baseStream);
 #else
-            using (BinaryReader reader = new BinaryReader(_baseStream, Encoding.UTF8, true))
+            using (BinaryReader reader = new BinaryReader(_baseStream, _textEncoding, true))
 #endif
             {
                 if (reader.ReadInt32() != _head)
@@ -1124,7 +1154,7 @@ namespace DieFledermaus
                                 int keyBits;
                                 if (bytes.Length == 3)
                                 {
-                                    string strVal = Encoding.UTF8.GetString(bytes);
+                                    string strVal = _textEncoding.GetString(bytes);
                                     switch (strVal)
                                     {
                                         case _keyStrAes128:
@@ -1211,6 +1241,35 @@ namespace DieFledermaus
                     continue;
                 }
 
+                if (curForm.Equals(_kComment, StringComparison.Ordinal))
+                {
+                    CheckAdvance(optLen, ref i);
+                    byte[] buffer = GetStringBytes(reader);
+                    if (buffer.Length != 1)
+                        throw new InvalidDataException(TextResources.FormatBad);
+                    int curLen = buffer[0];
+                    if (curLen == 0) curLen = maxLen;
+
+                    List<byte> byteList = new List<byte>(curLen << 8);
+                    curLen--;
+
+                    for (int j = 0; j <= curLen; j++)
+                    {
+                        CheckAdvance(optLen, ref i);
+                        buffer = GetStringBytes(reader);
+                        if (j < curLen && buffer.Length != maxLen)
+                            throw new InvalidDataException(TextResources.FormatBad);
+                        byteList.AddRange(buffer);
+                    }
+
+                    string comment = _textEncoding.GetString(byteList.ToArray());
+                    if (_comment != null && !_comment.Equals(comment, StringComparison.Ordinal))
+                        throw new InvalidDataException(TextResources.FormatBad);
+
+                    _comment = comment;
+                    continue;
+                }
+
                 if (version == _minVersionShort && curForm.Equals(_kEncFilename, StringComparison.Ordinal))
                 {
                     if (_filename != null)
@@ -1264,7 +1323,7 @@ namespace DieFledermaus
         {
             byte[] strBytes = GetStringBytes(reader);
 
-            return Encoding.UTF8.GetString(strBytes);
+            return _textEncoding.GetString(strBytes);
         }
 
         private static byte[] GetStringBytes(BinaryReader reader)
@@ -1354,7 +1413,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
                     BinaryReader reader = new BinaryReader(bufferStream);
 #else
-                    using (BinaryReader reader = new BinaryReader(bufferStream, Encoding.UTF8, true))
+                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
 #endif
                     {
                         ReadOptions(reader, true);
@@ -1366,7 +1425,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
                     BinaryReader reader = new BinaryReader(bufferStream);
 #else
-                    using (BinaryReader reader = new BinaryReader(bufferStream, Encoding.UTF8, true))
+                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
 #endif
                     {
                         filename = GetString(reader);
@@ -1651,7 +1710,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             BinaryWriter writer = new BinaryWriter(_baseStream);
 #else
-            using (BinaryWriter writer = new BinaryWriter(_baseStream, Encoding.UTF8, true))
+            using (BinaryWriter writer = new BinaryWriter(_baseStream, _textEncoding, true))
 #endif
             {
                 writer.Write(_head);
@@ -1667,6 +1726,9 @@ namespace DieFledermaus
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
                         FormatSetTimes(formats);
+
+                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
+                        FormatSetComment(formats);
 
                     switch (_encFmt)
                     {
@@ -1724,6 +1786,9 @@ namespace DieFledermaus
                                 case MausOptionToEncrypt.ModTime:
                                     FormatSetTimes(formats);
                                     continue;
+                                case MausOptionToEncrypt.Comment:
+                                    FormatSetComment(formats);
+                                    continue;
                             }
                         }
 
@@ -1766,7 +1831,7 @@ namespace DieFledermaus
             if (_filename != null)
             {
                 formats.Add(_bFilename);
-                formats.Add(Encoding.UTF8.GetBytes(_filename));
+                formats.Add(_textEncoding.GetBytes(_filename));
             }
         }
 
@@ -1798,6 +1863,25 @@ namespace DieFledermaus
             {
                 formats.Add(_bTimeM);
                 formats.Add(GetBytes(_timeM.Value.ToUniversalTime().Ticks));
+            }
+        }
+
+        private void FormatSetComment(List<byte[]> formats)
+        {
+            if (string.IsNullOrEmpty(_comment))
+                return;
+
+            formats.Add(_bComment);
+            byte[] allBytes = _textEncoding.GetBytes(_comment);
+
+            byte byteLen = (byte)Math.Ceiling((double)allBytes.Length / maxLen);
+
+            formats.Add(new byte[] { byteLen });
+            for (int i = 0; i < allBytes.Length; i += maxLen)
+            {
+                byte[] curBuffer = new byte[Math.Min(maxLen, allBytes.Length - i)];
+                Array.Copy(allBytes, i, curBuffer, 0, curBuffer.Length);
+                formats.Add(curBuffer);
             }
         }
 
@@ -2170,5 +2254,9 @@ namespace DieFledermaus
         /// Indicates that <see cref="DieFledermausStream.CreatedTime"/> and <see cref="DieFledermausStream.ModifiedTime"/> will be encrypted.
         /// </summary>
         ModTime,
+        /// <summary>
+        /// Indicates that <see cref="DieFledermausStream.Comment"/> will be encrypted.
+        /// </summary>
+        Comment,
     }
 }

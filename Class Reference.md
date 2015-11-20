@@ -328,6 +328,30 @@ Gets the compression format of the current instance.
 
 --------------------------------------------------
 
+## Property: `System.Nullable<T> CreatedTime { get; set; }`
+Gets and sets the time at which the underlying file was created, or `null` to specify no creation time.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current stream is closed.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+In a set operation, the current stream is in read-mode.
+
+--------------------------------------------------
+
+## Property: `System.Nullable<T> ModifiedTime { get; set; }`
+Gets and sets the time at which the underlying file was last modified prior to being archived, or `null` to specify no modification time.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current stream is closed.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+In a set operation, the current stream is in read-mode.
+
+--------------------------------------------------
+
 ## Property: `System.Byte[] Key { get; set; }`
 Gets and sets the key used to encrypt the DieFledermaus stream.
 
@@ -395,6 +419,21 @@ Gets the number of bits in a single block of encrypted data, or 0 if the current
 
 ## Property: `System.Int32 BlockByteCount { get; }`
 Gets the number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
+
+--------------------------------------------------
+
+## Property: `System.String Comment { get; set; }`
+Gets and sets a comment on the file.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current instance is in read-mode.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the specified value is not `null`, and has a length of either 0 or which is greater than 65536.
 
 --------------------------------------------------
 
@@ -805,3 +844,13 @@ Indicates that [`DieFledermausStream.Filename`](#property-systemstring-filename-
 
 ## `MausOptionToEncrypt.Compression = 1`
 Indicates that [`DieFledermausStream.CompressionFormat`](#property-diefledermausmauscompressionformat-compressionformat--get-) will be encrypted.
+
+--------------------------------------------------
+
+## `MausOptionToEncrypt.ModTime = 2`
+Indicates that [`DieFledermausStream.CreatedTime`](#property-systemnullablet-createdtime--get-set-) and [`DieFledermausStream.ModifiedTime`](#property-systemnullablet-modifiedtime--get-set-) will be encrypted.
+
+--------------------------------------------------
+
+## `MausOptionToEncrypt.Comment = 3`
+Indicates that [`DieFledermausStream.Comment`](#property-systemstring-comment--get-set-) will be encrypted.
