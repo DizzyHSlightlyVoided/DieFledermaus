@@ -1149,16 +1149,11 @@ namespace DieFledermaus
 
         private const int maxLen = 256;
 
-        private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>()
+        private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>(StringComparer.Ordinal)
         {
             { _cmpNone, MausCompressionFormat.None },
             { _cmpLzma, MausCompressionFormat.Lzma },
             { _cmpDef, MausCompressionFormat.Deflate }
-        };
-
-        private static readonly Dictionary<string, MausEncryptionFormat> _encDict = new Dictionary<string, MausEncryptionFormat>()
-        {
-            { _encAes, MausEncryptionFormat.Aes }
         };
 
         private const string _kFilename = "Name", _kEncFilename = "KName", _kULen = "DeL", _kComment = "Kom";
@@ -1243,64 +1238,53 @@ namespace DieFledermaus
                     continue;
                 }
 
-                MausEncryptionFormat encFmt;
-                if (_encDict.TryGetValue(curForm, out encFmt))
+                if (curForm.Equals(_encAes, StringComparison.Ordinal))
                 {
-                    if (gotEnc && _encFmt != encFmt)
-                        throw new InvalidDataException(TextResources.FormatBad);
-
                     _encryptedOptions = options;
-                    gotEnc = true;
-                    switch (encFmt)
+                    CheckAdvance(optLen, ref i);
+
+                    byte[] bytes = GetStringBytes(reader);
+                    _blockByteCount = _blockByteCtAes;
+                    int keyBits;
+                    if (bytes.Length == 3)
                     {
-                        case MausEncryptionFormat.Aes:
-                            {
-                                CheckAdvance(optLen, ref i);
-
-                                byte[] bytes = GetStringBytes(reader);
-                                _blockByteCount = _blockByteCtAes;
-                                int keyBits;
-                                if (bytes.Length == 3)
-                                {
-                                    string strVal = _textEncoding.GetString(bytes);
-                                    switch (strVal)
-                                    {
-                                        case _keyStrAes128:
-                                            keyBits = _keyBitAes128;
-                                            break;
-                                        case _keyStrAes192:
-                                            keyBits = _keyBitAes192;
-                                            break;
-                                        case _keyStrAes256:
-                                            keyBits = _keyBitAes256;
-                                            break;
-                                        default:
-                                            throw new NotSupportedException(TextResources.FormatUnknown);
-                                    }
-                                }
-                                else if (bytes.Length == 2)
-                                {
-                                    keyBits = bytes[0] | (bytes[1] << 8);
-
-                                    switch (keyBits)
-                                    {
-                                        case _keyBitAes128:
-                                        case _keyBitAes192:
-                                        case _keyBitAes256:
-                                            break;
-                                        default:
-                                            throw new NotSupportedException(TextResources.FormatUnknown);
-                                    }
-                                }
-                                else throw new NotSupportedException(TextResources.FormatUnknown);
-                                if (_keySizes == null)
-                                    _setKeySizes(keyBits);
-                                else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
-                                    throw new InvalidDataException(TextResources.FormatBad);
-                            }
-                            break;
+                        string strVal = _textEncoding.GetString(bytes);
+                        switch (strVal)
+                        {
+                            case _keyStrAes128:
+                                keyBits = _keyBitAes128;
+                                break;
+                            case _keyStrAes192:
+                                keyBits = _keyBitAes192;
+                                break;
+                            case _keyStrAes256:
+                                keyBits = _keyBitAes256;
+                                break;
+                            default:
+                                throw new NotSupportedException(TextResources.FormatUnknown);
+                        }
                     }
-                    _encFmt = encFmt;
+                    else if (bytes.Length == 2)
+                    {
+                        keyBits = bytes[0] | (bytes[1] << 8);
+
+                        switch (keyBits)
+                        {
+                            case _keyBitAes128:
+                            case _keyBitAes192:
+                            case _keyBitAes256:
+                                break;
+                            default:
+                                throw new NotSupportedException(TextResources.FormatUnknown);
+                        }
+                    }
+                    else throw new NotSupportedException(TextResources.FormatUnknown);
+                    if (_keySizes == null)
+                        _setKeySizes(keyBits);
+                    else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
+                        throw new InvalidDataException(TextResources.FormatBad);
+                    gotEnc = true;
+                    _encFmt = MausEncryptionFormat.Aes;
                     continue;
                 }
 
@@ -1844,25 +1828,21 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
 
-                    switch (_encFmt)
+                    if (_encFmt == MausEncryptionFormat.Aes)
                     {
-                        case MausEncryptionFormat.Aes:
-                            {
-                                formats.Add(_encBAes);
-                                switch (_key.Length)
-                                {
-                                    case _keyByteAes256:
-                                        formats.Add(_keyBAes256);
-                                        break;
-                                    case _keyByteAes192:
-                                        formats.Add(_keyBAes192);
-                                        break;
-                                    case _keyByteAes128:
-                                        formats.Add(_keyBAes128);
-                                        break;
-                                }
-                            }
-                            break;
+                        formats.Add(_encBAes);
+                        switch (_key.Length)
+                        {
+                            case _keyByteAes256:
+                                formats.Add(_keyBAes256);
+                                break;
+                            case _keyByteAes192:
+                                formats.Add(_keyBAes192);
+                                break;
+                            case _keyByteAes128:
+                                formats.Add(_keyBAes128);
+                                break;
+                        }
                     }
 
                     WriteFormats(writer, formats);

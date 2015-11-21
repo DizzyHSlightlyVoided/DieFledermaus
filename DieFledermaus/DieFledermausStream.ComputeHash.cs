@@ -72,15 +72,7 @@ namespace DieFledermaus
 
         private SymmetricAlgorithm GetAlgorithm()
         {
-            SymmetricAlgorithm alg;
-            switch (_encFmt)
-            {
-                case MausEncryptionFormat.Aes:
-                    alg = Aes.Create();
-                    break;
-                default:
-                    return null;
-            }
+            SymmetricAlgorithm alg = Aes.Create();
             alg.Key = _key;
             alg.IV = _iv;
             return alg;
@@ -109,9 +101,9 @@ namespace DieFledermaus
             using (ICryptoTransform transform = alg.CreateEncryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
-                byte[] iv = alg.IV, firstBuffer = new byte[_key.Length + iv.Length];
+                byte[] firstBuffer = new byte[_key.Length + _iv.Length];
                 Array.Copy(_salt, firstBuffer, _key.Length);
-                Array.Copy(iv, 0, firstBuffer, _key.Length, iv.Length);
+                Array.Copy(_iv, 0, firstBuffer, _key.Length, _iv.Length);
 
                 output.Prepend(firstBuffer);
 
@@ -124,7 +116,8 @@ namespace DieFledermaus
 
         private KeySizes _keySizes;
         /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes.
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// for the current encryption, or <c>null</c> if the current stream is not encrypted.
         /// </summary>
         public KeySizes KeySizes { get { return _keySizes; } }
     }
