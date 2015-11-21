@@ -120,6 +120,21 @@
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
   </data>
+  <data name="ArchiveClosed" xml:space="preserve">
+    <value>The current archive has been disposed.</value>
+  </data>
+  <data name="ArchiveEntryDeleted" xml:space="preserve">
+    <value>The current archive entry has been deleted.</value>
+  </data>
+  <data name="ArchiveExists" xml:space="preserve">
+    <value>The specified filename already exists in the archive.</value>
+  </data>
+  <data name="ArchiveReadMode" xml:space="preserve">
+    <value>The current archive is in read-mode.</value>
+  </data>
+  <data name="ArchiveWriteMode" xml:space="preserve">
+    <value>The current archive is in create-mode.</value>
+  </data>
   <data name="BadChecksum" xml:space="preserve">
     <value>The computed SHA-512 checksum did not match the expected value.</value>
   </data>
@@ -151,12 +166,19 @@
     <value>The specified filename contains an unpaired surrogate character: {0}</value>
     <comment>{0} = invalid character.</comment>
   </data>
+  <data name="FilenameComponent" xml:space="preserve">
+    <value>The specified path contains an invalid element: {0}</value>
+    <comment>{0} = other message.</comment>
+  </data>
   <data name="FilenameControl" xml:space="preserve">
     <value>The specified filename contained a non-whitespace control character.</value>
   </data>
   <data name="FilenameDot" xml:space="preserve">
     <value>The specified value "{0}" is not a valid filename.</value>
     <comment>{0} = filename.</comment>
+  </data>
+  <data name="FilenameEDirLengthLong" xml:space="preserve">
+    <value>The specified path has a length greater than 254 UTF-8 bytes, counting the trailing forward-slash.</value>
   </data>
   <data name="FilenameForwardSlash" xml:space="preserve">
     <value>The specified filename contains a forward-slash character "/".</value>

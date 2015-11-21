@@ -61,7 +61,7 @@ namespace DieFledermaus
         private const ushort _versionShort = 95, _minVersionShort = 94;
         private const float _versionDiv = 100;
 
-        private static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
+        internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
         private Stream _baseStream;
         private Stream _deflateStream;
@@ -70,7 +70,7 @@ namespace DieFledermaus
         private bool _leaveOpen;
         private long _uncompressedLength;
 
-        private static void _checkRead(Stream stream)
+        internal static void CheckRead(Stream stream)
         {
             if (stream.CanRead) return;
 
@@ -78,7 +78,7 @@ namespace DieFledermaus
             throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
-        private static void _checkWrite(Stream stream)
+        internal static void CheckWrite(Stream stream)
         {
             if (stream.CanWrite) return;
 
@@ -92,7 +92,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -119,7 +119,7 @@ namespace DieFledermaus
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (compressionMode == CompressionMode.Compress)
             {
-                _checkWrite(stream);
+                CheckWrite(stream);
                 _bufferStream = new QuickBufferStream();
                 _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
                 _headerGotten = true;
@@ -127,7 +127,7 @@ namespace DieFledermaus
             }
             else if (compressionMode == CompressionMode.Decompress)
             {
-                _checkRead(stream);
+                CheckRead(stream);
                 _baseStream = stream;
                 _getHeader();
             }
@@ -166,7 +166,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -219,7 +219,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -236,7 +236,7 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            _checkWrite(stream);
+            CheckWrite(stream);
 
             _bufferStream = new QuickBufferStream();
             switch (compressionFormat)
@@ -286,7 +286,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -334,7 +334,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -391,7 +391,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream containing compressed data.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -443,7 +443,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -460,7 +460,7 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            _checkWrite(stream);
+            CheckWrite(stream);
             switch (compressionLevel)
             {
                 case CompressionLevel.Fastest:
@@ -507,7 +507,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave open <paramref name="stream"/> when the current instance is disposed;
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -554,6 +554,30 @@ namespace DieFledermaus
         {
         }
 #endif
+
+        internal DieFledermausStream(Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
+        {
+            _baseStream = stream;
+            _bufferStream = new QuickBufferStream();
+            switch (compFormat.CompressionFormat)
+            {
+                case MausCompressionFormat.Deflate:
+#if COMPLVL
+                    _deflateStream = new DeflateStream(_bufferStream, ((DeflateCompressionFormat)compFormat).CompressionLevel, true);
+#else
+                    _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
+#endif
+                    break;
+                case MausCompressionFormat.Lzma:
+                    _lzmaDictSize = ((LzmaCompressionFormat)compFormat).DictionarySize;
+                    goto default;
+                default:
+                    _deflateStream = _bufferStream;
+                    break;
+            }
+            _cmpFmt = compFormat.CompressionFormat;
+            _setEncFormat(encryptionFormat);
+        }
         #endregion
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
@@ -882,25 +906,38 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (value == null || IsValidFilename(value, true))
+                if (value == null || IsValidFilename(value, true, _allowDirNames, nameof(value)))
                     _filename = value;
             }
         }
 
-        private static bool IsValidFilename(string value, bool throwOnInvalid)
+        internal static bool IsValidFilename(string value, bool throwOnInvalid, bool allowDirNames, string paramName)
         {
-            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value == null) throw new ArgumentNullException(paramName);
 
             if (value.Length == 0)
             {
                 if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameLengthZero, nameof(value));
+                    throw new ArgumentException(TextResources.FilenameLengthZero, paramName);
                 return false;
             }
             if (_textEncoding.GetByteCount(value) > maxLen)
             {
                 if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameLengthLong, nameof(value));
+                    throw new ArgumentException(TextResources.FilenameLengthLong, paramName);
+            }
+
+            if (allowDirNames)
+            {
+                //TODO: Something better than this?
+                try
+                {
+                    return value.Split('/').All(f => IsValidFilename(value, throwOnInvalid, false, paramName));
+                }
+                catch (ArgumentException e)
+                {
+                    throw new ArgumentException(string.Format(TextResources.FilenameComponent, e.Message), paramName, e);
+                }
             }
 
             bool seenNotWhite = false;
@@ -923,7 +960,7 @@ namespace DieFledermaus
                     if (throwOnInvalid)
                     {
                         throw new ArgumentException(string.Format(TextResources.FilenameBadSurrogate,
-                            string.Format("\\u{0:x4} {1}", (int)c, c)), nameof(value));
+                            string.Format("\\u{0:x4} {1}", (int)c, c)), paramName);
                     }
                     return false;
                 }
@@ -953,7 +990,7 @@ namespace DieFledermaus
                 if (c < ' ' || (c > '~' && c <= '\u009f'))
                 {
                     if (throwOnInvalid)
-                        throw new ArgumentException(TextResources.FilenameControl, nameof(value));
+                        throw new ArgumentException(TextResources.FilenameControl, paramName);
                     return false;
                 }
             }
@@ -961,9 +998,9 @@ namespace DieFledermaus
             if (throwOnInvalid)
             {
                 if (!seenNotWhite)
-                    throw new ArgumentException(TextResources.FilenameWhitespace, nameof(value));
+                    throw new ArgumentException(TextResources.FilenameWhitespace, paramName);
                 if (dotCount > 0)
-                    throw new ArgumentException(string.Format(TextResources.FilenameDot, value), nameof(value));
+                    throw new ArgumentException(string.Format(TextResources.FilenameDot, value), paramName);
                 return true;
             }
 
@@ -975,15 +1012,15 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to set.</param>
         /// <returns><c>true</c> if <paramref name="value"/> is a valid filename; <c>false</c> if <paramref name="value"/> has a length of 0, has a length
-        /// greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
-        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace, contains a
-        /// forward-slash character "/", or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
+        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace,
+        /// or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
         public static bool IsValidFilename(string value)
         {
-            return IsValidFilename(value, false);
+            return IsValidFilename(value, false, false, nameof(value));
         }
 
         /// <summary>
@@ -1153,9 +1190,9 @@ namespace DieFledermaus
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
         private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
 
-        private bool _headerGotten;
+        private bool _headerGotten, _allowDirNames = false;
 
-        private const int maxLen = 256;
+        internal const int maxLen = 256;
 
         private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>(StringComparer.Ordinal)
         {
@@ -1310,7 +1347,7 @@ namespace DieFledermaus
                     else if (!filename.Equals(_filename, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    if (!IsValidFilename(filename, false))
+                    if (!IsValidFilename(filename, false, _allowDirNames, null))
                         throw new InvalidDataException(TextResources.FormatFilename);
                     continue;
                 }
@@ -1530,7 +1567,7 @@ namespace DieFledermaus
                         filename = GetString(reader);
                     }
 
-                    if (!IsValidFilename(filename, false))
+                    if (!IsValidFilename(filename, false, _allowDirNames, null))
                         throw new InvalidDataException(TextResources.FormatFilename);
                     _filename = filename;
                 }
@@ -1760,6 +1797,7 @@ namespace DieFledermaus
                 _bufferStream = null;
                 _deflateStream = null;
                 base.Dispose(disposing);
+                GC.SuppressFinalize(this);
             }
         }
 

@@ -70,6 +70,51 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The current archive has been disposed..
+        /// </summary>
+        internal static string ArchiveClosed {
+            get {
+                return ResourceManager.GetString("ArchiveClosed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current archive entry has been deleted..
+        /// </summary>
+        internal static string ArchiveEntryDeleted {
+            get {
+                return ResourceManager.GetString("ArchiveEntryDeleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename already exists in the archive..
+        /// </summary>
+        internal static string ArchiveExists {
+            get {
+                return ResourceManager.GetString("ArchiveExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current archive is in read-mode..
+        /// </summary>
+        internal static string ArchiveReadMode {
+            get {
+                return ResourceManager.GetString("ArchiveReadMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current archive is in create-mode..
+        /// </summary>
+        internal static string ArchiveWriteMode {
+            get {
+                return ResourceManager.GetString("ArchiveWriteMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The computed SHA-512 checksum did not match the expected value..
         /// </summary>
         internal static string BadChecksum {
@@ -160,6 +205,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified path contains an invalid element: {0}.
+        /// </summary>
+        internal static string FilenameComponent {
+            get {
+                return ResourceManager.GetString("FilenameComponent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified filename contained a non-whitespace control character..
         /// </summary>
         internal static string FilenameControl {
@@ -174,6 +228,15 @@ namespace DieFledermaus.Globalization {
         internal static string FilenameDot {
             get {
                 return ResourceManager.GetString("FilenameDot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path has a length greater than 254 UTF-8 bytes, counting the trailing forward-slash..
+        /// </summary>
+        internal static string FilenameEDirLengthLong {
+            get {
+                return ResourceManager.GetString("FilenameEDirLengthLong", resourceCulture);
             }
         }
         
