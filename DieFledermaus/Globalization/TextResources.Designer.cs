@@ -178,6 +178,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified filename contains a forward-slash character &quot;/&quot;..
+        /// </summary>
+        internal static string FilenameForwardSlash {
+            get {
+                return ResourceManager.GetString("FilenameForwardSlash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified filename has a length greater than 256 UTF-8 bytes..
         /// </summary>
         internal static string FilenameLengthLong {

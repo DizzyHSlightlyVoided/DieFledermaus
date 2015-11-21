@@ -158,6 +158,9 @@
     <value>The specified value "{0}" is not a valid filename.</value>
     <comment>{0} = filename.</comment>
   </data>
+  <data name="FilenameForwardSlash" xml:space="preserve">
+    <value>The specified filename contains a forward-slash character "/".</value>
+  </data>
   <data name="FilenameLengthLong" xml:space="preserve">
     <value>The specified filename has a length greater than 256 UTF-8 bytes.</value>
   </data>

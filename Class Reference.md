@@ -547,7 +547,7 @@ In a set operation, the specified value is not `null` and is invalid.
 Determines if the specified value is a valid value for the [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-) property.
 * `value`: The value to set.
 
-**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `value` is a valid filename; `false` if `value` has a length of 0, has a length greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters between `\u0000` and `\u001f` inclusive, or between `\u007f` and `\u009f` inclusive), contains only whitespace, or is "." or ".." (the "current directory" and "parent directory" identifiers).
+**Returns:**  Type [`Boolean`](https://msdn.microsoft.com/en-us/library/system.boolean.aspx): `true` if `value` is a valid filename; `false` if `value` has a length of 0, has a length greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters between `\u0000` and `\u001f` inclusive, or between `\u007f` and `\u009f` inclusive), contains only whitespace, contains a forward-slash character "/", or is "." or ".." (the "current directory" and "parent directory" identifiers).
 
 ### Exceptions
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)

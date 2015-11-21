@@ -940,6 +940,14 @@ namespace DieFledermaus
 
                 if (char.IsWhiteSpace(c))
                     continue;
+
+                if (c == '/')
+                {
+                    if (throwOnInvalid)
+                        throw new ArgumentException(TextResources.FilenameForwardSlash);
+                    return false;
+                }
+
                 seenNotWhite = true;
 
                 if (c < ' ' || (c > '~' && c <= '\u009f'))
@@ -968,8 +976,8 @@ namespace DieFledermaus
         /// <param name="value">The value to set.</param>
         /// <returns><c>true</c> if <paramref name="value"/> is a valid filename; <c>false</c> if <paramref name="value"/> has a length of 0, has a length
         /// greater than 256 UTF-8 characters, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
-        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace, or is "." or
-        /// ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace, contains a
+        /// forward-slash character "/", or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
