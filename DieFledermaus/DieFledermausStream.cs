@@ -1210,7 +1210,7 @@ namespace DieFledermaus
             }
         }
 
-        bool gotFormat, gotEnc, gotULen;
+        bool gotFormat, gotULen;
         private void ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
             int optLen = version == _minVersionShort ? reader.ReadByte() : reader.ReadUInt16();
@@ -1279,11 +1279,11 @@ namespace DieFledermaus
                         }
                     }
                     else throw new NotSupportedException(TextResources.FormatUnknown);
+
                     if (_keySizes == null)
                         _setKeySizes(keyBits);
                     else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
                         throw new InvalidDataException(TextResources.FormatBad);
-                    gotEnc = true;
                     _encFmt = MausEncryptionFormat.Aes;
                     continue;
                 }
