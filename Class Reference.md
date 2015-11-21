@@ -883,7 +883,7 @@ Advances the enumerator to the next position in the collection.
 --------------------------------------------------
 
 ## Property: `override System.Security.Cryptography.KeySizes KeySizes { get; }`
-Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) object indicating all valid key sizes.
+Gets a [`KeySizes`](https://msdn.microsoft.com/en-us/library/system.security.cryptography.keysizes.aspx) object indicating all valid key sizes for the current encryption, or `null` if the current stream is not encrypted.
 
 --------------------------------------------------
 
