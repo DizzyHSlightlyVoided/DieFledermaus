@@ -139,6 +139,12 @@
     <value>The archive with path "{0}" has not yet been written to.</value>
     <comment>ArchiveNotWritten</comment>
   </data>
+  <data name="ArchivePathExistingDir" xml:space="preserve">
+    <value>The specified path is an existing directory name.</value>
+  </data>
+  <data name="ArchivePathExistingFileAsDir" xml:space="preserve">
+    <value>The specified path contains an existing filename as one of its directories.</value>
+  </data>
   <data name="ArchiveReadMode" xml:space="preserve">
     <value>The current archive is in read-mode.</value>
   </data>

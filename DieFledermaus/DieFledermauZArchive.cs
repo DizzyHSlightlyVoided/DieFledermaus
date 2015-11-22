@@ -188,6 +188,14 @@ namespace DieFledermaus
 
         private DieFledermauZArchiveEntry AddEntry(string path, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
         {
+            PathSeparator pathSep = new PathSeparator(path);
+
+            if (_entries.Keys.Any(pathSep.OtherBeginsWith))
+                throw new ArgumentException(TextResources.ArchivePathExistingDir, nameof(path));
+
+            if (_entries.Keys.Any(pathSep.BeginsWith))
+                throw new ArgumentException(TextResources.ArchivePathExistingFileAsDir, nameof(path));
+
             switch (encryptionFormat)
             {
                 case MausEncryptionFormat.Aes:
@@ -206,6 +214,31 @@ namespace DieFledermaus
             _entries.Add(path, entry);
             _entryKeys.Add(entry, path);
             return entry;
+        }
+
+        private class PathSeparator
+        {
+            private string _basePath;
+
+            public PathSeparator(string basePath)
+            {
+                _basePath = basePath;
+            }
+
+            private static bool _beginsWith(string basePath, string other)
+            {
+                return other.StartsWith(basePath, StringComparison.Ordinal) && (basePath.Length == other.Length || other[basePath.Length] == '/');
+            }
+
+            public bool BeginsWith(string other)
+            {
+                return _beginsWith(_basePath, other);
+            }
+
+            public bool OtherBeginsWith(string other)
+            {
+                return _beginsWith(other, _basePath);
+            }
         }
 
         /// <summary>

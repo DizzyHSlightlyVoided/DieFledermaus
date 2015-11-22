@@ -124,6 +124,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified path is an existing directory name..
+        /// </summary>
+        internal static string ArchivePathExistingDir {
+            get {
+                return ResourceManager.GetString("ArchivePathExistingDir", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path contains an existing filename as one of its directories..
+        /// </summary>
+        internal static string ArchivePathExistingFileAsDir {
+            get {
+                return ResourceManager.GetString("ArchivePathExistingFileAsDir", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current archive is in read-mode..
         /// </summary>
         internal static string ArchiveReadMode {
