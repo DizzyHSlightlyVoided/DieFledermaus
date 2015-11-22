@@ -32,6 +32,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Globalization;
@@ -394,6 +395,8 @@ namespace DieFledermaus
         /// <summary>
         /// A dictionary of all entries in a <see cref="DieFledermauZArchive"/>.
         /// </summary>
+        [DebuggerTypeProxy(typeof(DebugView))]
+        [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
         public sealed class EntryDictionary : IDictionary<string, DieFledermauZArchiveEntry>, IDictionary
 #if IREADONLY
             , IReadOnlyDictionary<string, DieFledermauZArchiveEntry>
@@ -710,6 +713,8 @@ namespace DieFledermaus
             /// <summary>
             /// A collection of all keys in the dictionary.
             /// </summary>
+            [DebuggerTypeProxy(typeof(KeyDebugView))]
+            [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
             public class KeyCollection : ICollection<string>, ICollection
 #if IREADONLY
                 , IReadOnlyCollection<string>
@@ -865,11 +870,29 @@ namespace DieFledermaus
                         _enum.Reset();
                     }
                 }
+
+                private class KeyDebugView
+                {
+                    private KeyCollection _col;
+
+                    public KeyDebugView(KeyCollection col)
+                    {
+                        _col = col;
+                    }
+
+                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    public string[] Items
+                    {
+                        get { return _col.ToArray(); }
+                    }
+                }
             }
 
             /// <summary>
             /// A collection of all values in the dictionary.
             /// </summary>
+            [DebuggerTypeProxy(typeof(ValueDebugView))]
+            [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
             public class ValueCollection : ICollection<DieFledermauZArchiveEntry>, ICollection
 #if IREADONLY
                 , IReadOnlyCollection<DieFledermauZArchiveEntry>
@@ -1024,6 +1047,38 @@ namespace DieFledermaus
                     {
                         _enum.Reset();
                     }
+                }
+
+                private class ValueDebugView
+                {
+                    private ValueCollection _col;
+
+                    public ValueDebugView(ValueCollection col)
+                    {
+                        _col = col;
+                    }
+
+                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    public DieFledermauZArchiveEntry[] Items
+                    {
+                        get { return _col.ToArray(); }
+                    }
+                }
+            }
+
+            private class DebugView
+            {
+                private EntryDictionary _col;
+
+                public DebugView(EntryDictionary col)
+                {
+                    _col = col;
+                }
+
+                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                public KeyValuePair<string, DieFledermauZArchiveEntry>[] Items
+                {
+                    get { return _col.ToArray(); }
                 }
             }
         }

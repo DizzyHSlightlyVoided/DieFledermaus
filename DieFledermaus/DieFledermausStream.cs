@@ -32,6 +32,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -2022,6 +2023,8 @@ namespace DieFledermaus
         /// <summary>
         /// Represents a collection of <see cref="MausOptionToEncrypt"/> options.
         /// </summary>
+        [DebuggerTypeProxy(typeof(DebugView))]
+        [DebuggerDisplay(CollectionDebuggerDisplay)]
         public sealed class SettableOptions : ICollection<MausOptionToEncrypt>, ICollection
 #if IREADONLY
             , IReadOnlyCollection<MausOptionToEncrypt>
@@ -2312,7 +2315,25 @@ namespace DieFledermaus
                     _enum.Reset();
                 }
             }
+
+            private class DebugView
+            {
+                private SettableOptions _col;
+
+                public DebugView(SettableOptions col)
+                {
+                    _col = col;
+                }
+
+                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                public MausOptionToEncrypt[] Items
+                {
+                    get { return _col.ToArray(); }
+                }
+            }
         }
+
+        internal const string CollectionDebuggerDisplay = "Count = {Count}";
     }
 
     /// <summary>
