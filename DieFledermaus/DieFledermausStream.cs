@@ -122,7 +122,6 @@ namespace DieFledermaus
                 CheckWrite(stream);
                 _bufferStream = new QuickBufferStream();
                 _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
-                _headerGotten = true;
                 _baseStream = stream;
             }
             else if (compressionMode == CompressionMode.Decompress)
@@ -256,7 +255,6 @@ namespace DieFledermaus
             _baseStream = stream;
             _mode = CompressionMode.Compress;
             _leaveOpen = leaveOpen;
-            _headerGotten = true;
         }
 
         /// <summary>
@@ -476,7 +474,6 @@ namespace DieFledermaus
             _baseStream = stream;
             _mode = CompressionMode.Compress;
             _leaveOpen = leaveOpen;
-            _headerGotten = true;
         }
 
         /// <summary>
@@ -555,7 +552,7 @@ namespace DieFledermaus
         }
 #endif
 
-        internal DieFledermausStream(Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
+        internal DieFledermausStream(DieFledermauZArchiveEntry entry, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
         {
             _baseStream = stream;
             _bufferStream = new QuickBufferStream();
@@ -577,6 +574,7 @@ namespace DieFledermaus
             }
             _cmpFmt = compFormat.CompressionFormat;
             _setEncFormat(encryptionFormat);
+            _allowDirNames = true;
         }
         #endregion
 
@@ -669,6 +667,8 @@ namespace DieFledermaus
         /// Gets the compression format of the current instance.
         /// </summary>
         public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
+
+        internal bool HeaderIsProcessed { get { return _headerGotten; } }
 
         private DateTime? _timeC;
         /// <summary>
@@ -1750,7 +1750,6 @@ namespace DieFledermaus
         {
             _ensureCanWrite();
             _deflateStream.Write(buffer, offset, count);
-            _headerGotten = true;
             _uncompressedLength += count;
         }
 

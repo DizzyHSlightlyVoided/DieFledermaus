@@ -70,6 +70,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The current archive entry has already been decrypted..
+        /// </summary>
+        internal static string AlreadyDecryptedArchive {
+            get {
+                return ResourceManager.GetString("AlreadyDecryptedArchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The archive has already been opened for writing..
+        /// </summary>
+        internal static string ArchiveAlreadyWritten {
+            get {
+                return ResourceManager.GetString("ArchiveAlreadyWritten", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current archive has been disposed..
         /// </summary>
         internal static string ArchiveClosed {
@@ -322,7 +340,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An encrypted DieFledermaus stream requires a key or password..
+        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a key or password..
         /// </summary>
         internal static string KeyNotSet {
             get {
@@ -331,7 +349,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus stream is not currently encrypted..
+        ///   Looks up a localized string similar to The DieFledermaus stream is not encrypted..
         /// </summary>
         internal static string NotEncrypted {
             get {

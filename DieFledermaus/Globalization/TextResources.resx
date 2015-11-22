@@ -120,6 +120,12 @@
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
   </data>
+  <data name="AlreadyDecryptedArchive" xml:space="preserve">
+    <value>The current archive entry has already been decrypted.</value>
+  </data>
+  <data name="ArchiveAlreadyWritten" xml:space="preserve">
+    <value>The archive has already been opened for writing.</value>
+  </data>
   <data name="ArchiveClosed" xml:space="preserve">
     <value>The current archive has been disposed.</value>
   </data>
@@ -208,10 +214,10 @@
     <value>The specified key is the wrong length.</value>
   </data>
   <data name="KeyNotSet" xml:space="preserve">
-    <value>An encrypted DieFledermaus stream requires a key or password.</value>
+    <value>The DieFledermaus stream is encrypted, and requires a key or password.</value>
   </data>
   <data name="NotEncrypted" xml:space="preserve">
-    <value>The DieFledermaus stream is not currently encrypted.</value>
+    <value>The DieFledermaus stream is not encrypted.</value>
   </data>
   <data name="OutOfRange" xml:space="preserve">
     <value>The specified value must be greater than or equal to {0} and less than or equal to {1}.</value>

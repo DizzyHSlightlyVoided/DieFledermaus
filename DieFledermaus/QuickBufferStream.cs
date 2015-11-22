@@ -82,7 +82,12 @@ namespace DieFledermaus
         private long _length;
         public override long Length
         {
-            get { return _length; }
+            get
+            {
+                if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (Disposing != null) throw new NotSupportedException();
+                return _length;
+            }
         }
 
         public override long Position
@@ -90,6 +95,7 @@ namespace DieFledermaus
             get
             {
                 if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (Disposing != null) throw new NotSupportedException();
                 if (_reading) return _position;
                 return _length;
             }
@@ -178,6 +184,14 @@ namespace DieFledermaus
 
         public void BufferCopyTo(Stream destination)
         {
+            QuickBufferStream qbs = destination as QuickBufferStream;
+            if (qbs != null)
+            {
+                qbs._firstBuffer = _firstBuffer;
+                qbs.Reset();
+                return;
+            }
+
             if (_currentPos != 0)
             {
                 destination.Write(_currentBuffer.Data, _currentPos, _currentBuffer.End - _currentPos);
@@ -194,13 +208,19 @@ namespace DieFledermaus
             _position = _length;
         }
 
+        internal event EventHandler Disposing;
+
         protected override void Dispose(bool disposing)
         {
             if (_firstBuffer == null)
                 return;
 
+            if (Disposing != null)
+                Disposing(this, EventArgs.Empty);
+
             _firstBuffer = _currentBuffer = null;
             _length = _position = _currentPos = 0;
+            Disposing = null;
             base.Dispose(disposing);
         }
 

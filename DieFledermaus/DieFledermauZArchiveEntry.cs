@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
+using System.Security;
 
 using DieFledermaus.Globalization;
 
@@ -42,8 +43,9 @@ namespace DieFledermaus
     {
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
-            _compFormat = compFormat ?? new DeflateCompressionFormat();
             _path = path;
+            _bufferStream = new QuickBufferStream();
+            _mausStream = new DieFledermausStream(this, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
         }
 
         private object _lock = new object();
@@ -61,7 +63,99 @@ namespace DieFledermaus
         /// </summary>
         public string Path { get { return _path; } }
 
-        private ICompressionFormat _compFormat;
+        /// <summary>
+        /// Gets the encryption format of the current instance.
+        /// </summary>
+        public MausEncryptionFormat EncryptionFormat { get { return _mausStream.EncryptionFormat; } }
+
+        /// <summary>
+        /// Gets the compression format of the current instance.
+        /// </summary>
+        public MausCompressionFormat CompressionFormat { get { return _mausStream.CompressionFormat; } }
+
+        /// <summary>
+        /// Gets and sets the encryption key for the current instance, or <c>null</c> if the current instance is not encrypted.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>The current instance is false.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// </exception>
+        public byte[] Key
+        {
+            get { return _mausStream.Key; }
+            set
+            {
+                _ensureCanSetKey();
+
+                _mausStream.Key = value;
+            }
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>The current instance is false.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(string password)
+        {
+            _ensureCanSetKey();
+            _mausStream.SetPassword(password);
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>The current instance is false.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(SecureString password)
+        {
+            _ensureCanSetKey();
+            _mausStream.SetPassword(password);
+        }
+
+        /// <summary>
+        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current entry is not encrypted.
+        /// </summary>
+        public DieFledermausStream.SettableOptions EncryptedOptions { get { return _mausStream.EncryptedOptions; } }
+
+        private void _ensureCanSetKey()
+        {
+            if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
+            if (_mausStream.EncryptionFormat == MausEncryptionFormat.None)
+                throw new InvalidOperationException(TextResources.NotEncrypted);
+            if (_arch.Mode == MauZArchiveMode.Read && _mausStream.HeaderIsProcessed)
+                throw new InvalidOperationException(TextResources.AlreadyDecryptedArchive);
+        }
 
         private void EnsureCanWrite()
         {
@@ -73,6 +167,42 @@ namespace DieFledermaus
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
             _arch.EnsureCanRead();
+        }
+
+        private readonly QuickBufferStream _bufferStream;
+        private readonly DieFledermausStream _mausStream;
+        private QuickBufferStream _writingStream;
+
+        /// <summary>
+        /// Opens the archive entry for writing.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para><see cref="Archive"/> is in read-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance has already been open for writing.</para>
+        /// </exception>
+        public Stream OpenWrite()
+        {
+            lock (_lock)
+            {
+                EnsureCanWrite();
+                if (_writingStream != null)
+                    throw new InvalidOperationException(TextResources.ArchiveAlreadyWritten);
+
+                _writingStream = new QuickBufferStream();
+                _writingStream.Disposing += _writingStream_Disposing;
+                return _writingStream;
+            }
+        }
+
+        private void _writingStream_Disposing(object sender, EventArgs e)
+        {
+            _writingStream.Reset();
+            _writingStream.BufferCopyTo(_mausStream);
         }
 
         /// <summary>
@@ -91,6 +221,8 @@ namespace DieFledermaus
                 EnsureCanWrite();
                 _arch.Delete(this);
                 _arch = null;
+                if (_writingStream != null)
+                    _writingStream.Disposing -= _writingStream_Disposing;
             }
         }
     }
