@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -50,6 +51,7 @@ namespace DieFledermaus
         public Stream BaseStream { get { return _baseStream; } }
 
         private Dictionary<string, DieFledermauZArchiveEntry> _entries = new Dictionary<string, DieFledermauZArchiveEntry>(StringComparer.Ordinal);
+        private Dictionary<DieFledermauZArchiveEntry, string> _entryKeys = new Dictionary<DieFledermauZArchiveEntry, string>();
 
         /// <summary>
         /// Creates a new instance using the specified options.
@@ -97,12 +99,20 @@ namespace DieFledermaus
             Mode = mode;
             _baseStream = stream;
             _leaveOpen = leaveOpen;
+            _entryDict = new EntryDictionary(this);
         }
 
         internal void Delete(DieFledermauZArchiveEntry entry)
         {
             _entries.Remove(entry.Path);
+            _entryKeys.Remove(entry);
         }
+
+        private EntryDictionary _entryDict;
+        /// <summary>
+        /// Gets a dictionary containing all entries in the current archive.
+        /// </summary>
+        public EntryDictionary Entries { get { return _entryDict; } }
 
         internal readonly MauZArchiveMode Mode;
 
@@ -187,6 +197,7 @@ namespace DieFledermaus
 
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
             _entries.Add(path, entry);
+            _entryKeys.Add(entry, path);
             return entry;
         }
 
@@ -288,6 +299,643 @@ namespace DieFledermaus
         ~DieFledermauZArchive()
         {
             Dispose(false);
+        }
+
+        /// <summary>
+        /// A dictionary of all entries in a <see cref="DieFledermauZArchive"/>.
+        /// </summary>
+        public sealed class EntryDictionary : IDictionary<string, DieFledermauZArchiveEntry>, IDictionary
+#if IREADONLY
+            , IReadOnlyDictionary<string, DieFledermauZArchiveEntry>
+#endif
+        {
+            private DieFledermauZArchive _archive;
+
+            internal EntryDictionary(DieFledermauZArchive archive)
+            {
+                _archive = archive;
+                _keys = new KeyCollection(this);
+                _values = new ValueCollection(this);
+            }
+
+            /// <summary>
+            /// Gets the element with the specified key.
+            /// </summary>
+            /// <param name="key">The key of the element to get.</param>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="key"/> is <c>null</c>.
+            /// </exception>
+            /// <exception cref="KeyNotFoundException">
+            /// <paramref name="key"/> was not found in the dictionary.
+            /// </exception>
+            public DieFledermauZArchiveEntry this[string key]
+            {
+                get { return _archive._entries[key]; }
+            }
+
+            DieFledermauZArchiveEntry IDictionary<string, DieFledermauZArchiveEntry>.this[string key]
+            {
+                get { return _archive._entries[key]; }
+                set { throw new NotSupportedException(TextResources.CollectReadOnly); }
+            }
+
+            object IDictionary.this[object key]
+            {
+                get { return ((IDictionary)_archive._entries)[key]; }
+                set { throw new NotSupportedException(TextResources.CollectReadOnly); }
+            }
+
+            /// <summary>
+            /// Gets the number of elements contained in the dictionary.
+            /// </summary>
+            public int Count { get { return _archive._entries.Count; } }
+
+            private KeyCollection _keys;
+            /// <summary>
+            /// Gets a collection containing all keys in the dictionary.
+            /// </summary>
+            public KeyCollection Keys { get { return _keys; } }
+
+            ICollection<string> IDictionary<string, DieFledermauZArchiveEntry>.Keys { get { return _keys; } }
+            ICollection IDictionary.Keys { get { return _keys; } }
+#if IREADONLY
+            IEnumerable<string> IReadOnlyDictionary<string, DieFledermauZArchiveEntry>.Keys { get { return _keys; } }
+#endif
+            private ValueCollection _values;
+            /// <summary>
+            /// Gets a collection containing all values in the dictionary.
+            /// </summary>
+            public ValueCollection Values { get { return _values; } }
+
+            ICollection<DieFledermauZArchiveEntry> IDictionary<string, DieFledermauZArchiveEntry>.Values { get { return _values; } }
+            ICollection IDictionary.Values { get { return _values; } }
+#if IREADONLY
+            IEnumerable<DieFledermauZArchiveEntry> IReadOnlyDictionary<string, DieFledermauZArchiveEntry>.Values { get { return _values; } }
+#endif
+
+            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.IsReadOnly
+            {
+                get { return true; }
+            }
+
+            bool IDictionary.IsReadOnly
+            {
+                get { return true; }
+            }
+
+            bool IDictionary.IsFixedSize
+            {
+                get { return false; }
+            }
+
+            object ICollection.SyncRoot
+            {
+                get { return ((IDictionary)_archive._entries).SyncRoot; }
+            }
+
+            bool ICollection.IsSynchronized
+            {
+                get { return false; }
+            }
+
+            /// <summary>
+            /// Determines whether the specified key exists in the dictionary.
+            /// </summary>
+            /// <param name="key">The key to search for in the dictionary.</param>
+            /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="key"/> is <c>null</c>.
+            /// </exception>
+            public bool ContainsKey(string key)
+            {
+                return _archive._entries.ContainsKey(key);
+            }
+
+            /// <summary>
+            /// Determines whether the specified value exists in the dictionary.
+            /// </summary>
+            /// <param name="value">The value to search for in the dictionary.</param>
+            /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
+            public bool ContainsValue(DieFledermauZArchiveEntry value)
+            {
+                return value != null && _archive._entryKeys.ContainsKey(value);
+            }
+
+            /// <summary>
+            /// Gets the key associated with the specified value.
+            /// </summary>
+            /// <param name="key">The key to search for in the dictionary.</param>
+            /// <param name="value">When this method returns, contains the value associated with <paramref name="key"/>, or <c>null</c> if
+            /// <paramref name="key"/> was not found. This parameter is passed uninitialized.</param>
+            /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="key"/> is <c>null</c>.
+            /// </exception>
+            public bool TryGetValue(string key, out DieFledermauZArchiveEntry value)
+            {
+                return _archive._entries.TryGetValue(key, out value);
+            }
+
+            /// <summary>
+            /// Gets the value associated with the specified key.
+            /// </summary>
+            /// <param name="value">The value to search for in the dictionary.</param>
+            /// <param name="key">When this method returns, contains the key associated with <paramref name="value"/>, or <c>null</c> if
+            /// <paramref name="value"/> was not found. This parameter is passed uninitialized.</param>
+            /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
+            /// <exception cref="ArgumentNullException">
+            /// <paramref name="value"/> is <c>null</c>.
+            /// </exception>
+            public bool TryGetKey(DieFledermauZArchiveEntry value, out string key)
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                return _archive._entryKeys.TryGetValue(value, out key);
+            }
+
+            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.CopyTo(KeyValuePair<string, DieFledermauZArchiveEntry>[] array, int arrayIndex)
+            {
+                ((ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>)_archive._entries).CopyTo(array, arrayIndex);
+            }
+
+            /// <summary>
+            /// Returns an enumerator which iterates through the dictionary.
+            /// </summary>
+            /// <returns>An enumerator which iterates through the dictionary.</returns>
+            public Enumerator GetEnumerator()
+            {
+                return new Enumerator(this, true);
+            }
+
+            IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>> IEnumerable<KeyValuePair<string, DieFledermauZArchiveEntry>>.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            IDictionaryEnumerator IDictionary.GetEnumerator()
+            {
+                return new Enumerator(this, true);
+            }
+
+            #region Not Supported
+            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Add(KeyValuePair<string, DieFledermauZArchiveEntry> item)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IDictionary<string, DieFledermauZArchiveEntry>.Add(string key, DieFledermauZArchiveEntry value)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Clear()
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Contains(KeyValuePair<string, DieFledermauZArchiveEntry> item)
+            {
+                return ((ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>)_archive._entries).Contains(item);
+            }
+
+            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Remove(KeyValuePair<string, DieFledermauZArchiveEntry> item)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            bool IDictionary<string, DieFledermauZArchiveEntry>.Remove(string key)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            bool IDictionary.Contains(object key)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IDictionary.Add(object key, object value)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IDictionary.Clear()
+            {
+                throw new NotImplementedException();
+            }
+
+            void IDictionary.Remove(object key)
+            {
+                throw new NotImplementedException();
+            }
+
+            void ICollection.CopyTo(Array array, int index)
+            {
+                throw new NotImplementedException();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                throw new NotImplementedException();
+            }
+            #endregion
+
+            /// <summary>
+            /// An enumerator which iterates through the dictionary.
+            /// </summary>
+            public struct Enumerator : IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>>, IDictionaryEnumerator
+            {
+                private bool _generic;
+
+                private IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>> _enum;
+                private KeyValuePair<string, DieFledermauZArchiveEntry> _current;
+                private DictionaryEntry _curEntry;
+                private object _curObj;
+
+                internal Enumerator(EntryDictionary dict, bool generic)
+                {
+                    _enum = dict._archive._entries.GetEnumerator();
+                    _current = default(KeyValuePair<string, DieFledermauZArchiveEntry>);
+                    _curEntry = default(DictionaryEntry);
+                    _curObj = null;
+                    _generic = generic;
+                }
+
+                /// <summary>
+                /// Gets the element at the current position in the enumerator.
+                /// </summary>
+                public KeyValuePair<string, DieFledermauZArchiveEntry> Current { get { return _current; } }
+
+                object IEnumerator.Current { get { return _curObj; } }
+
+                DictionaryEntry IDictionaryEnumerator.Entry { get { return _curEntry; } }
+
+                object IDictionaryEnumerator.Key
+                {
+                    get { return _curEntry.Key; }
+                }
+
+                object IDictionaryEnumerator.Value
+                {
+                    get { return _curEntry.Value; }
+                }
+
+                /// <summary>
+                /// Disposes of the current instance.
+                /// </summary>
+                public void Dispose()
+                {
+                    if (_enum == null) return;
+                    _enum.Dispose();
+                    this = default(Enumerator);
+                }
+
+                /// <summary>
+                /// Advances the enumerator to the next position in the collection.
+                /// </summary>
+                /// <returns><c>true</c> if the enumerator was successfully advanced; 
+                /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                public bool MoveNext()
+                {
+                    if (_enum == null) return false;
+
+                    if (!_enum.MoveNext())
+                    {
+                        Dispose();
+                        return false;
+                    }
+
+                    _current = _enum.Current;
+                    _curEntry = new DictionaryEntry(_curEntry.Key, _curEntry.Value);
+                    _curObj = _generic ? (object)_current : _curEntry;
+                    return true;
+                }
+
+                void IEnumerator.Reset()
+                {
+                    _enum.Reset();
+                }
+            }
+
+            /// <summary>
+            /// A collection of all keys in the dictionary.
+            /// </summary>
+            public class KeyCollection : ICollection<string>, ICollection
+#if IREADONLY
+                , IReadOnlyCollection<string>
+#endif
+            {
+                private EntryDictionary _dict;
+
+                internal KeyCollection(EntryDictionary dict)
+                {
+                    _dict = dict;
+                }
+
+                /// <summary>
+                /// Gets the number of elements in the collection.
+                /// </summary>
+                public int Count { get { return _dict._archive._entries.Count; } }
+
+                bool ICollection<string>.IsReadOnly { get { return true; } }
+
+                /// <summary>
+                /// Determines if the specified key exists in the current instance.
+                /// </summary>
+                /// <param name="key">The key to search for in the collection.</param>
+                /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
+                public bool Contains(string key)
+                {
+                    return key != null && _dict.ContainsKey(key);
+                }
+
+                /// <summary>
+                /// Copies all elements in the collection to the specified array, starting at the specified index.
+                /// </summary>
+                /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
+                /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
+                /// <exception cref="ArgumentNullException">
+                /// <paramref name="array"/> is <c>null</c>.
+                /// </exception>
+                /// <exception cref="ArgumentOutOfRangeException">
+                /// <paramref name="index"/> is less than 0.
+                /// </exception>
+                /// <exception cref="ArgumentException">
+                /// <paramref name="index"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
+                /// </exception>
+                public void CopyTo(string[] array, int index)
+                {
+                    _dict._archive._entries.Keys.CopyTo(array, index);
+                }
+
+                object ICollection.SyncRoot
+                {
+                    get { return ((IDictionary)_dict).SyncRoot; }
+                }
+
+                bool ICollection.IsSynchronized
+                {
+                    get { return false; }
+                }
+
+                void ICollection.CopyTo(Array array, int index)
+                {
+                    ((ICollection)_dict._archive._entries.Keys).CopyTo(array, index);
+                }
+
+                #region Not Supported
+                void ICollection<string>.Add(string item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void ICollection<string>.Clear()
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                bool ICollection<string>.Remove(string item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+                #endregion
+
+                /// <summary>
+                /// Returns an enumerator which iterates through the collection.
+                /// </summary>
+                /// <returns>An enumerator which iterates through the collection.</returns>
+                public Enumerator GetEnumerator()
+                {
+                    return new Enumerator(this);
+                }
+
+                IEnumerator<string> IEnumerable<string>.GetEnumerator()
+                {
+                    return GetEnumerator();
+                }
+
+                IEnumerator IEnumerable.GetEnumerator()
+                {
+                    return GetEnumerator();
+                }
+
+                /// <summary>
+                /// An enumerator which iterates through the collection.
+                /// </summary>
+                public struct Enumerator : IEnumerator<string>
+                {
+                    private IEnumerator<string> _enum;
+
+                    internal Enumerator(KeyCollection keys)
+                    {
+                        _enum = keys._dict._archive._entries.Keys.GetEnumerator();
+                    }
+
+                    /// <summary>
+                    /// Gets the element at the current position in the enumerator.
+                    /// </summary>
+                    public string Current
+                    {
+                        get { return _enum.Current; }
+                    }
+
+                    object IEnumerator.Current
+                    {
+                        get { return _enum.Current; }
+                    }
+
+                    /// <summary>
+                    /// Disposes of the current instance.
+                    /// </summary>
+                    public void Dispose()
+                    {
+                        if (_enum == null) return;
+                        _enum.Dispose();
+                        this = default(Enumerator);
+                    }
+
+                    /// <summary>
+                    /// Advances the enumerator to the next position in the collection.
+                    /// </summary>
+                    /// <returns><c>true</c> if the enumerator was successfully advanced; 
+                    /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                    public bool MoveNext()
+                    {
+                        if (_enum == null)
+                            return false;
+                        if (_enum.MoveNext())
+                            return true;
+
+                        Dispose();
+                        return false;
+                    }
+
+                    void IEnumerator.Reset()
+                    {
+                        _enum.Reset();
+                    }
+                }
+            }
+
+            /// <summary>
+            /// A collection of all values in the dictionary.
+            /// </summary>
+            public class ValueCollection : ICollection<DieFledermauZArchiveEntry>, ICollection
+#if IREADONLY
+                , IReadOnlyCollection<DieFledermauZArchiveEntry>
+#endif
+            {
+                private EntryDictionary _dict;
+
+                internal ValueCollection(EntryDictionary dict)
+                {
+                    _dict = dict;
+                }
+
+                /// <summary>
+                /// Gets the number of elements in the collection.
+                /// </summary>
+                public int Count { get { return _dict._archive._entries.Count; } }
+
+                bool ICollection<DieFledermauZArchiveEntry>.IsReadOnly { get { return true; } }
+
+                /// <summary>
+                /// Determines if the specified value exists in the current instance.
+                /// </summary>
+                /// <param name="value">The value to search for in the collection.</param>
+                /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
+                public bool Contains(DieFledermauZArchiveEntry value)
+                {
+                    return value != null && _dict.ContainsValue(value);
+                }
+
+                /// <summary>
+                /// Copies all elements in the collection to the specified array, starting at the specified index.
+                /// </summary>
+                /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
+                /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
+                /// <exception cref="ArgumentNullException">
+                /// <paramref name="array"/> is <c>null</c>.
+                /// </exception>
+                /// <exception cref="ArgumentOutOfRangeException">
+                /// <paramref name="index"/> is less than 0.
+                /// </exception>
+                /// <exception cref="ArgumentException">
+                /// <paramref name="index"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
+                /// </exception>
+                public void CopyTo(DieFledermauZArchiveEntry[] array, int index)
+                {
+                    _dict._archive._entries.Values.CopyTo(array, index);
+                }
+
+                object ICollection.SyncRoot
+                {
+                    get { return ((IDictionary)_dict).SyncRoot; }
+                }
+
+                bool ICollection.IsSynchronized
+                {
+                    get { return false; }
+                }
+
+                void ICollection.CopyTo(Array array, int index)
+                {
+                    ((ICollection)_dict._archive._entries.Keys).CopyTo(array, index);
+                }
+
+                #region Not Supported
+                void ICollection<DieFledermauZArchiveEntry>.Add(DieFledermauZArchiveEntry item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void ICollection<DieFledermauZArchiveEntry>.Clear()
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                bool ICollection<DieFledermauZArchiveEntry>.Remove(DieFledermauZArchiveEntry item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+                #endregion
+
+                /// <summary>
+                /// Returns an enumerator which iterates through the collection.
+                /// </summary>
+                /// <returns>An enumerator which iterates through the collection.</returns>
+                public Enumerator GetEnumerator()
+                {
+                    return new Enumerator(this);
+                }
+
+                IEnumerator<DieFledermauZArchiveEntry> IEnumerable<DieFledermauZArchiveEntry>.GetEnumerator()
+                {
+                    return GetEnumerator();
+                }
+
+                IEnumerator IEnumerable.GetEnumerator()
+                {
+                    return GetEnumerator();
+                }
+
+                /// <summary>
+                /// An enumerator which iterates through the collection.
+                /// </summary>
+                public struct Enumerator : IEnumerator<DieFledermauZArchiveEntry>
+                {
+                    private IEnumerator<DieFledermauZArchiveEntry> _enum;
+
+                    internal Enumerator(ValueCollection values)
+                    {
+                        _enum = values._dict._archive._entries.Values.GetEnumerator();
+                    }
+
+                    /// <summary>
+                    /// Gets the element at the current position in the enumerator.
+                    /// </summary>
+                    public DieFledermauZArchiveEntry Current
+                    {
+                        get { return _enum.Current; }
+                    }
+
+                    object IEnumerator.Current
+                    {
+                        get { return _enum.Current; }
+                    }
+
+                    /// <summary>
+                    /// Disposes of the current instance.
+                    /// </summary>
+                    public void Dispose()
+                    {
+                        if (_enum == null) return;
+                        _enum.Dispose();
+                        this = default(Enumerator);
+                    }
+
+                    /// <summary>
+                    /// Advances the enumerator to the next position in the collection.
+                    /// </summary>
+                    /// <returns><c>true</c> if the enumerator was successfully advanced; 
+                    /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                    public bool MoveNext()
+                    {
+                        if (_enum == null)
+                            return false;
+                        if (_enum.MoveNext())
+                            return true;
+
+                        Dispose();
+                        return false;
+                    }
+
+                    void IEnumerator.Reset()
+                    {
+                        _enum.Reset();
+                    }
+                }
+            }
         }
     }
 

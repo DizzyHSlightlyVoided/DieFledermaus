@@ -2315,11 +2315,9 @@ namespace DieFledermaus
                 /// </summary>
                 public void Dispose()
                 {
-                    if (_enum == null)
-                        return;
-                    _current = 0;
+                    if (_enum == null) return;
                     _enum.Dispose();
-                    _enum = null;
+                    this = default(Enumerator);
                 }
 
                 /// <summary>
