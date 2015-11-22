@@ -2076,7 +2076,7 @@ namespace DieFledermaus
             /// </summary>
             /// <remarks>
             /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
-            /// however, 
+            /// however, it may still be changed by the base stream.
             /// </remarks>
             public bool IsReadOnly
             {
