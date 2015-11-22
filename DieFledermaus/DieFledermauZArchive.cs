@@ -378,7 +378,6 @@ namespace DieFledermaus
 
                 for (long i = 0; i < entries.LongLength; i++)
                 {
-                    Debug.Assert(curOffset == _baseStream.Length, "Offset mismatch", "Expected offset: {0}, actual offset: {1}", curOffset, _baseStream.Length);
                     var curStream = entryStreams[i];
                     var curEntry = entries[i];
                     offsets[i] = curOffset;
@@ -398,7 +397,6 @@ namespace DieFledermaus
                     curEntry.DoDelete();
                 }
 
-                Debug.Assert(curOffset == _baseStream.Length, "All-offset mismatch", "Expected offset: {0}, actual offset: {1}", curOffset, _baseStream.Length);
                 writer.Write(_allOffsets);
 
                 for (long i = 0; i < entries.LongLength; i++)
@@ -419,7 +417,6 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             writer.Flush();
 #endif
-            Debug.Assert(length == _baseStream.Length, "Length mismatch", "Expected length: {0}, actual length: {1}", length, _baseStream.Length);
         }
 
         /// <summary>
