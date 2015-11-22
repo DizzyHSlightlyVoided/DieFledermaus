@@ -39,16 +39,16 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a single entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
-    public class DieFledermauZArchiveEntry
+    public abstract class DieFledermauZItem
     {
-        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
+        internal DieFledermauZItem(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
             _bufferStream = new MausBufferStream();
-            _mausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
+            MausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
             _arch = archive;
         }
 
-        private object _lock = new object();
+        internal object _lock = new object();
 
         private DieFledermauZArchive _arch;
         /// <summary>
@@ -60,17 +60,17 @@ namespace DieFledermaus
         /// <summary>
         /// Gets the path of the current instance within the archive.
         /// </summary>
-        public string Path { get { return _mausStream.Filename; } }
+        public string Path { get { return MausStream.Filename; } }
 
         /// <summary>
         /// Gets the encryption format of the current instance.
         /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return _mausStream.EncryptionFormat; } }
+        public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
 
         /// <summary>
         /// Gets the compression format of the current instance.
         /// </summary>
-        public MausCompressionFormat CompressionFormat { get { return _mausStream.CompressionFormat; } }
+        public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
 
         /// <summary>
         /// Gets and sets the encryption key for the current instance, or <c>null</c> if the current instance is not encrypted.
@@ -85,12 +85,12 @@ namespace DieFledermaus
         /// </exception>
         public byte[] Key
         {
-            get { return _mausStream.Key; }
+            get { return MausStream.Key; }
             set
             {
                 _ensureCanSetKey();
 
-                _mausStream.Key = value;
+                MausStream.Key = value;
             }
         }
 
@@ -115,7 +115,7 @@ namespace DieFledermaus
         public void SetPassword(string password)
         {
             _ensureCanSetKey();
-            _mausStream.SetPassword(password);
+            MausStream.SetPassword(password);
         }
 
         /// <summary>
@@ -139,77 +139,42 @@ namespace DieFledermaus
         public void SetPassword(SecureString password)
         {
             _ensureCanSetKey();
-            _mausStream.SetPassword(password);
+            MausStream.SetPassword(password);
         }
 
         /// <summary>
         /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current entry is not encrypted.
         /// </summary>
-        public DieFledermausStream.SettableOptions EncryptedOptions { get { return _mausStream.EncryptedOptions; } }
+        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
 
         private void _ensureCanSetKey()
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
-            if (_mausStream.EncryptionFormat == MausEncryptionFormat.None)
+            if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new InvalidOperationException(TextResources.NotEncrypted);
-            if (_arch.Mode == MauZArchiveMode.Read && _mausStream.HeaderIsProcessed)
+            if (_arch.Mode == MauZArchiveMode.Read && MausStream.HeaderIsProcessed)
                 throw new InvalidOperationException(TextResources.AlreadyDecryptedArchive);
         }
 
-        private void EnsureCanWrite()
+        internal void EnsureCanWrite()
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
             _arch.EnsureCanWrite();
         }
 
-        private void EnsureCanRead()
+        internal void EnsureCanRead()
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
             _arch.EnsureCanRead();
         }
 
         private readonly MausBufferStream _bufferStream;
-        private readonly DieFledermausStream _mausStream;
-        private MausBufferStream _writingStream;
+        internal readonly DieFledermausStream MausStream;
 
-        internal MausBufferStream GetWritten()
+        internal virtual MausBufferStream GetWritten()
         {
-            if (_writingStream == null || _writingStream.CanRead)
-                throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, _mausStream.Filename));
-            _mausStream.Dispose();
+            MausStream.Dispose();
             return _bufferStream;
-        }
-
-        /// <summary>
-        /// Opens the archive entry for writing.
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has been deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para><see cref="Archive"/> is in read-only mode.</para>
-        /// <para>-OR-</para>
-        /// <para>The current instance has already been open for writing.</para>
-        /// </exception>
-        public Stream OpenWrite()
-        {
-            lock (_lock)
-            {
-                EnsureCanWrite();
-                if (_writingStream != null)
-                    throw new InvalidOperationException(TextResources.ArchiveAlreadyWritten);
-
-                _writingStream = new MausBufferStream();
-                _writingStream.Disposing += _writingStream_Disposing;
-                return _writingStream;
-            }
-        }
-
-        private void _writingStream_Disposing(object sender, EventArgs e)
-        {
-            _writingStream.Reset();
-            _writingStream.BufferCopyTo(_mausStream);
         }
 
         /// <summary>
@@ -231,13 +196,11 @@ namespace DieFledermaus
             }
         }
 
-        internal void DoDelete()
+        internal virtual void DoDelete()
         {
             _arch = null;
-            _mausStream.Close();
+            MausStream.Close();
             _bufferStream.Close();
-            if (_writingStream != null)
-                _writingStream.Disposing -= _writingStream_Disposing;
         }
     }
 

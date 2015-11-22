@@ -109,10 +109,14 @@ namespace DieFledermaus
             _entryDict = new EntryDictionary(this);
         }
 
-        internal void Delete(DieFledermauZArchiveEntry entry)
+        internal void Delete(DieFledermauZItem item)
         {
-            _entries.Remove(entry.Path);
-            _entryKeys.Remove(entry);
+            var entry = item as DieFledermauZArchiveEntry;
+            if (item != null)
+            {
+                _entries.Remove(entry.Path);
+                _entryKeys.Remove(entry);
+            }
         }
 
         private EntryDictionary _entryDict;
@@ -159,7 +163,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
-        public DieFledermauZArchiveEntry AddEntry(string path, MausCompressionFormat compressionFormat, MausEncryptionFormat encryptionFormat)
+        public DieFledermauZArchiveEntry Create(string path, MausCompressionFormat compressionFormat, MausEncryptionFormat encryptionFormat)
         {
             EnsureCanWrite();
             ICompressionFormat compFormat;

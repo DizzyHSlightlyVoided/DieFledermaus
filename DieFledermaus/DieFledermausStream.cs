@@ -552,7 +552,7 @@ namespace DieFledermaus
         }
 #endif
 
-        internal DieFledermausStream(DieFledermauZArchiveEntry entry, string path, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
+        internal DieFledermausStream(DieFledermauZItem entry, string path, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
         {
             _baseStream = stream;
             _bufferStream = new MausBufferStream();
@@ -582,7 +582,7 @@ namespace DieFledermaus
         }
         #endregion
 
-        private DieFledermauZArchiveEntry _entry;
+        private DieFledermauZItem _entry;
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {

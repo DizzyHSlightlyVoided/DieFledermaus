@@ -53,6 +53,7 @@
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="DieFledermauZArchive.cs" />
     <Compile Include="DieFledermauZArchiveEntry.cs" />
+    <Compile Include="DieFledermauZItem.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
