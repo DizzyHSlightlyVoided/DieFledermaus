@@ -35,9 +35,9 @@ using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
-    internal partial class QuickBufferStream : Stream
+    internal partial class MausBufferStream : Stream
     {
-        public QuickBufferStream()
+        public MausBufferStream()
         {
             _currentBuffer = _firstBuffer = new MiniBuffer();
         }
@@ -184,7 +184,7 @@ namespace DieFledermaus
 
         public void BufferCopyTo(Stream destination)
         {
-            QuickBufferStream qbs = destination as QuickBufferStream;
+            MausBufferStream qbs = destination as MausBufferStream;
             if (qbs != null)
             {
                 qbs._firstBuffer = _firstBuffer;
@@ -224,7 +224,7 @@ namespace DieFledermaus
             base.Dispose(disposing);
         }
 
-        internal void Prepend(QuickBufferStream other)
+        internal void Prepend(MausBufferStream other)
         {
             _length += other._length;
             other._currentBuffer.Next = _firstBuffer;

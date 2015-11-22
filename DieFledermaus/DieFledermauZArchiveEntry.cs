@@ -44,7 +44,7 @@ namespace DieFledermaus
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
             _path = path;
-            _bufferStream = new QuickBufferStream();
+            _bufferStream = new MausBufferStream();
             _mausStream = new DieFledermausStream(this, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
         }
 
@@ -169,9 +169,9 @@ namespace DieFledermaus
             _arch.EnsureCanRead();
         }
 
-        private readonly QuickBufferStream _bufferStream;
+        private readonly MausBufferStream _bufferStream;
         private readonly DieFledermausStream _mausStream;
-        private QuickBufferStream _writingStream;
+        private MausBufferStream _writingStream;
 
         /// <summary>
         /// Opens the archive entry for writing.
@@ -193,7 +193,7 @@ namespace DieFledermaus
                 if (_writingStream != null)
                     throw new InvalidOperationException(TextResources.ArchiveAlreadyWritten);
 
-                _writingStream = new QuickBufferStream();
+                _writingStream = new MausBufferStream();
                 _writingStream.Disposing += _writingStream_Disposing;
                 return _writingStream;
             }

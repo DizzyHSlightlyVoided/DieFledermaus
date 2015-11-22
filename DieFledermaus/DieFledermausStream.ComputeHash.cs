@@ -78,9 +78,9 @@ namespace DieFledermaus
             return alg;
         }
 
-        private QuickBufferStream Decrypt()
+        private MausBufferStream Decrypt()
         {
-            QuickBufferStream output = new QuickBufferStream();
+            MausBufferStream output = new MausBufferStream();
 
             using (SymmetricAlgorithm alg = GetAlgorithm())
             using (ICryptoTransform transform = alg.CreateDecryptor())
@@ -93,9 +93,9 @@ namespace DieFledermaus
             return output;
         }
 
-        private QuickBufferStream Encrypt()
+        private MausBufferStream Encrypt()
         {
-            QuickBufferStream output = new QuickBufferStream();
+            MausBufferStream output = new MausBufferStream();
             byte[] firstBuffer = new byte[_key.Length + _iv.Length];
             Array.Copy(_salt, firstBuffer, _key.Length);
             Array.Copy(_iv, 0, firstBuffer, _key.Length, _iv.Length);

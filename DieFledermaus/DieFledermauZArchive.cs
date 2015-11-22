@@ -87,7 +87,7 @@ namespace DieFledermaus
                     }
                     else
                     {
-                        //TODO: Copy the stream into a QuickBufferStream
+                        //TODO: Copy the stream into a MausBufferStream
                     }
 
                     throw new NotImplementedException();

@@ -59,7 +59,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="QuickBufferStream.cs" />
+    <Compile Include="MausBufferStream.cs" />
     <Compile Include="DieFledermausStream.ComputeHash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

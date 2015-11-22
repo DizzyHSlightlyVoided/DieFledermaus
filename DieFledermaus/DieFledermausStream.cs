@@ -65,7 +65,7 @@ namespace DieFledermaus
 
         private Stream _baseStream;
         private Stream _deflateStream;
-        private QuickBufferStream _bufferStream;
+        private MausBufferStream _bufferStream;
         private CompressionMode _mode;
         private bool _leaveOpen;
         private long _uncompressedLength;
@@ -120,7 +120,7 @@ namespace DieFledermaus
             if (compressionMode == CompressionMode.Compress)
             {
                 CheckWrite(stream);
-                _bufferStream = new QuickBufferStream();
+                _bufferStream = new MausBufferStream();
                 _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Compress, true);
                 _baseStream = stream;
             }
@@ -237,7 +237,7 @@ namespace DieFledermaus
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             CheckWrite(stream);
 
-            _bufferStream = new QuickBufferStream();
+            _bufferStream = new MausBufferStream();
             switch (compressionFormat)
             {
                 case MausCompressionFormat.Deflate:
@@ -469,7 +469,7 @@ namespace DieFledermaus
                     throw new InvalidEnumArgumentException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
             }
 
-            _bufferStream = new QuickBufferStream();
+            _bufferStream = new MausBufferStream();
             _deflateStream = new DeflateStream(_bufferStream, compressionLevel, true);
             _baseStream = stream;
             _mode = CompressionMode.Compress;
@@ -555,7 +555,7 @@ namespace DieFledermaus
         internal DieFledermausStream(DieFledermauZArchiveEntry entry, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
         {
             _baseStream = stream;
-            _bufferStream = new QuickBufferStream();
+            _bufferStream = new MausBufferStream();
             switch (compFormat.CompressionFormat)
             {
                 case MausCompressionFormat.Deflate:
@@ -1517,7 +1517,7 @@ namespace DieFledermaus
 
             if (_bufferStream == null)
             {
-                _bufferStream = new QuickBufferStream();
+                _bufferStream = new MausBufferStream();
                 byte[] buffer = new byte[MaxBuffer];
                 long length = _compLength;
                 while (length > 0)
@@ -1580,7 +1580,7 @@ namespace DieFledermaus
             {
                 case MausCompressionFormat.Lzma:
                     _deflateStream = _bufferStream;
-                    _bufferStream = new QuickBufferStream();
+                    _bufferStream = new MausBufferStream();
                     const int optLen = 5;
 
                     byte[] opts = new byte[optLen];
@@ -1827,7 +1827,7 @@ namespace DieFledermaus
             else if (_cmpFmt == MausCompressionFormat.Lzma)
             {
                 _bufferStream.Reset();
-                _bufferStream = new QuickBufferStream();
+                _bufferStream = new MausBufferStream();
 
                 LzmaEncoder encoder = new LzmaEncoder();
                 object[] props = new object[]
@@ -1908,7 +1908,7 @@ namespace DieFledermaus
                 }
                 else
                 {
-                    using (QuickBufferStream opts = new QuickBufferStream())
+                    using (MausBufferStream opts = new MausBufferStream())
                     {
                         List<byte[]> formats = new List<byte[]>();
 
@@ -1941,7 +1941,7 @@ namespace DieFledermaus
                         }
                     }
 
-                    using (QuickBufferStream output = Encrypt())
+                    using (MausBufferStream output = Encrypt())
                     {
                         writer.Write(output.Length);
                         writer.Write((long)_pkCount);
