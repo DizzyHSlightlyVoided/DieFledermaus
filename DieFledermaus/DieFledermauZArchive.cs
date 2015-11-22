@@ -48,7 +48,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d, _mFoot = 0x6d41755a;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const short _versionShort = 10, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 10, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;
@@ -334,10 +334,11 @@ namespace DieFledermaus
 
         private void WriteFile()
         {
-            long length = 60;
+            long length = 52;
 
             DieFledermauZArchiveEntry[] entries = _entries.Values.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
+            byte[][] paths = new byte[entries.Length][];
 
             for (int i = 0; i < entries.Length; i++)
             {
@@ -346,10 +347,17 @@ namespace DieFledermaus
                 MausBufferStream curStream = curEntry.GetWritten();
                 entryStreams[i] = curStream;
 
-                length += 34L + curStream.Length + (DieFledermausStream._textEncoding.GetByteCount(curEntry.Path) * 2);
+                string path;
+                if (curEntry.EncryptedOptions != null && curEntry.EncryptedOptions.Contains(MausOptionToEncrypt.Filename))
+                    path = "/V" + i.ToString(NumberFormatInfo.InvariantInfo);
+                else
+                    path = curEntry.Path;
+                byte[] curPath = DieFledermausStream._textEncoding.GetBytes(path);
+                paths[i] = curPath;
+
+                length += 42L + curStream.Length + (curPath.Length * 2);
             }
 
-            long curOffset = 28;
 #if NOLEAVEOPEN
             BinaryWriter writer = new BinaryWriter(_baseStream);
 #else
@@ -360,32 +368,24 @@ namespace DieFledermaus
                 writer.Write(_versionShort);
 
                 writer.Write(length);
-                writer.Write((ushort)0); //TODO: Options
+                long curOffset = 28;
+                writer.Write((ushort)0); //TODO: Options, add to curOffset
                 writer.Write(entries.LongLength);
 
                 writer.Write(_allEntries);
 
                 long[] offsets = new long[entries.Length];
-                string[] paths = new string[entries.Length];
 
-                for (long i = 0; i < entries.LongLength;)
+                for (long i = 0; i < entries.LongLength; i++)
                 {
+                    Debug.Assert(curOffset == _baseStream.Length, "Offset mismatch", "Expected offset: {0}, actual offset: {1}", curOffset, _baseStream.Length);
                     var curStream = entryStreams[i];
                     var curEntry = entries[i];
                     offsets[i] = curOffset;
                     writer.Write(_curEntry);
-                    long nextI = i + 1;
-                    writer.Write(nextI);
+                    writer.Write(i);
 
-                    string path;
-                    if (curEntry.EncryptedOptions != null && curEntry.EncryptedOptions.Contains(MausOptionToEncrypt.Filename))
-                        path = "/V" + i.ToString(NumberFormatInfo.InvariantInfo);
-                    else
-                        path = curEntry.Path;
-
-                    paths[i] = path;
-                    i = nextI;
-                    byte[] pathBytes = DieFledermausStream._textEncoding.GetBytes(path);
+                    byte[] pathBytes = paths[i];
 
                     writer.Write((byte)pathBytes.Length);
                     writer.Write(pathBytes);
@@ -398,18 +398,18 @@ namespace DieFledermaus
                     curEntry.DoDelete();
                 }
 
+                Debug.Assert(curOffset == _baseStream.Length, "All-offset mismatch", "Expected offset: {0}, actual offset: {1}", curOffset, _baseStream.Length);
                 writer.Write(_allOffsets);
 
-                for (long i = 0; i < entries.LongLength;)
+                for (long i = 0; i < entries.LongLength; i++)
                 {
-                    byte[] pathBytes = DieFledermausStream._textEncoding.GetBytes(paths[i]);
-                    long off = offsets[i];
+                    byte[] pathBytes = paths[i];
                     writer.Write(_curOffset);
-                    writer.Write(++i);
+                    writer.Write(i);
                     writer.Write((byte)pathBytes.Length);
                     writer.Write(pathBytes);
                     writer.Write(0L);
-                    writer.Write(off);
+                    writer.Write(offsets[i]);
                 }
 
                 writer.Write(0L);
@@ -419,6 +419,7 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             writer.Flush();
 #endif
+            Debug.Assert(length == _baseStream.Length, "Length mismatch", "Expected length: {0}, actual length: {1}", length, _baseStream.Length);
         }
 
         /// <summary>

@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.IO;
 using System.Security;
 
 using DieFledermaus.Globalization;
@@ -61,16 +60,6 @@ namespace DieFledermaus
         /// Gets the path of the current instance within the archive.
         /// </summary>
         public string Path { get { return MausStream.Filename; } }
-
-        /// <summary>
-        /// Gets the encryption format of the current instance.
-        /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
-
-        /// <summary>
-        /// Gets the compression format of the current instance.
-        /// </summary>
-        public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
 
         /// <summary>
         /// Gets and sets the encryption key for the current instance, or <c>null</c> if the current instance is not encrypted.
@@ -142,11 +131,6 @@ namespace DieFledermaus
             MausStream.SetPassword(password);
         }
 
-        /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current entry is not encrypted.
-        /// </summary>
-        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
-
         private void _ensureCanSetKey()
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
@@ -168,8 +152,8 @@ namespace DieFledermaus
             _arch.EnsureCanRead();
         }
 
-        private readonly MausBufferStream _bufferStream;
-        internal readonly DieFledermausStream MausStream;
+        internal readonly MausBufferStream _bufferStream;
+        internal DieFledermausStream MausStream;
 
         internal virtual MausBufferStream GetWritten()
         {

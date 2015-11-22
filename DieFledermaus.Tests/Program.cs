@@ -36,7 +36,7 @@ namespace DieFledermaus.Tests
                 stream.Write(bigBuffer, 0, bigBufferLength);
         }
 
-        private static void SetPasswd(DieFledermauZItem entry)
+        private static void SetPasswd(DieFledermauZArchiveEntry entry)
         {
             const string passwd = "Correct Horse!Battery#Staple69105";
 

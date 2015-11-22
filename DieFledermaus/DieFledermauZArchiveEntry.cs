@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
-using System.Security;
 
 using DieFledermaus.Globalization;
 
@@ -46,13 +45,27 @@ namespace DieFledermaus
         {
         }
 
-        private MausBufferStream _writingStream;
+        /// <summary>
+        /// Gets the encryption format of the current instance.
+        /// </summary>
+        public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
 
+        /// <summary>
+        /// Gets the compression format of the current instance.
+        /// </summary>
+        public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
+
+        /// <summary>
+        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current entry is not encrypted.
+        /// </summary>
+        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
+
+        private MausBufferStream _writingStream;
 
         /// <summary>
         /// Opens the archive entry for writing.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A writeable stream to which the data will be written..</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance has been deleted.
         /// </exception>
@@ -83,9 +96,12 @@ namespace DieFledermaus
 
         internal override MausBufferStream GetWritten()
         {
-            if (_writingStream == null || _writingStream.CanRead)
-                throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, MausStream.Filename));
-            return base.GetWritten();
+            lock (_lock)
+            {
+                if (_writingStream == null || _writingStream.CanRead)
+                    throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, MausStream.Filename));
+                return base.GetWritten();
+            }
         }
 
         internal override void DoDelete()

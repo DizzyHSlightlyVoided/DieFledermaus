@@ -1808,7 +1808,7 @@ namespace DieFledermaus
                 LzmaEncoder encoder = new LzmaEncoder();
                 object[] props = new object[]
                 {
-                        (int)_lzmaDictSize,
+                        (int)(_lzmaDictSize == LzmaDictionarySize.Default ? LzmaDictionarySize.Size8m : _lzmaDictSize),
                         2,
                         3,
                         0,

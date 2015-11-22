@@ -190,6 +190,8 @@ namespace DieFledermaus
                 qbs._currentBuffer.Next = _firstBuffer;
                 qbs._length += _length;
                 qbs.Reset();
+                _position = _length;
+                _currentBuffer = null;
                 return;
             }
 
