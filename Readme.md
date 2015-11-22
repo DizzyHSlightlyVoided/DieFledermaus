@@ -2,7 +2,7 @@
 =================================
 * Version 0.95
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)- or [Lempel-Ziv-Markov chain](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. The file format is specified in [DieFledermaus Format.md](DieFledermaus Format.md). Two version numbers are defined: 0.94 (depreciated) and 0.95.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)- or [Lempel-Ziv-Markov chain](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. The file format is specified in [DieFledermaus Format.md](DieFledermaus Format.md).
 
 Features
 --------

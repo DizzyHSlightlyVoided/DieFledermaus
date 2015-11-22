@@ -6,7 +6,7 @@ Version 0.95
 * Byte order: little-endian
 * Signing form: two's complement
 
-The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun. Two version numbers are defined for use: 0.94 (depreciated) and 0.95.
+The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)-compressed file, with metadata and a magic number. The name exists solely to be a bilingual pun.
 
 Terminology
 -----------
@@ -21,7 +21,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Structure
 ---------
-Any encoder or decoder must support version 0.94 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
+Any encoder or decoder must support version 0.95 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless a specific filename is requested by the user.
 
@@ -36,7 +36,7 @@ A DieFledermaus stream contains the following fields:
 7. **Data:** The compressed data itself.
 
 ### Format
-**Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer (8-bit in version 0.94) specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
+**Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
 
 Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for the element; the original element is thus a *parameterized element*.
 
@@ -76,9 +76,6 @@ When a DieFledermaus archive is encrypted, the following DieFledermaus fields be
 The encrypted data contains:
 1. **Encrypted Format:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename (`Name`). This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
 2. The **Data** field as it exists when unencrypted; the compressed data.
-
-#### Version 0.94
-In version 0.94, there was no **Encrypted Format** field. Instead, there was only an entry in **Format**, `KName`, which specified that the encrypted **Filename** was prepended to the encrypted data as a length-prefixed string, and which was mutually exclusive with `Name`.
 
 ### Text-based passwords
 Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 interations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).

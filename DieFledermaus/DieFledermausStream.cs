@@ -58,8 +58,7 @@ namespace DieFledermaus
     {
         internal const int MaxBuffer = 65536;
         private const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 95, _minVersionShort = 94;
-        private const float _versionDiv = 100;
+        private const ushort _versionShort = 95, _minVersionShort = 95;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
@@ -1204,11 +1203,10 @@ namespace DieFledermaus
             { _cmpDef, MausCompressionFormat.Deflate }
         };
 
-        private const string _kFilename = "Name", _kEncFilename = "KName", _kULen = "DeL", _kComment = "Kom";
+        private const string _kFilename = "Name", _kULen = "DeL", _kComment = "Kom";
         private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' },
             _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
-        private ushort version = _versionShort;
         private void _getHeader()
         {
 #if NOLEAVEOPEN
@@ -1219,7 +1217,7 @@ namespace DieFledermaus
             {
                 if (reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidMagicNumber);
-                version = reader.ReadUInt16();
+                ushort version = reader.ReadUInt16();
                 if (version > _versionShort)
                     throw new NotSupportedException(TextResources.VersionTooHigh);
                 if (version < _minVersionShort)
@@ -1261,7 +1259,7 @@ namespace DieFledermaus
         bool gotFormat, gotULen;
         private void ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
-            int optLen = version == _minVersionShort ? reader.ReadByte() : reader.ReadUInt16();
+            int optLen = reader.ReadUInt16();
 
             SettableOptions options = fromEncrypted ? _encryptedOptions : new SettableOptions(this);
 
@@ -1410,20 +1408,8 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (version == _minVersionShort && curForm.Equals(_kEncFilename, StringComparison.Ordinal))
-                {
-                    if (_filename != null)
-                        throw new InvalidDataException(TextResources.FormatBad);
-
-                    options.InternalAdd(MausOptionToEncrypt.Filename);
-                    continue;
-                }
-
                 throw new NotSupportedException(TextResources.FormatUnknown);
             }
-
-            if (_minVersionShort == version && options.Contains(MausOptionToEncrypt.Filename) && _encFmt == MausEncryptionFormat.None)
-                throw new InvalidDataException(TextResources.FormatBad);
         }
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
@@ -1547,32 +1533,13 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.BadKey);
                 bufferStream.Reset();
 
-                if (version > _minVersionShort)
-                {
 #if NOLEAVEOPEN
-                    BinaryReader reader = new BinaryReader(bufferStream);
+                BinaryReader reader = new BinaryReader(bufferStream);
 #else
-                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
+                using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
 #endif
-                    {
-                        ReadOptions(reader, true);
-                    }
-                }
-                else if (_encryptedOptions.Contains(MausOptionToEncrypt.Filename))
                 {
-                    string filename;
-#if NOLEAVEOPEN
-                    BinaryReader reader = new BinaryReader(bufferStream);
-#else
-                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
-#endif
-                    {
-                        filename = GetString(reader);
-                    }
-
-                    if (!IsValidFilename(filename, false, _allowDirNames, null))
-                        throw new InvalidDataException(TextResources.FormatFilename);
-                    _filename = filename;
+                    ReadOptions(reader, true);
                 }
 
                 _bufferStream.Close();
@@ -2094,7 +2061,7 @@ namespace DieFledermaus
             /// </summary>
             private bool IsFrozen
             {
-                get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && (_minVersionShort == _stream.version || _stream._headerGotten)); }
+                get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && _stream._headerGotten); }
             }
             bool ICollection.IsSynchronized { get { return IsFrozen; } }
 
