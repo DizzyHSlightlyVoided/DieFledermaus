@@ -187,7 +187,8 @@ namespace DieFledermaus
             MausBufferStream qbs = destination as MausBufferStream;
             if (qbs != null)
             {
-                qbs._firstBuffer = _firstBuffer;
+                qbs._currentBuffer.Next = _firstBuffer;
+                qbs._length += _length;
                 qbs.Reset();
                 return;
             }

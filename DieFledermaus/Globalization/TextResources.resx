@@ -135,6 +135,10 @@
   <data name="ArchiveExists" xml:space="preserve">
     <value>The specified filename already exists in the archive.</value>
   </data>
+  <data name="ArchiveNotWritten" xml:space="preserve">
+    <value>The archive with path "{0}" has not yet been written to.</value>
+    <comment>ArchiveNotWritten</comment>
+  </data>
   <data name="ArchiveReadMode" xml:space="preserve">
     <value>The current archive is in read-mode.</value>
   </data>

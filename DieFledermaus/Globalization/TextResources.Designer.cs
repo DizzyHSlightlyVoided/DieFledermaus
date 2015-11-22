@@ -115,6 +115,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive with path &quot;{0}&quot; has not yet been written to..
+        /// </summary>
+        internal static string ArchiveNotWritten {
+            get {
+                return ResourceManager.GetString("ArchiveNotWritten", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current archive is in read-mode..
         /// </summary>
         internal static string ArchiveReadMode {

@@ -43,9 +43,9 @@ namespace DieFledermaus
     {
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
-            _path = path;
             _bufferStream = new MausBufferStream();
-            _mausStream = new DieFledermausStream(this, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
+            _mausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
+            _arch = archive;
         }
 
         private object _lock = new object();
@@ -57,11 +57,10 @@ namespace DieFledermaus
         /// </summary>
         public DieFledermauZArchive Archive { get { return _arch; } }
 
-        private string _path;
         /// <summary>
         /// Gets the path of the current instance within the archive.
         /// </summary>
-        public string Path { get { return _path; } }
+        public string Path { get { return _mausStream.Filename; } }
 
         /// <summary>
         /// Gets the encryption format of the current instance.
@@ -173,6 +172,14 @@ namespace DieFledermaus
         private readonly DieFledermausStream _mausStream;
         private MausBufferStream _writingStream;
 
+        internal MausBufferStream GetWritten()
+        {
+            if (_writingStream == null || _writingStream.CanRead)
+                throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, _mausStream.Filename));
+            _mausStream.Dispose();
+            return _bufferStream;
+        }
+
         /// <summary>
         /// Opens the archive entry for writing.
         /// </summary>
@@ -220,12 +227,17 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 _arch.Delete(this);
-                _arch = null;
-                _mausStream.Close();
-                _bufferStream.Close();
-                if (_writingStream != null)
-                    _writingStream.Disposing -= _writingStream_Disposing;
+                DoDelete();
             }
+        }
+
+        internal void DoDelete()
+        {
+            _arch = null;
+            _mausStream.Close();
+            _bufferStream.Close();
+            if (_writingStream != null)
+                _writingStream.Disposing -= _writingStream_Disposing;
         }
     }
 
