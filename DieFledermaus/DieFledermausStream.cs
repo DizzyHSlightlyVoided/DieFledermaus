@@ -575,8 +575,11 @@ namespace DieFledermaus
             _cmpFmt = compFormat.CompressionFormat;
             _setEncFormat(encryptionFormat);
             _allowDirNames = true;
+            _entry = entry;
         }
         #endregion
+
+        private DieFledermauZArchiveEntry _entry;
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
@@ -1814,6 +1817,8 @@ namespace DieFledermaus
 
         private void WriteFile()
         {
+            if (_entry != null && _entry.Archive == null)
+                return;
             if (_deflateStream == null || _bufferStream == null || _mode != CompressionMode.Compress || _uncompressedLength == 0)
                 return;
             if (_encFmt != MausEncryptionFormat.None && _key == null)

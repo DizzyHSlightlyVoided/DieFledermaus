@@ -221,6 +221,8 @@ namespace DieFledermaus
                 EnsureCanWrite();
                 _arch.Delete(this);
                 _arch = null;
+                _mausStream.Close();
+                _bufferStream.Close();
                 if (_writingStream != null)
                     _writingStream.Disposing -= _writingStream_Disposing;
             }
