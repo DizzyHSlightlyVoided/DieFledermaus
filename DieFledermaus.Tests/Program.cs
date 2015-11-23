@@ -21,6 +21,9 @@ namespace DieFledermaus.Tests
                 {
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.Aes);
+                    var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
+                    emptyDir.EncryptPath = true;
+                    SetPasswd(emptyDir);
                 }
             }
         }
@@ -36,7 +39,7 @@ namespace DieFledermaus.Tests
                 stream.Write(bigBuffer, 0, bigBufferLength);
         }
 
-        private static void SetPasswd(DieFledermauZArchiveEntry entry)
+        private static void SetPasswd(DieFledermauZItem item)
         {
             const string passwd = "Correct Horse!Battery#Staple69105";
 
@@ -46,11 +49,17 @@ namespace DieFledermaus.Tests
                 foreach (char c in passwd)
                     passwdSS.AppendChar(c);
                 passwdSS.MakeReadOnly();
-                entry.SetPassword(passwdSS);
+                item.SetPassword(passwdSS);
             }
             sw.Stop();
-            if (entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
-                entry.EncryptedOptions.AddAll();
+            DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
+
+            if (entry != null)
+            {
+
+                if (entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
+                    entry.EncryptedOptions.AddAll();
+            }
             Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);
         }
     }

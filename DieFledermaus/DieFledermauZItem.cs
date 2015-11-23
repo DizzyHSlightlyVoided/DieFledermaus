@@ -197,6 +197,15 @@ namespace DieFledermaus
             MausStream.Close();
             _bufferStream.Close();
         }
+
+        /// <summary>
+        /// Returns a string representation of the current instance.
+        /// </summary>
+        /// <returns>A string representation of the current instance.</returns>
+        public override string ToString()
+        {
+            return Path;
+        }
     }
 
     internal interface ICompressionFormat

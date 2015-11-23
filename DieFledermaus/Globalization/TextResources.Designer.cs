@@ -106,11 +106,20 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified filename already exists in the archive..
+        ///   Looks up a localized string similar to The specified path is an existing filename..
         /// </summary>
         internal static string ArchiveExists {
             get {
                 return ResourceManager.GetString("ArchiveExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path is an existing empty directory..
+        /// </summary>
+        internal static string ArchiveExistsDir {
+            get {
+                return ResourceManager.GetString("ArchiveExistsDir", resourceCulture);
             }
         }
         
@@ -138,6 +147,15 @@ namespace DieFledermaus.Globalization {
         internal static string ArchivePathExistingFileAsDir {
             get {
                 return ResourceManager.GetString("ArchivePathExistingFileAsDir", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path is an existing non-empty directory..
+        /// </summary>
+        internal static string ArchivePathNonEmpty {
+            get {
+                return ResourceManager.GetString("ArchivePathNonEmpty", resourceCulture);
             }
         }
         

@@ -60,7 +60,7 @@ namespace DieFledermaus
         /// Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/> to a randomly-generated value. Subsequently setting this property
         /// to <c>true</c> will set <see cref="DieFledermauZItem.Key"/> to <c>null</c>, and the old key will not be remembered or saved.
         /// </remarks>
-        public bool EncryptFilename
+        public bool EncryptPath
         {
             get { return _enc; }
             set

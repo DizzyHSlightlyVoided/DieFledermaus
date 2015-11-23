@@ -133,7 +133,10 @@
     <value>The current archive entry has been deleted.</value>
   </data>
   <data name="ArchiveExists" xml:space="preserve">
-    <value>The specified filename already exists in the archive.</value>
+    <value>The specified path is an existing filename.</value>
+  </data>
+  <data name="ArchiveExistsDir" xml:space="preserve">
+    <value>The specified path is an existing empty directory.</value>
   </data>
   <data name="ArchiveNotWritten" xml:space="preserve">
     <value>The archive with path "{0}" has not yet been written to.</value>
@@ -144,6 +147,9 @@
   </data>
   <data name="ArchivePathExistingFileAsDir" xml:space="preserve">
     <value>The specified path contains an existing filename as one of its directories.</value>
+  </data>
+  <data name="ArchivePathNonEmpty" xml:space="preserve">
+    <value>The specified path is an existing non-empty directory.</value>
   </data>
   <data name="ArchiveReadMode" xml:space="preserve">
     <value>The current archive is in read-mode.</value>
