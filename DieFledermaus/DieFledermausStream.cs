@@ -2061,7 +2061,7 @@ namespace DieFledermaus
             }
 
             /// <summary>
-            /// Gets a value indicating whether the current instance is entirely immutable.
+            /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
             /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
             /// <c>false</c> otherwise.
             /// </summary>

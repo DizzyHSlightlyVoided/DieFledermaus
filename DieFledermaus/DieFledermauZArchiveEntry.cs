@@ -45,6 +45,11 @@ namespace DieFledermaus
         {
         }
 
+        internal override bool IsFilenameEncrypted
+        {
+            get { return MausStream.EncryptedOptions != null && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Filename); }
+        }
+
         /// <summary>
         /// Gets the encryption format of the current instance.
         /// </summary>

@@ -61,6 +61,17 @@ namespace DieFledermaus
         /// </summary>
         public string Path { get { return MausStream.Filename; } }
 
+        internal abstract bool IsFilenameEncrypted { get; }
+
+        private bool _isDecrypted;
+        internal bool IsDecrypted { get { return _isDecrypted; } }
+
+        internal void TryDecrypt()
+        {
+            MausStream.LoadData();
+            _isDecrypted = true;
+        }
+
         /// <summary>
         /// Gets and sets the encryption key for the current instance, or <c>null</c> if the current instance is not encrypted.
         /// </summary>

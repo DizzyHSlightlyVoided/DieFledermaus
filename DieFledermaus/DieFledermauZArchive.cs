@@ -57,8 +57,10 @@ namespace DieFledermaus
         /// </summary>
         public Stream BaseStream { get { return _baseStream; } }
 
-        private Dictionary<string, DieFledermauZArchiveEntry> _entries = new Dictionary<string, DieFledermauZArchiveEntry>(StringComparer.Ordinal);
-        private Dictionary<DieFledermauZArchiveEntry, string> _entryKeys = new Dictionary<DieFledermauZArchiveEntry, string>();
+        private bool _headerGotten;
+
+        private readonly List<DieFledermauZItem> _entries = new List<DieFledermauZItem>();
+        private readonly Dictionary<string, int> _entryDict = new Dictionary<string, int>(StringComparer.Ordinal);
 
         /// <summary>
         /// Creates a new instance using the specified options.
@@ -98,7 +100,7 @@ namespace DieFledermaus
                     {
                         //TODO: Copy the stream into a MausBufferStream
                     }
-
+                    _headerGotten = true;
                     throw new NotImplementedException();
                 default:
                     throw new InvalidEnumArgumentException(nameof(mode), (int)mode, typeof(MauZArchiveMode));
@@ -106,24 +108,23 @@ namespace DieFledermaus
             Mode = mode;
             _baseStream = stream;
             _leaveOpen = leaveOpen;
-            _entryDict = new EntryDictionary(this);
+            _entriesRO = new EntryList(this);
         }
 
         internal void Delete(DieFledermauZItem item)
         {
-            var entry = item as DieFledermauZArchiveEntry;
-            if (item != null)
-            {
-                _entries.Remove(entry.Path);
-                _entryKeys.Remove(entry);
-            }
+            int index = _entries.IndexOf(item);
+            _entries.RemoveAt(index);
+            _entryDict.Remove(item.Path);
+            for (int i = index; i < _entries.Count; i++)
+                _entryDict[_entries[i].Path] = i;
         }
 
-        private EntryDictionary _entryDict;
+        private readonly EntryList _entriesRO;
         /// <summary>
-        /// Gets a dictionary containing all entries in the current archive.
+        /// Gets a collection containing all entries in the current archive.
         /// </summary>
-        public EntryDictionary Entries { get { return _entryDict; } }
+        public EntryList Entries { get { return _entriesRO; } }
 
         internal readonly MauZArchiveMode Mode;
 
@@ -194,10 +195,13 @@ namespace DieFledermaus
         {
             PathSeparator pathSep = new PathSeparator(path);
 
-            if (_entries.Keys.Any(pathSep.OtherBeginsWith))
+            if (_entryDict.ContainsKey(path))
+                throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
+
+            if (_entryDict.Keys.Any(pathSep.OtherBeginsWith))
                 throw new ArgumentException(TextResources.ArchivePathExistingDir, nameof(path));
 
-            if (_entries.Keys.Any(pathSep.BeginsWith))
+            if (_entryDict.Keys.Any(pathSep.BeginsWith))
                 throw new ArgumentException(TextResources.ArchivePathExistingFileAsDir, nameof(path));
 
             switch (encryptionFormat)
@@ -211,12 +215,9 @@ namespace DieFledermaus
 
             DieFledermausStream.IsValidFilename(path, true, true, nameof(path));
 
-            if (_entries.ContainsKey(path))
-                throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
-
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
-            _entries.Add(path, entry);
-            _entryKeys.Add(entry, path);
+            _entryDict.Add(path, _entries.Count);
+            _entries.Add(entry);
             return entry;
         }
 
@@ -336,7 +337,7 @@ namespace DieFledermaus
         {
             long length = 52;
 
-            DieFledermauZArchiveEntry[] entries = _entries.Values.ToArray();
+            DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
             byte[][] paths = new byte[entries.Length][];
 
@@ -348,7 +349,7 @@ namespace DieFledermaus
                 entryStreams[i] = curStream;
 
                 string path;
-                if (curEntry.EncryptedOptions != null && curEntry.EncryptedOptions.Contains(MausOptionToEncrypt.Filename))
+                if (curEntry.IsFilenameEncrypted)
                     path = "/V" + i.ToString(NumberFormatInfo.InvariantInfo);
                 else
                     path = curEntry.Path;
@@ -428,284 +429,247 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// A dictionary of all entries in a <see cref="DieFledermauZArchive"/>.
+        /// Represents a list of <see cref="DieFledermauZItem"/> objects.
         /// </summary>
-        [DebuggerTypeProxy(typeof(DebugView))]
         [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
-        public sealed class EntryDictionary : IDictionary<string, DieFledermauZArchiveEntry>, IDictionary
+        [DebuggerTypeProxy(typeof(DebugView))]
+        public class EntryList : IList<DieFledermauZItem>, IList
 #if IREADONLY
-            , IReadOnlyDictionary<string, DieFledermauZArchiveEntry>
+            , IReadOnlyList<DieFledermauZItem>
 #endif
         {
             private DieFledermauZArchive _archive;
 
-            internal EntryDictionary(DieFledermauZArchive archive)
+            internal EntryList(DieFledermauZArchive archive)
             {
                 _archive = archive;
-                _keys = new KeyCollection(this);
-                _values = new ValueCollection(this);
             }
 
             /// <summary>
-            /// Gets the element with the specified key.
+            /// Get the element at the specified index.
             /// </summary>
-            /// <param name="key">The key of the element to get.</param>
-            /// <exception cref="ArgumentNullException">
-            /// <paramref name="key"/> is <c>null</c>.
+            /// <param name="index">The index of the element to get.</param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
             /// </exception>
-            /// <exception cref="KeyNotFoundException">
-            /// <paramref name="key"/> was not found in the dictionary.
-            /// </exception>
-            public DieFledermauZArchiveEntry this[string key]
+            public DieFledermauZItem this[int index]
             {
-                get { return _archive._entries[key]; }
+                get { return _archive._entries[index]; }
             }
 
-            DieFledermauZArchiveEntry IDictionary<string, DieFledermauZArchiveEntry>.this[string key]
+            DieFledermauZItem IList<DieFledermauZItem>.this[int index]
             {
-                get { return _archive._entries[key]; }
+                get { return _archive._entries[index]; }
                 set { throw new NotSupportedException(TextResources.CollectReadOnly); }
             }
 
-            object IDictionary.this[object key]
+            object IList.this[int index]
             {
-                get { return ((IDictionary)_archive._entries)[key]; }
+                get { return _archive._entries[index]; }
                 set { throw new NotSupportedException(TextResources.CollectReadOnly); }
             }
 
             /// <summary>
-            /// Gets the number of elements contained in the dictionary.
+            /// Gets the number of elements in the list.
             /// </summary>
             public int Count { get { return _archive._entries.Count; } }
 
-            private KeyCollection _keys;
             /// <summary>
-            /// Gets a collection containing all keys in the dictionary.
+            /// Gets the entry associated with the specified path.
             /// </summary>
-            public KeyCollection Keys { get { return _keys; } }
-
-            ICollection<string> IDictionary<string, DieFledermauZArchiveEntry>.Keys { get { return _keys; } }
-            ICollection IDictionary.Keys { get { return _keys; } }
-#if IREADONLY
-            IEnumerable<string> IReadOnlyDictionary<string, DieFledermauZArchiveEntry>.Keys { get { return _keys; } }
-#endif
-            private ValueCollection _values;
-            /// <summary>
-            /// Gets a collection containing all values in the dictionary.
-            /// </summary>
-            public ValueCollection Values { get { return _values; } }
-
-            ICollection<DieFledermauZArchiveEntry> IDictionary<string, DieFledermauZArchiveEntry>.Values { get { return _values; } }
-            ICollection IDictionary.Values { get { return _values; } }
-#if IREADONLY
-            IEnumerable<DieFledermauZArchiveEntry> IReadOnlyDictionary<string, DieFledermauZArchiveEntry>.Values { get { return _values; } }
-#endif
-
-            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.IsReadOnly
-            {
-                get { return true; }
-            }
-
-            bool IDictionary.IsReadOnly
-            {
-                get { return true; }
-            }
-
-            bool IDictionary.IsFixedSize
-            {
-                get { return false; }
-            }
-
-            object ICollection.SyncRoot
-            {
-                get { return ((IDictionary)_archive._entries).SyncRoot; }
-            }
-
-            bool ICollection.IsSynchronized
-            {
-                get { return false; }
-            }
-
-            /// <summary>
-            /// Determines whether the specified key exists in the dictionary.
-            /// </summary>
-            /// <param name="key">The key to search for in the dictionary.</param>
-            /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
+            /// <param name="path">The path to search for in the archive.</param>
+            /// <param name="value">When this method returns, contains the value associated with <paramref name="path"/>, or <c>null</c>
+            /// if <paramref name="path"/> was not found. This parameter is passed uninitialized.
+            /// </param>
+            /// <returns><c>true</c> if <paramref name="path"/> was found; <c>false</c> otherwise.</returns>
             /// <exception cref="ArgumentNullException">
-            /// <paramref name="key"/> is <c>null</c>.
+            /// <paramref name="path"/> is <c>null</c>.
             /// </exception>
-            public bool ContainsKey(string key)
+            public bool TryGetEntry(string path, out DieFledermauZItem value)
             {
-                return _archive._entries.ContainsKey(key);
+                if (path == null)
+                    throw new ArgumentNullException(nameof(path));
+
+                int index;
+                if (_archive._entryDict.TryGetValue(path, out index) || _archive._entryDict.TryGetValue(path + "/", out index))
+                {
+                    value = this[index];
+                    return true;
+                }
+                value = null;
+                return false;
             }
 
             /// <summary>
-            /// Determines whether the specified value exists in the dictionary.
+            /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
             /// </summary>
-            /// <param name="value">The value to search for in the dictionary.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
-            public bool ContainsValue(DieFledermauZArchiveEntry value)
+            public bool IsFrozen
             {
-                return value != null && _archive._entryKeys.ContainsKey(value);
+                get
+                {
+                    return _archive._baseStream == null || (_archive.Mode != MauZArchiveMode.Create && _archive._headerGotten);
+                }
+            }
+
+            bool ICollection.IsSynchronized { get { return IsFrozen; } }
+
+            object ICollection.SyncRoot { get { return ((IList)_archive._entries).SyncRoot; } }
+
+            bool IList.IsFixedSize { get { return true; } }
+
+            bool IList.IsReadOnly { get { return true; } }
+
+            bool ICollection<DieFledermauZItem>.IsReadOnly { get { return true; } }
+
+            /// <summary>
+            /// Returns the index of the specified element.
+            /// </summary>
+            /// <param name="item">The element to search for in the list.</param>
+            /// <returns>The index of <paramref name="item"/>, if found; otherwise, <c>null</c>.</returns>
+            public int IndexOf(DieFledermauZItem item)
+            {
+                if (item == null) return -1;
+                return _archive._entries.IndexOf(item);
+            }
+
+            int IList.IndexOf(object value)
+            {
+                return IndexOf(value as DieFledermauZItem);
             }
 
             /// <summary>
-            /// Gets the key associated with the specified value.
+            /// Determines whether the specified element exists in the list.
             /// </summary>
-            /// <param name="key">The key to search for in the dictionary.</param>
-            /// <param name="value">When this method returns, contains the value associated with <paramref name="key"/>, or <c>null</c> if
-            /// <paramref name="key"/> was not found. This parameter is passed uninitialized.</param>
-            /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
+            /// <param name="item">The element to search for in the list.</param>
+            /// <returns><c>true</c> if <paramref name="item"/> was found; <c>false</c> otherwise.</returns>
+            public bool Contains(DieFledermauZItem item)
+            {
+                return item != null && _archive._entries.Contains(item);
+            }
+
+            bool IList.Contains(object value)
+            {
+                return Contains(value as DieFledermauZItem);
+            }
+
+            /// <summary>
+            /// Copies all elements in the collection to the specified array, starting at the specified index.
+            /// </summary>
+            /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
+            /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
             /// <exception cref="ArgumentNullException">
-            /// <paramref name="key"/> is <c>null</c>.
+            /// <paramref name="array"/> is <c>null</c>.
             /// </exception>
-            public bool TryGetValue(string key, out DieFledermauZArchiveEntry value)
-            {
-                return _archive._entries.TryGetValue(key, out value);
-            }
-
-            /// <summary>
-            /// Gets the value associated with the specified key.
-            /// </summary>
-            /// <param name="value">The value to search for in the dictionary.</param>
-            /// <param name="key">When this method returns, contains the key associated with <paramref name="value"/>, or <c>null</c> if
-            /// <paramref name="value"/> was not found. This parameter is passed uninitialized.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
-            /// <exception cref="ArgumentNullException">
-            /// <paramref name="value"/> is <c>null</c>.
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <paramref name="index"/> is less than 0.
             /// </exception>
-            public bool TryGetKey(DieFledermauZArchiveEntry value, out string key)
+            /// <exception cref="ArgumentException">
+            /// <paramref name="index"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
+            /// </exception>
+            public void CopyTo(DieFledermauZItem[] array, int index)
             {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                return _archive._entryKeys.TryGetValue(value, out key);
-            }
-
-            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.CopyTo(KeyValuePair<string, DieFledermauZArchiveEntry>[] array, int arrayIndex)
-            {
-                ((ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>)_archive._entries).CopyTo(array, arrayIndex);
-            }
-
-            /// <summary>
-            /// Returns an enumerator which iterates through the dictionary.
-            /// </summary>
-            /// <returns>An enumerator which iterates through the dictionary.</returns>
-            public Enumerator GetEnumerator()
-            {
-                return new Enumerator(this, true);
-            }
-
-            IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>> IEnumerable<KeyValuePair<string, DieFledermauZArchiveEntry>>.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            IDictionaryEnumerator IDictionary.GetEnumerator()
-            {
-                return new Enumerator(this, true);
-            }
-
-            #region Not Supported
-            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Add(KeyValuePair<string, DieFledermauZArchiveEntry> item)
-            {
-                throw new NotSupportedException(TextResources.CollectReadOnly);
-            }
-
-            void IDictionary<string, DieFledermauZArchiveEntry>.Add(string key, DieFledermauZArchiveEntry value)
-            {
-                throw new NotSupportedException(TextResources.CollectReadOnly);
-            }
-
-            void ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Clear()
-            {
-                throw new NotSupportedException(TextResources.CollectReadOnly);
-            }
-
-            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Contains(KeyValuePair<string, DieFledermauZArchiveEntry> item)
-            {
-                return ((ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>)_archive._entries).Contains(item);
-            }
-
-            bool ICollection<KeyValuePair<string, DieFledermauZArchiveEntry>>.Remove(KeyValuePair<string, DieFledermauZArchiveEntry> item)
-            {
-                throw new NotSupportedException(TextResources.CollectReadOnly);
-            }
-
-            bool IDictionary<string, DieFledermauZArchiveEntry>.Remove(string key)
-            {
-                throw new NotSupportedException(TextResources.CollectReadOnly);
-            }
-
-            bool IDictionary.Contains(object key)
-            {
-                throw new NotImplementedException();
-            }
-
-            void IDictionary.Add(object key, object value)
-            {
-                throw new NotImplementedException();
-            }
-
-            void IDictionary.Clear()
-            {
-                throw new NotImplementedException();
-            }
-
-            void IDictionary.Remove(object key)
-            {
-                throw new NotImplementedException();
+                _archive._entries.CopyTo(array, index);
             }
 
             void ICollection.CopyTo(Array array, int index)
             {
-                throw new NotImplementedException();
+                ((ICollection)_archive._entries).CopyTo(array, index);
             }
 
-            IEnumerator IEnumerable.GetEnumerator()
+            #region Not Supported
+            void IList<DieFledermauZItem>.Insert(int index, DieFledermauZItem item)
             {
-                throw new NotImplementedException();
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IList<DieFledermauZItem>.RemoveAt(int index)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void ICollection<DieFledermauZItem>.Add(DieFledermauZItem item)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            bool ICollection<DieFledermauZItem>.Remove(DieFledermauZItem item)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void ICollection<DieFledermauZItem>.Clear()
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            int IList.Add(object value)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IList.Clear()
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IList.Remove(object value)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IList.Insert(int index, object value)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
+            }
+
+            void IList.RemoveAt(int index)
+            {
+                throw new NotSupportedException(TextResources.CollectReadOnly);
             }
             #endregion
 
             /// <summary>
-            /// An enumerator which iterates through the dictionary.
+            /// Returns an enumerator which iterates through the collection.
             /// </summary>
-            public struct Enumerator : IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>>, IDictionaryEnumerator
+            /// <returns>An enumerator which iterates through the collection.</returns>
+            public Enumerator GetEnumerator()
             {
-                private bool _generic;
+                return new Enumerator(this);
+            }
 
-                private IEnumerator<KeyValuePair<string, DieFledermauZArchiveEntry>> _enum;
-                private KeyValuePair<string, DieFledermauZArchiveEntry> _current;
-                private DictionaryEntry _curEntry;
-                private object _curObj;
+            IEnumerator<DieFledermauZItem> IEnumerable<DieFledermauZItem>.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
 
-                internal Enumerator(EntryDictionary dict, bool generic)
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            /// <summary>
+            /// An enumerator which iterates through the collection.
+            /// </summary>
+            public struct Enumerator : IEnumerator<DieFledermauZItem>
+            {
+                private IEnumerator<DieFledermauZItem> _enum;
+
+                internal Enumerator(EntryList list)
                 {
-                    _enum = dict._archive._entries.GetEnumerator();
-                    _current = default(KeyValuePair<string, DieFledermauZArchiveEntry>);
-                    _curEntry = default(DictionaryEntry);
-                    _curObj = null;
-                    _generic = generic;
+                    _enum = list._archive._entries.GetEnumerator();
                 }
 
                 /// <summary>
                 /// Gets the element at the current position in the enumerator.
                 /// </summary>
-                public KeyValuePair<string, DieFledermauZArchiveEntry> Current { get { return _current; } }
-
-                object IEnumerator.Current { get { return _curObj; } }
-
-                DictionaryEntry IDictionaryEnumerator.Entry { get { return _curEntry; } }
-
-                object IDictionaryEnumerator.Key
+                public DieFledermauZItem Current
                 {
-                    get { return _curEntry.Key; }
+                    get { return _enum.Current; }
                 }
 
-                object IDictionaryEnumerator.Value
+                object IEnumerator.Current
                 {
-                    get { return _curEntry.Value; }
+                    get { return _enum.Current; }
                 }
 
                 /// <summary>
@@ -725,18 +689,13 @@ namespace DieFledermaus
                 /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
                 public bool MoveNext()
                 {
-                    if (_enum == null) return false;
-
-                    if (!_enum.MoveNext())
-                    {
-                        Dispose();
+                    if (_enum == null)
                         return false;
-                    }
+                    if (_enum.MoveNext())
+                        return true;
 
-                    _current = _enum.Current;
-                    _curEntry = new DictionaryEntry(_curEntry.Key, _curEntry.Value);
-                    _curObj = _generic ? (object)_current : _curEntry;
-                    return true;
+                    Dispose();
+                    return false;
                 }
 
                 void IEnumerator.Reset()
@@ -745,38 +704,127 @@ namespace DieFledermaus
                 }
             }
 
+            private class DebugView
+            {
+                private EntryList _col;
+
+                public DebugView(EntryList col)
+                {
+                    _col = col;
+                }
+
+                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                public DieFledermauZItem[] Items
+                {
+                    get { return _col.ToArray(); }
+                }
+            }
+
             /// <summary>
-            /// A collection of all keys in the dictionary.
+            /// A collection containing the paths of all entries in the collection.
             /// </summary>
-            [DebuggerTypeProxy(typeof(KeyDebugView))]
             [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
-            public class KeyCollection : ICollection<string>, ICollection
+            [DebuggerTypeProxy(typeof(PathDebugView))]
+            public class PathCollection : IList<string>, IList
 #if IREADONLY
-                , IReadOnlyCollection<string>
+                , IReadOnlyList<string>
 #endif
             {
-                private EntryDictionary _dict;
+                private EntryList _list;
 
-                internal KeyCollection(EntryDictionary dict)
+                internal PathCollection(EntryList list)
                 {
-                    _dict = dict;
+                    _list = list;
                 }
 
                 /// <summary>
-                /// Gets the number of elements in the collection.
+                /// Gets the element at the specified index.
                 /// </summary>
-                public int Count { get { return _dict._archive._entries.Count; } }
+                /// <param name="index">The element at the specified index.</param>
+                /// <exception cref="ArgumentOutOfRangeException">
+                /// <paramref name="index"/> is less than 0 or is greater than or equal to <see cref="Count"/>.
+                /// </exception>
+                public string this[int index]
+                {
+                    get { return _list[index].Path; }
+                }
 
-                bool ICollection<string>.IsReadOnly { get { return true; } }
+                string IList<string>.this[int index]
+                {
+                    get { return _list[index].Path; }
+                    set { throw new NotSupportedException(TextResources.CollectReadOnly); }
+                }
+
+                object IList.this[int index]
+                {
+                    get { return this[index]; }
+                    set { throw new NotSupportedException(TextResources.CollectReadOnly); }
+                }
 
                 /// <summary>
-                /// Determines if the specified key exists in the current instance.
+                /// Gets the number of elements contained in the list.
                 /// </summary>
-                /// <param name="key">The key to search for in the collection.</param>
-                /// <returns><c>true</c> if <paramref name="key"/> was found; <c>false</c> otherwise.</returns>
-                public bool Contains(string key)
+                public int Count { get { return _list.Count; } }
+
+                /// <summary>
+                /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
+                /// </summary>
+                public bool IsFrozen { get { return _list.IsFrozen; } }
+
+                bool IList.IsFixedSize
                 {
-                    return key != null && _dict.ContainsKey(key);
+                    get { return true; }
+                }
+
+                bool IList.IsReadOnly
+                {
+                    get { return true; }
+                }
+
+                bool ICollection<string>.IsReadOnly
+                {
+                    get { return true; }
+                }
+
+                bool ICollection.IsSynchronized
+                {
+                    get { return _list.IsFrozen; }
+                }
+
+                object ICollection.SyncRoot
+                {
+                    get { return ((IList)_list).SyncRoot; }
+                }
+
+                /// <summary>
+                /// Returns the index of the specified path.
+                /// </summary>
+                /// <param name="path">The path to search for in the list.</param>
+                /// <returns>The index of <paramref name="path"/>, if found; otherwise, -1.</returns>
+                public int IndexOf(string path)
+                {
+                    if (path == null) return -1;
+                    return _list._archive._entries.FindIndex(i => path.Equals(i.Path, StringComparison.Ordinal));
+                }
+
+                int IList.IndexOf(object value)
+                {
+                    return IndexOf(value as string);
+                }
+
+                /// <summary>
+                /// Gets a value indicating whether the specified path exists in the list.
+                /// </summary>
+                /// <param name="path">The path to search for in the list.</param>
+                /// <returns><c>true</c> if <paramref name="path"/> was found; <c>false</c> otherwise.</returns>
+                public bool Contains(string path)
+                {
+                    return IndexOf(path) >= 0;
+                }
+
+                bool IList.Contains(object value)
+                {
+                    return Contains(value as string);
                 }
 
                 /// <summary>
@@ -795,26 +843,26 @@ namespace DieFledermaus
                 /// </exception>
                 public void CopyTo(string[] array, int index)
                 {
-                    _dict._archive._entries.Keys.CopyTo(array, index);
-                }
-
-                object ICollection.SyncRoot
-                {
-                    get { return ((IDictionary)_dict).SyncRoot; }
-                }
-
-                bool ICollection.IsSynchronized
-                {
-                    get { return false; }
+                    _list._archive._entryDict.Keys.CopyTo(array, index);
                 }
 
                 void ICollection.CopyTo(Array array, int index)
                 {
-                    ((ICollection)_dict._archive._entries.Keys).CopyTo(array, index);
+                    ((ICollection)_list._archive._entryDict.Keys).CopyTo(array, index);
                 }
 
                 #region Not Supported
+                int IList.Add(object value)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
                 void ICollection<string>.Add(string item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void IList.Clear()
                 {
                     throw new NotSupportedException(TextResources.CollectReadOnly);
                 }
@@ -824,7 +872,32 @@ namespace DieFledermaus
                     throw new NotSupportedException(TextResources.CollectReadOnly);
                 }
 
+                void IList.Insert(int index, object value)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void IList<string>.Insert(int index, string item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void IList.Remove(object value)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
                 bool ICollection<string>.Remove(string item)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void IList.RemoveAt(int index)
+                {
+                    throw new NotSupportedException(TextResources.CollectReadOnly);
+                }
+
+                void IList<string>.RemoveAt(int index)
                 {
                     throw new NotSupportedException(TextResources.CollectReadOnly);
                 }
@@ -856,9 +929,9 @@ namespace DieFledermaus
                 {
                     private IEnumerator<string> _enum;
 
-                    internal Enumerator(KeyCollection keys)
+                    internal Enumerator(PathCollection keys)
                     {
-                        _enum = keys._dict._archive._entries.Keys.GetEnumerator();
+                        _enum = keys._list._archive._entryDict.Keys.GetEnumerator();
                     }
 
                     /// <summary>
@@ -906,11 +979,11 @@ namespace DieFledermaus
                     }
                 }
 
-                private class KeyDebugView
+                private class PathDebugView
                 {
-                    private KeyCollection _col;
+                    private PathCollection _col;
 
-                    public KeyDebugView(KeyCollection col)
+                    public PathDebugView(PathCollection col)
                     {
                         _col = col;
                     }
@@ -920,200 +993,6 @@ namespace DieFledermaus
                     {
                         get { return _col.ToArray(); }
                     }
-                }
-            }
-
-            /// <summary>
-            /// A collection of all values in the dictionary.
-            /// </summary>
-            [DebuggerTypeProxy(typeof(ValueDebugView))]
-            [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
-            public class ValueCollection : ICollection<DieFledermauZArchiveEntry>, ICollection
-#if IREADONLY
-                , IReadOnlyCollection<DieFledermauZArchiveEntry>
-#endif
-            {
-                private EntryDictionary _dict;
-
-                internal ValueCollection(EntryDictionary dict)
-                {
-                    _dict = dict;
-                }
-
-                /// <summary>
-                /// Gets the number of elements in the collection.
-                /// </summary>
-                public int Count { get { return _dict._archive._entries.Count; } }
-
-                bool ICollection<DieFledermauZArchiveEntry>.IsReadOnly { get { return true; } }
-
-                /// <summary>
-                /// Determines if the specified value exists in the current instance.
-                /// </summary>
-                /// <param name="value">The value to search for in the collection.</param>
-                /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
-                public bool Contains(DieFledermauZArchiveEntry value)
-                {
-                    return value != null && _dict.ContainsValue(value);
-                }
-
-                /// <summary>
-                /// Copies all elements in the collection to the specified array, starting at the specified index.
-                /// </summary>
-                /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
-                /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
-                /// <exception cref="ArgumentNullException">
-                /// <paramref name="array"/> is <c>null</c>.
-                /// </exception>
-                /// <exception cref="ArgumentOutOfRangeException">
-                /// <paramref name="index"/> is less than 0.
-                /// </exception>
-                /// <exception cref="ArgumentException">
-                /// <paramref name="index"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
-                /// </exception>
-                public void CopyTo(DieFledermauZArchiveEntry[] array, int index)
-                {
-                    _dict._archive._entries.Values.CopyTo(array, index);
-                }
-
-                object ICollection.SyncRoot
-                {
-                    get { return ((IDictionary)_dict).SyncRoot; }
-                }
-
-                bool ICollection.IsSynchronized
-                {
-                    get { return false; }
-                }
-
-                void ICollection.CopyTo(Array array, int index)
-                {
-                    ((ICollection)_dict._archive._entries.Keys).CopyTo(array, index);
-                }
-
-                #region Not Supported
-                void ICollection<DieFledermauZArchiveEntry>.Add(DieFledermauZArchiveEntry item)
-                {
-                    throw new NotSupportedException(TextResources.CollectReadOnly);
-                }
-
-                void ICollection<DieFledermauZArchiveEntry>.Clear()
-                {
-                    throw new NotSupportedException(TextResources.CollectReadOnly);
-                }
-
-                bool ICollection<DieFledermauZArchiveEntry>.Remove(DieFledermauZArchiveEntry item)
-                {
-                    throw new NotSupportedException(TextResources.CollectReadOnly);
-                }
-                #endregion
-
-                /// <summary>
-                /// Returns an enumerator which iterates through the collection.
-                /// </summary>
-                /// <returns>An enumerator which iterates through the collection.</returns>
-                public Enumerator GetEnumerator()
-                {
-                    return new Enumerator(this);
-                }
-
-                IEnumerator<DieFledermauZArchiveEntry> IEnumerable<DieFledermauZArchiveEntry>.GetEnumerator()
-                {
-                    return GetEnumerator();
-                }
-
-                IEnumerator IEnumerable.GetEnumerator()
-                {
-                    return GetEnumerator();
-                }
-
-                /// <summary>
-                /// An enumerator which iterates through the collection.
-                /// </summary>
-                public struct Enumerator : IEnumerator<DieFledermauZArchiveEntry>
-                {
-                    private IEnumerator<DieFledermauZArchiveEntry> _enum;
-
-                    internal Enumerator(ValueCollection values)
-                    {
-                        _enum = values._dict._archive._entries.Values.GetEnumerator();
-                    }
-
-                    /// <summary>
-                    /// Gets the element at the current position in the enumerator.
-                    /// </summary>
-                    public DieFledermauZArchiveEntry Current
-                    {
-                        get { return _enum.Current; }
-                    }
-
-                    object IEnumerator.Current
-                    {
-                        get { return _enum.Current; }
-                    }
-
-                    /// <summary>
-                    /// Disposes of the current instance.
-                    /// </summary>
-                    public void Dispose()
-                    {
-                        if (_enum == null) return;
-                        _enum.Dispose();
-                        this = default(Enumerator);
-                    }
-
-                    /// <summary>
-                    /// Advances the enumerator to the next position in the collection.
-                    /// </summary>
-                    /// <returns><c>true</c> if the enumerator was successfully advanced; 
-                    /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
-                    public bool MoveNext()
-                    {
-                        if (_enum == null)
-                            return false;
-                        if (_enum.MoveNext())
-                            return true;
-
-                        Dispose();
-                        return false;
-                    }
-
-                    void IEnumerator.Reset()
-                    {
-                        _enum.Reset();
-                    }
-                }
-
-                private class ValueDebugView
-                {
-                    private ValueCollection _col;
-
-                    public ValueDebugView(ValueCollection col)
-                    {
-                        _col = col;
-                    }
-
-                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                    public DieFledermauZArchiveEntry[] Items
-                    {
-                        get { return _col.ToArray(); }
-                    }
-                }
-            }
-
-            private class DebugView
-            {
-                private EntryDictionary _col;
-
-                public DebugView(EntryDictionary col)
-                {
-                    _col = col;
-                }
-
-                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                public KeyValuePair<string, DieFledermauZArchiveEntry>[] Items
-                {
-                    get { return _col.ToArray(); }
                 }
             }
         }

@@ -84,6 +84,11 @@ namespace DieFledermaus
             }
         }
 
+        internal override bool IsFilenameEncrypted
+        {
+            get { return _enc; }
+        }
+
         internal override MausBufferStream GetWritten()
         {
             lock (_lock)
