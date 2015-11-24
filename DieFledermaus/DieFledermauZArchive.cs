@@ -446,6 +446,86 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="compressionFormat">The compression format of the archive entry.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, MausCompressionFormat compressionFormat)
+        {
+            return Create(path, compressionFormat, 0);
+        }
+
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="encryptionFormat">The encryption format of the archive entry.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, MausEncryptionFormat encryptionFormat)
+        {
+            return Create(path, 0, encryptionFormat);
+        }
+
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path)
+        {
+            return Create(path, 0, 0);
+        }
+
+        /// <summary>
         /// Adds a new empty directory to the current archive.
         /// </summary>
         /// <param name="path">The path to the empty directory within the archive's file structure.</param>
