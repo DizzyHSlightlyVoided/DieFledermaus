@@ -223,8 +223,11 @@
   <data name="FormatUnknown" xml:space="preserve">
     <value>The DieFledermaus stream contains an unknown format.</value>
   </data>
-  <data name="InvalidMagicNumber" xml:space="preserve">
+  <data name="InvalidDataMaus" xml:space="preserve">
     <value>The stream is not a valid DieFledermaus stream.</value>
+  </data>
+  <data name="InvalidDataMauZ" xml:space="preserve">
+    <value>The stream does not contain a valid DieFledermauZ archive.</value>
   </data>
   <data name="KeyLength" xml:space="preserve">
     <value>The specified key is the wrong length.</value>
@@ -262,9 +265,21 @@
     <value>The specified stream does not support writing.</value>
   </data>
   <data name="VersionTooHigh" xml:space="preserve">
-    <value>The DieFledermaus version number was higher than the supported maximum of the current implementation.</value>
+    <value>The DieFledermaus version number is higher than the supported maximum of the current implementation.</value>
   </data>
   <data name="VersionTooLow" xml:space="preserve">
-    <value>The DieFledermaus version number was lower than the supported minimum.</value>
+    <value>The DieFledermaus version number is lower than the supported minimum.</value>
+  </data>
+  <data name="FormatUnknownZ" xml:space="preserve">
+    <value>The DieFledermauZ archive contains an unknown format.</value>
+  </data>
+  <data name="VersionTooHighZ" xml:space="preserve">
+    <value>The DieFledermauZ version number is higher than the supported maximum of the current implementation.</value>
+  </data>
+  <data name="VersionTooLowZ" xml:space="preserve">
+    <value>The DieFledermauZ version number is lower than the supported minimum.</value>
+  </data>
+  <data name="SpanningNotSupported" xml:space="preserve">
+    <value>File-spanning is not supported.</value>
   </data>
 </root>

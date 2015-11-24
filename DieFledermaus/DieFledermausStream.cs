@@ -58,7 +58,7 @@ namespace DieFledermaus
     public partial class DieFledermausStream : Stream
     {
         internal const int MaxBuffer = 65536;
-        private const int _head = 0x5375416d; //Little-endian "mAuS"
+        internal const int _head = 0x5375416d; //Little-endian "mAuS"
         private const ushort _versionShort = 95, _minVersionShort = 95;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
@@ -128,7 +128,10 @@ namespace DieFledermaus
             {
                 CheckRead(stream);
                 _baseStream = stream;
-                _getHeader();
+                if (stream.CanSeek && stream.Length == stream.Position)
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                _getHeader(true);
             }
             else throw new InvalidEnumArgumentException(nameof(compressionMode), (int)compressionMode, typeof(CompressionMode));
             _mode = compressionMode;
@@ -580,9 +583,18 @@ namespace DieFledermaus
             _mode = CompressionMode.Compress;
             _leaveOpen = true;
         }
+
+        internal DieFledermausStream(Stream stream, bool readMagNum)
+        {
+            _baseStream = stream;
+            _allowDirNames = true;
+            _mode = CompressionMode.Decompress;
+            _leaveOpen = true;
+            _getHeader(readMagNum);
+        }
         #endregion
 
-        private DieFledermauZItem _entry;
+        internal DieFledermauZItem _entry;
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
@@ -675,6 +687,7 @@ namespace DieFledermaus
         public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
 
         internal bool HeaderIsProcessed { get { return _headerGotten; } }
+        internal bool DataIsLoaded { get { return _bufferStream != null; } }
 
         private DateTime? _timeC;
         /// <summary>
@@ -938,7 +951,11 @@ namespace DieFledermaus
                 //TODO: Something better than this?
                 try
                 {
-                    return value.Split('/').All(f => IsValidFilename(value, throwOnInvalid, false, paramName));
+                    int end = value.Length - 1;
+                    if (value[end] == '/')
+                        value = value.Substring(0, end);
+
+                    return value.Split('/').All(f => IsValidFilename(f, throwOnInvalid, false, paramName));
                 }
                 catch (ArgumentException e)
                 {
@@ -1196,7 +1213,7 @@ namespace DieFledermaus
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
         private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
 
-        private bool _headerGotten, _allowDirNames = false;
+        private bool _headerGotten, _allowDirNames;
 
         internal const int maxLen = 256;
 
@@ -1211,7 +1228,11 @@ namespace DieFledermaus
         private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' },
             _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
-        private void _getHeader()
+        private long _headSize;
+
+        internal long HeadLength { get { return _headSize; } }
+
+        private void _getHeader(bool readMagNum)
         {
 #if NOLEAVEOPEN
             BinaryReader reader = new BinaryReader(_baseStream);
@@ -1219,15 +1240,15 @@ namespace DieFledermaus
             using (BinaryReader reader = new BinaryReader(_baseStream, _textEncoding, true))
 #endif
             {
-                if (reader.ReadInt32() != _head)
-                    throw new InvalidDataException(TextResources.InvalidMagicNumber);
+                if (readMagNum && reader.ReadInt32() != _head)
+                    throw new InvalidDataException(TextResources.InvalidDataMaus);
                 ushort version = reader.ReadUInt16();
                 if (version > _versionShort)
                     throw new NotSupportedException(TextResources.VersionTooHigh);
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                ReadOptions(reader, false);
+                _headSize = ReadOptions(reader, false);
 
                 _compLength = reader.ReadInt64();
                 _uncompressedLength = reader.ReadInt64();
@@ -1235,12 +1256,12 @@ namespace DieFledermaus
                 if (_encFmt != MausEncryptionFormat.None)
                 {
                     if (_uncompressedLength < 0 || _uncompressedLength > (int.MaxValue - minPkCount))
-                        throw new InvalidDataException(TextResources.InvalidMagicNumber);
+                        throw new InvalidDataException(TextResources.InvalidDataMaus);
                     _pkCount = (int)_uncompressedLength;
                     _uncompressedLength = 0;
                 }
                 else if (_uncompressedLength <= 0)
-                    throw new InvalidDataException(TextResources.InvalidMagicNumber);
+                    throw new InvalidDataException(TextResources.InvalidDataMaus);
                 else gotULen = true;
 
                 _hashExpected = reader.ReadBytes(hashLength);
@@ -1248,28 +1269,34 @@ namespace DieFledermaus
 
                 if (_encFmt != MausEncryptionFormat.None)
                 {
-                    int keySize = _keySizes.MinSize >> 3;
+                    int keySize = _keySizes.MaxSize >> 3;
                     _salt = reader.ReadBytes(keySize);
                     if (_salt.Length < keySize) throw new EndOfStreamException();
 
                     _iv = reader.ReadBytes(_blockByteCount);
                     if (_iv.Length < _blockByteCount) throw new EndOfStreamException();
 
-                    _compLength -= keySize + _iv.Length;
+                    long getLength = keySize + _iv.Length;
+
+                    _compLength -= getLength;
+
+                    _headSize += getLength;
                 }
             }
         }
 
         bool gotFormat, gotULen;
-        private void ReadOptions(BinaryReader reader, bool fromEncrypted)
+        private long ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
+            long headSize = 88;
+
             int optLen = reader.ReadUInt16();
 
             SettableOptions options = fromEncrypted ? _encryptedOptions : new SettableOptions(this);
 
             for (int i = 0; i < optLen; i++)
             {
-                string curForm = GetString(reader);
+                string curForm = GetString(reader, ref headSize);
 
                 MausCompressionFormat cmpFmt;
                 if (_formDict.TryGetValue(curForm, out cmpFmt))
@@ -1293,7 +1320,7 @@ namespace DieFledermaus
                     _encryptedOptions = options;
                     CheckAdvance(optLen, ref i);
 
-                    byte[] bytes = GetStringBytes(reader);
+                    byte[] bytes = GetStringBytes(reader, ref headSize);
                     _blockByteCount = _blockByteCtAes;
                     int keyBits;
                     if (bytes.Length == 3)
@@ -1342,7 +1369,7 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
 
-                    string filename = GetString(reader);
+                    string filename = GetString(reader, ref headSize);
 
                     if (_filename == null)
                     {
@@ -1354,6 +1381,7 @@ namespace DieFledermaus
 
                     if (!IsValidFilename(filename, false, _allowDirNames, null))
                         throw new InvalidDataException(TextResources.FormatFilename);
+                    _filename = filename;
                     continue;
                 }
 
@@ -1386,7 +1414,7 @@ namespace DieFledermaus
                 if (curForm.Equals(_kComment, StringComparison.Ordinal))
                 {
                     CheckAdvance(optLen, ref i);
-                    byte[] buffer = GetStringBytes(reader);
+                    byte[] buffer = GetStringBytes(reader, ref headSize);
                     if (buffer.Length != 1)
                         throw new InvalidDataException(TextResources.FormatBad);
                     int curLen = buffer[0];
@@ -1398,7 +1426,7 @@ namespace DieFledermaus
                     for (int j = 0; j <= curLen; j++)
                     {
                         CheckAdvance(optLen, ref i);
-                        buffer = GetStringBytes(reader);
+                        buffer = GetStringBytes(reader, ref headSize);
                         if (j < curLen && buffer.Length != maxLen)
                             throw new InvalidDataException(TextResources.FormatBad);
                         byteList.AddRange(buffer);
@@ -1414,6 +1442,8 @@ namespace DieFledermaus
 
                 throw new NotSupportedException(TextResources.FormatUnknown);
             }
+
+            return headSize;
         }
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
@@ -1449,26 +1479,29 @@ namespace DieFledermaus
                 throw new InvalidDataException(TextResources.FormatBad);
         }
 
-        private static string GetString(BinaryReader reader)
+        internal static string GetString(BinaryReader reader, ref long curSize)
         {
-            byte[] strBytes = GetStringBytes(reader);
+            byte[] strBytes = GetStringBytes(reader, ref curSize);
 
             return _textEncoding.GetString(strBytes);
         }
 
-        private static byte[] GetStringBytes(BinaryReader reader)
+        internal static byte[] GetStringBytes(BinaryReader reader, ref long curSize)
         {
             int strLen = reader.ReadByte();
             if (strLen == 0) strLen = maxLen;
             byte[] strBytes = reader.ReadBytes(strLen);
+            curSize += 1L + strBytes.Length;
             if (strBytes.Length < strLen)
                 throw new EndOfStreamException();
             return strBytes;
         }
 
+        private long _compLength;
+        internal long CompressedLength { get { return _compLength; } }
+
         private byte[] _hashExpected, _salt, _iv;
         private const int hashLength = 64, minPkCount = 9001;
-        private long _compLength;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;
 
@@ -1508,19 +1541,8 @@ namespace DieFledermaus
             if (_key == null && _encFmt != MausEncryptionFormat.None)
                 throw new CryptographicException(TextResources.KeyNotSet);
 
-            if (_bufferStream == null)
-            {
-                _bufferStream = new MausBufferStream();
-                byte[] buffer = new byte[MaxBuffer];
-                long length = _compLength;
-                while (length > 0)
-                {
-                    int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
-                    if (read == 0) throw new EndOfStreamException();
-                    _bufferStream.Write(buffer, 0, read);
-                    length -= read;
-                }
-            }
+            GetBuffer();
+
             _bufferStream.Reset();
 
             if (_encFmt == MausEncryptionFormat.None)
@@ -1583,6 +1605,23 @@ namespace DieFledermaus
                     break;
             }
             _headerGotten = true;
+        }
+
+        internal void GetBuffer()
+        {
+            if (_bufferStream != null)
+                return;
+
+            _bufferStream = new MausBufferStream();
+            byte[] buffer = new byte[MaxBuffer];
+            long length = _compLength;
+            while (length > 0)
+            {
+                int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
+                if (read == 0) throw new EndOfStreamException();
+                _bufferStream.Write(buffer, 0, read);
+                length -= read;
+            }
         }
 
         private bool CompareBytes(byte[] hashComputed)

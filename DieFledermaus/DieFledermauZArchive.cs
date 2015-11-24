@@ -58,6 +58,7 @@ namespace DieFledermaus
         public Stream BaseStream { get { return _baseStream; } }
 
         private bool _headerGotten;
+        internal readonly long StreamOffset;
 
         private readonly List<DieFledermauZItem> _entries = new List<DieFledermauZItem>();
         private readonly Dictionary<string, int> _entryDict = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -84,38 +85,251 @@ namespace DieFledermaus
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            switch (mode)
+            if (mode == MauZArchiveMode.Create)
             {
-                case MauZArchiveMode.Create:
-                    DieFledermausStream.CheckWrite(stream);
-                    break;
-                case MauZArchiveMode.Read:
-                    DieFledermausStream.CheckRead(stream);
-
-                    if (stream.CanSeek)
-                    {
-                        //TODO: Seeking through the stream
-                    }
-                    else
-                    {
-                        //TODO: Copy the stream into a MausBufferStream
-                    }
-                    _headerGotten = true;
-                    throw new NotImplementedException();
-                default:
-                    throw new InvalidEnumArgumentException(nameof(mode), (int)mode, typeof(MauZArchiveMode));
+                DieFledermausStream.CheckWrite(stream);
+                _baseStream = stream;
+                _mode = mode;
             }
-            Mode = mode;
-            _baseStream = stream;
+            else if (mode == MauZArchiveMode.Read)
+            {
+                DieFledermausStream.CheckRead(stream);
+                _baseStream = stream;
+                if (stream.CanSeek)
+                {
+                    if (stream.Length == stream.Position) stream.Seek(0, SeekOrigin.Begin);
+                    StreamOffset = stream.Position;
+                }
+                _mode = mode;
+                ReadHeader();
+                _headerGotten = true;
+            }
+            else throw new InvalidEnumArgumentException(nameof(mode), (int)mode, typeof(MauZArchiveMode));
+
             _leaveOpen = leaveOpen;
             _entriesRO = new EntryList(this);
+        }
+
+        private void ReadHeader()
+        {
+#if NOLEAVEOPEN
+            BinaryReader reader = new BinaryReader(_baseStream);
+#else
+            using (BinaryReader reader = new BinaryReader(_baseStream, DieFledermausStream._textEncoding, true))
+#endif
+            {
+                int head = reader.ReadInt32();
+
+                if (head == DieFledermausStream._head)
+                {
+                    long skipOffset = 0;
+                    _entries.Add(LoadMausStream(null, false, -1, 0, ref skipOffset));
+                    return;
+                }
+                else if (head != _mHead)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                ushort version = reader.ReadUInt16();
+
+                if (version < _minVersionShort)
+                    throw new NotSupportedException(TextResources.VersionTooLowZ);
+                if (version > _versionShort)
+                    throw new NotSupportedException(TextResources.VersionTooHighZ);
+
+                long totalSize = reader.ReadInt64();
+
+                if (totalSize < BaseOffset)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                long curOffset = ReadOptions(reader);
+
+                DieFledermauZItem[] entries;
+
+                try
+                {
+                    entries = new DieFledermauZItem[reader.ReadInt64()];
+                }
+                catch (OutOfMemoryException)
+                {
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                }
+
+                //All Entries
+                if (reader.ReadInt32() != _allEntries)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                for (long i = 0; i < entries.LongLength; i++)
+                {
+                    long curBaseOffset = curOffset;
+
+                    if (reader.ReadInt32() != _curEntry)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    long index = reader.ReadInt64();
+
+                    if (entries[index] != null)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                    string path = DieFledermausStream.GetString(reader, ref curOffset);
+                    curOffset += (sizeof(int) + sizeof(long));
+
+                    entries[index] = LoadMausStream(path, true, index, curBaseOffset, ref curOffset);
+                }
+
+                long metaOffset = curOffset;
+                //All Offsets
+                if (reader.ReadInt32() != _allOffsets)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                curOffset += sizeof(int);
+
+                HashSet<long> indices = new HashSet<long>();
+
+                for (long i = 0; i < entries.LongLength; i++)
+                {
+                    if (reader.ReadInt32() != _curOffset)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    const long offsetSize = 28;
+
+                    curOffset += offsetSize;
+
+                    long index = reader.ReadInt64();
+                    if (!indices.Add(index))
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                    string basePath = entries[index].Path;
+
+                    string curPath = DieFledermausStream.GetString(reader, ref curOffset);
+                    if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
+                        curPath = null;
+
+                    if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                    //TODO: Spanning
+                    if (reader.ReadInt64() != 0)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    long testOffset = reader.ReadInt64();
+                    if (testOffset != entries[index].Offset)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                }
+
+                //TODO: Spanning
+                if (reader.ReadInt64() != 0)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                if (reader.ReadInt64() != metaOffset || reader.ReadInt32() != _mFoot)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                if ((curOffset + sizeof(long) + sizeof(long) + sizeof(int)) != totalSize)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            }
+        }
+
+        internal DieFledermauZItem LoadMausStream(string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
+        {
+            if (path == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
+                path = null;
+            else if (index >= 0 && !DieFledermausStream.IsValidFilename(path, false, true, nameof(path)))
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            DieFledermausStream mausStream;
+
+            try
+            {
+                mausStream = new DieFledermausStream(_baseStream, readMagNum);
+            }
+            catch (InvalidDataException e)
+            {
+                throw new InvalidDataException(TextResources.InvalidDataMauZ, e);
+            }
+            catch (NotSupportedException e)
+            {
+                throw new InvalidDataException(TextResources.InvalidDataMauZ, e);
+            }
+
+            long headLength = mausStream.HeadLength;
+
+            if (_baseStream.CanSeek)
+                _baseStream.Seek(mausStream.CompressedLength, SeekOrigin.Current);
+            else
+                mausStream.GetBuffer();
+
+            DieFledermauZItem returner;
+
+            if (index < 0)
+            {
+                path = mausStream.Filename;
+            }
+            else if (mausStream.Filename == null)
+            {
+                if (mausStream.EncryptionFormat == MausEncryptionFormat.None)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            }
+            else if (path == null)
+            {
+                path = mausStream.Filename;
+            }
+            else if (!path.Equals(mausStream.Filename, StringComparison.Ordinal))
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            if (path == null)
+            {
+                if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount << 1))
+                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset);
+                else
+                    returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset);
+            }
+            else
+            {
+                string regPath;
+                int end = path.Length - 1;
+                if (path[end] == '/')
+                {
+                    returner = new DieFledermauZEmptyDirectory(this, path, mausStream, baseOffset);
+                    regPath = path.Substring(0, end);
+                }
+                else
+                {
+                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset);
+                    regPath = path;
+                }
+
+                PathSeparator pathSep = new PathSeparator(regPath);
+
+                if (_entryDict.ContainsKey(path) || _entryDict.ContainsKey(regPath) ||
+                    _entryDict.Keys.Any(pathSep.BeginsWith) || _entryDict.Keys.Any(pathSep.OtherBeginsWith))
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                _entryDict.Add(path, (int)index);
+            }
+
+            curOffset += mausStream.HeadLength + mausStream.CompressedLength;
+            return returner;
+        }
+
+        internal long ReadOptions(BinaryReader reader)
+        {
+            long curOffset = BaseOffset;
+
+            ushort optCount = reader.ReadUInt16();
+
+            for (int i = 0; i < optCount; i++)
+            {
+                string curOption = DieFledermausStream.GetString(reader, ref curOffset);
+
+                //TODO: Actually use the options!
+
+                if (curOption != null)
+                    throw new NotSupportedException(TextResources.FormatUnknownZ);
+            }
+
+            return curOffset;
         }
 
         internal void Delete(DieFledermauZItem item)
         {
             int index = _entries.IndexOf(item);
             _entries.RemoveAt(index);
-            _entryDict.Remove(item.Path);
+            if (item.Path != null)
+                _entryDict.Remove(item.Path);
             for (int i = index; i < _entries.Count; i++)
                 _entryDict[_entries[i].Path] = i;
         }
@@ -126,13 +340,17 @@ namespace DieFledermaus
         /// </summary>
         public EntryList Entries { get { return _entriesRO; } }
 
-        internal readonly MauZArchiveMode Mode;
+        private readonly MauZArchiveMode _mode;
+        /// <summary>
+        /// Gets the mode of operation of the current instance.
+        /// </summary>
+        public MauZArchiveMode Mode { get { return _mode; } }
 
         internal void EnsureCanWrite()
         {
             if (_baseStream == null)
                 throw new ObjectDisposedException(null, TextResources.ArchiveClosed);
-            if (Mode == MauZArchiveMode.Read)
+            if (_mode == MauZArchiveMode.Read)
                 throw new NotSupportedException(TextResources.ArchiveReadMode);
         }
 
@@ -140,7 +358,7 @@ namespace DieFledermaus
         {
             if (_baseStream == null)
                 throw new ObjectDisposedException(null, TextResources.ArchiveClosed);
-            if (Mode == MauZArchiveMode.Create)
+            if (_mode == MauZArchiveMode.Create)
                 throw new NotSupportedException(TextResources.ArchiveWriteMode);
         }
 
@@ -151,6 +369,12 @@ namespace DieFledermaus
         /// <param name="compressionFormat">The compression format of the archive entry.</param>
         /// <param name="encryptionFormat">The encryption format of the archive entry.</param>
         /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="path"/> is <c>null</c>.
         /// </exception>
@@ -207,8 +431,13 @@ namespace DieFledermaus
             if (_entryDict.Keys.Any(pathSep.OtherBeginsWith))
                 throw new ArgumentException(TextResources.ArchivePathExistingDir, nameof(path));
 
-            if (_entryDict.Keys.Any(pathSep.BeginsWith))
+            if (_entryDict.Keys.Where(i => !i.EndsWith("/")).Any(pathSep.BeginsWith))
                 throw new ArgumentException(TextResources.ArchivePathExistingFileAsDir, nameof(path));
+
+            var emptyDirs = _entries.Where(pathSep.BeginsWithEmptyDir).ToArray();
+
+            for (int i = 0; i < emptyDirs.Length; i++)
+                emptyDirs[i].Delete();
 
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
             _entryDict.Add(path, _entries.Count);
@@ -228,6 +457,12 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> is not a valid file path.</para>
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
         /// </exception>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path)
         {
@@ -282,6 +517,22 @@ namespace DieFledermaus
             public bool OtherBeginsWith(string other)
             {
                 return _beginsWith(other, _basePath);
+            }
+
+            public bool BeginsWithEmptyDir(DieFledermauZItem item)
+            {
+                DieFledermauZEmptyDirectory emptyDir = item as DieFledermauZEmptyDirectory;
+
+                if (emptyDir == null) return false;
+                string path = emptyDir.Path;
+
+                if (path == null) return false;
+
+                int baseEnd = path.Length - 1;
+                if (path[baseEnd] == '/')
+                    path = path.Substring(0, baseEnd);
+
+                return _beginsWith(path, _basePath);
             }
         }
 
@@ -372,6 +623,8 @@ namespace DieFledermaus
             }
         }
 
+        private const long BaseOffset = 28;
+
         private void WriteFile()
         {
             long length = 52;
@@ -389,7 +642,7 @@ namespace DieFledermaus
 
                 string path;
                 if (curEntry.IsFilenameEncrypted)
-                    path = "/V" + i.ToString(NumberFormatInfo.InvariantInfo);
+                    path = "//V" + i.ToString(NumberFormatInfo.InvariantInfo);
                 else
                     path = curEntry.Path;
                 byte[] curPath = DieFledermausStream._textEncoding.GetBytes(path);
@@ -408,7 +661,7 @@ namespace DieFledermaus
                 writer.Write(_versionShort);
 
                 writer.Write(length);
-                long curOffset = 28;
+                long curOffset = BaseOffset;
                 writer.Write((ushort)0); //TODO: Options, add to curOffset
                 writer.Write(entries.LongLength);
 
@@ -467,6 +720,11 @@ namespace DieFledermaus
             Dispose(false);
         }
 
+        internal void AddPath(string path, DieFledermauZItem item)
+        {
+            _entryDict.Add(path, _entries.IndexOf(item));
+        }
+
         /// <summary>
         /// Represents a list of <see cref="DieFledermauZItem"/> objects.
         /// </summary>
@@ -482,6 +740,7 @@ namespace DieFledermaus
             internal EntryList(DieFledermauZArchive archive)
             {
                 _archive = archive;
+                _paths = new PathCollection(this);
             }
 
             /// <summary>
@@ -494,6 +753,11 @@ namespace DieFledermaus
             public DieFledermauZItem this[int index]
             {
                 get { return _archive._entries[index]; }
+            }
+
+            internal void ReplaceElement(int index, DieFledermauZItem value)
+            {
+                _archive._entries[index] = value;
             }
 
             DieFledermauZItem IList<DieFledermauZItem>.this[int index]
@@ -512,6 +776,12 @@ namespace DieFledermaus
             /// Gets the number of elements in the list.
             /// </summary>
             public int Count { get { return _archive._entries.Count; } }
+
+            private PathCollection _paths;
+            /// <summary>
+            /// Gets a collection containing all filenames and directory names in the current instance.
+            /// </summary>
+            public PathCollection Paths { get { return _paths; } }
 
             /// <summary>
             /// Gets the entry associated with the specified path.
@@ -546,7 +816,8 @@ namespace DieFledermaus
             {
                 get
                 {
-                    return _archive._baseStream == null || (_archive.Mode != MauZArchiveMode.Create && _archive._headerGotten);
+                    return _archive._baseStream == null || (_archive._mode == MauZArchiveMode.Read && _archive._headerGotten &&
+                        !_archive._entries.Any(i => i is DieFledermauZItemUnknown));
                 }
             }
 
@@ -567,8 +838,13 @@ namespace DieFledermaus
             /// <returns>The index of <paramref name="item"/>, if found; otherwise, <c>null</c>.</returns>
             public int IndexOf(DieFledermauZItem item)
             {
-                if (item == null) return -1;
-                return _archive._entries.IndexOf(item);
+                if (item == null || item.Archive != _archive) return -1;
+
+                int dex;
+                if (item.Path == null || !_archive._entryDict.TryGetValue(item.Path, out dex))
+                    return _archive._entries.IndexOf(item);
+
+                return dex;
             }
 
             int IList.IndexOf(object value)
@@ -842,8 +1118,10 @@ namespace DieFledermaus
                 /// <returns>The index of <paramref name="path"/>, if found; otherwise, -1.</returns>
                 public int IndexOf(string path)
                 {
-                    if (path == null) return -1;
-                    return _list._archive._entries.FindIndex(i => path.Equals(i.Path, StringComparison.Ordinal));
+                    int dex;
+                    if (path == null || !_list._archive._entryDict.TryGetValue(path, out dex))
+                        return -1;
+                    return dex;
                 }
 
                 int IList.IndexOf(object value)

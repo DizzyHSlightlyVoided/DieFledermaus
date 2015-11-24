@@ -45,15 +45,15 @@ namespace DieFledermaus
         {
         }
 
+        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset)
+            : base(archive, path, stream, curOffset)
+        {
+        }
+
         internal override bool IsFilenameEncrypted
         {
             get { return MausStream.EncryptedOptions != null && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Filename); }
         }
-
-        /// <summary>
-        /// Gets the encryption format of the current instance.
-        /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
 
         /// <summary>
         /// Gets the compression format of the current instance.

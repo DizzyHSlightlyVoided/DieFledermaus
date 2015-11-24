@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
-using System.Security;
+using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
 
@@ -44,6 +44,12 @@ namespace DieFledermaus
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path)
             : base(archive, path, new NoneCompressionFormat(), MausEncryptionFormat.None)
         {
+        }
+
+        internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset)
+            : base(archive, path, stream, offset)
+        {
+            CheckStream(MausStream);
         }
 
         private bool _enc;
@@ -82,6 +88,40 @@ namespace DieFledermaus
                     _enc = value;
                 }
             }
+        }
+
+        /// <summary>
+        /// Decrypts the current instance.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in write-only mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/>
+        /// again if this exception is caught.
+        /// </exception>
+        public override DieFledermauZItem Decrypt()
+        {
+            base.Decrypt();
+            CheckStream(MausStream);
+            return this;
+        }
+
+        internal static void CheckStream(DieFledermausStream stream)
+        {
+            const int ForwardSlashReadByte = '/';
+            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > 254 || stream.ReadByte() != ForwardSlashReadByte || stream.ReadByte() >= 0)
+                throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
 
         internal override bool IsFilenameEncrypted

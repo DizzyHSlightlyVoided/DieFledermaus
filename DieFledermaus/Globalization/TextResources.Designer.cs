@@ -367,11 +367,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DieFledermauZ archive contains an unknown format..
+        /// </summary>
+        internal static string FormatUnknownZ {
+            get {
+                return ResourceManager.GetString("FormatUnknownZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The stream is not a valid DieFledermaus stream..
         /// </summary>
-        internal static string InvalidMagicNumber {
+        internal static string InvalidDataMaus {
             get {
-                return ResourceManager.GetString("InvalidMagicNumber", resourceCulture);
+                return ResourceManager.GetString("InvalidDataMaus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The stream does not contain a valid DieFledermauZ archive..
+        /// </summary>
+        internal static string InvalidDataMauZ {
+            get {
+                return ResourceManager.GetString("InvalidDataMauZ", resourceCulture);
             }
         }
         
@@ -448,6 +466,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to File-spanning is not supported..
+        /// </summary>
+        internal static string SpanningNotSupported {
+            get {
+                return ResourceManager.GetString("SpanningNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified stream is closed..
         /// </summary>
         internal static string StreamClosed {
@@ -475,7 +502,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus version number was higher than the supported maximum of the current implementation..
+        ///   Looks up a localized string similar to The DieFledermaus version number is higher than the supported maximum of the current implementation..
         /// </summary>
         internal static string VersionTooHigh {
             get {
@@ -484,11 +511,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus version number was lower than the supported minimum..
+        ///   Looks up a localized string similar to The DieFledermauZ version number is higher than the supported maximum of the current implementation..
+        /// </summary>
+        internal static string VersionTooHighZ {
+            get {
+                return ResourceManager.GetString("VersionTooHighZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DieFledermaus version number is lower than the supported minimum..
         /// </summary>
         internal static string VersionTooLow {
             get {
                 return ResourceManager.GetString("VersionTooLow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DieFledermauZ version number is lower than the supported minimum..
+        /// </summary>
+        internal static string VersionTooLowZ {
+            get {
+                return ResourceManager.GetString("VersionTooLowZ", resourceCulture);
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security;
 
 namespace DieFledermaus.Tests
@@ -19,18 +20,35 @@ namespace DieFledermaus.Tests
             {
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
+                    archive.AddEmptyDirectory("Files/");
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.Aes);
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
                     SetPasswd(emptyDir);
                 }
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Read, true))
+                {
+                    foreach (DieFledermauZItem item in archive.Entries.Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
+                    {
+                        SetPasswd(item);
+                        item.Decrypt();
+                    }
+
+                    foreach (DieFledermauZArchiveEntry entry in archive.Entries.Where(i => i is DieFledermauZArchiveEntry))
+                    {
+
+                    }
+                }
             }
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
-            var entry = archive.Create(compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
+            var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
 
             if (encFormat != MausEncryptionFormat.None)
                 SetPasswd(entry);

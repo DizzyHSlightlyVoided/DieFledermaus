@@ -56,6 +56,7 @@
     <Compile Include="DieFledermauZArchiveEntry.cs" />
     <Compile Include="DieFledermauZEmptyDirectory.cs" />
     <Compile Include="DieFledermauZItem.cs" />
+    <Compile Include="DieFledermauZItemUnknown.cs" />
     <Compile Include="Globalization\TextResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
