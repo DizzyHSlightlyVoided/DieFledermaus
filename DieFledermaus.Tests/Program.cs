@@ -20,9 +20,8 @@ namespace DieFledermaus.Tests
             {
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
-                    archive.AddEmptyDirectory("Files/");
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.Aes);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes);
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
                     SetPasswd(emptyDir);
@@ -32,23 +31,53 @@ namespace DieFledermaus.Tests
 
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Read, true))
                 {
-                    foreach (DieFledermauZItem item in archive.Entries.Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
+                    foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
+                        Console.WriteLine(" - Decrypting file ...");
                         SetPasswd(item);
-                        item.Decrypt();
+                        Console.WriteLine("Successfully decrypted " + item.Decrypt().Path);
                     }
+
+                    byte[] getBuffer = new byte[bigBufferLength];
 
                     foreach (DieFledermauZArchiveEntry entry in archive.Entries.Where(i => i is DieFledermauZArchiveEntry))
                     {
+                        Console.WriteLine(" - Reading file: " + entry.Path);
+                        using (Stream outStream = entry.OpenRead())
+                        {
+                            int read = outStream.Read(getBuffer, 0, bigBufferLength);
 
+                            if (read == bigBufferLength)
+                                Console.WriteLine("Correct length!");
+                            else
+                                Console.WriteLine("Wrong length: " + read);
+
+                            bool correct = true;
+
+                            for (int i = 0; correct && i < read; i++)
+                            {
+                                if (getBuffer[i] != bigBuffer[i])
+                                {
+                                    Console.WriteLine("Wrong value!");
+                                    correct = false;
+                                }
+                            }
+                            if (correct)
+                                Console.WriteLine("All values are correct as well!");
+                        }
                     }
                 }
             }
+
+            Console.WriteLine("Press any key to continue ...");
+            Console.ReadKey();
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
+
+            Console.WriteLine(" - Building file: " + entry.Path);
 
             if (encFormat != MausEncryptionFormat.None)
                 SetPasswd(entry);

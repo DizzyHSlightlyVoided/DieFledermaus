@@ -49,15 +49,16 @@ namespace DieFledermaus
             _arch = archive;
         }
 
-        internal DieFledermauZItem(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset)
+        internal DieFledermauZItem(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)
         {
             _arch = archive;
             MausStream = stream;
             Offset = curOffset;
+            RealOffset = realOffset;
             MausStream._entry = this;
         }
 
-        internal readonly long Offset;
+        internal readonly long Offset, RealOffset;
 
         internal long HeadLength { get { return MausStream.HeadLength; } }
 
@@ -86,8 +87,7 @@ namespace DieFledermaus
 
         internal abstract bool IsFilenameEncrypted { get; }
 
-        private bool _isDecrypted;
-        internal bool IsDecrypted { get { return _isDecrypted; } }
+        internal bool _isDecrypted;
 
         /// <summary>
         /// Decrypts the current instance.
@@ -115,11 +115,8 @@ namespace DieFledermaus
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new InvalidOperationException(TextResources.NotEncrypted);
             if (_isDecrypted) return this;
+            SeekToFile();
 
-            if (_arch.BaseStream.CanSeek && !MausStream.DataIsLoaded)
-                _arch.BaseStream.Seek(Offset + _arch.StreamOffset + MausStream.HeadLength, SeekOrigin.Begin);
-
-            MausStream.LoadData();
             if (MausStream.Filename == null)
             {
                 if (Offset != 0)
@@ -132,9 +129,15 @@ namespace DieFledermaus
             }
             else if (!_path.Equals(MausStream.Filename, StringComparison.Ordinal))
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
-            _isDecrypted = true;
 
             return this;
+        }
+
+        internal void SeekToFile()
+        {
+            if (_arch.BaseStream.CanSeek && !MausStream.DataIsLoaded)
+                _arch.BaseStream.Seek(RealOffset + _arch.StreamOffset + MausStream.HeadLength, SeekOrigin.Begin);
+            MausStream.LoadData();
         }
 
         /// <summary>
@@ -264,8 +267,10 @@ namespace DieFledermaus
         internal virtual void DoDelete()
         {
             _arch = null;
-            MausStream.Close();
-            _bufferStream.Close();
+            if (MausStream != null)
+                MausStream.Dispose();
+            if (_bufferStream != null)
+                _bufferStream.Dispose();
         }
 
         /// <summary>

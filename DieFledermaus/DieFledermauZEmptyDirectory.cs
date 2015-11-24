@@ -46,10 +46,9 @@ namespace DieFledermaus
         {
         }
 
-        internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset)
-            : base(archive, path, stream, offset)
+        internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset, long realOffset)
+            : base(archive, path, stream, offset, realOffset)
         {
-            CheckStream(MausStream);
         }
 
         private bool _enc;
@@ -113,7 +112,9 @@ namespace DieFledermaus
         public override DieFledermauZItem Decrypt()
         {
             base.Decrypt();
+            if (_isDecrypted) return this;
             CheckStream(MausStream);
+            _isDecrypted = true;
             return this;
         }
 

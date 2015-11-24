@@ -207,8 +207,7 @@ namespace DieFledermaus
                     //TODO: Spanning
                     if (reader.ReadInt64() != 0)
                         throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                    long testOffset = reader.ReadInt64();
-                    if (testOffset != entries[index].Offset)
+                    if (reader.ReadInt64() != entries[index].Offset)
                         throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 }
 
@@ -221,6 +220,8 @@ namespace DieFledermaus
 
                 if ((curOffset + sizeof(long) + sizeof(long) + sizeof(int)) != totalSize)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                _entries.AddRange(entries);
             }
         }
 
@@ -274,9 +275,9 @@ namespace DieFledermaus
             if (path == null)
             {
                 if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount << 1))
-                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset);
+                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
                 else
-                    returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset);
+                    returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset, curOffset);
             }
             else
             {
@@ -284,12 +285,14 @@ namespace DieFledermaus
                 int end = path.Length - 1;
                 if (path[end] == '/')
                 {
-                    returner = new DieFledermauZEmptyDirectory(this, path, mausStream, baseOffset);
+                    returner = new DieFledermauZEmptyDirectory(this, path, mausStream, baseOffset, curOffset);
+                    if (mausStream.EncryptionFormat == MausEncryptionFormat.None)
+                        DieFledermauZEmptyDirectory.CheckStream(mausStream);
                     regPath = path.Substring(0, end);
                 }
                 else
                 {
-                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset);
+                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
                     regPath = path;
                 }
 
@@ -707,6 +710,9 @@ namespace DieFledermaus
 
         private void WriteFile()
         {
+            if (_mode == MauZArchiveMode.Read)
+                return;
+
             long length = 52;
 
             DieFledermauZItem[] entries = _entries.ToArray();

@@ -1709,6 +1709,31 @@ namespace DieFledermaus
             return result;
         }
 
+        internal void BufferCopyTo(MausBufferStream other)
+        {
+            MausBufferStream mbs = _deflateStream as MausBufferStream;
+
+            if (mbs != null)
+            {
+                mbs.BufferCopyTo(other);
+                return;
+            }
+
+#if NOCOPY
+            byte[] buffer = new byte[MaxBuffer];
+
+            int read = _deflateStream.Read(buffer, 0, MaxBuffer);
+
+            while (read > 0)
+            {
+                other.Write(buffer, 0, MaxBuffer);
+                read = _deflateStream.Read(buffer, 0, MaxBuffer);
+            }
+#else
+            _deflateStream.CopyTo(other, MaxBuffer);
+#endif
+        }
+
         private object _lock = new object();
 
         private void _ensureCanRead()

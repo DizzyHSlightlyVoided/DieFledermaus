@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
+using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
 
@@ -45,8 +46,8 @@ namespace DieFledermaus
         {
         }
 
-        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset)
-            : base(archive, path, stream, curOffset)
+        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)
+            : base(archive, path, stream, curOffset, realOffset)
         {
         }
 
@@ -90,6 +91,80 @@ namespace DieFledermaus
                 _writingStream = new MausBufferStream();
                 _writingStream.Disposing += _writingStream_Disposing;
                 return _writingStream;
+            }
+        }
+
+        /// <summary>
+        /// Decrypts the current instance.
+        /// </summary>
+        /// <returns>The current instance, in decrypted form.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in write-only mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/>
+        /// again if this exception is caught.
+        /// </exception>
+        public override DieFledermauZItem Decrypt()
+        {
+            lock (_lock)
+            {
+                DoDecrypt();
+                return this;
+            }
+        }
+
+        private void DoDecrypt()
+        {
+            base.Decrypt();
+            if (_isDecrypted) return;
+            if (_writingStream == null)
+            {
+                _writingStream = new MausBufferStream();
+                MausStream.BufferCopyTo(_writingStream);
+            }
+            _isDecrypted = true;
+        }
+
+        /// <summary>
+        /// Opens the archive entry for reading.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in write-only mode.
+        /// </exception>
+        public Stream OpenRead()
+        {
+            lock (_lock)
+            {
+                EnsureCanRead();
+
+                if (_writingStream == null)
+                {
+                    if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
+                    {
+                        SeekToFile();
+                        _writingStream = new MausBufferStream();
+                        MausStream.BufferCopyTo(_writingStream);
+                    }
+                    else DoDecrypt();
+                }
+
+                MausBufferStream mbs = new MausBufferStream();
+                _writingStream.BufferCopyTo(mbs);
+                return mbs;
             }
         }
 
