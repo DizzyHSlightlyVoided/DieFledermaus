@@ -66,7 +66,7 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 
 ### Changes to the format
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
-* **Decompressed Length** contains the number of PBKDF2 cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the "Decompressed Length" field must have a value between 0 and 2147474646 inclusive. Since no uncompressed length is specified, the compressed data is simply read to the end.
+* **Decompressed Length** is replaced with the **PBKDF2 Value** (still a signed 64-bit integer to make the structure more straightforward), which is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive. If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
 * **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the plaintext to be incrypted.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
