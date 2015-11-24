@@ -680,6 +680,13 @@ namespace DieFledermaus
         /// </summary>
         public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
 
+        private KeySizes _keySizes;
+        /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// for the current encryption, or <c>null</c> if the current stream is not encrypted.
+        /// </summary>
+        public KeySizes KeySizes { get { return _keySizes; } }
+
         private MausCompressionFormat _cmpFmt;
         /// <summary>
         /// Gets the compression format of the current instance.
@@ -1555,7 +1562,7 @@ namespace DieFledermaus
             {
                 var bufferStream = Decrypt();
 
-                if (!CompareBytes(ComputeHmac(bufferStream)))
+                if (!CompareBytes(ComputeHmac(bufferStream, _key)))
                     throw new CryptographicException(TextResources.BadKey);
                 bufferStream.Reset();
 
@@ -1771,7 +1778,85 @@ namespace DieFledermaus
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
+        internal static byte[] ComputeHash(Stream inputStream)
+        {
+            using (SHA512Managed shaHash = new SHA512Managed())
+                return shaHash.ComputeHash(inputStream);
+        }
 
+        internal static byte[] ComputeHmac(Stream inputStream, byte[] key)
+        {
+            using (HMACSHA512 hmac = new HMACSHA512(key))
+                return hmac.ComputeHash(inputStream);
+        }
+
+        private byte[] FillBuffer(int length)
+        {
+            byte[] buffer = new byte[length];
+#if NOCRYPTOCLOSE
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
+#else
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+#endif
+            {
+                rng.GetBytes(buffer);
+            }
+            return buffer;
+        }
+
+        private void _setKeySizes(int keySize)
+        {
+            if (keySize <= 0)
+                _keySizes = null;
+            else
+                _keySizes = new KeySizes(keySize, keySize, 0);
+        }
+
+        private SymmetricAlgorithm GetAlgorithm()
+        {
+            SymmetricAlgorithm alg = Aes.Create();
+            alg.Key = _key;
+            alg.IV = _iv;
+            return alg;
+        }
+
+        private MausBufferStream Decrypt()
+        {
+            MausBufferStream output = new MausBufferStream();
+
+            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (ICryptoTransform transform = alg.CreateDecryptor())
+            {
+                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+                _bufferStream.BufferCopyTo(cs);
+                cs.FlushFinalBlock();
+            }
+            output.Reset();
+            return output;
+        }
+
+        private MausBufferStream Encrypt()
+        {
+            MausBufferStream output = new MausBufferStream();
+            byte[] firstBuffer = new byte[_key.Length + _iv.Length];
+            Array.Copy(_salt, firstBuffer, _key.Length);
+            Array.Copy(_iv, 0, firstBuffer, _key.Length, _iv.Length);
+
+            output.Prepend(firstBuffer);
+
+            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (ICryptoTransform transform = alg.CreateEncryptor())
+            {
+                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+
+                _bufferStream.BufferCopyTo(cs);
+                cs.FlushFinalBlock();
+            }
+            output.Reset();
+            return output;
+        }
+
+        #region Disposal
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
         /// </summary>
@@ -1962,7 +2047,7 @@ namespace DieFledermaus
                         writer.Write((long)_pkCount);
 
                         _bufferStream.Reset();
-                        byte[] hashHmac = ComputeHmac(_bufferStream);
+                        byte[] hashHmac = ComputeHmac(_bufferStream, _key);
                         _baseStream.Write(hashHmac, 0, hashLength);
 
                         output.BufferCopyTo(_baseStream);
@@ -2039,7 +2124,7 @@ namespace DieFledermaus
             }
         }
 
-        private static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
+        internal static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
         {
             writer.Write((ushort)formats.Count);
 
@@ -2050,6 +2135,7 @@ namespace DieFledermaus
                 writer.Write(curForm);
             }
         }
+        #endregion
 
         /// <summary>
         /// Destructor.

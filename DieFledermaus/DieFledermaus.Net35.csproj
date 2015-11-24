@@ -62,7 +62,6 @@
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
     <Compile Include="MausBufferStream.cs" />
-    <Compile Include="DieFledermausStream.ComputeHash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
