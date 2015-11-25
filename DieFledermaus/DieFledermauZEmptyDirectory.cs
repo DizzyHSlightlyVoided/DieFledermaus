@@ -62,8 +62,9 @@ namespace DieFledermaus
         /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/> to a randomly-generated value. Subsequently setting this property
-        /// to <c>true</c> will set <see cref="DieFledermauZItem.Key"/> to <c>null</c>, and the old key will not be remembered or saved.
+        /// Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/>, <see cref="DieFledermauZItem.IV"/>, and
+        /// <see cref="DieFledermauZItem.Salt"/> to randomly-generated values. Subsequently setting this property to <c>false</c> will
+        /// set these properties to <c>null</c>, and the old values will not be remembered or saved.
         /// </remarks>
         public bool EncryptPath
         {

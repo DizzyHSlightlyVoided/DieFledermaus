@@ -151,10 +151,11 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
         /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// <para>In a set operation, the current instance is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.
         /// </exception>
         public byte[] Key
         {
@@ -162,8 +163,61 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-
                 MausStream.Key = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets the initialization vector used for the current instance, or <c>null</c> if the current instance is not encrypted.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance is in read-mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is the wrong length.
+        /// </exception>
+        public byte[] IV
+        {
+            get { return MausStream.IV; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.IV = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets the salt used for the current instance, or <c>null</c> if the current instance is not encrypted.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance is in read-mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is the wrong length.
+        /// </exception>
+        public byte[] Salt
+        {
+            get { return MausStream.Salt; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.Salt = value;
             }
         }
 
@@ -174,10 +228,11 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
         /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// <para>The current instance is false.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="password"/> is <c>null</c>.
@@ -198,10 +253,11 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
         /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// <para>The current instance is false.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.</para>
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="password"/> is <c>null</c>.
@@ -219,7 +275,7 @@ namespace DieFledermaus
         {
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
-                throw new InvalidOperationException(TextResources.NotEncrypted);
+                throw new NotSupportedException(TextResources.NotEncrypted);
             if (_arch.Mode == MauZArchiveMode.Read && MausStream.HeaderIsProcessed)
                 throw new InvalidOperationException(TextResources.AlreadyDecryptedArchive);
         }

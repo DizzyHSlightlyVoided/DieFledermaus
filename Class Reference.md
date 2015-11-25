@@ -424,7 +424,7 @@ Gets and sets the time at which the underlying file was created, or `null` to sp
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current stream is closed.
 
-##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
 In a set operation, the current stream is in read-mode.
 
 --------------------------------------------------
@@ -436,8 +436,52 @@ Gets and sets the time at which the underlying file was last modified prior to b
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current stream is closed.
 
-##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
 In a set operation, the current stream is in read-mode.
+
+--------------------------------------------------
+
+## Property: `System.Byte[] IV { get; set; }`
+Gets and sets the initialization vector used when encrypting the current instance.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current stream is in write-mode.
+
+-OR-
+
+In a set operation, the current stream is not encrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the length of the specified value is not equal to [`DieFledermausStream.BlockByteCount`](#property-systemint32-blockbytecount--get-).
+
+--------------------------------------------------
+
+## Property: `System.Byte[] Salt { get; set; }`
+Gets and sets the salt used to help obfuscate the key when setting the password.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current stream is in write-mode.
+
+-OR-
+
+In a set operation, the current stream is not encrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the length of the specified value is less than the maximum key length specified by [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-).
 
 --------------------------------------------------
 
@@ -447,6 +491,9 @@ Gets and sets the key used to encrypt the DieFledermaus stream.
 ### Exceptions
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current stream is not encrypted.
 
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
 In a set operation, the current stream is in read-mode and the stream has already been successfully decrypted.
@@ -568,11 +615,40 @@ Sets [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to a value 
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 The current stream is closed.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current stream is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
 The current stream is in read-mode and the stream has already been successfully decrypted.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
 `password` is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`password` has a length of 0.
+
+--------------------------------------------------
+
+## Method: `public void SetPassword(System.String password, System.Int32 keyByteSize)`
+Sets [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to a value derived from the specified password, using the specified key size.
+* `password`: The password to set.
+* `keyByteSize`: The length of [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to set, in bytes (1/8 the number of bits).
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current stream is not encrypted.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+The current stream is in read-mode and the stream has already been successfully decrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`password` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`keyByteSize` is invalid according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-).
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
 `password` has a length of 0.
@@ -587,11 +663,40 @@ Sets [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to a value 
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 The current stream is closed.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current stream is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
 The current stream is in read-mode and the stream has already been successfully decrypted.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
 `password` is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`password` has a length of 0.
+
+--------------------------------------------------
+
+## Method: `public void SetPassword(System.Security.SecureString password, System.Int32 keyByteSize)`
+Sets [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to a value derived from the specified password, using the specified key size.
+* `password`: The password to set.
+* `keyByteSize`: The length of [`DieFledermausStream.Key`](#property-systembyte-key--get-set-) to set, in bytes (1/8 the number of bits).
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current stream is closed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current stream is not encrypted.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+The current stream is in read-mode and the stream has already been successfully decrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`password` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`keyByteSize` is invalid according to [`DieFledermausStream.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get-).
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
 `password` has a length of 0.
@@ -1215,12 +1320,59 @@ Gets the number of bytes in a single block of encrypted data, or 0 if the curren
 
 --------------------------------------------------
 
+## Property: `System.Byte[] IV { get; set; }`
+Gets and sets the initialization vector used when encrypting the current instance.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current archive is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current archive is in write-mode.
+
+-OR-
+
+In a set operation, the current archive is not encrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the length of the specified value is not equal to [`DieFledermauZArchive.BlockByteCount`](#property-systemint32-blockbytecount--get--1).
+
+--------------------------------------------------
+
+## Property: `System.Byte[] Salt { get; set; }`
+Gets and sets the salt used to help obfuscate the key when setting the password.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current archive is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current archive is in write-mode.
+
+-OR-
+
+In a set operation, the current archive is not encrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the length of the specified value is less than the maximum key length specified by [`DieFledermauZArchive.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get--1).
+
+--------------------------------------------------
+
 ## Property: `System.Byte[] Key { get; set; }`
 Gets and sets the key used to encrypt the DieFledermaus stream.
 
 ### Exceptions
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current archive is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current archive is not encrypted.
 
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
 In a set operation, the current archive is in read-mode and the stream has already been successfully decrypted.
@@ -1252,6 +1404,32 @@ The current archive is in read-mode and the stream has already been successfully
 
 --------------------------------------------------
 
+## Method: `public void SetPassword(System.String password, System.Int32 keyByteSize)`
+Sets [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to a value derived from the specified password, using the specified key size.
+* `password`: The password to set.
+* `keyByteSize`: The length of [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to set, in bytes (1/8 the number of bits).
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current archive is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current archive is not encrypted.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+The current archive is in read-mode and the stream has already been successfully decrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`password` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`keyByteSize` is invalid according to [`DieFledermauZArchive.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get--1).
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`password` has a length of 0.
+
+--------------------------------------------------
+
 ## Method: `public void SetPassword(System.Security.SecureString password)`
 Sets [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to a value derived from the specified password.
 * `password`: The password to set.
@@ -1260,11 +1438,40 @@ Sets [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to a val
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 The current archive is disposed.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current archive is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
 The current archive is in read-mode and the stream has already been successfully decrypted.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
 `password` is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+`password` has a length of 0.
+
+--------------------------------------------------
+
+## Method: `public void SetPassword(System.Security.SecureString password, System.Int32 keyByteSize)`
+Sets [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to a value derived from the specified password, using the specified key size.
+* `password`: The password to set.
+* `keyByteSize`: The length of [`DieFledermauZArchive.Key`](#property-systembyte-key--get-set--1) to set, in bytes (1/8 the number of bits).
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+The current archive is disposed.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current archive is not encrypted.
+
+##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
+The current archive is in read-mode and the stream has already been successfully decrypted.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+`password` is `null`.
+
+##### [`ArgumentOutOfRangeException`](https://msdn.microsoft.com/en-us/library/system.argumentoutofrangeexception.aspx)
+`keyByteSize` is invalid according to [`DieFledermauZArchive.KeySizes`](#property-systemsecuritycryptographykeysizes-keysizes--get--1).
 
 ##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
 `password` has a length of 0.
