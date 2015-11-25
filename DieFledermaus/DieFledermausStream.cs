@@ -576,9 +576,9 @@ namespace DieFledermaus
                     break;
             }
             _cmpFmt = compFormat.CompressionFormat;
+            _entry = entry;
             _setEncFormat(encryptionFormat);
             _allowDirNames = true;
-            _entry = entry;
             _filename = path;
             _mode = CompressionMode.Compress;
             _leaveOpen = true;
@@ -601,10 +601,40 @@ namespace DieFledermaus
             _keySizes = _getKeySizes(encryptionFormat, out _blockByteCount);
             _encFmt = encryptionFormat;
             if (_encFmt == MausEncryptionFormat.None) return;
-            _key = FillBuffer(_keySizes.MaxSize >> 3);
-            _iv = FillBuffer(_blockByteCount);
-            _salt = FillBuffer(_key.Length);
             _encryptedOptions = new SettableOptions(this);
+            _key = FillBuffer(_keySizes.MaxSize >> 3);
+            do
+            {
+                _iv = FillBuffer(_blockByteCount);
+                _salt = FillBuffer(_key.Length);
+            }
+            while (_entry != null && (_entry.Archive.Entries.Any(_checkOtherEntry) ||
+                (_entry.Archive.EncryptionFormat == _encFmt && _checkOther(_entry.Archive.IV, _entry.Archive.Salt))));
+        }
+
+        private bool _checkOtherEntry(DieFledermauZItem other)
+        {
+            if (other == _entry || other.MausStream._encFmt != _encFmt || other.MausStream._iv.Length != _iv.Length || other.MausStream._salt.Length != _salt.Length)
+                return false;
+
+            return _checkOther(other.MausStream._iv, other.MausStream._salt);
+        }
+
+        private bool _checkOther(byte[] otherIv, byte[] otherSalt)
+        {
+            for (int i = 0; i < _iv.Length; i++)
+            {
+                if (_iv[i] != otherIv[i])
+                    return false;
+            }
+
+            for (int i = 0; i < _salt.Length; i++)
+            {
+                if (_salt[i] != otherSalt[i])
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
