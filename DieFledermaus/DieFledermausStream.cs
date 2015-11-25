@@ -703,7 +703,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
         /// </exception>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="NotSupportedException">
         /// In a set operation, the current stream is in read-mode.
         /// </exception>
         public DateTime? CreatedTime
@@ -724,7 +724,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
         /// </exception>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="NotSupportedException">
         /// In a set operation, the current stream is in read-mode.
         /// </exception>
         public DateTime? ModifiedTime
@@ -737,12 +737,86 @@ namespace DieFledermaus
             }
         }
 
+        private byte[] _iv;
+        /// <summary>
+        /// Gets and sets the initialization vector used when encrypting the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current stream is in write-mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is not encrypted.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the length of the specified value is not equal to <see cref="BlockByteCount"/>.
+        /// </exception>
+        public byte[] IV
+        {
+            get
+            {
+                if (_iv == null) return null;
+                return (byte[])_salt.Clone();
+            }
+            set
+            {
+                _ensureCanWrite();
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value.Length != _blockByteCount) throw new ArgumentException(TextResources.IvLength, nameof(value));
+                _iv = (byte[])value.Clone();
+            }
+        }
+
+        private byte[] _salt;
+        /// <summary>
+        /// Gets and sets the salt used to help obfuscate the key when setting the password.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current stream is in write-mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is not encrypted.</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the length of the specified value is less than the maximum key length specified by <see cref="KeySizes"/>.
+        /// </exception>
+        public byte[] Salt
+        {
+            get
+            {
+                if (_salt == null) return null;
+                return (byte[])_salt.Clone();
+            }
+            set
+            {
+                _ensureCanWrite();
+
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value.Length < (_keySizes.MaxSize >> 3))
+                    throw new ArgumentException(TextResources.SaltLength, nameof(value));
+
+                _salt = (byte[])value.Clone();
+            }
+        }
+
         private byte[] _key;
         /// <summary>
         /// Gets and sets the key used to encrypt the DieFledermaus stream.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current stream is in read-mode and the stream has already been successfully decrypted.
@@ -767,7 +841,7 @@ namespace DieFledermaus
 
                 if (!IsValidKeyByteSize(value.Length))
                     throw new ArgumentException(TextResources.KeyLength, nameof(value));
-                _key = value;
+                _key = (byte[])value.Clone();
             }
         }
 
@@ -1060,6 +1134,9 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The current stream is in read-mode and the stream has already been successfully decrypted.
         /// </exception>
@@ -1072,21 +1149,55 @@ namespace DieFledermaus
         public void SetPassword(string password)
         {
             _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount);
+            _key = SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
         }
 
-        internal static byte[] SetPassword(string password, byte[] _salt, int _pkCount)
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(string password, int keyByteSize)
+        {
+            _ensureCanSetKey();
+            _key = SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
+        }
+
+        internal static byte[] SetPassword(string password, byte[] _salt, int _pkCount, int keyByteSize, KeySizes keySizes)
         {
             if (password == null)
                 throw new ArgumentNullException(nameof(password));
+            if (!IsValidKeyBitSize(keyByteSize << 3, keySizes))
+                throw new ArgumentOutOfRangeException(nameof(keyByteSize), keyByteSize, TextResources.KeyLength);
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-            return SetPassword(_textEncoding.GetBytes(password), _salt, _pkCount);
+            return SetPassword(_textEncoding.GetBytes(password), _salt, _pkCount, keyByteSize);
         }
 
-        private static byte[] SetPassword(byte[] data, byte[] _salt, int _pkCount)
+        private static byte[] SetPassword(byte[] data, byte[] _salt, int _pkCount, int keyLength)
         {
+            if (_salt.Length > keyLength)
+                Array.Resize(ref _salt, keyLength);
+
             try
             {
 #if NOCRYPTOCLOSE
@@ -1095,7 +1206,7 @@ namespace DieFledermaus
                 using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount))
 #endif
                 {
-                    return pbkdf2.GetBytes(_salt.Length);
+                    return pbkdf2.GetBytes(keyLength);
                 }
             }
             finally
@@ -1111,6 +1222,9 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The current stream is in read-mode and the stream has already been successfully decrypted.
         /// </exception>
@@ -1123,13 +1237,44 @@ namespace DieFledermaus
         public void SetPassword(SecureString password)
         {
             _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount);
+            _key = SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
         }
 
-        internal static byte[] SetPassword(SecureString password, byte[] salt, int pkCount)
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(SecureString password, int keyByteSize)
+        {
+            _ensureCanSetKey();
+            _key = SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
+        }
+
+        internal static byte[] SetPassword(SecureString password, byte[] salt, int pkCount, int keyByteSize, KeySizes keySizes)
         {
             if (password == null)
                 throw new ArgumentNullException(nameof(password));
+            if (!IsValidKeyBitSize(keyByteSize << 3, keySizes))
+                throw new ArgumentOutOfRangeException(nameof(keyByteSize), keyByteSize, TextResources.KeyLength);
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
@@ -1141,7 +1286,7 @@ namespace DieFledermaus
                 pData = Marshal.SecureStringToGlobalAllocUnicode(password);
                 Marshal.Copy(pData, data, 0, data.Length);
                 bytes = _textEncoding.GetBytes(data);
-                return SetPassword(bytes, salt, pkCount);
+                return SetPassword(bytes, salt, pkCount, keyByteSize);
             }
             finally
             {
@@ -1517,7 +1662,7 @@ namespace DieFledermaus
         private long _compLength;
         internal long CompressedLength { get { return _compLength; } }
 
-        private byte[] _hashExpected, _salt, _iv;
+        private byte[] _hashExpected;
         internal const int hashLength = 64, minPkCount = 9001;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;

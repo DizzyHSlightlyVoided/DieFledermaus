@@ -403,7 +403,16 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified key is the wrong length..
+        ///   Looks up a localized string similar to The specified IV must be the same length as the block size..
+        /// </summary>
+        internal static string IvLength {
+            get {
+                return ResourceManager.GetString("IvLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value is an invalid length..
         /// </summary>
         internal static string KeyLength {
             get {
@@ -480,6 +489,15 @@ namespace DieFledermaus.Globalization {
         internal static string PasswordZeroLength {
             get {
                 return ResourceManager.GetString("PasswordZeroLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified salt must be the maximum length specified for the KeySize..
+        /// </summary>
+        internal static string SaltLength {
+            get {
+                return ResourceManager.GetString("SaltLength", resourceCulture);
             }
         }
         

@@ -230,7 +230,7 @@
     <value>The stream does not contain a valid DieFledermauZ archive.</value>
   </data>
   <data name="KeyLength" xml:space="preserve">
-    <value>The specified key is the wrong length.</value>
+    <value>The specified value is an invalid length.</value>
   </data>
   <data name="KeyNotSet" xml:space="preserve">
     <value>The DieFledermaus stream is encrypted, and requires a key or password.</value>
@@ -287,5 +287,11 @@
   </data>
   <data name="KeyNotSetZ" xml:space="preserve">
     <value>The DieFledermauZ archive is encrypted, and requires a key or password.</value>
+  </data>
+  <data name="IvLength" xml:space="preserve">
+    <value>The specified IV must be the same length as the block size.</value>
+  </data>
+  <data name="SaltLength" xml:space="preserve">
+    <value>The specified salt must be the maximum length specified for the KeySize.</value>
   </data>
 </root>
