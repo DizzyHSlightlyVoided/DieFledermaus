@@ -282,4 +282,10 @@
   <data name="SpanningNotSupported" xml:space="preserve">
     <value>File-spanning is not supported.</value>
   </data>
+  <data name="FormatBadZ" xml:space="preserve">
+    <value>The DieFledermauZ archive contains invalid or contradictory formats.</value>
+  </data>
+  <data name="KeyNotSetZ" xml:space="preserve">
+    <value>The DieFledermauZ archive is encrypted, and requires a key or password.</value>
+  </data>
 </root>

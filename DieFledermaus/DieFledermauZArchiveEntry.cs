@@ -163,7 +163,7 @@ namespace DieFledermaus
                 }
 
                 MausBufferStream mbs = new MausBufferStream();
-                _writingStream.BufferCopyTo(mbs);
+                _writingStream.BufferCopyTo(mbs, false);
                 return mbs;
             }
         }
@@ -171,7 +171,7 @@ namespace DieFledermaus
         private void _writingStream_Disposing(object sender, EventArgs e)
         {
             _writingStream.Reset();
-            _writingStream.BufferCopyTo(MausStream);
+            _writingStream.BufferCopyTo(MausStream, false);
         }
 
         internal override MausBufferStream GetWritten()

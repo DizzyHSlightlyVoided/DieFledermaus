@@ -349,6 +349,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DieFledermauZ archive contains invalid or contradictory formats..
+        /// </summary>
+        internal static string FormatBadZ {
+            get {
+                return ResourceManager.GetString("FormatBadZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DieFledermaus stream contains an invalid filename..
         /// </summary>
         internal static string FormatFilename {
@@ -408,6 +417,15 @@ namespace DieFledermaus.Globalization {
         internal static string KeyNotSet {
             get {
                 return ResourceManager.GetString("KeyNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a key or password..
+        /// </summary>
+        internal static string KeyNotSetZ {
+            get {
+                return ResourceManager.GetString("KeyNotSetZ", resourceCulture);
             }
         }
         

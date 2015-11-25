@@ -182,10 +182,10 @@ namespace DieFledermaus
             }
         }
 
-        public void BufferCopyTo(Stream destination)
+        public void BufferCopyTo(Stream destination, bool forceWrite)
         {
             MausBufferStream qbs = destination as MausBufferStream;
-            if (qbs != null)
+            if (qbs != null && !forceWrite)
             {
                 if (qbs._currentBuffer == qbs._firstBuffer && qbs._firstBuffer.End == 0)
                 {

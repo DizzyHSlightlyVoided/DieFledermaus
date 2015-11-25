@@ -33,9 +33,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Globalization;
+using System.Security;
+using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
 
@@ -46,7 +48,7 @@ namespace DieFledermaus
     /// </summary>
     public class DieFledermauZArchive : IDisposable
     {
-        private const int _mHead = 0x5a75416d, _mFoot = 0x6d41755a;
+        private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
         private const ushort _versionShort = 10, _minVersionShort = _versionShort;
 
@@ -81,6 +83,15 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and the stream does not contain a valid DieFledermauZ archive.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and the stream contains unsupported options.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
         public DieFledermauZArchive(Stream stream, MauZArchiveMode mode, bool leaveOpen)
         {
             if (stream == null)
@@ -102,7 +113,6 @@ namespace DieFledermaus
                 }
                 _mode = mode;
                 ReadHeader();
-                _headerGotten = true;
             }
             else throw new InvalidEnumArgumentException(nameof(mode), (int)mode, typeof(MauZArchiveMode));
 
@@ -110,6 +120,107 @@ namespace DieFledermaus
             _entriesRO = new EntryList(this);
         }
 
+        /// <summary>
+        /// Creates a new instance using the specified options.
+        /// </summary>
+        /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
+        /// <param name="mode">Indicates options for accessing the stream.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="mode"/> is <see cref="MauZArchiveMode.Create"/>, and <paramref name="stream"/> does not support writing.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/> does not support reading.</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/>  does not contain a valid DieFledermauZ archive.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/>  contains unsupported options.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        public DieFledermauZArchive(Stream stream, MauZArchiveMode mode)
+            : this(stream, mode, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance in create-mode using the specified encryption format.
+        /// </summary>
+        /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
+        /// <param name="encryptionFormat">Indicates options for how to encrypt the stream.</param>
+        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// <paramref name="stream"/> does not contain a valid DieFledermauZ archive.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <paramref name="stream"/> contains unsupported options.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        public DieFledermauZArchive(Stream stream, MausEncryptionFormat encryptionFormat, bool leaveOpen)
+            : this(stream, MauZArchiveMode.Create, leaveOpen)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        /// <summary>
+        /// Creates a new instance in create-mode using the specified encryption format.
+        /// </summary>
+        /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
+        /// <param name="encryptionFormat">Indicates options for how to encrypt the stream.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// <paramref name="stream"/> does not contain a valid DieFledermauZ archive.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <paramref name="stream"/> contains unsupported options.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        public DieFledermauZArchive(Stream stream, MausEncryptionFormat encryptionFormat)
+            : this(stream, MauZArchiveMode.Create, false)
+        {
+            _setEncFormat(encryptionFormat);
+        }
+
+        private void _setEncFormat(MausEncryptionFormat encryptionFormat)
+        {
+            _keySizes = DieFledermausStream._getKeySizes(encryptionFormat, out _blockByteCount);
+            _encFmt = encryptionFormat;
+            if (encryptionFormat == MausEncryptionFormat.None) return;
+            _key = DieFledermausStream.FillBuffer(_keySizes.MaxSize >> 3);
+            _iv = DieFledermausStream.FillBuffer(_blockByteCount);
+            _salt = DieFledermausStream.FillBuffer(_key.Length);
+        }
+
+        long totalSize, curOffset;
         private void ReadHeader()
         {
 #if NOLEAVEOPEN
@@ -123,7 +234,7 @@ namespace DieFledermaus
                 if (head == DieFledermausStream._head)
                 {
                     long skipOffset = 0;
-                    _entries.Add(LoadMausStream(null, false, -1, 0, ref skipOffset));
+                    _entries.Add(LoadMausStream(_baseStream, null, false, -1, 0, ref skipOffset));
                     return;
                 }
                 else if (head != _mHead)
@@ -136,96 +247,121 @@ namespace DieFledermaus
                 if (version > _versionShort)
                     throw new NotSupportedException(TextResources.VersionTooHighZ);
 
-                long totalSize = reader.ReadInt64();
+                totalSize = reader.ReadInt64();
 
                 if (totalSize < BaseOffset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                curOffset = BaseOffset;
+                ReadOptions(reader, false);
 
-                long curOffset = ReadOptions(reader);
-
-                DieFledermauZItem[] entries;
-
-                try
+                if (_encFmt == MausEncryptionFormat.None)
                 {
-                    entries = new DieFledermauZItem[reader.ReadInt64()];
+                    ReadDecrypted(reader, ref curOffset);
+                    if ((curOffset + sizeof(long) + sizeof(long)) != totalSize)
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                    return;
                 }
-                catch (OutOfMemoryException)
-                {
+
+                long pkValue = reader.ReadInt64();
+
+                if (pkValue < 0 || pkValue > (int.MaxValue - DieFledermausStream.minPkCount))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                }
+                _pkCount = (int)pkValue;
 
-                //All Entries
-                if (reader.ReadInt32() != _allEntries)
+                _hashExpected = ReadBytes(reader, DieFledermausStream.hashLength);
+                _salt = ReadBytes(reader, _keySizes.MaxSize >> 3);
+                _iv = ReadBytes(reader, DieFledermausStream._blockByteCtAes);
+
+                curOffset += (_keySizes.MaxSize >> 3) + _addSize - 12;
+            }
+        }
+
+        private static byte[] ReadBytes(BinaryReader reader, int size)
+        {
+            byte[] data = reader.ReadBytes(size);
+            if (data.Length < size)
+                throw new EndOfStreamException();
+            return data;
+        }
+
+        private void ReadDecrypted(BinaryReader reader, ref long curOffset)
+        {
+            _headerGotten = true;
+            long entryCount = reader.ReadInt64();
+            if (entryCount <= 0)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            DieFledermauZItem[] entries = new DieFledermauZItem[entryCount];
+
+            //All Entries
+            if (reader.ReadInt32() != _allEntries)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            for (long i = 0; i < entryCount; i++)
+            {
+                long curBaseOffset = curOffset;
+
+                if (reader.ReadInt32() != _curEntry)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                long index = reader.ReadInt64();
+
+                if (entries[index] != null)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                for (long i = 0; i < entries.LongLength; i++)
-                {
-                    long curBaseOffset = curOffset;
+                string path = DieFledermausStream.GetString(reader, ref curOffset);
+                curOffset += (sizeof(int) + sizeof(long));
 
-                    if (reader.ReadInt32() != _curEntry)
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                    long index = reader.ReadInt64();
+                entries[index] = LoadMausStream(reader.BaseStream, path, true, index, curBaseOffset, ref curOffset);
+            }
 
-                    if (entries[index] != null)
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            long metaOffset = curOffset;
+            //All Offsets
+            if (reader.ReadInt32() != _allOffsets)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            curOffset += sizeof(int);
 
-                    string path = DieFledermausStream.GetString(reader, ref curOffset);
-                    curOffset += (sizeof(int) + sizeof(long));
+            HashSet<long> indices = new HashSet<long>();
 
-                    entries[index] = LoadMausStream(path, true, index, curBaseOffset, ref curOffset);
-                }
-
-                long metaOffset = curOffset;
-                //All Offsets
-                if (reader.ReadInt32() != _allOffsets)
+            for (long i = 0; i < entryCount; i++)
+            {
+                if (reader.ReadInt32() != _curOffset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                curOffset += sizeof(int);
+                const long offsetSize = 28;
 
-                HashSet<long> indices = new HashSet<long>();
+                curOffset += offsetSize;
 
-                for (long i = 0; i < entries.LongLength; i++)
-                {
-                    if (reader.ReadInt32() != _curOffset)
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                    const long offsetSize = 28;
+                long index = reader.ReadInt64();
+                if (!indices.Add(index))
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                    curOffset += offsetSize;
+                string basePath = entries[index].Path;
 
-                    long index = reader.ReadInt64();
-                    if (!indices.Add(index))
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                string curPath = DieFledermausStream.GetString(reader, ref curOffset);
+                if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
+                    curPath = null;
 
-                    string basePath = entries[index].Path;
-
-                    string curPath = DieFledermausStream.GetString(reader, ref curOffset);
-                    if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
-                        curPath = null;
-
-                    if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
-
-                    //TODO: Spanning
-                    if (reader.ReadInt64() != 0)
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                    if (reader.ReadInt64() != entries[index].Offset)
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                }
+                if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 //TODO: Spanning
                 if (reader.ReadInt64() != 0)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
-
-                if (reader.ReadInt64() != metaOffset || reader.ReadInt32() != _mFoot)
+                if (reader.ReadInt64() != entries[index].Offset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
-
-                if ((curOffset + sizeof(long) + sizeof(long) + sizeof(int)) != totalSize)
-                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
-
-                _entries.AddRange(entries);
             }
+
+            //TODO: Spanning
+            if (reader.ReadInt64() != 0)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            if (reader.ReadInt64() != metaOffset)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+            _entries.AddRange(entries);
         }
 
-        internal DieFledermauZItem LoadMausStream(string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
+        internal DieFledermauZItem LoadMausStream(Stream _baseStream, string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
         {
             if (path == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
                 path = null;
@@ -308,23 +444,146 @@ namespace DieFledermaus
             return returner;
         }
 
-        internal long ReadOptions(BinaryReader reader)
+        private MausBufferStream _bufferStream;
+        /// <summary>
+        /// Decrypts the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in write-only mode.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contained invalid data.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The stream contained unsupported optoins.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/>
+        /// again if this exception is caught.
+        /// </exception>
+        public void Decrypt()
         {
-            long curOffset = BaseOffset;
+            EnsureCanRead();
+            _loadData();
+        }
 
-            ushort optCount = reader.ReadUInt16();
+        private void _loadData()
+        {
+            if (_headerGotten)
+                return;
 
-            for (int i = 0; i < optCount; i++)
+            if (_bufferStream == null)
+                _bufferStream = DieFledermausStream.GetBuffer(totalSize - curOffset, _baseStream);
+
+            _bufferStream.Reset();
+
+            using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
+            using (ICryptoTransform transform = algorithm.CreateDecryptor())
+            using (MausBufferStream newBufferStream = new MausBufferStream())
+            {
+                CryptoStream cs = new CryptoStream(newBufferStream, transform, CryptoStreamMode.Write);
+                _bufferStream.BufferCopyTo(cs, false);
+                cs.FlushFinalBlock();
+
+                newBufferStream.Reset();
+
+                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key), _hashExpected))
+                    throw new CryptographicException(TextResources.BadKey);
+
+                newBufferStream.Reset();
+
+                using (BinaryReader reader = new BinaryReader(newBufferStream))
+                {
+                    ReadOptions(reader, true);
+                    long curOffset = newBufferStream.Position;
+                    ReadDecrypted(reader, ref curOffset);
+                }
+            }
+        }
+
+        private bool _gotEnc;
+
+        internal void ReadOptions(BinaryReader reader, bool fromEncrypted)
+        {
+            ushort optLen = reader.ReadUInt16();
+
+            for (int i = 0; i < optLen; i++)
             {
                 string curOption = DieFledermausStream.GetString(reader, ref curOffset);
 
-                //TODO: Actually use the options!
+                if (curOption.Equals(DieFledermausStream._encAes))
+                {
+                    if (_gotEnc)
+                    {
+                        if (_encFmt != MausEncryptionFormat.Aes)
+                            throw new InvalidDataException(TextResources.FormatBadZ);
+                    }
+                    else
+                    {
+                        _gotEnc = true;
+                        _encFmt = MausEncryptionFormat.Aes;
+                    }
+                    _blockByteCount = DieFledermausStream._blockByteCtAes;
+                    CheckAdvance(optLen, ref i);
+                    byte[] aesBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset);
+                    int keySize;
+                    if (aesBytes.Length == 3)
+                    {
+                        string aesName = DieFledermausStream._textEncoding.GetString(aesBytes);
 
-                if (curOption != null)
-                    throw new NotSupportedException(TextResources.FormatUnknownZ);
+                        switch (aesName)
+                        {
+                            case DieFledermausStream._keyStrAes256:
+                                keySize = DieFledermausStream._keyBitAes256;
+                                break;
+                            case DieFledermausStream._keyStrAes192:
+                                keySize = DieFledermausStream._keyBitAes192;
+                                break;
+                            case DieFledermausStream._keyStrAes128:
+                                keySize = DieFledermausStream._keyBitAes128;
+                                break;
+                            default:
+                                throw new NotSupportedException(TextResources.FormatUnknownZ);
+                        }
+                    }
+                    else if (aesBytes.Length == 2)
+                    {
+                        keySize = aesBytes[0] | aesBytes[1] << 8;
+
+                        switch (keySize)
+                        {
+                            case DieFledermausStream._keyBitAes256:
+                            case DieFledermausStream._keyBitAes192:
+                            case DieFledermausStream._keyBitAes128:
+                                break;
+                            default:
+                                throw new NotSupportedException(TextResources.FormatUnknownZ);
+                        }
+                    }
+                    else throw new NotSupportedException(TextResources.FormatUnknownZ);
+
+                    if (_keySizes == null)
+                        _keySizes = new KeySizes(keySize, keySize, 0);
+                    else if (_keySizes.MaxSize != keySize)
+                        throw new InvalidDataException(TextResources.FormatBadZ);
+
+                    continue;
+                }
+
+                throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
+        }
 
-            return curOffset;
+        private static void CheckAdvance(int optLen, ref int i)
+        {
+            if (++i >= optLen)
+                throw new InvalidDataException(TextResources.FormatBadZ);
         }
 
         internal void Delete(DieFledermauZItem item)
@@ -349,6 +608,40 @@ namespace DieFledermaus
         /// </summary>
         public MauZArchiveMode Mode { get { return _mode; } }
 
+        private MausEncryptionFormat _encFmt;
+        /// <summary>
+        /// Gets the encryption format of the current instance.
+        /// </summary>
+        public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
+
+        private void _ensureCanSetKey()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (_encFmt == MausEncryptionFormat.None)
+                throw new NotSupportedException(TextResources.NotEncrypted);
+            if (_mode == MauZArchiveMode.Read && _headerGotten)
+                throw new InvalidOperationException(TextResources.AlreadyDecrypted);
+        }
+
+        private KeySizes _keySizes;
+        /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// for the current encryption, or <c>null</c> if the current archive is not encrypted.
+        /// </summary>
+        public KeySizes KeySizes { get { return _keySizes; } }
+
+        /// <summary>
+        /// Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// </summary>
+        public int BlockSize { get { return _blockByteCount << 3; } }
+
+        private int _blockByteCount;
+        /// <summary>
+        /// Gets the number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// </summary>
+        public int BlockByteCount { get { return _blockByteCount; } }
+
         internal void EnsureCanWrite()
         {
             if (_baseStream == null)
@@ -363,6 +656,85 @@ namespace DieFledermaus
                 throw new ObjectDisposedException(null, TextResources.ArchiveClosed);
             if (_mode == MauZArchiveMode.Create)
                 throw new NotSupportedException(TextResources.ArchiveWriteMode);
+        }
+
+        private int _pkCount;
+        private byte[] _key, _salt, _iv, _hashExpected;
+        /// <summary>
+        /// Gets and sets the key used to encrypt the DieFledermaus stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current archive is disposed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current archive is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is an invalid length according to <see cref="KeySizes"/>.
+        /// </exception>
+        public byte[] Key
+        {
+            get
+            {
+                if (_key == null) return null;
+                return (byte[])_key.Clone();
+            }
+            set
+            {
+                _ensureCanSetKey();
+                if (value == null) throw new ArgumentNullException(nameof(value));
+
+                if (!DieFledermausStream.IsValidKeyBitSize(value.Length, _keySizes))
+                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
+                _key = value;
+            }
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current archive is disposed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current archive is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(string password)
+        {
+            _ensureCanSetKey();
+            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount);
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current archive is disposed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current archive is in read-mode and the stream has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(SecureString password)
+        {
+            _ensureCanSetKey();
+            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount);
         }
 
         /// <summary>
@@ -703,6 +1075,8 @@ namespace DieFledermaus
             finally
             {
                 _baseStream = null;
+                for (int i = 0; i < _entries.Count; i++)
+                    _entries[i].DoDelete();
             }
         }
 
@@ -713,7 +1087,7 @@ namespace DieFledermaus
             if (_mode == MauZArchiveMode.Read)
                 return;
 
-            long length = 52;
+            long length = 16;
 
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
@@ -733,69 +1107,174 @@ namespace DieFledermaus
                     path = curEntry.Path;
                 byte[] curPath = DieFledermausStream._textEncoding.GetBytes(path);
                 paths[i] = curPath;
-
-                length += 42L + curStream.Length + (curPath.Length * 2);
             }
 
-#if NOLEAVEOPEN
-            BinaryWriter writer = new BinaryWriter(_baseStream);
-#else
-            using (BinaryWriter writer = new BinaryWriter(_baseStream, DieFledermausStream._textEncoding, true))
-#endif
+            List<byte[]> options = new List<byte[]>();
+            if (_encFmt == MausEncryptionFormat.Aes)
             {
-                writer.Write(_mHead);
-                writer.Write(_versionShort);
-
-                writer.Write(length);
-                long curOffset = BaseOffset;
-                writer.Write((ushort)0); //TODO: Options, add to curOffset
-                writer.Write(entries.LongLength);
-
-                writer.Write(_allEntries);
-
-                long[] offsets = new long[entries.Length];
-
-                for (long i = 0; i < entries.LongLength; i++)
+                options.Add(DieFledermausStream._encBAes);
+                switch (_key.Length)
                 {
-                    var curStream = entryStreams[i];
-                    var curEntry = entries[i];
-                    offsets[i] = curOffset;
-                    writer.Write(_curEntry);
-                    writer.Write(i);
-
-                    byte[] pathBytes = paths[i];
-
-                    writer.Write((byte)pathBytes.Length);
-                    writer.Write(pathBytes);
-
-                    curStream.BufferCopyTo(_baseStream);
-
-                    curOffset += 13L + pathBytes.Length + curStream.Length;
-
-                    curStream.Dispose();
-                    curEntry.DoDelete();
+                    default:
+                        options.Add(DieFledermausStream._keyBAes256);
+                        break;
+                    case DieFledermausStream._keyByteAes192:
+                        options.Add(DieFledermausStream._keyBAes192);
+                        break;
+                    case DieFledermausStream._keyByteAes128:
+                        options.Add(DieFledermausStream._keyBAes128);
+                        break;
                 }
+            }
 
-                writer.Write(_allOffsets);
+            long curOffset = BaseOffset;
+            AddSize(options, ref length, ref curOffset);
 
-                for (long i = 0; i < entries.LongLength; i++)
+            List<byte[]> encryptedOptions;
+
+            if (_encFmt == MausEncryptionFormat.None)
+                encryptedOptions = null;
+            else
+            {
+                encryptedOptions = new List<byte[]>();
+                long size = _key.Length + _addSize;
+
+                length += size;
+                curOffset += size;
+
+                //TODO: Other encrypted options
+
+                AddSize(encryptedOptions, ref length, ref curOffset);
+            }
+
+            using (MausBufferStream dataStream = new MausBufferStream())
+            {
+                byte[] hmac = null;
+                if (_encFmt == MausEncryptionFormat.None)
                 {
-                    byte[] pathBytes = paths[i];
-                    writer.Write(_curOffset);
-                    writer.Write(i);
-                    writer.Write((byte)pathBytes.Length);
-                    writer.Write(pathBytes);
-                    writer.Write(0L);
-                    writer.Write(offsets[i]);
+#if NOLEAVEOPEN
+                    BinaryWriter dataWriter = new BinaryWriter(dataStream);
+#else
+                    using (BinaryWriter dataWriter = new BinaryWriter(dataStream, DieFledermausStream._textEncoding, true))
+#endif
+                    {
+                        WriteFiles(entries, entryStreams, paths, dataWriter, curOffset);
+                    }
                 }
+                else
+                {
+                    using (MausBufferStream cryptStream = new MausBufferStream())
+                    {
+#if NOLEAVEOPEN
+                        BinaryWriter cryptWriter = new BinaryWriter(cryptStream);
+#else
+                        using (BinaryWriter cryptWriter = new BinaryWriter(cryptStream, DieFledermausStream._textEncoding, true))
+#endif
+                        {
+                            DieFledermausStream.WriteFormats(cryptWriter, encryptedOptions);
+                            WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position);
+                        }
 
-                writer.Write(0L);
-                writer.Write(curOffset);
-                writer.Write(_mFoot);
+                        cryptStream.Reset();
+                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key);
+                        cryptStream.Reset();
+
+                        using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
+                        using (ICryptoTransform transform = algorithm.CreateEncryptor())
+                        {
+                            CryptoStream cs = new CryptoStream(dataStream, transform, CryptoStreamMode.Write);
+                            cryptStream.BufferCopyTo(cs, false);
+                            cs.FlushFinalBlock();
+                        }
+                    }
+                }
+                dataStream.Reset();
+                length += dataStream.Length;
+
+#if NOLEAVEOPEN
+                BinaryWriter writer = new BinaryWriter(_baseStream);
+#else
+                using (BinaryWriter writer = new BinaryWriter(_baseStream, DieFledermausStream._textEncoding, true))
+#endif
+                {
+                    writer.Write(_mHead);
+                    writer.Write(_versionShort);
+
+                    writer.Write(length);
+
+                    DieFledermausStream.WriteFormats(writer, options);
+
+                    if (_encFmt != MausEncryptionFormat.None)
+                    {
+                        writer.Write((long)_pkCount);
+                        writer.Write(hmac);
+                        writer.Write(_salt);
+                        writer.Write(_iv);
+                    }
+                    dataStream.BufferCopyTo(_baseStream, false);
+                }
             }
 #if NOLEAVEOPEN
             writer.Flush();
 #endif
+        }
+
+        private static void AddSize(List<byte[]> options, ref long length, ref long curOffset)
+        {
+            for (int i = 0; i < options.Count; i++)
+            {
+                long curL = 1L + options[i].Length;
+                length += curL;
+                curOffset += curL;
+            }
+        }
+
+        private const long _addSize = DieFledermausStream._blockByteCtAes + DieFledermausStream.hashLength + sizeof(long);
+        //Respectively, IV, HMAC, and PBKDF2 value
+
+        private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, BinaryWriter writer, long curOffset)
+        {
+            writer.Write(entries.LongLength);
+
+            writer.Write(_allEntries);
+
+            long[] offsets = new long[entries.Length];
+
+            for (long i = 0; i < entries.LongLength; i++)
+            {
+                var curStream = entryStreams[i];
+                var curEntry = entries[i];
+                offsets[i] = curOffset;
+                writer.Write(_curEntry);
+                writer.Write(i);
+
+                byte[] pathBytes = paths[i];
+
+                writer.Write((byte)pathBytes.Length);
+                writer.Write(pathBytes);
+
+                curStream.BufferCopyTo(writer.BaseStream, true);
+
+                curOffset += 13L + pathBytes.Length + curStream.Length;
+
+                curStream.Dispose();
+            }
+
+            writer.Write(_allOffsets);
+
+            for (long i = 0; i < entries.LongLength; i++)
+            {
+                byte[] pathBytes = paths[i];
+                writer.Write(_curOffset);
+                writer.Write(i);
+                writer.Write((byte)pathBytes.Length);
+                writer.Write(pathBytes);
+                writer.Write(0L);
+                writer.Write(offsets[i]);
+            }
+
+            writer.Write(0L);
+            writer.Write(curOffset);
         }
 
         /// <summary>

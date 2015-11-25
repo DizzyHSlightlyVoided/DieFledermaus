@@ -635,7 +635,7 @@ namespace DieFledermaus
             return _getKeySizes(encryptionFormat, out blockByteCount);
         }
 
-        private static KeySizes _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
+        internal static KeySizes _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
         {
             switch (encryptionFormat)
             {
@@ -842,7 +842,7 @@ namespace DieFledermaus
             return keySizes != null && IsValidKeyBitSize(bitCount, keySizes);
         }
 
-        private static bool IsValidKeyBitSize(int bitCount, KeySizes _keySizes)
+        internal static bool IsValidKeyBitSize(int bitCount, KeySizes _keySizes)
         {
             if (_keySizes == null) return false;
 
@@ -1072,15 +1072,20 @@ namespace DieFledermaus
         public void SetPassword(string password)
         {
             _ensureCanSetKey();
+            _key = SetPassword(password, _salt, _pkCount);
+        }
+
+        internal static byte[] SetPassword(string password, byte[] _salt, int _pkCount)
+        {
             if (password == null)
                 throw new ArgumentNullException(nameof(password));
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-            SetPassword(_textEncoding.GetBytes(password));
+            return SetPassword(_textEncoding.GetBytes(password), _salt, _pkCount);
         }
 
-        private void SetPassword(byte[] data)
+        private static byte[] SetPassword(byte[] data, byte[] _salt, int _pkCount)
         {
             try
             {
@@ -1090,7 +1095,7 @@ namespace DieFledermaus
                 using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount))
 #endif
                 {
-                    _key = pbkdf2.GetBytes(_salt.Length);
+                    return pbkdf2.GetBytes(_salt.Length);
                 }
             }
             finally
@@ -1118,6 +1123,11 @@ namespace DieFledermaus
         public void SetPassword(SecureString password)
         {
             _ensureCanSetKey();
+            _key = SetPassword(password, _salt, _pkCount);
+        }
+
+        internal static byte[] SetPassword(SecureString password, byte[] salt, int pkCount)
+        {
             if (password == null)
                 throw new ArgumentNullException(nameof(password));
             if (password.Length == 0)
@@ -1131,7 +1141,7 @@ namespace DieFledermaus
                 pData = Marshal.SecureStringToGlobalAllocUnicode(password);
                 Marshal.Copy(pData, data, 0, data.Length);
                 bytes = _textEncoding.GetBytes(data);
-                SetPassword(bytes);
+                return SetPassword(bytes, salt, pkCount);
             }
             finally
             {
@@ -1203,18 +1213,18 @@ namespace DieFledermaus
         }
         #endregion
 
-        private const int _blockByteCtAes = 16;
-        private const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
-        private const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
-        private const int _keyBitAes192 = 192, _keyByteAes192 = _keyBitAes192 >> 3;
-        private const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
-        private static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
+        internal const int _blockByteCtAes = 16;
+        internal const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
+        internal const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
+        internal const int _keyBitAes192 = 192, _keyByteAes192 = _keyBitAes192 >> 3;
+        internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
+        internal static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
         private const string _cmpNone = "NK", _cmpDef = "DEF", _cmpLzma = "LZMA";
-        private const string _encAes = "AES";
+        internal const string _encAes = "AES";
         private static readonly byte[] _cmpBNone = { (byte)'N', (byte)'K' }, _cmpBDef = { (byte)'D', (byte)'E', (byte)'F' },
-            _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' },
-            _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
+            _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
+        internal static readonly byte[] _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
@@ -1365,7 +1375,7 @@ namespace DieFledermaus
                     else throw new NotSupportedException(TextResources.FormatUnknown);
 
                     if (_keySizes == null)
-                        _setKeySizes(keyBits);
+                        _keySizes = new KeySizes(keyBits, keyBits, 0);
                     else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
                         throw new InvalidDataException(TextResources.FormatBad);
                     _encFmt = MausEncryptionFormat.Aes;
@@ -1508,7 +1518,7 @@ namespace DieFledermaus
         internal long CompressedLength { get { return _compLength; } }
 
         private byte[] _hashExpected, _salt, _iv;
-        private const int hashLength = 64, minPkCount = 9001;
+        internal const int hashLength = 64, minPkCount = 9001;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;
 
@@ -1554,7 +1564,7 @@ namespace DieFledermaus
 
             if (_encFmt == MausEncryptionFormat.None)
             {
-                if (!CompareBytes(ComputeHash(_bufferStream)))
+                if (!CompareBytes(ComputeHash(_bufferStream), _hashExpected))
                     throw new InvalidDataException(TextResources.BadChecksum);
                 _bufferStream.Reset();
             }
@@ -1562,7 +1572,7 @@ namespace DieFledermaus
             {
                 var bufferStream = Decrypt();
 
-                if (!CompareBytes(ComputeHmac(bufferStream, _key)))
+                if (!CompareBytes(ComputeHmac(bufferStream, _key), _hashExpected))
                     throw new CryptographicException(TextResources.BadKey);
                 bufferStream.Reset();
 
@@ -1619,9 +1629,14 @@ namespace DieFledermaus
             if (_bufferStream != null)
                 return;
 
-            _bufferStream = new MausBufferStream();
-            byte[] buffer = new byte[MaxBuffer];
             long length = _compLength;
+            _bufferStream = GetBuffer(length, _baseStream);
+        }
+
+        internal static MausBufferStream GetBuffer(long length, Stream _baseStream)
+        {
+            MausBufferStream _bufferStream = new MausBufferStream();
+            byte[] buffer = new byte[MaxBuffer];
             while (length > 0)
             {
                 int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
@@ -1629,9 +1644,11 @@ namespace DieFledermaus
                 _bufferStream.Write(buffer, 0, read);
                 length -= read;
             }
+
+            return _bufferStream;
         }
 
-        private bool CompareBytes(byte[] hashComputed)
+        internal static bool CompareBytes(byte[] hashComputed, byte[] _hashExpected)
         {
             for (int i = 0; i < hashLength; i++)
             {
@@ -1715,7 +1732,7 @@ namespace DieFledermaus
 
             if (mbs != null)
             {
-                mbs.BufferCopyTo(other);
+                mbs.BufferCopyTo(other, false);
                 return;
             }
 
@@ -1815,7 +1832,7 @@ namespace DieFledermaus
                 return hmac.ComputeHash(inputStream);
         }
 
-        private byte[] FillBuffer(int length)
+        internal static byte[] FillBuffer(int length)
         {
             byte[] buffer = new byte[length];
 #if NOCRYPTOCLOSE
@@ -1829,15 +1846,7 @@ namespace DieFledermaus
             return buffer;
         }
 
-        private void _setKeySizes(int keySize)
-        {
-            if (keySize <= 0)
-                _keySizes = null;
-            else
-                _keySizes = new KeySizes(keySize, keySize, 0);
-        }
-
-        private SymmetricAlgorithm GetAlgorithm()
+        internal static SymmetricAlgorithm GetAlgorithm(byte[] _key, byte[] _iv)
         {
             SymmetricAlgorithm alg = Aes.Create();
             alg.Key = _key;
@@ -1849,11 +1858,11 @@ namespace DieFledermaus
         {
             MausBufferStream output = new MausBufferStream();
 
-            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (SymmetricAlgorithm alg = GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = alg.CreateDecryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
-                _bufferStream.BufferCopyTo(cs);
+                _bufferStream.BufferCopyTo(cs, false);
                 cs.FlushFinalBlock();
             }
             output.Reset();
@@ -1869,12 +1878,12 @@ namespace DieFledermaus
 
             output.Prepend(firstBuffer);
 
-            using (SymmetricAlgorithm alg = GetAlgorithm())
+            using (SymmetricAlgorithm alg = GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = alg.CreateEncryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
 
-                _bufferStream.BufferCopyTo(cs);
+                _bufferStream.BufferCopyTo(cs, false);
                 cs.FlushFinalBlock();
             }
             output.Reset();
@@ -2029,7 +2038,7 @@ namespace DieFledermaus
 
                     _bufferStream.Reset();
 
-                    _bufferStream.BufferCopyTo(_baseStream);
+                    _bufferStream.BufferCopyTo(_baseStream, false);
                 }
                 else
                 {
@@ -2075,7 +2084,7 @@ namespace DieFledermaus
                         byte[] hashHmac = ComputeHmac(_bufferStream, _key);
                         _baseStream.Write(hashHmac, 0, hashLength);
 
-                        output.BufferCopyTo(_baseStream);
+                        output.BufferCopyTo(_baseStream, false);
                     }
                 }
             }
