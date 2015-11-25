@@ -1213,10 +1213,10 @@ namespace DieFledermaus
                     }
                     dataStream.BufferCopyTo(_baseStream, false);
                 }
-            }
 #if NOLEAVEOPEN
-            writer.Flush();
+                writer.Flush();
 #endif
+            }
         }
 
         private static void AddSize(List<byte[]> options, ref long length, ref long curOffset)
