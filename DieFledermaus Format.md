@@ -31,7 +31,7 @@ A DieFledermaus stream contains the following fields:
 2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5f 00` (hex) = integer `95` (decimal) = version 0.95.
 3. **Format:** An array of length-prefixed strings describing the format.
 4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
-5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded.
+5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
 6. **Checksum:** A SHA-512 hash of the decompressed value.
 7. **Data:** The compressed data itself.
 
@@ -66,7 +66,8 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 
 ### Changes to the format
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
-* **Decompressed Length** is replaced with the **PBKDF2 Value** (still a signed 64-bit integer to make the structure more straightforward), which is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive. If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
+* **Decompressed Length** is replaced with the **PBKDF2 Value**, which is still a signed 64-bit integer to make the structure more straightforward. This value is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive.
+* If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
 * **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the plaintext to be incrypted.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.

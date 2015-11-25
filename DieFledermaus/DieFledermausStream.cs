@@ -52,7 +52,7 @@ namespace DieFledermaus
     /// which is just the DEFLATE algorithm prefixed with magic number "<c>mAuS</c>" and metadata.
     /// </summary>
     /// <remarks>
-    /// Unlike <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
+    /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
     /// to <see cref="Read(byte[], int, int)"/>.
     /// </remarks>
     public partial class DieFledermausStream : Stream

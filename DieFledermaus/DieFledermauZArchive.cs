@@ -798,21 +798,10 @@ namespace DieFledermaus
 
             DieFledermausStream.IsValidFilename(path, true, true, nameof(path));
 
-            PathSeparator pathSep = new PathSeparator(path);
-
             if (_entryDict.ContainsKey(path))
                 throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
 
-            if (_entryDict.Keys.Any(pathSep.OtherBeginsWith))
-                throw new ArgumentException(TextResources.ArchivePathExistingDir, nameof(path));
-
-            if (_entryDict.Keys.Where(i => !i.EndsWith("/")).Any(pathSep.BeginsWith))
-                throw new ArgumentException(TextResources.ArchivePathExistingFileAsDir, nameof(path));
-
-            var emptyDirs = _entries.Where(pathSep.BeginsWithEmptyDir).ToArray();
-
-            for (int i = 0; i < emptyDirs.Length; i++)
-                emptyDirs[i].Delete();
+            CheckSeparator(path, false);
 
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
             _entryDict.Add(path, _entries.Count);
@@ -843,6 +832,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directories.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, MausCompressionFormat compressionFormat)
         {
             return Create(path, compressionFormat, 0);
@@ -871,6 +864,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directories.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, MausEncryptionFormat encryptionFormat)
         {
             return Create(path, 0, encryptionFormat);
@@ -895,6 +892,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directories.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path)
         {
             return Create(path, 0, 0);
@@ -919,6 +920,10 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current instance is in read-only mode.
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directories.
+        /// </remarks>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path)
         {
             EnsureCanWrite();
@@ -939,15 +944,28 @@ namespace DieFledermaus
             if (_entryDict.ContainsKey(pathSlash))
                 throw new ArgumentException(TextResources.ArchiveExistsDir, nameof(path));
 
-            PathSeparator pathSep = new PathSeparator(path);
-
-            if (_entryDict.Keys.Any(pathSep.OtherBeginsWith))
-                throw new ArgumentException(TextResources.ArchivePathNonEmpty, nameof(path));
+            CheckSeparator(path, true);
 
             DieFledermauZEmptyDirectory empty = new DieFledermauZEmptyDirectory(this, pathSlash);
             _entryDict.Add(pathSlash, _entries.Count);
             _entries.Add(empty);
             return empty;
+        }
+
+        private void CheckSeparator(string path, bool dir)
+        {
+            PathSeparator pathSep = new PathSeparator(path);
+
+            if (_entryDict.Keys.Any(pathSep.OtherBeginsWith))
+                throw new ArgumentException(dir ? TextResources.ArchivePathNonEmpty : TextResources.ArchivePathExistingDir, nameof(path));
+
+            if (_entryDict.Keys.Where(i => !i.EndsWith("/")).Any(pathSep.BeginsWith))
+                throw new ArgumentException(TextResources.ArchivePathExistingFileAsDir, nameof(path));
+
+            var emptyDirs = _entries.Where(pathSep.BeginsWithEmptyDir).ToArray();
+
+            for (int i = 0; i < emptyDirs.Length; i++)
+                emptyDirs[i].Delete();
         }
 
         private class PathSeparator
