@@ -1443,6 +1443,8 @@ namespace DieFledermaus
                 _headSize = ReadOptions(reader, false);
 
                 _compLength = reader.ReadInt64();
+                if (_compLength <= 0)
+                    throw new InvalidDataException(TextResources.InvalidDataMaus);
                 _uncompressedLength = reader.ReadInt64();
 
                 if (_encFmt != MausEncryptionFormat.None)
@@ -1788,16 +1790,27 @@ namespace DieFledermaus
                     _bufferStream.Reset();
                     _deflateStream.Close();
                     _deflateStream = _bufferStream;
+                    if (_bufferStream.Length < _uncompressedLength || _bufferStream.Length == 0)
+                        throw new EndOfStreamException();
                     break;
                 case MausCompressionFormat.None:
                     _deflateStream = _bufferStream;
                     break;
                 default:
                     _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Decompress, false);
+                    if (!gotULen)
+                    {
+                        int getByte = _deflateStream.ReadByte();
+                        if (getByte < 0)
+                            throw new EndOfStreamException();
+                        firstByte = (byte)getByte;
+                    }
                     break;
             }
             _headerGotten = true;
         }
+
+        byte? firstByte;
 
         internal void GetBuffer()
         {
@@ -1890,7 +1903,21 @@ namespace DieFledermaus
             if (gotULen)
                 count = (int)Math.Min(count, _uncompressedLength);
 
-            int result = _deflateStream.Read(buffer, offset, count);
+            if (count == 0) return 0;
+
+            int result;
+
+            if (firstByte.HasValue)
+            {
+                buffer[offset] = firstByte.Value;
+                firstByte = null;
+                offset++;
+                count--;
+                result = 1;
+            }
+            else result = 0;
+
+            result += _deflateStream.Read(buffer, offset, count);
 
             if (gotULen)
             {
