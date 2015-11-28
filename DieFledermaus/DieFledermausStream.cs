@@ -57,9 +57,9 @@ namespace DieFledermaus
     /// </remarks>
     public partial class DieFledermausStream : Stream
     {
-        internal const int MaxBuffer = 65536;
+        internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 95, _minVersionShort = 95;
+        private const ushort _versionShort = 96, _minVersionShort = _versionShort;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
@@ -983,8 +983,6 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
-        private const int _maxComment = 65536;
-
         private string _comment;
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -1004,7 +1002,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (value != null && (value.Length <= 0 || value.Length > _maxComment))
+                if (value != null && (value.Length <= 0 || value.Length > Max16Bit))
                     throw new ArgumentException(TextResources.CommentLength, nameof(value));
                 _comment = value;
             }
@@ -1051,7 +1049,7 @@ namespace DieFledermaus
                     throw new ArgumentException(TextResources.FilenameLengthZero, paramName);
                 return false;
             }
-            if (_textEncoding.GetByteCount(value) > maxLen)
+            if (_textEncoding.GetByteCount(value) > Max8Bit)
             {
                 if (throwOnInvalid)
                     throw new ArgumentException(TextResources.FilenameLengthLong, paramName);
@@ -1407,7 +1405,7 @@ namespace DieFledermaus
 
         private bool _headerGotten, _allowDirNames;
 
-        internal const int maxLen = 256;
+        internal const int Max8Bit = 256;
 
         private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>(StringComparer.Ordinal)
         {
@@ -1421,8 +1419,9 @@ namespace DieFledermaus
             _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
         private long _headSize;
-
         internal long HeadLength { get { return _headSize; } }
+
+        private ushort version = _versionShort;
 
         private void _getHeader(bool readMagNum)
         {
@@ -1434,13 +1433,13 @@ namespace DieFledermaus
             {
                 if (readMagNum && reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
-                ushort version = reader.ReadUInt16();
+                version = reader.ReadUInt16();
                 if (version > _versionShort)
                     throw new NotSupportedException(TextResources.VersionTooHigh);
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                _headSize = ReadOptions(reader, false);
+                _headSize = ReadFormat(reader, false);
 
                 _compLength = reader.ReadInt64();
                 if (_compLength <= 0)
@@ -1458,17 +1457,14 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
                 else gotULen = true;
 
-                _hashExpected = reader.ReadBytes(hashLength);
-                if (_hashExpected.Length < hashLength) throw new EndOfStreamException();
+                _hashExpected = ReadBytes(reader, hashLength);
 
                 if (_encFmt != MausEncryptionFormat.None)
                 {
                     int keySize = _keySizes.MaxSize >> 3;
-                    _salt = reader.ReadBytes(keySize);
-                    if (_salt.Length < keySize) throw new EndOfStreamException();
+                    _salt = ReadBytes(reader, keySize);
 
-                    _iv = reader.ReadBytes(_blockByteCount);
-                    if (_iv.Length < _blockByteCount) throw new EndOfStreamException();
+                    _iv = ReadBytes(reader, _blockByteCount);
 
                     long getLength = keySize + _iv.Length;
 
@@ -1480,7 +1476,7 @@ namespace DieFledermaus
         }
 
         bool gotFormat, gotULen;
-        private long ReadOptions(BinaryReader reader, bool fromEncrypted)
+        private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
             long headSize = 88;
 
@@ -1490,7 +1486,7 @@ namespace DieFledermaus
 
             for (int i = 0; i < optLen; i++)
             {
-                string curForm = GetString(reader, ref headSize);
+                string curForm = GetString(reader, ref headSize, false);
 
                 MausCompressionFormat cmpFmt;
                 if (_formDict.TryGetValue(curForm, out cmpFmt))
@@ -1514,7 +1510,7 @@ namespace DieFledermaus
                     _encryptedOptions = options;
                     CheckAdvance(optLen, ref i);
 
-                    byte[] bytes = GetStringBytes(reader, ref headSize);
+                    byte[] bytes = GetStringBytes(reader, ref headSize, false);
                     _blockByteCount = _blockByteCtAes;
                     int keyBits;
                     if (bytes.Length == 3)
@@ -1563,7 +1559,7 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
 
-                    string filename = GetString(reader, ref headSize);
+                    string filename = GetString(reader, ref headSize, false);
 
                     if (_filename == null)
                     {
@@ -1608,25 +1604,11 @@ namespace DieFledermaus
                 if (curForm.Equals(_kComment, StringComparison.Ordinal))
                 {
                     CheckAdvance(optLen, ref i);
-                    byte[] buffer = GetStringBytes(reader, ref headSize);
-                    if (buffer.Length != 1)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    int curLen = buffer[0];
-                    if (curLen == 0) curLen = maxLen;
+                    byte[] buffer = GetStringBytes(reader, ref headSize, false);
 
-                    List<byte> byteList = new List<byte>(curLen << 8);
-                    curLen--;
 
-                    for (int j = 0; j <= curLen; j++)
-                    {
-                        CheckAdvance(optLen, ref i);
-                        buffer = GetStringBytes(reader, ref headSize);
-                        if (j < curLen && buffer.Length != maxLen)
-                            throw new InvalidDataException(TextResources.FormatBad);
-                        byteList.AddRange(buffer);
-                    }
+                    string comment = _textEncoding.GetString(buffer);
 
-                    string comment = _textEncoding.GetString(byteList.ToArray());
                     if (_comment != null && !_comment.Equals(comment, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
 
@@ -1638,6 +1620,14 @@ namespace DieFledermaus
             }
 
             return headSize;
+        }
+
+        internal static byte[] ReadBytes(BinaryReader reader, int size)
+        {
+            byte[] data = reader.ReadBytes(size);
+            if (data.Length < size)
+                throw new EndOfStreamException();
+            return data;
         }
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
@@ -1661,7 +1651,7 @@ namespace DieFledermaus
 
         private static long GetValueInt64(BinaryReader reader)
         {
-            if (reader.ReadByte() != sizeof(long))
+            if (reader.ReadUInt16() != sizeof(long))
                 throw new InvalidDataException(TextResources.FormatBad);
 
             return reader.ReadInt64();
@@ -1673,21 +1663,30 @@ namespace DieFledermaus
                 throw new InvalidDataException(TextResources.FormatBad);
         }
 
-        internal static string GetString(BinaryReader reader, ref long curSize)
+        internal static string GetString(BinaryReader reader, ref long curSize, bool is8bit)
         {
-            byte[] strBytes = GetStringBytes(reader, ref curSize);
+            byte[] strBytes = GetStringBytes(reader, ref curSize, is8bit);
 
             return _textEncoding.GetString(strBytes);
         }
 
-        internal static byte[] GetStringBytes(BinaryReader reader, ref long curSize)
+        internal static byte[] GetStringBytes(BinaryReader reader, ref long curSize, bool is8bit)
         {
-            int strLen = reader.ReadByte();
-            if (strLen == 0) strLen = maxLen;
-            byte[] strBytes = reader.ReadBytes(strLen);
-            curSize += 1L + strBytes.Length;
-            if (strBytes.Length < strLen)
-                throw new EndOfStreamException();
+            int strLen;
+            if (is8bit)
+            {
+                strLen = reader.ReadByte();
+                if (strLen == 0) strLen = Max8Bit;
+                curSize += 1;
+            }
+            else
+            {
+                strLen = reader.ReadUInt16();
+                if (strLen == 0) strLen = Max16Bit;
+                curSize += 2;
+            }
+            byte[] strBytes = ReadBytes(reader, strLen);
+            curSize += strBytes.Length;
             return strBytes;
         }
 
@@ -1759,7 +1758,7 @@ namespace DieFledermaus
                 using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
 #endif
                 {
-                    ReadOptions(reader, true);
+                    ReadFormat(reader, true);
                 }
 
                 _bufferStream.Close();
@@ -1824,10 +1823,10 @@ namespace DieFledermaus
         internal static MausBufferStream GetBuffer(long length, Stream _baseStream)
         {
             MausBufferStream _bufferStream = new MausBufferStream();
-            byte[] buffer = new byte[MaxBuffer];
+            byte[] buffer = new byte[Max16Bit];
             while (length > 0)
             {
-                int read = _baseStream.Read(buffer, 0, (int)Math.Min(MaxBuffer, length));
+                int read = _baseStream.Read(buffer, 0, (int)Math.Min(Max16Bit, length));
                 if (read == 0) throw new EndOfStreamException();
                 _bufferStream.Write(buffer, 0, read);
                 length -= read;
@@ -1939,17 +1938,17 @@ namespace DieFledermaus
             }
 
 #if NOCOPY
-            byte[] buffer = new byte[MaxBuffer];
+            byte[] buffer = new byte[Max16Bit];
 
-            int read = _deflateStream.Read(buffer, 0, MaxBuffer);
+            int read = _deflateStream.Read(buffer, 0, Max16Bit);
 
             while (read > 0)
             {
-                other.Write(buffer, 0, MaxBuffer);
-                read = _deflateStream.Read(buffer, 0, MaxBuffer);
+                other.Write(buffer, 0, Max16Bit);
+                read = _deflateStream.Read(buffer, 0, Max16Bit);
             }
 #else
-            _deflateStream.CopyTo(other, MaxBuffer);
+            _deflateStream.CopyTo(other, Max16Bit);
 #endif
         }
 
@@ -2347,17 +2346,7 @@ namespace DieFledermaus
                 return;
 
             formats.Add(_bComment);
-            byte[] allBytes = _textEncoding.GetBytes(_comment);
-
-            byte byteLen = (byte)Math.Ceiling((double)allBytes.Length / maxLen);
-
-            formats.Add(new byte[] { byteLen });
-            for (int i = 0; i < allBytes.Length; i += maxLen)
-            {
-                byte[] curBuffer = new byte[Math.Min(maxLen, allBytes.Length - i)];
-                Array.Copy(allBytes, i, curBuffer, 0, curBuffer.Length);
-                formats.Add(curBuffer);
-            }
+            formats.Add(_textEncoding.GetBytes(_comment));
         }
 
         internal static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
@@ -2367,7 +2356,7 @@ namespace DieFledermaus
             for (int i = 0; i < formats.Count; i++)
             {
                 byte[] curForm = formats[i];
-                writer.Write((byte)curForm.Length);
+                writer.Write((ushort)curForm.Length);
                 writer.Write(curForm);
             }
         }

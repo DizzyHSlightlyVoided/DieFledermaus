@@ -1,6 +1,6 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 0.95
+Version 0.96
 ------------
 * File Extension: ".maus"
 * Byte order: little-endian
@@ -15,13 +15,13 @@ Terminology
 * **encoder:** Any application, library, or other software which encodes data to a DieFledermaus stream.
 * **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form.
 * **re-encoder:** Any software which functions as both an encoder and a decoder.
-* **length-prefixed string:** In the DieFledermaus format, a sequence of bytes, usually UTF-8 text, which is prefixed by a single unsigned byte indicating the length (not including the length-byte itself). If the length-byte has a value of 0, the length of the string is 256.
+* **length-prefixed string:** In the DieFledermaus format, a length-prefixed string is a sequence of bytes, usually UTF-8 text, which is prefixed by the *length value*, an 8-bit or 16-bit unsigned integer indicating the length of the string (not including the length value itself). If the length value is 0, the actual length of the string is 256 for 8-bit length values and 65536 for 16-bit length values.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 Structure
 ---------
-Any encoder or decoder must support version 0.95 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
+Any encoder or decoder must support version 0.96 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless a specific filename is requested by the user.
 
@@ -36,14 +36,14 @@ A DieFledermaus stream contains the following fields:
 7. **Data:** The compressed data itself.
 
 ### Format
-**Format** is an array of length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike DieFledermaus length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
+**Format** is an array of 16-bit length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike the length-prefixed strings themselves, a 0-value in the **Format Length** means that there really are zero elements.
 
-Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for the element; the original element is thus a *parameterized element*.
+Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for the element; the original element is thus a *parameterized element*. Format elements should have a length no greater than 256 bytes because I mean seriously c'mon. Parameters may be any length between 1 and 65536 inclusive.
 
 If no element in **Format** specifies the compression format, the decoder must use the DEFLATE algorithm.
 
 The following values are defined for the default implementation:
-* `Name` - *One parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension.
+* `Name` - *One parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension. The maximum length of the filename is 256 UTF-8 bytes.
 * `NK` - *No parameters.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
 * `DEF` - *No parameters.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
 * `LZMA` - *No parameters.* Indicates that the file is compressed using the [Lempel-Ziv-Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size must be less than or equal to 64 megabytes.

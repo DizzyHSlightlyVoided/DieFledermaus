@@ -50,7 +50,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const ushort _versionShort = 20, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 30, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;
@@ -221,6 +221,7 @@ namespace DieFledermaus
         }
 
         long totalSize, curOffset;
+
         private void ReadHeader()
         {
 #if NOLEAVEOPEN
@@ -270,20 +271,12 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 _pkCount = (int)pkValue;
 
-                _hashExpected = ReadBytes(reader, DieFledermausStream.hashLength);
-                _salt = ReadBytes(reader, _keySizes.MaxSize >> 3);
-                _iv = ReadBytes(reader, DieFledermausStream._blockByteCtAes);
+                _hashExpected = DieFledermausStream.ReadBytes(reader, DieFledermausStream.hashLength);
+                _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
+                _iv = DieFledermausStream.ReadBytes(reader, DieFledermausStream._blockByteCtAes);
 
                 curOffset += _salt.Length + _addSize - 12;
             }
-        }
-
-        private static byte[] ReadBytes(BinaryReader reader, int size)
-        {
-            byte[] data = reader.ReadBytes(size);
-            if (data.Length < size)
-                throw new EndOfStreamException();
-            return data;
         }
 
         private void ReadDecrypted(BinaryReader reader, ref long curOffset)
@@ -310,7 +303,7 @@ namespace DieFledermaus
                 if (entries[index] != null)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                string path = DieFledermausStream.GetString(reader, ref curOffset);
+                string path = DieFledermausStream.GetString(reader, ref curOffset, true);
 
                 curOffset += (sizeof(int) + sizeof(long));
 
@@ -336,12 +329,12 @@ namespace DieFledermaus
                 curOffset += offsetSize;
 
                 long index = reader.ReadInt64();
-                if (!indices.Add(index))
+                if (index < 0 || index >= entryCount || !indices.Add(index))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 string basePath = entries[index].Path;
 
-                string curPath = DieFledermausStream.GetString(reader, ref curOffset);
+                string curPath = DieFledermausStream.GetString(reader, ref curOffset, true);
                 if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
                     curPath = null;
 
@@ -512,7 +505,7 @@ namespace DieFledermaus
 
             for (int i = 0; i < optLen; i++)
             {
-                string curOption = DieFledermausStream.GetString(reader, ref curOffset);
+                string curOption = DieFledermausStream.GetString(reader, ref curOffset, false);
 
                 if (curOption.Equals(DieFledermausStream._encAes))
                 {
@@ -528,7 +521,7 @@ namespace DieFledermaus
                     }
                     _blockByteCount = DieFledermausStream._blockByteCtAes;
                     CheckAdvance(optLen, ref i);
-                    byte[] aesBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset);
+                    byte[] aesBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset, false);
                     int keySize;
                     if (aesBytes.Length == 3)
                     {
@@ -1238,6 +1231,9 @@ namespace DieFledermaus
         {
             if (_mode == MauZArchiveMode.Read)
                 return;
+
+            if (_entries.Count == 0)
+                throw new InvalidOperationException(TextResources.ArchiveEmpty);
 
             long length = 16;
 

@@ -46,7 +46,7 @@ namespace DieFledermaus
         {
             public MiniBuffer()
             {
-                Data = new byte[DieFledermausStream.MaxBuffer];
+                Data = new byte[DieFledermausStream.Max16Bit];
             }
 
             public MiniBuffer(byte[] buffer)
@@ -168,13 +168,13 @@ namespace DieFledermaus
 
             while (count > 0)
             {
-                int bytesToWrite = Math.Min(count, DieFledermausStream.MaxBuffer - _currentBuffer.End);
+                int bytesToWrite = Math.Min(count, DieFledermausStream.Max16Bit - _currentBuffer.End);
                 Array.Copy(buffer, offset, _currentBuffer.Data, _currentBuffer.End, bytesToWrite);
                 _currentBuffer.End += bytesToWrite;
                 offset += bytesToWrite;
                 count -= bytesToWrite;
 
-                if (_currentBuffer.End == DieFledermausStream.MaxBuffer)
+                if (_currentBuffer.End == DieFledermausStream.Max16Bit)
                 {
                     _currentBuffer.Next = new MiniBuffer();
                     _currentBuffer = _currentBuffer.Next;

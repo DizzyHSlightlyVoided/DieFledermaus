@@ -97,6 +97,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive does not contain any entries..
+        /// </summary>
+        internal static string ArchiveEmpty {
+            get {
+                return ResourceManager.GetString("ArchiveEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current archive entry has been deleted..
         /// </summary>
         internal static string ArchiveEntryDeleted {

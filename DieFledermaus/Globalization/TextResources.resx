@@ -294,4 +294,7 @@
   <data name="SaltLength" xml:space="preserve">
     <value>The specified salt must be the maximum length specified for the KeySize.</value>
   </data>
+  <data name="ArchiveEmpty" xml:space="preserve">
+    <value>The archive does not contain any entries.</value>
+  </data>
 </root>
