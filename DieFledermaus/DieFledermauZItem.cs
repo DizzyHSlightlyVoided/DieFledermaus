@@ -45,8 +45,8 @@ namespace DieFledermaus
         internal DieFledermauZItem(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
             _bufferStream = new MausBufferStream();
-            MausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
             _arch = archive;
+            MausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
         }
 
         internal DieFledermauZItem(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)

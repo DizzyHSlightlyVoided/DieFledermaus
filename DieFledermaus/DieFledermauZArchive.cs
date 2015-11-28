@@ -50,7 +50,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const ushort _versionShort = 10, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 20, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;
@@ -257,7 +257,8 @@ namespace DieFledermaus
                 if (_encFmt == MausEncryptionFormat.None)
                 {
                     ReadDecrypted(reader, ref curOffset);
-                    if ((curOffset + sizeof(long) + sizeof(long)) != totalSize)
+                    //Size of metaoffset
+                    if ((curOffset + sizeof(long)) != totalSize)
                         throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                     return;
@@ -273,7 +274,7 @@ namespace DieFledermaus
                 _salt = ReadBytes(reader, _keySizes.MaxSize >> 3);
                 _iv = ReadBytes(reader, DieFledermausStream._blockByteCtAes);
 
-                curOffset += (_keySizes.MaxSize >> 3) + _addSize - 12;
+                curOffset += _salt.Length + _addSize - 12;
             }
         }
 
@@ -310,6 +311,7 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 string path = DieFledermausStream.GetString(reader, ref curOffset);
+
                 curOffset += (sizeof(int) + sizeof(long));
 
                 entries[index] = LoadMausStream(reader.BaseStream, path, true, index, curBaseOffset, ref curOffset);
@@ -319,6 +321,7 @@ namespace DieFledermaus
             //All Offsets
             if (reader.ReadInt32() != _allOffsets)
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            //Size of head.
             curOffset += sizeof(int);
 
             HashSet<long> indices = new HashSet<long>();
@@ -327,7 +330,8 @@ namespace DieFledermaus
             {
                 if (reader.ReadInt32() != _curOffset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                const long offsetSize = 28;
+                //Size of curOffset + size of ID + size of offset
+                const long offsetSize = sizeof(int) + sizeof(long) + sizeof(long);
 
                 curOffset += offsetSize;
 
@@ -344,16 +348,9 @@ namespace DieFledermaus
                 if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                //TODO: Spanning
-                if (reader.ReadInt64() != 0)
-                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 if (reader.ReadInt64() != entries[index].Offset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
             }
-
-            //TODO: Spanning
-            if (reader.ReadInt64() != 0)
-                throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
             if (reader.ReadInt64() != metaOffset)
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
@@ -1424,11 +1421,9 @@ namespace DieFledermaus
                 writer.Write(i);
                 writer.Write((byte)pathBytes.Length);
                 writer.Write(pathBytes);
-                writer.Write(0L);
                 writer.Write(offsets[i]);
             }
 
-            writer.Write(0L);
             writer.Write(curOffset);
         }
 
