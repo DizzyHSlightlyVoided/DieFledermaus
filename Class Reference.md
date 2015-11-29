@@ -1954,7 +1954,7 @@ The current stream is disposed.
 [`DieFledermauZItem.Archive`](#property-diefledermausdiefledermauzarchive-archive--get-) is in read-only mode.
 
 ### Remarks
-Setting this property to `true` will set [`DieFledermauZItem.Key`](#property-systembyte-key--get-set--2) to a randomly-generated value. Subsequently setting this property to `true` will set [`DieFledermauZItem.Key`](#property-systembyte-key--get-set--2) to `null`, and the old key will not be remembered or saved.
+Setting this property to `true` will set [`DieFledermauZItem.Key`](#property-systembyte-key--get-set--2), [`DieFledermauZItem.IV`](#property-systembyte-iv--get-set--2), and [`DieFledermauZItem.Salt`](#property-systembyte-salt--get-set--2) to randomly-generated values. Subsequently setting this property to `false` will set these properties to `null`, and the old values will not be remembered or saved.
 
 --------------------------------------------------
 
@@ -2031,12 +2031,55 @@ Gets and sets the encryption key for the current instance, or `null` if the curr
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current instance has been deleted.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current instance is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
-In a set operation, the current instance is not encrypted.
+In a set operation, [`DieFledermauZItem.Archive`](#property-diefledermausdiefledermauzarchive-archive--get-) is in read-mode, and the current instance has already been successfully decoded.
+
+--------------------------------------------------
+
+## Property: `System.Byte[] IV { get; set; }`
+Gets and sets the initialization vector used for the current instance, or `null` if the current instance is not encrypted.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance has been deleted.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current instance is not encrypted.
 
 -OR-
 
-In a set operation, [`DieFledermauZItem.Archive`](#property-diefledermausdiefledermauzarchive-archive--get-) is in read-mode, and the current instance has already been successfully decoded.
+The current instance is in read-mode.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the specified value is the wrong length.
+
+--------------------------------------------------
+
+## Property: `System.Byte[] Salt { get; set; }`
+Gets and sets the salt used for the current instance, or `null` if the current instance is not encrypted.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance has been deleted.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current instance is not encrypted.
+
+-OR-
+
+The current instance is in read-mode.
+
+##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
+In a set operation, the specified value is `null`.
+
+##### [`ArgumentException`](https://msdn.microsoft.com/en-us/library/system.argumentexception.aspx)
+In a set operation, the specified value is the wrong length.
 
 --------------------------------------------------
 
@@ -2048,11 +2091,10 @@ Sets [`DieFledermauZItem.Key`](#property-systembyte-key--get-set--2) to a value 
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current instance has been deleted.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current instance is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
-The current instance is false.
-
--OR-
-
 In a set operation, [`DieFledermauZItem.Archive`](#property-diefledermausdiefledermauzarchive-archive--get-) is in read-mode, and the current instance has already been successfully decoded.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
@@ -2071,11 +2113,10 @@ Sets [`DieFledermauZItem.Key`](#property-systembyte-key--get-set--2) to a value 
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 In a set operation, the current instance has been deleted.
 
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+The current instance is not encrypted.
+
 ##### [`InvalidOperationException`](https://msdn.microsoft.com/en-us/library/system.invalidoperationexception.aspx)
-The current instance is false.
-
--OR-
-
 In a set operation, [`DieFledermauZItem.Archive`](#property-diefledermausdiefledermauzarchive-archive--get-) is in read-mode, and the current instance has already been successfully decoded.
 
 ##### [`ArgumentNullException`](https://msdn.microsoft.com/en-us/library/system.argumentnullexception.aspx)
