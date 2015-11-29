@@ -54,32 +54,32 @@ namespace DieFledermaus.Cli
             Console.WriteLine(TextResources.Disclaimer);
             Console.WriteLine();
 
-            ClParam help = new ClParam(TextResources.HelpMHelp, 'h', "help", TextResources.PNameHelp);
-            ClParam create = new ClParam(TextResources.HelpMCreate, 'c', "create", TextResources.PNameCreate);
-            ClParam extract = new ClParam(TextResources.HelpMExtract, 'x', "extract", TextResources.PNameExtract);
+            ClParamFlag help = new ClParamFlag(TextResources.HelpMHelp, 'h', "help", TextResources.PNameHelp);
+            ClParamFlag create = new ClParamFlag(TextResources.HelpMCreate, 'c', "create", TextResources.PNameCreate);
+            ClParamFlag extract = new ClParamFlag(TextResources.HelpMExtract, 'x', "extract", TextResources.PNameExtract);
             extract.MutualExclusives.Add(create);
             create.MutualExclusives.Add(extract);
 
-            ClParam interactive = new ClParam(TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
+            ClParamFlag interactive = new ClParamFlag(TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
 
-            ClParam overwrite = new ClParam(TextResources.HelpMOverwrite, 'w', "overWrite", TextResources.PNameOverwrite);
-            ClParam skipexist = new ClParam(TextResources.HelpMSkip, 's', "skip", "skip-existing",
+            ClParamFlag overwrite = new ClParamFlag(TextResources.HelpMOverwrite, 'w', "overWrite", TextResources.PNameOverwrite);
+            ClParamFlag skipexist = new ClParamFlag(TextResources.HelpMSkip, 's', "skip", "skip-existing",
                 TextResources.PNameSkip, TextResources.PNameSkipExisting);
             skipexist.MutualExclusives.Add(overwrite);
 
-            ClParam verbose = new ClParam(TextResources.HelpMVerbose, 'v', "verbose", TextResources.PNameVerbose);
+            ClParamFlag verbose = new ClParamFlag(TextResources.HelpMVerbose, 'v', "verbose", TextResources.PNameVerbose);
 
-            ClParam archiveFile = new ClParam(TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
+            ClParamValue archiveFile = new ClParamValue(TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
                 TextResources.PNameFile, TextResources.PNameArchive);
             archiveFile.ConvertValue = Path.GetFullPath;
 
-            ClParam entryFile = new ClParam(TextResources.HelpMEntry, TextResources.HelpInput, 'e', "entry", "input",
+            ClParamValue entryFile = new ClParamValue(TextResources.HelpMEntry, TextResources.HelpInput, 'e', "entry", "input",
                 TextResources.PNameEntry, TextResources.PNameInput);
             entryFile.ConvertValue = Path.GetFullPath;
             entryFile.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(entryFile, NoEntryExtract);
 
-            ClParam outFile = new ClParam(TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
+            ClParamValue outFile = new ClParamValue(TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
                 TextResources.PNameOut, TextResources.PNameOutput);
             outFile.ConvertValue = Path.GetFullPath;
             outFile.MutualExclusives.Add(create);
@@ -104,13 +104,13 @@ namespace DieFledermaus.Cli
                 return false;
             };
 
-            ClParam encAes = new ClParam(TextResources.HelpMAes, '\0', "AES");
+            ClParamFlag encAes = new ClParamFlag(TextResources.HelpMAes, '\0', "AES");
             encAes.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(encAes, NoEntryExtract);
 
-            ClParam encKeyFile = new ClParam(TextResources.HelpMKeyFile, TextResources.HelpInput, '\0', "keyfile", TextResources.PNameKeyFile);
+            ClParamValue encKeyFile = new ClParamValue(TextResources.HelpMKeyFile, TextResources.HelpInput, '\0', "keyfile", TextResources.PNameKeyFile);
 
-            ClParam encSaveKey = new ClParam(TextResources.HelpMSaveKey, TextResources.HelpOutput, '\0', "savekey", TextResources.PNameSaveKey);
+            ClParamValue encSaveKey = new ClParamValue(TextResources.HelpMSaveKey, TextResources.HelpOutput, '\0', "savekey", TextResources.PNameSaveKey);
             encSaveKey.MutualExclusives.Add(extract);
             encSaveKey.MutualExclusives.Add(encKeyFile);
             extract.OtherMessages.Add(encSaveKey, NoEntryExtract);
@@ -545,9 +545,10 @@ namespace DieFledermaus.Cli
 
                     IEnumerable<string> paramList;
 
-                    if (curParam.TakesValue)
+                    ClParamValue cParamValue = curParam as ClParamValue;
+                    if (cParamValue != null)
                     {
-                        paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", curParam.ArgName, ">") }.
+                        paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", cParamValue.ArgName, ">") }.
                             Concat(new ArraySegment<string>(curParam.LongNames, 1, curParam.LongNames.Length - 1));
                     }
                     else paramList = curParam.LongNames;
@@ -557,8 +558,8 @@ namespace DieFledermaus.Cli
                     {
                         string shortName = "-" + curParam.ShortName;
 
-                        if (curParam.TakesValue)
-                            shortName += " <" + curParam.ArgName + ">";
+                        if (cParamValue != null)
+                            shortName += " <" + cParamValue.ArgName + ">";
 
                         paramList = new string[] { shortName }.Concat(paramList);
                     }
@@ -603,7 +604,7 @@ namespace DieFledermaus.Cli
         }
 #endif
 
-        private static bool EncryptionPrompt(DieFledermausStream ds, MausEncryptionFormat encFormat, ClParam encSaveKey, out byte[] key, out SecureString ss)
+        private static bool EncryptionPrompt(DieFledermausStream ds, MausEncryptionFormat encFormat, ClParamValue encSaveKey, out byte[] key, out SecureString ss)
         {
             bool notFound1 = true;
             ss = null;

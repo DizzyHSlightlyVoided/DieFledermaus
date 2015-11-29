@@ -303,29 +303,24 @@ namespace DieFledermaus.Cli
         }
     }
 
-    internal class ClParam
+    internal abstract class ClParam
     {
-        public ClParam(string helpMessage, char shortName, params string[] longNames)
+        protected ClParam(string helpMessage, char shortName, params string[] longNames)
         {
             ShortName = shortName;
             LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             HelpMessage = helpMessage;
         }
 
-        public ClParam(string helpMessage, string argName, char shortName, params string[] longNames)
-            : this(helpMessage, shortName, longNames)
-        {
-            TakesValue = true;
-            ArgName = argName;
-        }
-
-        public readonly string HelpMessage, ArgName;
+        public readonly string HelpMessage;
 
         public readonly char ShortName;
 
         public readonly string[] LongNames;
 
-        public readonly bool TakesValue;
+        public abstract bool TakesValue { get; }
+
+        public abstract bool SetValue(string value);
 
         private bool _isSet;
         public bool IsSet
@@ -344,8 +339,6 @@ namespace DieFledermaus.Cli
 
         public event EventHandler SetChanged;
 
-        public Func<string, string> ConvertValue;
-
         public Func<ClParser, bool> SetAction;
 
         private string _key;
@@ -359,43 +352,12 @@ namespace DieFledermaus.Cli
             }
         }
 
-        public string Value;
-
-        public virtual bool SetValue(string value)
-        {
-            if (!TakesValue && value != null)
-            {
-                Console.Error.WriteLine(TextResources.ParamNoArg, _key);
-                return false;
-            }
-
-            if (ConvertValue != null && value != null)
-                value = ConvertValue(value);
-
-            if (Value != null && value != null && !value.Equals(Value, StringComparison.Ordinal))
-            {
-                if (_key.Length == 0)
-                    Console.Error.WriteLine(TextResources.ParamDupLit, value);
-                else
-                    Console.Error.WriteLine(TextResources.ParamDup, _key, value);
-                return true;
-            }
-
-            Value = value;
-            return false;
-        }
-
         public HashSet<ClParam> MutualExclusives = new HashSet<ClParam>();
 
         public Dictionary<ClParam, Func<ClParam, string>> OtherMessages = new Dictionary<ClParam, Func<ClParam, string>>();
 
         public override string ToString()
         {
-            if (Value != null)
-                return _key + "=" + Value;
-            else if (_isSet)
-                return _key;
-
             if (ShortName == '\0')
             {
                 if (LongNames.Length == 0)
@@ -407,6 +369,73 @@ namespace DieFledermaus.Cli
             if (LongNames.Length == 0) return shortName;
 
             return shortName + ", --" + LongNames[0];
+        }
+    }
+
+    internal class ClParamValue : ClParam
+    {
+        public ClParamValue(string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(helpMessage, shortName, longNames)
+        {
+            ArgName = argName;
+        }
+
+        public readonly string ArgName;
+
+        public override bool TakesValue
+        {
+            get { return true; }
+        }
+
+        public string Value;
+
+        public Func<string, string> ConvertValue;
+
+        public override bool SetValue(string value)
+        {
+            if (Value != null && value != null && !value.Equals(Value, StringComparison.Ordinal))
+            {
+                if (Key.Length == 0)
+                    Console.Error.WriteLine(TextResources.ParamDupLit, value);
+                else
+                    Console.Error.WriteLine(TextResources.ParamDup, Key, value);
+                return true;
+            }
+
+            Value = value;
+            return false;
+        }
+
+        public override string ToString()
+        {
+            if (IsSet)
+            {
+                if (Value != null && Value.Length != 0)
+                    return Key + "=" + string.Join(",", Value);
+                else if (IsSet)
+                    return Key;
+            }
+
+            return base.ToString();
+        }
+    }
+
+    internal class ClParamFlag : ClParam
+    {
+        public ClParamFlag(string helpMessage, char shortName, params string[] longNames)
+            : base(helpMessage, shortName, longNames)
+        {
+        }
+
+        public override bool TakesValue
+        {
+            get { return false; }
+        }
+
+        public override bool SetValue(string value)
+        {
+            Console.Error.WriteLine(TextResources.ParamNoArg, Key);
+            return false;
         }
     }
 }
