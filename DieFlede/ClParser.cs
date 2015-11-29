@@ -393,6 +393,9 @@ namespace DieFledermaus.Cli
 
         public override bool SetValue(string value)
         {
+            if (ConvertValue != null && value != null)
+                value = ConvertValue(value);
+
             if (Value != null && value != null && !value.Equals(Value, StringComparison.Ordinal))
             {
                 if (Key.Length == 0)
