@@ -36,6 +36,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
@@ -1218,10 +1219,36 @@ namespace DieFledermaus
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-            return SetPassword(_textEncoding.GetBytes(password), _salt, _pkCount, keyByteSize);
+            byte[] bytes = null;
+            GCHandle hStrBytes = default(GCHandle);
+
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                bytes = new byte[_textEncoding.GetByteCount(password)];
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try { }
+                finally
+                {
+                    hStrBytes = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+                }
+
+                _textEncoding.GetBytes(password, 0, password.Length, bytes, 0);
+
+                return SetPassword(ref bytes, _salt, _pkCount, keyByteSize);
+            }
+            finally
+            {
+                if (bytes != null)
+                    Array.Clear(bytes, 0, bytes.Length);
+
+                if (hStrBytes.IsAllocated)
+                    hStrBytes.Free();
+            }
         }
 
-        private static byte[] SetPassword(byte[] data, byte[] _salt, int _pkCount, int keyLength)
+        private static byte[] SetPassword(ref byte[] data, byte[] _salt, int _pkCount, int keyLength)
         {
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
@@ -1240,6 +1267,7 @@ namespace DieFledermaus
             finally
             {
                 Array.Clear(data, 0, data.Length);
+                data = null;
             }
         }
 
@@ -1309,18 +1337,62 @@ namespace DieFledermaus
             char[] data = new char[password.Length];
             IntPtr pData = IntPtr.Zero;
             byte[] bytes = null;
+            GCHandle hData = default(GCHandle), hBytes = default(GCHandle);
+            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                pData = Marshal.SecureStringToGlobalAllocUnicode(password);
-                Marshal.Copy(pData, data, 0, data.Length);
-                bytes = _textEncoding.GetBytes(data);
-                return SetPassword(bytes, salt, pkCount, keyByteSize);
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try { }
+                finally
+                {
+                    hData = GCHandle.Alloc(data, GCHandleType.Pinned);
+                }
+
+                try
+                {
+                    pData = Marshal.SecureStringToBSTR(password);
+                    Marshal.Copy(pData, data, 0, data.Length);
+                }
+                finally
+                {
+                    Marshal.ZeroFreeBSTR(pData);
+                    pData = IntPtr.Zero;
+                }
+
+                bytes = new byte[_textEncoding.GetByteCount(data)];
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try { }
+                finally
+                {
+                    hBytes = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+                }
+
+                try
+                {
+                    _textEncoding.GetBytes(data, 0, data.Length, bytes, 0);
+                }
+                finally
+                {
+                    Array.Clear(data, 0, data.Length);
+                    hData.Free();
+                    data = null;
+                }
+
+                return SetPassword(ref bytes, salt, pkCount, keyByteSize);
             }
             finally
             {
+                if (data != null)
+                    Array.Clear(data, 0, data.Length);
+                if (hData.IsAllocated)
+                    hData.Free();
+                if (bytes != null)
+                    Array.Clear(bytes, 0, bytes.Length);
+                if (hBytes.IsAllocated)
+                    hBytes.Free();
                 if (pData != IntPtr.Zero)
-                    Marshal.FreeHGlobal(pData);
-                Array.Clear(data, 0, data.Length);
+                    Marshal.ZeroFreeBSTR(pData);
             }
         }
 
