@@ -1391,7 +1391,6 @@ namespace DieFledermaus
             for (long i = 0; i < entries.LongLength; i++)
             {
                 var curStream = entryStreams[i];
-                var curEntry = entries[i];
                 offsets[i] = curOffset;
                 writer.Write(_curEntry);
                 writer.Write(i);

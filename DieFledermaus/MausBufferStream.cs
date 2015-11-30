@@ -189,7 +189,7 @@ namespace DieFledermaus
             {
                 if (qbs._currentBuffer == qbs._firstBuffer && qbs._firstBuffer.End == 0)
                 {
-                    qbs._firstBuffer = qbs._firstBuffer = _firstBuffer;
+                    qbs._firstBuffer = _firstBuffer;
                     qbs._length = _length;
                 }
                 else
