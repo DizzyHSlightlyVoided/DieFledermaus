@@ -283,7 +283,7 @@
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="HelpMInteractive" xml:space="preserve">
-    <value>Run in interactive mode, ask for user input.</value>
+    <value>Run in interactive mode, ask for user input when needed.</value>
     <comment>Help description.</comment>
   </data>
   <data name="HelpMOverwrite" xml:space="preserve">
@@ -339,54 +339,15 @@
   <data name="EncryptedPrompt3KeyB64" xml:space="preserve">
     <value>Enter encryption key (base64)</value>
   </data>
-  <data name="EncryptedPrompt4KeyFile" xml:space="preserve">
-    <value>Enter path to a key file</value>
-  </data>
-  <data name="EncryptionNoEncryption" xml:space="preserve">
-    <value>Encryption options are specified, but no encryption is set.</value>
-  </data>
-  <data name="EncryptionNoOpts" xml:space="preserve">
-    <value>Encryption is specified, but no encryption options are set.</value>
-  </data>
-  <data name="EncryptionNoOptsExtract" xml:space="preserve">
-    <value>The file is encrypted, but no options are set.</value>
-  </data>
-  <data name="EncryptionSaved" xml:space="preserve">
-    <value>Saved key to: {0}</value>
-    <comment>{0} = file path.</comment>
-  </data>
   <data name="HelpMAes" xml:space="preserve">
     <value>Encrypt using AES encryption.</value>
     <comment>Help description.</comment>
-  </data>
-  <data name="HelpMKeyFile" xml:space="preserve">
-    <value>The path to a file containing the encryption key.</value>
-    <comment>Help description.</comment>
-  </data>
-  <data name="HelpMSaveKey" xml:space="preserve">
-    <value>The path to a file to which the encryption key will be saved.</value>
-    <comment>Help description.</comment>
-  </data>
-  <data name="PNameBase64Key" xml:space="preserve">
-    <value>base64key</value>
-    <comment>Localized parameter name, keep this unique (unless only one order for "base64key/keybase64" makes sense)</comment>
-  </data>
-  <data name="PNameKeyFile" xml:space="preserve">
-    <value>keyfile</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
-  <data name="PNameSaveKey" xml:space="preserve">
-    <value>savekey</value>
-    <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="EncryptedBadKey" xml:space="preserve">
     <value>The key or password is incorrect!</value>
   </data>
   <data name="EncryptInvalidBase64" xml:space="preserve">
     <value>The specified key is not a valid Base64 value.</value>
-  </data>
-  <data name="EncryptInvalidFileLength" xml:space="preserve">
-    <value>The number of bytes in the specified file is invalid.</value>
   </data>
   <data name="EncryptInvalidHex" xml:space="preserve">
     <value>The specified key is not a valid hexadecimal value.</value>
@@ -398,11 +359,8 @@
     <value>Keep it secret. Keep it safe.</value>
     <comment>A quote from Gandalf in "Lord of the Rings."</comment>
   </data>
-  <data name="EncryptionNoOpts2" xml:space="preserve">
-    <value>You must set a key file or run in interactive mode.</value>
-  </data>
-  <data name="EncryptionNot" xml:space="preserve">
-    <value>File is not encrypted. Skipping options.</value>
+  <data name="EncryptionNoOpts" xml:space="preserve">
+    <value>Encryption can only be used in interactive mode.</value>
   </data>
   <data name="EncryptKeyLength" xml:space="preserve">
     <value>Key size must be equal to {0} bits ({1} bytes).</value>
@@ -411,26 +369,12 @@
   <data name="OverRename" xml:space="preserve">
     <value>rename</value>
   </data>
-  <data name="OverwriteEncryptSameArchive" xml:space="preserve">
-    <value>Key output file is the same as the archive file! {0}</value>
-    <comment>{0} = filename</comment>
-  </data>
-  <data name="OverwriteEncryptSameEntry" xml:space="preserve">
-    <value>Key output file is the same as the entry file! {0}</value>
-    <comment>{0} = filename</comment>
-  </data>
   <data name="OverwriteRename" xml:space="preserve">
     <value>Renaming to {0}</value>
     <comment>{0} = filename</comment>
   </data>
   <data name="Completed" xml:space="preserve">
     <value>All operations completed successfully.</value>
-  </data>
-  <data name="EncryptedPrompt5SaveKey" xml:space="preserve">
-    <value>Generate random, save to file</value>
-  </data>
-  <data name="EncryptionSave" xml:space="preserve">
-    <value>Enter filename</value>
   </data>
   <data name="PasswordZeroLength" xml:space="preserve">
     <value>The password must have at least one character.</value>
@@ -446,5 +390,11 @@
   </data>
   <data name="TimeMSet" xml:space="preserve">
     <value>Unable to set file's last modified time.</value>
+  </data>
+  <data name="EncryptedEx" xml:space="preserve">
+    <value>The archive is encrypted.</value>
+  </data>
+  <data name="EncryptionNoOptsEx" xml:space="preserve">
+    <value>An archive can only be decrypted in interactive mode.</value>
   </data>
 </root>

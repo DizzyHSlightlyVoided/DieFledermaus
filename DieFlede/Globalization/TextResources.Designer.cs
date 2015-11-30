@@ -115,6 +115,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive is encrypted..
+        /// </summary>
+        internal static string EncryptedEx {
+            get {
+                return ResourceManager.GetString("EncryptedEx", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter password.
         /// </summary>
         internal static string EncryptedPrompt1Pwd {
@@ -142,38 +151,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter path to a key file.
-        /// </summary>
-        internal static string EncryptedPrompt4KeyFile {
-            get {
-                return ResourceManager.GetString("EncryptedPrompt4KeyFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Generate random, save to file.
-        /// </summary>
-        internal static string EncryptedPrompt5SaveKey {
-            get {
-                return ResourceManager.GetString("EncryptedPrompt5SaveKey", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified key is not a valid Base64 value..
         /// </summary>
         internal static string EncryptInvalidBase64 {
             get {
                 return ResourceManager.GetString("EncryptInvalidBase64", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The number of bytes in the specified file is invalid..
-        /// </summary>
-        internal static string EncryptInvalidFileLength {
-            get {
-                return ResourceManager.GetString("EncryptInvalidFileLength", resourceCulture);
             }
         }
         
@@ -196,16 +178,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Encryption options are specified, but no encryption is set..
-        /// </summary>
-        internal static string EncryptionNoEncryption {
-            get {
-                return ResourceManager.GetString("EncryptionNoEncryption", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Encryption is specified, but no encryption options are set..
+        ///   Looks up a localized string similar to Encryption can only be used in interactive mode..
         /// </summary>
         internal static string EncryptionNoOpts {
             get {
@@ -214,47 +187,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You must set a key file or run in interactive mode..
+        ///   Looks up a localized string similar to An archive can only be decrypted in interactive mode..
         /// </summary>
-        internal static string EncryptionNoOpts2 {
+        internal static string EncryptionNoOptsEx {
             get {
-                return ResourceManager.GetString("EncryptionNoOpts2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The file is encrypted, but no options are set..
-        /// </summary>
-        internal static string EncryptionNoOptsExtract {
-            get {
-                return ResourceManager.GetString("EncryptionNoOptsExtract", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to File is not encrypted. Skipping options..
-        /// </summary>
-        internal static string EncryptionNot {
-            get {
-                return ResourceManager.GetString("EncryptionNot", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enter filename.
-        /// </summary>
-        internal static string EncryptionSave {
-            get {
-                return ResourceManager.GetString("EncryptionSave", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Saved key to: {0}.
-        /// </summary>
-        internal static string EncryptionSaved {
-            get {
-                return ResourceManager.GetString("EncryptionSaved", resourceCulture);
+                return ResourceManager.GetString("EncryptionNoOptsEx", resourceCulture);
             }
         }
         
@@ -385,20 +322,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Run in interactive mode, ask for user input..
+        ///   Looks up a localized string similar to Run in interactive mode, ask for user input when needed..
         /// </summary>
         internal static string HelpMInteractive {
             get {
                 return ResourceManager.GetString("HelpMInteractive", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The path to a file containing the encryption key..
-        /// </summary>
-        internal static string HelpMKeyFile {
-            get {
-                return ResourceManager.GetString("HelpMKeyFile", resourceCulture);
             }
         }
         
@@ -417,15 +345,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpMOverwrite {
             get {
                 return ResourceManager.GetString("HelpMOverwrite", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The path to a file to which the encryption key will be saved..
-        /// </summary>
-        internal static string HelpMSaveKey {
-            get {
-                return ResourceManager.GetString("HelpMSaveKey", resourceCulture);
             }
         }
         
@@ -525,24 +444,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string OverwriteAlert {
             get {
                 return ResourceManager.GetString("OverwriteAlert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Key output file is the same as the archive file! {0}.
-        /// </summary>
-        internal static string OverwriteEncryptSameArchive {
-            get {
-                return ResourceManager.GetString("OverwriteEncryptSameArchive", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Key output file is the same as the entry file! {0}.
-        /// </summary>
-        internal static string OverwriteEncryptSameEntry {
-            get {
-                return ResourceManager.GetString("OverwriteEncryptSameEntry", resourceCulture);
             }
         }
         
@@ -682,15 +583,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to base64key.
-        /// </summary>
-        internal static string PNameBase64Key {
-            get {
-                return ResourceManager.GetString("PNameBase64Key", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to create.
         /// </summary>
         internal static string PNameCreate {
@@ -754,15 +646,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to keyfile.
-        /// </summary>
-        internal static string PNameKeyFile {
-            get {
-                return ResourceManager.GetString("PNameKeyFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to out.
         /// </summary>
         internal static string PNameOut {
@@ -786,15 +669,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameOverwrite {
             get {
                 return ResourceManager.GetString("PNameOverwrite", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to savekey.
-        /// </summary>
-        internal static string PNameSaveKey {
-            get {
-                return ResourceManager.GetString("PNameSaveKey", resourceCulture);
             }
         }
         
