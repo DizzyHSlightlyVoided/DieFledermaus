@@ -46,6 +46,11 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a DieFledermauZ archive file.
     /// </summary>
+    /// <remarks>
+    /// If this class attempts to load a stream containing a valid <see cref="DieFledermausStream"/>, it will interpret the stream as an archive containing 
+    /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <c>null</c> path if the DieFledermaus stream does not have
+    /// a filename set.
+    /// </remarks>
     public class DieFledermauZArchive : IDisposable
     {
         private const int _mHead = 0x5a75416d;
@@ -84,10 +89,11 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         /// <exception cref="InvalidDataException">
-        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and the stream does not contain a valid DieFledermauZ archive.
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/> does not contain either a valid DieFledermauZ archive
+        /// or a valid <see cref="DieFledermausStream"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and the stream contains unsupported options.
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/> contains unsupported options.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
@@ -137,10 +143,11 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         /// <exception cref="InvalidDataException">
-        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/>  does not contain a valid DieFledermauZ archive.
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/> does not contain either a valid DieFledermauZ archive
+        /// or a valid <see cref="DieFledermausStream"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/>  contains unsupported options.
+        /// <paramref name="mode"/> is <see cref="MauZArchiveMode.Read"/>, and <paramref name="stream"/> contains unsupported options.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
@@ -166,12 +173,6 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <exception cref="InvalidDataException">
-        /// <paramref name="stream"/> does not contain a valid DieFledermauZ archive.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <paramref name="stream"/> contains unsupported options.
-        /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
@@ -194,12 +195,6 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
-        /// </exception>
-        /// <exception cref="InvalidDataException">
-        /// <paramref name="stream"/> does not contain a valid DieFledermauZ archive.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <paramref name="stream"/> contains unsupported options.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.

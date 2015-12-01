@@ -1145,6 +1145,9 @@ The maximum value, equal to [`LzmaDictionarySize.Size64m`](#lzmadictionarysizesi
 # Type: `public class DieFledermaus.DieFledermauZArchive`
 Represents a DieFledermauZ archive file.
 
+### Remarks
+If this class attempts to load a stream containing a valid [`DieFledermausStream`](#type-public-class-diefledermausdiefledermausstream), it will interpret the stream as an archive containing a single entry with the path set to the [`DieFledermausStream.Filename`](#property-systemstring-filename--get-set-), or a `null` path if the DieFledermaus stream does not have a filename set.
+
 --------------------------------------------------
 
 ## Property: `System.IO.Stream BaseStream { get; }`
@@ -1173,10 +1176,10 @@ Creates a new instance using the specified options.
 `stream` is closed.
 
 ##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
-`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and the stream does not contain a valid DieFledermauZ archive.
+`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and `stream` does not contain either a valid DieFledermauZ archive or a valid [`DieFledermausStream`](#type-public-class-diefledermausdiefledermausstream).
 
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and the stream contains unsupported options.
+`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and `stream` contains unsupported options.
 
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
@@ -1203,7 +1206,7 @@ Creates a new instance using the specified options.
 `stream` is closed.
 
 ##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
-`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and `stream` does not contain a valid DieFledermauZ archive.
+`mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and `stream` does not contain either a valid DieFledermauZ archive or a valid [`DieFledermausStream`](#type-public-class-diefledermausdiefledermausstream).
 
 ##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
 `mode` is [`MauZArchiveMode.Read`](#mauzarchivemoderead--1), and `stream` contains unsupported options.
@@ -1229,12 +1232,6 @@ Creates a new instance in create-mode using the specified encryption format.
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 `stream` is closed.
 
-##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
-`stream` does not contain a valid DieFledermauZ archive.
-
-##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-`stream` contains unsupported options.
-
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
 
@@ -1254,12 +1251,6 @@ Creates a new instance in create-mode using the specified encryption format.
 
 ##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
 `stream` is closed.
-
-##### [`InvalidDataException`](https://msdn.microsoft.com/en-us/library/system.io.invaliddataexception.aspx)
-`stream` does not contain a valid DieFledermauZ archive.
-
-##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
-`stream` contains unsupported options.
 
 ##### [`IOException`](https://msdn.microsoft.com/en-us/library/system.io.ioexception.aspx)
 An I/O error occurred.
