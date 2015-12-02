@@ -66,6 +66,41 @@ namespace DieFledermaus
         /// </summary>
         public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
 
+        /// <summary>
+        /// Gets and sets the time at which the underlying file was created, or <c>null</c> to specify no creation time.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        public DateTime? CreatedTime
+        {
+            get { return MausStream.CreatedTime; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CreatedTime = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets the time at which the underlying file was last modified, or <c>null</c> to specify no modification time.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        public DateTime? ModifiedTime
+        {
+            get { return MausStream.ModifiedTime; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.ModifiedTime = value;
+            }
+        }
+
         private MausBufferStream _writingStream;
 
         /// <summary>

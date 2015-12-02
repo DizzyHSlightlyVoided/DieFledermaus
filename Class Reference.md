@@ -1874,6 +1874,27 @@ Gets a collection containing options which should be encrypted, or `null` if the
 
 --------------------------------------------------
 
+## Property: `System.Nullable<T> CreatedTime { get; set; }`
+Gets and sets the time at which the underlying file was created, or `null` to specify no creation time.
+
+### Exceptions
+##### [`ObjectDisposedException`](https://msdn.microsoft.com/en-us/library/system.objectdisposedexception.aspx)
+In a set operation, the current instance has been deleted.
+
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current instance is in read-only mode.
+
+--------------------------------------------------
+
+## Property: `System.Nullable<T> ModifiedTime { get; set; }`
+Gets and sets the time at which the underlying file was last modified, or `null` to specify no modification time.
+
+### Exceptions
+##### [`NotSupportedException`](https://msdn.microsoft.com/en-us/library/system.notsupportedexception.aspx)
+In a set operation, the current instance is in read-only mode.
+
+--------------------------------------------------
+
 ## Method: `public System.IO.Stream OpenWrite()`
 Opens the archive entry for writing.
 
