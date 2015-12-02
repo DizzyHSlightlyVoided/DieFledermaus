@@ -90,24 +90,31 @@ namespace DieFledermaus.Tests
         {
             const string passwd = "Correct Horse!Battery#Staple69105";
 
-            Stopwatch sw = Stopwatch.StartNew();
-            using (SecureString passwdSS = new SecureString())
+            Stopwatch sw;
+            if (item.Archive.Mode == MauZArchiveMode.Create)
             {
-                foreach (char c in passwd)
-                    passwdSS.AppendChar(c);
-                passwdSS.MakeReadOnly();
-                item.SetPassword(passwdSS);
+                using (SecureString passwdSS = new SecureString())
+                {
+                    foreach (char c in passwd)
+                        passwdSS.AppendChar(c);
+                    passwdSS.MakeReadOnly();
+
+                    sw = Stopwatch.StartNew();
+                    item.SetPassword(passwdSS);
+                    sw.Stop();
+                }
             }
-            sw.Stop();
-            DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
-
-            if (entry != null)
+            else
             {
-
-                if (entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
-                    entry.EncryptedOptions.AddAll();
+                sw = Stopwatch.StartNew();
+                item.SetPassword(passwd);
+                sw.Stop();
             }
             Console.WriteLine(" (Time to set password: {0}ms)", sw.Elapsed.TotalMilliseconds);
+
+            DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
+            if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
+                entry.EncryptedOptions.AddAll();
         }
     }
 }
