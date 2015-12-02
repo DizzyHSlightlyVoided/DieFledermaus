@@ -62,7 +62,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
+    <Compile Include="IMausCrypt.cs" />
     <Compile Include="MausBufferStream.cs" />
+    <Compile Include="MausSettableOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

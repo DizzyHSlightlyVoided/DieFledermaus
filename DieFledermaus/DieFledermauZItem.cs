@@ -40,7 +40,7 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a single entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
-    public abstract class DieFledermauZItem
+    public abstract class DieFledermauZItem : IMausCrypt
     {
         internal DieFledermauZItem(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
         {
@@ -62,7 +62,8 @@ namespace DieFledermaus
 
         internal long HeadLength { get { return MausStream.HeadLength; } }
 
-        internal object _lock = new object();
+        internal readonly object _lock = new object();
+        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private DieFledermauZArchive _arch;
         /// <summary>
@@ -222,6 +223,12 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// for <see cref="EncryptionFormat"/>, or <c>null</c> if the current entry is not encrypted.
+        /// </summary>
+        public KeySizes KeySizes { get { return MausStream.KeySizes; } }
+
+        /// <summary>
         /// Sets <see cref="Key"/> to a value derived from the specified password.
         /// </summary>
         /// <param name="password">The password to set.</param>
@@ -247,6 +254,35 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password using the specified key length.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <param name="keyByteSize">The length to set <see cref="Key"/>, in bytes.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(string password, int keyByteSize)
+        {
+            _ensureCanSetKey();
+            MausStream.SetPassword(password, keyByteSize);
+        }
+
+        /// <summary>
         /// Sets <see cref="Key"/> to a value derived from the specified password.
         /// </summary>
         /// <param name="password">The password to set.</param>
@@ -269,6 +305,35 @@ namespace DieFledermaus
         {
             _ensureCanSetKey();
             MausStream.SetPassword(password);
+        }
+
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from the specified password using the specified key length.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <param name="keyByteSize">The length to set <see cref="Key"/>, in bytes.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decoded.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="password"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="password"/> has a length of 0.
+        /// </exception>
+        public void SetPassword(SecureString password, int keyByteSize)
+        {
+            _ensureCanSetKey();
+            MausStream.SetPassword(password, keyByteSize);
         }
 
         private void _ensureCanSetKey()

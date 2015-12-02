@@ -133,11 +133,8 @@ namespace DieFledermaus
 
         internal override MausBufferStream GetWritten()
         {
-            lock (_lock)
-            {
-                MausStream.WriteByte((byte)'/');
-                return base.GetWritten();
-            }
+            MausStream.WriteByte((byte)'/');
+            return base.GetWritten();
         }
     }
 }

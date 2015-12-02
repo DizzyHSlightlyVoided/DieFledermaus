@@ -51,7 +51,7 @@ namespace DieFledermaus
     /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <c>null</c> path if the DieFledermaus stream does not have
     /// a filename set.
     /// </remarks>
-    public class DieFledermauZArchive : IDisposable
+    public class DieFledermauZArchive : IDisposable, IMausCrypt
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
@@ -63,6 +63,10 @@ namespace DieFledermaus
         /// Gets the underlying stream used by the current instance.
         /// </summary>
         public Stream BaseStream { get { return _baseStream; } }
+
+        [NonSerialized]
+        internal readonly object _lock = new object();
+        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private bool _headerGotten;
         internal readonly long StreamOffset;

@@ -29,10 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -56,7 +54,7 @@ namespace DieFledermaus
     /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
     /// to <see cref="Read(byte[], int, int)"/>.
     /// </remarks>
-    public partial class DieFledermausStream : Stream
+    public partial class DieFledermausStream : Stream, IMausCrypt
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
@@ -714,7 +712,7 @@ namespace DieFledermaus
         private KeySizes _keySizes;
         /// <summary>
         /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
-        /// for the current encryption, or <c>null</c> if the current stream is not encrypted.
+        /// for <see cref="EncryptionFormat"/>, or <c>null</c> if the current stream is not encrypted.
         /// </summary>
         public KeySizes KeySizes { get { return _keySizes; } }
 
@@ -2025,6 +2023,8 @@ namespace DieFledermaus
         }
 
         private object _lock = new object();
+        internal object SyncRoot { get { return _lock; } }
+        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private void _ensureCanRead()
         {
@@ -2445,29 +2445,18 @@ namespace DieFledermaus
         /// <summary>
         /// Represents a collection of <see cref="MausOptionToEncrypt"/> options.
         /// </summary>
-        [DebuggerTypeProxy(typeof(DebugView))]
-        [DebuggerDisplay(CollectionDebuggerDisplay)]
-        public sealed class SettableOptions : ICollection<MausOptionToEncrypt>, ICollection
-#if IREADONLY
-            , IReadOnlyCollection<MausOptionToEncrypt>
-#endif
+        public sealed class SettableOptions : MausSettableOptions<MausOptionToEncrypt>
         {
-            private static readonly HashSet<MausOptionToEncrypt> _allVals = new HashSet<MausOptionToEncrypt>(Enum.GetValues(typeof(MausOptionToEncrypt))
-                .OfType<MausOptionToEncrypt>());
+            private static readonly HashSet<MausOptionToEncrypt> _allVals =
+                new HashSet<MausOptionToEncrypt>((MausOptionToEncrypt[])Enum.GetValues(typeof(MausOptionToEncrypt)));
 
-            private HashSet<MausOptionToEncrypt> _set;
             private DieFledermausStream _stream;
 
             internal SettableOptions(DieFledermausStream stream)
+                : base(stream)
             {
                 _stream = stream;
-                _set = new HashSet<MausOptionToEncrypt>();
             }
-
-            /// <summary>
-            /// Gets the number of elements contained in the collection.
-            /// </summary>
-            public int Count { get { return _set.Count; } }
 
             /// <summary>
             /// Gets a value indicating whether the current instance is read-only.
@@ -2477,7 +2466,7 @@ namespace DieFledermaus
             /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
             /// however, it may still be changed by the base stream.
             /// </remarks>
-            public bool IsReadOnly
+            public override bool IsReadOnly
             {
                 get { return _stream._baseStream == null || _stream._mode == CompressionMode.Decompress; }
             }
@@ -2487,271 +2476,30 @@ namespace DieFledermaus
             /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
             /// <c>false</c> otherwise.
             /// </summary>
-            private bool IsFrozen
+            public override bool IsFrozen
             {
                 get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && _stream._headerGotten); }
             }
-            bool ICollection.IsSynchronized { get { return IsFrozen; } }
 
             /// <summary>
-            /// Adds the specified value to the collection.
+            /// Indicates whether the specified value is valid.
             /// </summary>
-            /// <param name="option">The option to add.</param>
-            /// <returns><c>true</c> if <paramref name="option"/> was successfully added; <c>false</c> if <paramref name="option"/>
-            /// already exists in the collection, or is not a valid <see cref="MausOptionToEncrypt"/> value.</returns>
-            /// <exception cref="NotSupportedException">
-            /// <see cref="IsReadOnly"/> is <c>true</c>.
-            /// </exception>
-            public bool Add(MausOptionToEncrypt option)
+            /// <param name="value">The value to test.</param>
+            /// <returns><c>true</c> if <paramref name="value"/> is a valid value for type <see cref="MausOptionToEncrypt"/>; <c>false</c> otherwise.</returns>
+            protected override bool IsValid(MausOptionToEncrypt value)
             {
-                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-                return _set.Add(option);
-            }
-
-            internal bool InternalAdd(MausOptionToEncrypt option)
-            {
-                return _set.Add(option);
-            }
-
-            void ICollection<MausOptionToEncrypt>.Add(MausOptionToEncrypt item)
-            {
-                Add(item);
+                return _allVals.Contains(value);
             }
 
             /// <summary>
-            /// Removes the specified value from the collection.
-            /// </summary>
-            /// <param name="option">The option to remove.</param>
-            /// <returns><c>true</c> if <paramref name="option"/> was found and successfully removed; <c>false</c> otherwise.</returns>
-            /// <exception cref="NotSupportedException">
-            /// <see cref="IsReadOnly"/> is <c>true</c>.
-            /// </exception>
-            public bool Remove(MausOptionToEncrypt option)
-            {
-                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-                return _set.Remove(option);
-            }
-
-            /// <summary>
-            /// Adds all elements in the specified collection to the current instance (excluding duplicates and values already in the current collection).
-            /// </summary>
-            /// <param name="other">A collection containing other values to add.</param>
-            /// <exception cref="ArgumentNullException">
-            /// <paramref name="other"/> is <c>null</c>.
-            /// </exception>
-            /// <exception cref="NotSupportedException">
-            /// <see cref="IsReadOnly"/> is <c>true</c>.
-            /// </exception>
-            public void AddRange(IEnumerable<MausOptionToEncrypt> other)
-            {
-                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-                _set.UnionWith(other);
-            }
-
-            /// <summary>
-            /// Adds all available values to the collection.
+            /// Adds all values for type <see cref="MausOptionToEncrypt"/> to the collection.
             /// </summary>
             /// <exception cref="NotSupportedException">
             /// <see cref="IsReadOnly"/> is <c>true</c>.
             /// </exception>
-            public void AddAll()
+            public override void AddAll()
             {
                 AddRange(_allVals);
-            }
-
-            /// <summary>
-            /// Removes all elements matching the specified predicate from the list.
-            /// </summary>
-            /// <param name="match">A predicate defining the elements to remove.</param>
-            /// <exception cref="ArgumentNullException">
-            /// <paramref name="match"/> is <c>null</c>.
-            /// </exception>
-            public void RemoveWhere(Predicate<MausOptionToEncrypt> match)
-            {
-                _set.RemoveWhere(match);
-            }
-
-            /// <summary>
-            /// Removes all elements from the collection.
-            /// </summary>
-            public void Clear()
-            {
-                if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-                _set.Clear();
-            }
-
-            /// <summary>
-            /// Determines if the specified value exists in the collection.
-            /// </summary>
-            /// <param name="option">The option to search for in the collection.</param>
-            /// <returns><c>true</c> if <paramref name="option"/> was found; <c>false</c> otherwise.</returns>
-            public bool Contains(MausOptionToEncrypt option)
-            {
-                return _set.Contains(option);
-            }
-
-            /// <summary>
-            /// Copies all elements in the collection to the specified array, starting at the specified index.
-            /// </summary>
-            /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
-            /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
-            /// <exception cref="ArgumentNullException">
-            /// <paramref name="array"/> is <c>null</c>.
-            /// </exception>
-            /// <exception cref="ArgumentOutOfRangeException">
-            /// <paramref name="arrayIndex"/> is less than 0.
-            /// </exception>
-            /// <exception cref="ArgumentException">
-            /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
-            /// </exception>
-            public void CopyTo(MausOptionToEncrypt[] array, int arrayIndex)
-            {
-                _set.CopyTo(array, arrayIndex);
-            }
-
-            /// <summary>
-            /// Returns an enumerator which iterates through the collection.
-            /// </summary>
-            /// <returns>An enumerator which iterates through the collection.</returns>
-            public Enumerator GetEnumerator()
-            {
-                return new Enumerator(this);
-            }
-
-            IEnumerator<MausOptionToEncrypt> IEnumerable<MausOptionToEncrypt>.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            [NonSerialized]
-            private object _syncRoot;
-            object ICollection.SyncRoot
-            {
-                get
-                {
-                    if (_syncRoot == null)
-                        System.Threading.Interlocked.CompareExchange<object>(ref _syncRoot, new object(), null);
-
-                    return _syncRoot;
-                }
-            }
-
-            void ICollection.CopyTo(Array array, int index)
-            {
-                if (array == null) throw new ArgumentNullException(nameof(array));
-                if (array.Rank != 1 || array.GetLowerBound(0) != 0)
-                    throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
-                if (index < 0) throw new ArgumentOutOfRangeException(TextResources.OutOfRangeLessThanZero, index, nameof(index));
-
-                MausOptionToEncrypt[] mArray = array as MausOptionToEncrypt[];
-
-                if (mArray != null)
-                {
-                    _set.CopyTo(mArray, index);
-                    return;
-                }
-
-                try
-                {
-                    object[] oArray = array as object[];
-                    int i = index;
-
-                    if (oArray == null)
-                    {
-                        foreach (MausOptionToEncrypt opt in _set)
-                            mArray.SetValue(opt, i++);
-                    }
-                    else
-                    {
-                        foreach (MausOptionToEncrypt opt in _set)
-                            oArray[i++] = opt;
-                    }
-                }
-                catch (InvalidCastException x)
-                {
-                    throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array), x);
-                }
-            }
-
-            /// <summary>
-            /// An enumerator which iterates through the collection.
-            /// </summary>
-            public struct Enumerator : IEnumerator<MausOptionToEncrypt>
-            {
-                private IEnumerator<MausOptionToEncrypt> _enum;
-
-                internal Enumerator(SettableOptions sOpts)
-                {
-                    _enum = sOpts._set.GetEnumerator();
-                    _current = 0;
-                }
-
-                private MausOptionToEncrypt _current;
-                /// <summary>
-                /// Gets the element at the current position in the enumerator.
-                /// </summary>
-                public MausOptionToEncrypt Current
-                {
-                    get { return _current; }
-                }
-
-                object IEnumerator.Current
-                {
-                    get { return _enum.Current; }
-                }
-
-                /// <summary>
-                /// Disposes of the current instance.
-                /// </summary>
-                public void Dispose()
-                {
-                    if (_enum == null) return;
-                    _enum.Dispose();
-                    this = default(Enumerator);
-                }
-
-                /// <summary>
-                /// Advances the enumerator to the next position in the collection.
-                /// </summary>
-                /// <returns><c>true</c> if the enumerator was successfully advanced; 
-                /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
-                public bool MoveNext()
-                {
-                    if (_enum == null) return false;
-                    if (!_enum.MoveNext())
-                    {
-                        Dispose();
-                        return false;
-                    }
-                    _current = _enum.Current;
-                    return true;
-                }
-
-                void IEnumerator.Reset()
-                {
-                    _enum.Reset();
-                }
-            }
-
-            private class DebugView
-            {
-                private SettableOptions _col;
-
-                public DebugView(SettableOptions col)
-                {
-                    _col = col;
-                }
-
-                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                public MausOptionToEncrypt[] Items
-                {
-                    get { return _col.ToArray(); }
-                }
             }
         }
 

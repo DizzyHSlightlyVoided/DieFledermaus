@@ -151,6 +151,7 @@ namespace DieFledermaus
         /// </exception>
         public override DieFledermauZItem Decrypt()
         {
+            EnsureCanRead();
             lock (_lock)
             {
                 DoDecrypt();
