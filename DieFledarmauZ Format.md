@@ -25,6 +25,11 @@ The structure of a DieFledermauZ file is as follows:
 * **Offset List:** A list of the locations of each element in **Entry List** within the file.
 * **Metaoffset:** Indicates the location of the beginning of **Offset List**.
 
+### Options
+The following elements are specified for the **Options** field:
+* `Kom` - *1 parameter* - Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
+* `AES` - *1 parameter* - Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus. See below for further information.
+
 Entry List
 ----------
 The **Entry List** is prefixed with the **Entry List Prefix**, the string "`\x03`DAT" (`03 44 41 54`). The number of elements in the list must be equal to **Entry Count**. Each element in **Entry List** has the following structure:

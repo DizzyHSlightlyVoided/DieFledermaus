@@ -987,13 +987,13 @@ namespace DieFledermaus
         /// Gets and sets a comment on the file.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
+        /// In a set operation, the current instance is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length of either 0 or which is greater than 65536.
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
         /// </exception>
         public string Comment
         {
@@ -1001,7 +1001,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (value != null && (value.Length <= 0 || value.Length > Max16Bit))
+                if (value != null && (value.Length == 0 || _textEncoding.GetByteCount(value) > Max16Bit))
                     throw new ArgumentException(TextResources.CommentLength, nameof(value));
                 _comment = value;
             }
@@ -1484,9 +1484,10 @@ namespace DieFledermaus
             { _cmpDef, MausCompressionFormat.Deflate }
         };
 
-        private const string _kFilename = "Name", _kULen = "DeL", _kComment = "Kom";
-        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' },
-            _bComment = { (byte)'K', (byte)'o', (byte)'m' };
+        private const string _kFilename = "Name", _kULen = "DeL";
+        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' };
+        internal static string _kComment = "Kom";
+        internal static readonly byte[] _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
         private long _headSize;
         internal long HeadLength { get { return _headSize; } }

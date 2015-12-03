@@ -74,6 +74,7 @@ namespace DieFledermaus
         private readonly List<DieFledermauZItem> _entries = new List<DieFledermauZItem>();
         private readonly Dictionary<string, int> _entryDict = new Dictionary<string, int>(StringComparer.Ordinal);
 
+        #region Constructors
         /// <summary>
         /// Creates a new instance using the specified options.
         /// </summary>
@@ -218,6 +219,7 @@ namespace DieFledermaus
             _iv = DieFledermausStream.FillBuffer(_blockByteCount);
             _salt = DieFledermausStream.FillBuffer(_key.Length);
         }
+        #endregion
 
         long totalSize, curOffset;
 
@@ -506,7 +508,7 @@ namespace DieFledermaus
             {
                 string curOption = DieFledermausStream.GetString(reader, ref curOffset, false);
 
-                if (curOption.Equals(DieFledermausStream._encAes))
+                if (curOption.Equals(DieFledermausStream._encAes, StringComparison.Ordinal))
                 {
                     if (_gotEnc)
                     {
@@ -565,6 +567,20 @@ namespace DieFledermaus
                     continue;
                 }
 
+                if (curOption.Equals(DieFledermausStream._kComment, StringComparison.Ordinal))
+                {
+                    CheckAdvance(optLen, ref i);
+
+                    string comment = DieFledermausStream.GetString(reader, ref curOffset, false);
+
+                    if (_comment == null)
+                        _comment = comment;
+                    else if (!_comment.Equals(comment, StringComparison.Ordinal))
+                        throw new InvalidDataException(TextResources.FormatBadZ);
+
+                    continue;
+                }
+
                 throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
         }
@@ -602,6 +618,31 @@ namespace DieFledermaus
         /// Gets the encryption format of the current instance.
         /// </summary>
         public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
+
+        private string _comment;
+        /// <summary>
+        /// Gets and sets the comment on the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string Comment
+        {
+            get { return _comment; }
+            set
+            {
+                EnsureCanWrite();
+                if (value != null && (value.Length == 0 || DieFledermausStream._textEncoding.GetByteCount(value) > DieFledermausStream.Max16Bit))
+                    throw new ArgumentException(TextResources.CommentLength);
+                _comment = value;
+            }
+        }
 
         private void _ensureCanSetKey()
         {
@@ -1272,6 +1313,12 @@ namespace DieFledermaus
                         options.Add(DieFledermausStream._keyBAes128);
                         break;
                 }
+            }
+
+            if (!string.IsNullOrEmpty(_comment))
+            {
+                options.Add(DieFledermausStream._bComment);
+                options.Add(DieFledermausStream._textEncoding.GetBytes(_comment));
             }
 
             long curOffset = BaseOffset;
