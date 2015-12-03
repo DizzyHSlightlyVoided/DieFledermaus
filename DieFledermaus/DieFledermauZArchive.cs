@@ -1177,6 +1177,32 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// </summary>
+        /// <param name="bitCount">The number of bits to test.</param>
+        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyBitSize(int bitCount)
+        {
+            if (_keySizes == null) return false;
+
+            return DieFledermausStream.IsValidKeyBitSize(bitCount, _keySizes);
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes to test.</param>
+        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyByteSize(int byteCount)
+        {
+            if (_keySizes == null || byteCount > int.MaxValue >> 3) return false;
+
+            return DieFledermausStream.IsValidKeyBitSize(byteCount << 3, _keySizes);
+        }
+
+        /// <summary>
         /// Determines if the specified value is a valid value for a file path.
         /// </summary>
         /// <param name="path">The value to test.</param>

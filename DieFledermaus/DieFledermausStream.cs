@@ -882,10 +882,9 @@ namespace DieFledermaus
         /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyByteSize(int byteCount)
         {
-            if (byteCount > int.MaxValue >> 3)
-                return false;
+            if (_keySizes == null || byteCount > int.MaxValue >> 3) return false;
 
-            return IsValidKeyBitSize(byteCount << 3);
+            return IsValidKeyBitSize(byteCount << 3, _keySizes);
         }
 
         /// <summary>
@@ -898,16 +897,7 @@ namespace DieFledermaus
         {
             if (_keySizes == null) return false;
 
-            if (bitCount < _keySizes.MinSize || bitCount > _keySizes.MaxSize) return false;
-
-            if (bitCount == _keySizes.MaxSize) return true;
-
-            for (int i = _keySizes.MinSize; i <= bitCount; i++)
-            {
-                if (i == bitCount)
-                    return true;
-            }
-            return false;
+            return IsValidKeyBitSize(bitCount, _keySizes);
         }
 
         /// <summary>
