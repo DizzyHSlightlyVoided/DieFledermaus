@@ -1788,6 +1788,8 @@ namespace DieFledermaus
             }
         }
 
+        void IMausCrypt.Decrypt() { LoadData(); }
+
         private void _readData()
         {
             if (_headerGotten) return;
@@ -2015,7 +2017,6 @@ namespace DieFledermaus
 
         private object _lock = new object();
         internal object SyncRoot { get { return _lock; } }
-        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private void _ensureCanRead()
         {
@@ -2444,7 +2445,6 @@ namespace DieFledermaus
             private DieFledermausStream _stream;
 
             internal SettableOptions(DieFledermausStream stream)
-                : base(stream)
             {
                 _stream = stream;
             }

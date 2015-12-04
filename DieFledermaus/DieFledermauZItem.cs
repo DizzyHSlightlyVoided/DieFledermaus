@@ -63,7 +63,6 @@ namespace DieFledermaus
         internal long HeadLength { get { return MausStream.HeadLength; } }
 
         internal readonly object _lock = new object();
-        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private DieFledermauZArchive _arch;
         /// <summary>
@@ -71,6 +70,16 @@ namespace DieFledermaus
         /// the current instance has been deleted.
         /// </summary>
         public DieFledermauZArchive Archive { get { return _arch; } }
+
+        /// <summary>
+        /// Gets the number of bits in a single block of data, or 0 if the current instance is not encrypted.
+        /// </summary>
+        public int BlockSize { get { return MausStream.BlockSize; } }
+
+        /// <summary>
+        /// Gets the number of bytes in a single block of data, or 0 if the current instance is not encrypted.
+        /// </summary>
+        public int BlockByteCount { get { return MausStream.BlockByteCount; } }
 
         private string _path;
         /// <summary>
@@ -132,6 +141,33 @@ namespace DieFledermaus
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
 
             return this;
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// </summary>
+        /// <param name="bitCount">The number of bits to test.</param>
+        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyBitSize(int bitCount)
+        {
+            return MausStream.IsValidKeyBitSize(bitCount);
+        }
+
+        /// <summary>
+        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes to test.</param>
+        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        public bool IsValidKeyByteSize(int byteCount)
+        {
+            return MausStream.IsValidKeyByteSize(byteCount);
+        }
+
+        void IMausCrypt.Decrypt()
+        {
+            Decrypt();
         }
 
         internal void SeekToFile()

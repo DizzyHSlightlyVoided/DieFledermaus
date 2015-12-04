@@ -50,12 +50,9 @@ namespace DieFledermaus
     {
         private HashSet<TValue> _set;
 
-        IMausCrypt _owner;
-
-        internal MausSettableOptions(IMausCrypt owner)
+        internal MausSettableOptions()
         {
             _set = new HashSet<TValue>();
-            _owner = owner;
         }
 
         /// <summary>
@@ -217,9 +214,16 @@ namespace DieFledermaus
             return GetEnumerator();
         }
 
+        [NonSerialized]
+        private object _syncRoot;
         object ICollection.SyncRoot
         {
-            get { return _owner.SyncRoot; }
+            get
+            {
+                if (_syncRoot == null)
+                    System.Threading.Interlocked.CompareExchange(ref _syncRoot, new object(), null);
+                return _syncRoot;
+            }
         }
 
         void ICollection.CopyTo(Array array, int index)

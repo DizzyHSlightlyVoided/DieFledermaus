@@ -66,7 +66,6 @@ namespace DieFledermaus
 
         [NonSerialized]
         internal readonly object _lock = new object();
-        object IMausCrypt.SyncRoot { get { return _lock; } }
 
         private bool _headerGotten;
         internal readonly long StreamOffset;
