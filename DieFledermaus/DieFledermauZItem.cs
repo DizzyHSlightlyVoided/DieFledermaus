@@ -98,6 +98,10 @@ namespace DieFledermaus
         internal abstract bool IsFilenameEncrypted { get; }
 
         internal bool _isDecrypted;
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
+        /// </summary>
+        public bool IsDecrypted { get { return _isDecrypted; } }
 
         /// <summary>
         /// Decrypts the current instance.
@@ -124,7 +128,7 @@ namespace DieFledermaus
             EnsureCanRead();
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new InvalidOperationException(TextResources.NotEncrypted);
-            if (_isDecrypted) return this;
+            if (MausStream.IsDecrypted) return this;
             SeekToFile();
 
             if (MausStream.Filename == null)
@@ -377,7 +381,7 @@ namespace DieFledermaus
             if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new NotSupportedException(TextResources.NotEncrypted);
-            if (_arch.Mode == MauZArchiveMode.Read && MausStream.HeaderIsProcessed)
+            if (_arch.Mode == MauZArchiveMode.Read && MausStream.IsDecrypted)
                 throw new InvalidOperationException(TextResources.AlreadyDecryptedArchive);
         }
 

@@ -722,7 +722,10 @@ namespace DieFledermaus
         /// </summary>
         public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
 
-        internal bool HeaderIsProcessed { get { return _headerGotten; } }
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
+        /// </summary>
+        public bool IsDecrypted { get { return _mode == CompressionMode.Decompress && _encFmt == MausEncryptionFormat.None || _headerGotten; } }
         internal bool DataIsLoaded { get { return _bufferStream != null; } }
 
         private DateTime? _timeC;

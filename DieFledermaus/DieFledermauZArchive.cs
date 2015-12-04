@@ -463,6 +463,11 @@ namespace DieFledermaus
             _loadData();
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
+        /// </summary>
+        public bool IsDecrypted { get { return _mode != MauZArchiveMode.Create && _headerGotten; } }
+
         private void _loadData()
         {
             if (_headerGotten)

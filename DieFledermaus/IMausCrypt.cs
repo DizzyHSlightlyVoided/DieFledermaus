@@ -98,6 +98,10 @@ namespace DieFledermaus
         /// </summary>
         int BlockSize { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance has been successfully decrypted.
+        /// </summary>
+        bool IsDecrypted { get; }
 
         /// <summary>
         /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object specifying the length.
