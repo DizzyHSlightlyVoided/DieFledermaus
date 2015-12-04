@@ -24,12 +24,17 @@ Usage:
 ------
 Compress a file:
 ```
-DieFled.exe -cf [archive.maus] [input filename]
+DieFled.exe -cf archive.maus file1 file2 file3
 ```
 
 Decompress a file:
 ```
-DieFled.exe -xf [archive.maus] [output filename]
+DieFled.exe -xf archive.maus -o [output directory]
+```
+
+List files verbosely:
+```
+DieFled.exe
 ```
 
 Show extended help:
