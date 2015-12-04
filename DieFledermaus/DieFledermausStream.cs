@@ -1501,6 +1501,8 @@ namespace DieFledermaus
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
                 _headSize = ReadFormat(reader, false);
+                if (readMagNum)
+                    _headSize += sizeof(int);
 
                 _compLength = reader.ReadInt64();
                 if (_compLength <= 0)
@@ -1539,7 +1541,10 @@ namespace DieFledermaus
         bool gotFormat, gotULen;
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
-            long headSize = 88;
+            const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
+                sizeof(long) + sizeof(long) + hashLength; //compressed length, uncompressed length, hashLength;
+
+            long headSize = baseHeadSize;
 
             int optLen = reader.ReadUInt16();
 
@@ -1640,7 +1645,7 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
 
-                    long uLen = GetValueInt64(reader);
+                    long uLen = GetValueInt64(reader, ref headSize);
 
                     if (uLen <= 0 || (gotULen && uLen != _uncompressedLength))
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -1652,13 +1657,13 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeC, optLen, ref i);
+                    GetDate(reader, ref _timeC, ref headSize, optLen, ref i);
                     continue;
                 }
 
                 if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeM, optLen, ref i);
+                    GetDate(reader, ref _timeM, ref headSize, optLen, ref i);
                     continue;
                 }
 
@@ -1666,7 +1671,6 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
                     byte[] buffer = GetStringBytes(reader, ref headSize, false);
-
 
                     string comment = _textEncoding.GetString(buffer);
 
@@ -1693,11 +1697,11 @@ namespace DieFledermaus
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
-        private void GetDate(BinaryReader reader, ref DateTime? curTime, int optLen, ref int i)
+        private void GetDate(BinaryReader reader, ref DateTime? curTime, ref long curOffset, int optLen, ref int i)
         {
             CheckAdvance(optLen, ref i);
 
-            long value = GetValueInt64(reader);
+            long value = GetValueInt64(reader, ref curOffset);
 
             if (value < 0 || value > maxTicks)
                 throw new InvalidDataException(TextResources.FormatBad);
@@ -1710,10 +1714,12 @@ namespace DieFledermaus
             curTime = newVal;
         }
 
-        private static long GetValueInt64(BinaryReader reader)
+        private static long GetValueInt64(BinaryReader reader, ref long curOffset)
         {
             if (reader.ReadUInt16() != sizeof(long))
                 throw new InvalidDataException(TextResources.FormatBad);
+
+            curOffset += (sizeof(long) + sizeof(ushort));
 
             return reader.ReadInt64();
         }

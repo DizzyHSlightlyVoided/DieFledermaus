@@ -491,7 +491,7 @@ namespace DieFledermaus
                 using (BinaryReader reader = new BinaryReader(newBufferStream))
                 {
                     ReadOptions(reader, true);
-                    long curOffset = newBufferStream.Position;
+                    long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
                     ReadDecrypted(reader, ref curOffset);
                 }
             }
@@ -713,7 +713,7 @@ namespace DieFledermaus
             get
             {
                 if (_iv == null) return null;
-                return (byte[])_salt.Clone();
+                return (byte[])_iv.Clone();
             }
             set
             {
@@ -1391,7 +1391,8 @@ namespace DieFledermaus
 #endif
                         {
                             DieFledermausStream.WriteFormats(cryptWriter, encryptedOptions);
-                            WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position);
+                            WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position
+                                + sizeof(int) + sizeof(long)); //Size of "all-entries" + size of entry count
                         }
 
                         cryptStream.Reset();
@@ -1442,7 +1443,7 @@ namespace DieFledermaus
         {
             for (int i = 0; i < options.Count; i++)
             {
-                long curL = 1L + options[i].Length;
+                long curL = 2L + options[i].Length;
                 length += curL;
                 curOffset += curL;
             }
