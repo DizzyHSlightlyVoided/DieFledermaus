@@ -441,4 +441,32 @@ namespace DieFledermaus.Cli
             return false;
         }
     }
+
+    internal class ClParamMulti : ClParam
+    {
+        public ClParamMulti(string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(helpMessage, shortName, longNames)
+        {
+            ArgName = argName;
+        }
+
+        public readonly string ArgName;
+
+        public override bool TakesValue
+        {
+            get { return true; }
+        }
+
+        private List<string> _vals = new List<string>();
+
+        public string[] Values { get { return _vals.Distinct().ToArray(); } }
+
+        public int Count { get { return _vals.Count; } }
+
+        public override bool SetValue(string value)
+        {
+            _vals.Add(value);
+            return false;
+        }
+    }
 }

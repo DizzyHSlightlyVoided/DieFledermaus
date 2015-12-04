@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CreateNoEntry" xml:space="preserve">
-    <value>No entry file set.</value>
+    <value>No entry file or files are set.</value>
   </data>
   <data name="Disclaimer" xml:space="preserve">
     <value>This project is under development. Features and functionality are subject to change without warning.</value>
@@ -165,10 +165,6 @@
   </data>
   <data name="OverwritePrompt" xml:space="preserve">
     <value>Overwrite? (Y)es/(N)o/(R)ename</value>
-  </data>
-  <data name="OverwriteSameArchive" xml:space="preserve">
-    <value>Output file is the same as the archive file! {0}</value>
-    <comment>{0} = output filename</comment>
   </data>
   <data name="OverYes" xml:space="preserve">
     <value>yes</value>
@@ -228,7 +224,7 @@
     <comment>Help description.</comment>
   </data>
   <data name="HelpMEntry" xml:space="preserve">
-    <value>The file to compress.</value>
+    <value>The files to compress.</value>
     <comment>Help description.</comment>
   </data>
   <data name="HelpMExtract" xml:space="preserve">
@@ -240,7 +236,7 @@
     <comment>Help description.</comment>
   </data>
   <data name="HelpMOut" xml:space="preserve">
-    <value>The output filename of the compressed file.</value>
+    <value>Specifies output directory when extracting.</value>
     <comment>Help description.</comment>
   </data>
   <data name="Parameters" xml:space="preserve">
@@ -252,10 +248,6 @@
   </data>
   <data name="PNameCreate" xml:space="preserve">
     <value>create</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
-  <data name="PNameEntry" xml:space="preserve">
-    <value>entry</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="PNameExtract" xml:space="preserve">
@@ -276,10 +268,6 @@
   </data>
   <data name="PNameOutput" xml:space="preserve">
     <value>output</value>
-    <comment>Localized parameter name, keep this unique</comment>
-  </data>
-  <data name="PNameInput" xml:space="preserve">
-    <value>input</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="HelpMInteractive" xml:space="preserve">
@@ -380,21 +368,98 @@
     <value>The password must have at least one character.</value>
   </data>
   <data name="TimeCGet" xml:space="preserve">
-    <value>Unable to read file's creation time.</value>
+    <value>Unable to read file's creation time: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
   <data name="TimeCSet" xml:space="preserve">
-    <value>Unable to set file's creation time.</value>
+    <value>Unable to set file's creation time: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
   <data name="TimeMGet" xml:space="preserve">
-    <value>Unable to read file's last modified time.</value>
+    <value>Unable to read file's last modified time: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
   <data name="TimeMSet" xml:space="preserve">
-    <value>Unable to set file's last modified time.</value>
+    <value>Unable to set file's last modified time: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
   <data name="EncryptedEx" xml:space="preserve">
     <value>The archive is encrypted.</value>
   </data>
   <data name="EncryptionNoOptsEx" xml:space="preserve">
     <value>An archive can only be decrypted in interactive mode.</value>
+  </data>
+  <data name="HelpList" xml:space="preserve">
+    <value>List files verbosely:</value>
+  </data>
+  <data name="HelpMList" xml:space="preserve">
+    <value>Lists all files in an archive.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameList" xml:space="preserve">
+    <value>list</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="ErrorHide" xml:space="preserve">
+    <value>Parameter "{0}" only makes sense when encrypting.</value>
+    <comment>{0} = param name</comment>
+  </data>
+  <data name="HelpMHide" xml:space="preserve">
+    <value>Encrypts the entire directory structure.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMSingle" xml:space="preserve">
+    <value>Compress to a DieFledermaus stream instead of a DieFledermauZ archive.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="NoEntriesCreate" xml:space="preserve">
+    <value>No entries to compress!</value>
+  </data>
+  <data name="PNameHide" xml:space="preserve">
+    <value>hide</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameSingle" xml:space="preserve">
+    <value>single</value>
+  </data>
+  <data name="EncryptedExEntry" xml:space="preserve">
+    <value>Encrypted entry: {0}</value>
+    <comment>{0} = path</comment>
+  </data>
+  <data name="ListEncryptedEntry" xml:space="preserve">
+    <value>(Encrypted file #{0})</value>
+    <comment>{0} = index</comment>
+  </data>
+  <data name="ListEncryptedUnknown" xml:space="preserve">
+    <value>(Encrypted item #{0})</value>
+    <comment>{0} = index</comment>
+  </data>
+  <data name="Comment" xml:space="preserve">
+    <value>Comment:</value>
+  </data>
+  <data name="DirNotFound" xml:space="preserve">
+    <value>Directory not found: {0}</value>
+    <comment>{0} = directory path</comment>
+  </data>
+  <data name="TimeC" xml:space="preserve">
+    <value>Created: {0}</value>
+    <comment>{0} = created time.</comment>
+  </data>
+  <data name="TimeM" xml:space="preserve">
+    <value>Modified: {0}</value>
+    <comment>{0} = modified time.</comment>
+  </data>
+  <data name="UnnamedFile" xml:space="preserve">
+    <value>(Unnamed file)</value>
+  </data>
+  <data name="OutDirOnly" xml:space="preserve">
+    <value>Output-directory only makes sense when extracting.</value>
+  </data>
+  <data name="SuccessExtract" xml:space="preserve">
+    <value>Successfully extracted {0} files ({1} failed)</value>
+    <comment>{0} = succeeded count, {1} = failed count</comment>
+  </data>
+  <data name="HelpMEntry2" xml:space="preserve">
+    <value>When extracting, lists the files you want to extract. Wildcards accepted.</value>
   </data>
 </root>

@@ -16,7 +16,7 @@ Features
 
 DieFlede
 ========
-* Version 0.0.4.0
+* Version 0.0.6.0
 
 A command-line utility for creating DieFledermaus files. The name is an even worse pun.
 
@@ -41,7 +41,7 @@ On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http
 
 Class Library
 =============
-* Version 0.1.3.0
+* Version 0.1.6.0
 
 The library contains one public type, `DieFledermaus.DieFledermausStream`, which provides much the same functionality as the [`System.IO.Compression.DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx) or [`System.IO.Compression.GZipStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.gzipstream.aspx) classes. Unlike either of these classes, however, DieFledermausStream must read part of the underlying stream before [`Stream.Read()`](https://msdn.microsoft.com/en-us/library/system.io.stream.read%28v=vs.110%29.aspx) is called. The complete class reference is listed in [Class Reference.md](Class Reference.md).
 Disclaimer

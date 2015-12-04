@@ -79,6 +79,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Comment:.
+        /// </summary>
+        internal static string Comment {
+            get {
+                return ResourceManager.GetString("Comment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All operations completed successfully..
         /// </summary>
         internal static string Completed {
@@ -88,11 +97,20 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No entry file set..
+        ///   Looks up a localized string similar to No entry file or files are set..
         /// </summary>
         internal static string CreateNoEntry {
             get {
                 return ResourceManager.GetString("CreateNoEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Directory not found: {0}.
+        /// </summary>
+        internal static string DirNotFound {
+            get {
+                return ResourceManager.GetString("DirNotFound", resourceCulture);
             }
         }
         
@@ -120,6 +138,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string EncryptedEx {
             get {
                 return ResourceManager.GetString("EncryptedEx", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypted entry: {0}.
+        /// </summary>
+        internal static string EncryptedExEntry {
+            get {
+                return ResourceManager.GetString("EncryptedExEntry", resourceCulture);
             }
         }
         
@@ -205,6 +232,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parameter &quot;{0}&quot; only makes sense when encrypting..
+        /// </summary>
+        internal static string ErrorHide {
+            get {
+                return ResourceManager.GetString("ErrorHide", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No archive file set..
         /// </summary>
         internal static string ExtractNoArchive {
@@ -268,6 +304,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to List files verbosely:.
+        /// </summary>
+        internal static string HelpList {
+            get {
+                return ResourceManager.GetString("HelpList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encrypt using AES encryption..
         /// </summary>
         internal static string HelpMAes {
@@ -295,11 +340,20 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The file to compress..
+        ///   Looks up a localized string similar to The files to compress..
         /// </summary>
         internal static string HelpMEntry {
             get {
                 return ResourceManager.GetString("HelpMEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When extracting, lists the files you want to extract. Wildcards accepted..
+        /// </summary>
+        internal static string HelpMEntry2 {
+            get {
+                return ResourceManager.GetString("HelpMEntry2", resourceCulture);
             }
         }
         
@@ -322,6 +376,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Encrypts the entire directory structure..
+        /// </summary>
+        internal static string HelpMHide {
+            get {
+                return ResourceManager.GetString("HelpMHide", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Run in interactive mode, ask for user input when needed..
         /// </summary>
         internal static string HelpMInteractive {
@@ -331,7 +394,16 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The output filename of the compressed file..
+        ///   Looks up a localized string similar to Lists all files in an archive..
+        /// </summary>
+        internal static string HelpMList {
+            get {
+                return ResourceManager.GetString("HelpMList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies output directory when extracting..
         /// </summary>
         internal static string HelpMOut {
             get {
@@ -345,6 +417,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpMOverwrite {
             get {
                 return ResourceManager.GetString("HelpMOverwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compress to a DieFledermaus stream instead of a DieFledermauZ archive..
+        /// </summary>
+        internal static string HelpMSingle {
+            get {
+                return ResourceManager.GetString("HelpMSingle", resourceCulture);
             }
         }
         
@@ -385,11 +466,38 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to (Encrypted file #{0}).
+        /// </summary>
+        internal static string ListEncryptedEntry {
+            get {
+                return ResourceManager.GetString("ListEncryptedEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (Encrypted item #{0}).
+        /// </summary>
+        internal static string ListEncryptedUnknown {
+            get {
+                return ResourceManager.GetString("ListEncryptedUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The following parameters are mutually exclusive: {0}.
         /// </summary>
         internal static string MutuallyExclusive {
             get {
                 return ResourceManager.GetString("MutuallyExclusive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No entries to compress!.
+        /// </summary>
+        internal static string NoEntriesCreate {
+            get {
+                return ResourceManager.GetString("NoEntriesCreate", resourceCulture);
             }
         }
         
@@ -408,6 +516,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string NoOutputCreate {
             get {
                 return ResourceManager.GetString("NoOutputCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Output-directory only makes sense when extracting..
+        /// </summary>
+        internal static string OutDirOnly {
+            get {
+                return ResourceManager.GetString("OutDirOnly", resourceCulture);
             }
         }
         
@@ -462,15 +579,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string OverwriteRename {
             get {
                 return ResourceManager.GetString("OverwriteRename", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Output file is the same as the archive file! {0}.
-        /// </summary>
-        internal static string OverwriteSameArchive {
-            get {
-                return ResourceManager.GetString("OverwriteSameArchive", resourceCulture);
             }
         }
         
@@ -592,15 +700,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to entry.
-        /// </summary>
-        internal static string PNameEntry {
-            get {
-                return ResourceManager.GetString("PNameEntry", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to extract.
         /// </summary>
         internal static string PNameExtract {
@@ -628,11 +727,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to input.
+        ///   Looks up a localized string similar to hide.
         /// </summary>
-        internal static string PNameInput {
+        internal static string PNameHide {
             get {
-                return ResourceManager.GetString("PNameInput", resourceCulture);
+                return ResourceManager.GetString("PNameHide", resourceCulture);
             }
         }
         
@@ -642,6 +741,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameInteractive {
             get {
                 return ResourceManager.GetString("PNameInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to list.
+        /// </summary>
+        internal static string PNameList {
+            get {
+                return ResourceManager.GetString("PNameList", resourceCulture);
             }
         }
         
@@ -669,6 +777,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameOverwrite {
             get {
                 return ResourceManager.GetString("PNameOverwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to single.
+        /// </summary>
+        internal static string PNameSingle {
+            get {
+                return ResourceManager.GetString("PNameSingle", resourceCulture);
             }
         }
         
@@ -718,7 +835,25 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to read file&apos;s creation time..
+        ///   Looks up a localized string similar to Successfully extracted {0} files ({1} failed).
+        /// </summary>
+        internal static string SuccessExtract {
+            get {
+                return ResourceManager.GetString("SuccessExtract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created: {0}.
+        /// </summary>
+        internal static string TimeC {
+            get {
+                return ResourceManager.GetString("TimeC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to read file&apos;s creation time: {0}.
         /// </summary>
         internal static string TimeCGet {
             get {
@@ -727,7 +862,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to set file&apos;s creation time..
+        ///   Looks up a localized string similar to Unable to set file&apos;s creation time: {0}.
         /// </summary>
         internal static string TimeCSet {
             get {
@@ -736,7 +871,16 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to read file&apos;s last modified time..
+        ///   Looks up a localized string similar to Modified: {0}.
+        /// </summary>
+        internal static string TimeM {
+            get {
+                return ResourceManager.GetString("TimeM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to read file&apos;s last modified time: {0}.
         /// </summary>
         internal static string TimeMGet {
             get {
@@ -745,7 +889,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to set file&apos;s last modified time..
+        ///   Looks up a localized string similar to Unable to set file&apos;s last modified time: {0}.
         /// </summary>
         internal static string TimeMSet {
             get {
@@ -759,6 +903,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string Title {
             get {
                 return ResourceManager.GetString("Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (Unnamed file).
+        /// </summary>
+        internal static string UnnamedFile {
+            get {
+                return ResourceManager.GetString("UnnamedFile", resourceCulture);
             }
         }
         
