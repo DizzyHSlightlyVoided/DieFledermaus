@@ -376,12 +376,9 @@ namespace DieFledermaus
 
             long headLength = mausStream.HeadLength;
 
-            if (_baseStream.CanSeek)
-                _baseStream.Seek(mausStream.CompressedLength, SeekOrigin.Current);
-            else
-                mausStream.GetBuffer();
-
             DieFledermauZItem returner;
+
+            bool notDir = true;
 
             if (index < 0)
             {
@@ -416,6 +413,7 @@ namespace DieFledermaus
                     if (mausStream.EncryptionFormat == MausEncryptionFormat.None)
                         DieFledermauZEmptyDirectory.CheckStream(mausStream);
                     regPath = path.Substring(0, end);
+                    notDir = false;
                 }
                 else
                 {
@@ -429,6 +427,14 @@ namespace DieFledermaus
                     _entryDict.Keys.Any(pathSep.BeginsWith) || _entryDict.Keys.Any(pathSep.OtherBeginsWith))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 _entryDict.Add(path, (int)index);
+            }
+
+            if (notDir)
+            {
+                if (_baseStream.CanSeek)
+                    _baseStream.Seek(mausStream.CompressedLength, SeekOrigin.Current);
+                else
+                    mausStream.GetBuffer();
             }
 
             curOffset += mausStream.HeadLength + mausStream.CompressedLength;
@@ -1254,7 +1260,7 @@ namespace DieFledermaus
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
-            
+
             return DieFledermausStream.IsValidFilename(path, throwOnInvalid, DieFledermausStream.AllowDirNames.EmptyDir, nameof(path));
         }
 
