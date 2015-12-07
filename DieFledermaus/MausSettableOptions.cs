@@ -38,16 +38,21 @@ using DieFledermaus.Globalization;
 namespace DieFledermaus
 {
     /// <summary>
-    /// Base class for collections of settable options.
+    /// Base class for collections of settable <c>enum</c> values.
     /// </summary>
     [DebuggerTypeProxy(typeof(MausSettableOptions<>.DebugView))]
     [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
     public abstract class MausSettableOptions<TValue> : ICollection<TValue>, ICollection
+#if !NOISET
+        , ISet<TValue>
+#endif
 #if IREADONLY
         , IReadOnlyCollection<TValue>
 #endif
         where TValue : struct, IConvertible
     {
+        private static readonly HashSet<TValue> _allValues = new HashSet<TValue>((TValue[])Enum.GetValues(typeof(TValue)));
+
         private HashSet<TValue> _set;
 
         internal MausSettableOptions()
@@ -76,13 +81,6 @@ namespace DieFledermaus
         bool ICollection.IsSynchronized { get { return IsFrozen; } }
 
         /// <summary>
-        /// When overridden in a derived class, indicates whether the specified value is valid.
-        /// </summary>
-        /// <param name="value">The value to test.</param>
-        /// <returns><c>true</c> if <paramref name="value"/> is a valid value for type <typeparamref name="TValue"/>; <c>false</c> otherwise.</returns>
-        protected abstract bool IsValid(TValue value);
-
-        /// <summary>
         /// Adds the specified value to the collection.
         /// </summary>
         /// <param name="option">The option to add.</param>
@@ -94,7 +92,7 @@ namespace DieFledermaus
         public bool Add(TValue option)
         {
             if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-            return IsValid(option) && _set.Add(option);
+            return _allValues.Contains(option) && _set.Add(option);
         }
 
         internal bool InternalAdd(TValue option)
@@ -108,12 +106,15 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// When overridden in a derived class, adds all values for type <typeparamref name="TValue"/> to the collection.
+        /// Adds all valid values to the collection.
         /// </summary>
         /// <exception cref="NotSupportedException">
         /// <see cref="IsReadOnly"/> is <c>true</c>.
         /// </exception>
-        public abstract void AddAll();
+        public void AddAll()
+        {
+            UnionWith(_allValues);
+        }
 
         /// <summary>
         /// Removes the specified value from the collection.
@@ -130,19 +131,70 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Adds all elements in the specified collection to the current instance (excluding duplicates and values already in the current collection).
+        /// Adds all elements in the specified collection to the current instance (excluding duplicates and values already in the current set).
         /// </summary>
         /// <param name="other">A collection containing other values to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null</c>.
-        /// </exception>
+        /// <remarks>The number of values which were added.</remarks>
         /// <exception cref="NotSupportedException">
         /// <see cref="IsReadOnly"/> is <c>true</c>.
         /// </exception>
-        public void AddRange(IEnumerable<TValue> other)
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null</c>.
+        /// </exception>
+        public void UnionWith(IEnumerable<TValue> other)
         {
             if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
-            _set.UnionWith(other);
+            if (other == null) throw new ArgumentNullException(nameof(other));
+
+            _set.UnionWith(other.Where(_allValues.Contains));
+        }
+
+        /// <summary>
+        /// Removes all elements from the current instance except those which already exist in the specified other collection.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null</c>.
+        /// </exception>
+        public void IntersectWith(IEnumerable<TValue> other)
+        {
+            if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+            _set.IntersectWith(other);
+        }
+
+        /// <summary>
+        /// Removes all elements in the specified collection from the current instance.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null</c>.
+        /// </exception>
+        public void ExceptWith(IEnumerable<TValue> other)
+        {
+            if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+            _set.ExceptWith(other);
+        }
+
+        /// <summary>
+        /// Modifies the contents of the current instance so that it contains all elements which were either contained in the current instance
+        /// or which are contained in the specified other collection, but not both.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null</c>.
+        /// </exception>
+        public void SymmetricExceptWith(IEnumerable<TValue> other)
+        {
+            if (IsReadOnly) throw new NotSupportedException(TextResources.CollectReadOnly);
+            _set.SymmetricExceptWith(other.Where(_allValues.Contains));
         }
 
         /// <summary>
@@ -174,6 +226,89 @@ namespace DieFledermaus
         public bool Contains(TValue option)
         {
             return _set.Contains(option);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the specified collection overlaps with the current instance.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if <paramref name="other"/> has any elements in commmon with the current instance; <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool Overlaps(IEnumerable<TValue> other)
+        {
+            return _set.Overlaps(other);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the specified collection has all the same elements as the current instance.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/> and vice versa;
+        /// <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool SetEquals(IEnumerable<TValue> other)
+        {
+            return _set.SetEquals(other);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is a superset of the specified other collection.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/>;
+        /// <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool IsSubsetOf(IEnumerable<TValue> other)
+        {
+            return _set.IsSubsetOf(other);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is a subset of the specified other collection.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if every element in <paramref name="other"/> is also contained in the current instance;
+        /// <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool IsSupersetOf(IEnumerable<TValue> other)
+        {
+            return _set.IsSupersetOf(other);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is a proper superset of the specified other collection.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/> AND <paramref name="other"/>
+        /// contains at least one element which the current instance does not have; <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool IsProperSubsetOf(IEnumerable<TValue> other)
+        {
+            return _set.IsProperSubsetOf(other);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is a proper subset of the specified other collection.
+        /// </summary>
+        /// <param name="other">The other collection to compare.</param>
+        /// <returns><c>true</c> if every element in <paramref name="other"/> is also contained in the current instance AND the current instance
+        /// contains at least one element which <paramref name="other"/> does not have; <c>false</c> otherwise.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="other"/> is <c>null.</c>
+        /// </exception>
+        public bool IsProperSupersetOf(IEnumerable<TValue> other)
+        {
+            return _set.IsProperSupersetOf(other);
         }
 
         /// <summary>

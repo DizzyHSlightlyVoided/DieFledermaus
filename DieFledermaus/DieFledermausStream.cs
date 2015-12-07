@@ -1550,9 +1550,7 @@ namespace DieFledermaus
             long headSize = baseHeadSize;
 
             int optLen = reader.ReadUInt16();
-
-            SettableOptions options = fromEncrypted ? _encryptedOptions : new SettableOptions(this);
-
+            
             for (int i = 0; i < optLen; i++)
             {
                 string curForm = GetString(reader, ref headSize, false);
@@ -1567,7 +1565,7 @@ namespace DieFledermaus
                         continue;
                     }
                     else if (fromEncrypted)
-                        options.InternalAdd(MausOptionToEncrypt.Compression);
+                        _encryptedOptions.InternalAdd(MausOptionToEncrypt.Compression);
 
                     gotFormat = true;
                     _cmpFmt = cmpFmt;
@@ -1576,7 +1574,8 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_encAes, StringComparison.Ordinal))
                 {
-                    _encryptedOptions = options;
+                    if (!fromEncrypted)
+                        _encryptedOptions = new SettableOptions(this);
                     CheckAdvance(optLen, ref i);
 
                     byte[] bytes = GetStringBytes(reader, ref headSize, false);
@@ -1633,7 +1632,7 @@ namespace DieFledermaus
                     if (_filename == null)
                     {
                         if (fromEncrypted)
-                            options.InternalAdd(MausOptionToEncrypt.Filename);
+                            _encryptedOptions.InternalAdd(MausOptionToEncrypt.Filename);
                     }
                     else if (!filename.Equals(_filename, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -2444,13 +2443,10 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Represents a collection of <see cref="MausOptionToEncrypt"/> options.
+        /// A collection of <see cref="MausOptionToEncrypt"/> values.
         /// </summary>
         public sealed class SettableOptions : MausSettableOptions<MausOptionToEncrypt>
         {
-            private static readonly HashSet<MausOptionToEncrypt> _allVals =
-                new HashSet<MausOptionToEncrypt>((MausOptionToEncrypt[])Enum.GetValues(typeof(MausOptionToEncrypt)));
-
             private DieFledermausStream _stream;
 
             internal SettableOptions(DieFledermausStream stream)
@@ -2479,27 +2475,6 @@ namespace DieFledermaus
             public override bool IsFrozen
             {
                 get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && _stream._headerGotten); }
-            }
-
-            /// <summary>
-            /// Indicates whether the specified value is valid.
-            /// </summary>
-            /// <param name="value">The value to test.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is a valid value for type <see cref="MausOptionToEncrypt"/>; <c>false</c> otherwise.</returns>
-            protected override bool IsValid(MausOptionToEncrypt value)
-            {
-                return _allVals.Contains(value);
-            }
-
-            /// <summary>
-            /// Adds all values for type <see cref="MausOptionToEncrypt"/> to the collection.
-            /// </summary>
-            /// <exception cref="NotSupportedException">
-            /// <see cref="IsReadOnly"/> is <c>true</c>.
-            /// </exception>
-            public override void AddAll()
-            {
-                AddRange(_allVals);
             }
         }
 
@@ -2541,7 +2516,7 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// Indicates values to encrypt.
+    /// Indicates values to encrypt in a <see cref="DieFledermausStream"/>.
     /// </summary>
     public enum MausOptionToEncrypt
     {
