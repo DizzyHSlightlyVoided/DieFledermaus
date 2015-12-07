@@ -48,7 +48,7 @@ If a decoder encounters invalid or contradictory file paths in *unencrypted* ent
 The **Entry ID** must be unique, sequential, and start at 0. That is, if there are four entries, they must collectively have the IDs 0, 1, 2, and 3. However, they are not required to be in any specific order. (An encoder should still assign them the same order that they are written into the file, however.)
 
 ### Empty directories
-A DieFledermauZ file may contain empty directories. They are specified by a filename with a trailing forward-slash and a maximum length of 254 UTF-8 bytes, no compression (`NK` in **Format**), and the uncompressed data must contain a single byte with a value of `/`. They may not be encrypted except for the purpose of encrypting the filename (see below).
+A DieFledermauZ file may contain empty directories. They are specified by a filename with a trailing forward-slash and a maximum length of 255 UTF-8 bytes (*including* the forward-slash), no compression (`NK` in **Format**), and the uncompressed data must contain a single byte with a value of `/`. They may not be encrypted except for the purpose of encrypting the filename (see below).
 
 Empty directories must be genuinely empty; if an archive contains a file named "Foo/Bar/Baz.txt", it must not also specify an empty directory named "Foo/", because "Foo/" is manifestly not empty.
 

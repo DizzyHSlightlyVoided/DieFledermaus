@@ -277,11 +277,11 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified path contains an invalid element: {0}.
+        ///   Looks up a localized string similar to The specified path contains an unpaired surrogate character: {0}.
         /// </summary>
-        internal static string FilenameComponent {
+        internal static string FilenameBadSurrogatePath {
             get {
-                return ResourceManager.GetString("FilenameComponent", resourceCulture);
+                return ResourceManager.GetString("FilenameBadSurrogatePath", resourceCulture);
             }
         }
         
@@ -295,6 +295,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified path contained a non-whitespace control character..
+        /// </summary>
+        internal static string FilenameControlPath {
+            get {
+                return ResourceManager.GetString("FilenameControlPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified value &quot;{0}&quot; is not a valid filename..
         /// </summary>
         internal static string FilenameDot {
@@ -304,11 +313,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified path has a length greater than 254 UTF-8 bytes, counting the trailing forward-slash..
+        ///   Looks up a localized string similar to The specified path contains an invalid element: {0}.
+        /// </summary>
+        internal static string FilenameDotPath {
+            get {
+                return ResourceManager.GetString("FilenameDotPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path has a length greater than 255 UTF-8 bytes, counting the trailing forward-slash..
         /// </summary>
         internal static string FilenameEDirLengthLong {
             get {
                 return ResourceManager.GetString("FilenameEDirLengthLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path has a length of 0..
+        /// </summary>
+        internal static string FilenameEmptyPath {
+            get {
+                return ResourceManager.GetString("FilenameEmptyPath", resourceCulture);
             }
         }
         
@@ -331,6 +358,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified path has a length greater than 256 UTF-8 bytes..
+        /// </summary>
+        internal static string FilenameLengthLongPath {
+            get {
+                return ResourceManager.GetString("FilenameLengthLongPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified filename is empty..
         /// </summary>
         internal static string FilenameLengthZero {
@@ -340,11 +376,38 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified path has a double forward-slash..
+        /// </summary>
+        internal static string FilenamePathDoubleSlash {
+            get {
+                return ResourceManager.GetString("FilenamePathDoubleSlash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path has a leading forward-slash..
+        /// </summary>
+        internal static string FilenamePathLeadingSlash {
+            get {
+                return ResourceManager.GetString("FilenamePathLeadingSlash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified filename contained only whitespace characters..
         /// </summary>
         internal static string FilenameWhitespace {
             get {
                 return ResourceManager.GetString("FilenameWhitespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path contains a filename or directory name containing only whitespace..
+        /// </summary>
+        internal static string FilenameWhitespacePath {
+            get {
+                return ResourceManager.GetString("FilenameWhitespacePath", resourceCulture);
             }
         }
         

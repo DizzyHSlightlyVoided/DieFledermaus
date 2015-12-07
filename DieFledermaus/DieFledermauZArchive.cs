@@ -356,14 +356,14 @@ namespace DieFledermaus
         {
             if (path == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
                 path = null;
-            else if (index >= 0 && !DieFledermausStream.IsValidFilename(path, false, true, nameof(path)))
+            else if (index >= 0 && !DieFledermausStream.IsValidFilename(path, false, DieFledermausStream.AllowDirNames.Unknown, nameof(path)))
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
             DieFledermausStream mausStream;
 
             try
             {
-                mausStream = new DieFledermausStream(_baseStream, readMagNum);
+                mausStream = new DieFledermausStream(_baseStream, readMagNum, path);
             }
             catch (InvalidDataException e)
             {
@@ -979,7 +979,7 @@ namespace DieFledermaus
                     throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
             }
 
-            DieFledermausStream.IsValidFilename(path, true, true, nameof(path));
+            DieFledermausStream.IsValidFilename(path, true, DieFledermausStream.AllowDirNames.Yes, nameof(path));
 
             if (_entryDict.ContainsKey(path))
                 throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
@@ -1231,10 +1231,8 @@ namespace DieFledermaus
         /// </exception>
         public static bool IsValidFilePath(string path)
         {
-            return DieFledermausStream.IsValidFilename(path, false, true, nameof(path));
+            return DieFledermausStream.IsValidFilename(path, false, DieFledermausStream.AllowDirNames.Yes, nameof(path));
         }
-
-        private const int maxLenEDir = 253;
 
         /// <summary>
         /// Determines if the specified value is a valid value for an empty directory path.
@@ -1256,19 +1254,8 @@ namespace DieFledermaus
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
-
-            int end = path.Length - 1;
-            if (path[end] == '/')
-                path = path.Substring(0, end);
-
-            if (DieFledermausStream._textEncoding.GetByteCount(path) > maxLenEDir)
-            {
-                if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameEDirLengthLong, nameof(path));
-                return false;
-            }
-
-            return DieFledermausStream.IsValidFilename(path, throwOnInvalid, true, nameof(path));
+            
+            return DieFledermausStream.IsValidFilename(path, throwOnInvalid, DieFledermausStream.AllowDirNames.EmptyDir, nameof(path));
         }
 
         /// <summary>

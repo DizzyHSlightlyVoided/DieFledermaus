@@ -577,18 +577,23 @@ namespace DieFledermaus
             _cmpFmt = compFormat.CompressionFormat;
             _entry = entry;
             _setEncFormat(encryptionFormat);
-            _allowDirNames = true;
             _filename = path;
+            _allowDirNames = entry is DieFledermauZArchiveEntry ? AllowDirNames.Yes : AllowDirNames.EmptyDir;
             _mode = CompressionMode.Compress;
             _leaveOpen = true;
         }
 
-        internal DieFledermausStream(Stream stream, bool readMagNum)
+        internal DieFledermausStream(Stream stream, bool readMagNum, string path)
         {
             _baseStream = stream;
-            _allowDirNames = true;
             _mode = CompressionMode.Decompress;
             _leaveOpen = true;
+            if (path == null)
+                _allowDirNames = AllowDirNames.Unknown;
+            else if (path[path.Length - 1] == '/')
+                _allowDirNames = AllowDirNames.EmptyDir;
+            else
+                _allowDirNames = AllowDirNames.Yes;
             _getHeader(readMagNum);
         }
         #endregion
@@ -1031,7 +1036,17 @@ namespace DieFledermaus
             }
         }
 
-        internal static bool IsValidFilename(string value, bool throwOnInvalid, bool allowDirNames, string paramName)
+        internal enum AllowDirNames
+        {
+            No,
+            Yes,
+            EmptyDir,
+            Unknown
+        }
+
+        private AllowDirNames _allowDirNames;
+
+        internal static bool IsValidFilename(string value, bool throwOnInvalid, AllowDirNames dirFormat, string paramName)
         {
             if (value == null) throw new ArgumentNullException(paramName);
 
@@ -1041,27 +1056,32 @@ namespace DieFledermaus
                     throw new ArgumentException(TextResources.FilenameLengthZero, paramName);
                 return false;
             }
-            if (_textEncoding.GetByteCount(value) > Max8Bit)
+            if (dirFormat == AllowDirNames.EmptyDir || dirFormat == AllowDirNames.Unknown)
+            {
+                int end = value.Length - 1;
+                if (value[end] == '/')
+                {
+                    value = value.Substring(0, end);
+                    dirFormat = AllowDirNames.EmptyDir;
+                }
+            }
+
+            if (dirFormat == AllowDirNames.EmptyDir)
+            {
+                const int maxDirLen = 254;
+
+                if (_textEncoding.GetByteCount(value) > maxDirLen)
+                {
+                    if (throwOnInvalid)
+                        throw new ArgumentException(TextResources.FilenameEDirLengthLong);
+                    return false;
+                }
+            }
+            else if (_textEncoding.GetByteCount(value) > Max8Bit)
             {
                 if (throwOnInvalid)
                     throw new ArgumentException(TextResources.FilenameLengthLong, paramName);
-            }
-
-            if (allowDirNames)
-            {
-                //TODO: Something better than this?
-                try
-                {
-                    int end = value.Length - 1;
-                    if (value[end] == '/')
-                        value = value.Substring(0, end);
-
-                    return value.Split('/').All(f => IsValidFilename(f, throwOnInvalid, false, paramName));
-                }
-                catch (ArgumentException e)
-                {
-                    throw new ArgumentException(string.Format(TextResources.FilenameComponent, e.Message), paramName, e);
-                }
+                return false;
             }
 
             bool seenNotWhite = false;
@@ -1083,8 +1103,8 @@ namespace DieFledermaus
 
                     if (throwOnInvalid)
                     {
-                        throw new ArgumentException(string.Format(TextResources.FilenameBadSurrogate,
-                            string.Format("\\u{0:x4} {1}", (int)c, c)), paramName);
+                        throw new ArgumentException(string.Format(dirFormat == AllowDirNames.No ? TextResources.FilenameBadSurrogate :
+                            TextResources.FilenameBadSurrogatePath, string.Format("\\u{0:x4} {1}", (int)c, c)), paramName);
                     }
                     return false;
                 }
@@ -1097,24 +1117,58 @@ namespace DieFledermaus
                     seenNotWhite = true;
                     continue;
                 }
-                else dotCount = -1;
 
                 if (char.IsWhiteSpace(c))
+                {
+                    dotCount = -1;
                     continue;
+                }
 
                 if (c == '/')
                 {
-                    if (throwOnInvalid)
-                        throw new ArgumentException(TextResources.FilenameForwardSlash);
-                    return false;
-                }
+                    if (dirFormat == AllowDirNames.No)
+                    {
+                        if (throwOnInvalid)
+                            throw new ArgumentException(TextResources.FilenameForwardSlash, paramName);
+                        return false;
+                    }
 
+                    string itemName = value.Substring(0, i);
+
+                    if (dotCount == 0)
+                    {
+                        if (throwOnInvalid)
+                            throw new ArgumentException(i == 0 ? TextResources.FilenamePathLeadingSlash : TextResources.FilenamePathDoubleSlash, paramName);
+                        return false;
+                    }
+
+                    if (dotCount > 0)
+                    {
+                        if (throwOnInvalid)
+                            throw new ArgumentException(string.Format(TextResources.FilenameDotPath, itemName), paramName);
+                        return false;
+                    }
+
+                    if (!seenNotWhite)
+                    {
+                        if (throwOnInvalid)
+                            throw new ArgumentException(TextResources.FilenameWhitespacePath, paramName);
+                        return false;
+                    }
+
+                    seenNotWhite = false;
+                    dotCount = 0;
+                    value = value.Substring(i + 1);
+                    i = -1;
+                    continue;
+                }
+                dotCount = -1;
                 seenNotWhite = true;
 
                 if (c < ' ' || (c > '~' && c <= '\u009f'))
                 {
                     if (throwOnInvalid)
-                        throw new ArgumentException(TextResources.FilenameControl, paramName);
+                        throw new ArgumentException(dirFormat == AllowDirNames.No ? TextResources.FilenameControl : TextResources.FilenameControlPath, paramName);
                     return false;
                 }
             }
@@ -1122,13 +1176,15 @@ namespace DieFledermaus
             if (throwOnInvalid)
             {
                 if (!seenNotWhite)
-                    throw new ArgumentException(TextResources.FilenameWhitespace, paramName);
+                    throw new ArgumentException(dirFormat == AllowDirNames.No ? TextResources.FilenameWhitespace : TextResources.FilenameWhitespacePath, paramName);
+                if (dotCount == 0)
+                    throw new ArgumentException(TextResources.FilenamePathDoubleSlash, paramName);
                 if (dotCount > 0)
-                    throw new ArgumentException(string.Format(TextResources.FilenameDot, value), paramName);
+                    throw new ArgumentException(string.Format(dirFormat == AllowDirNames.No ? TextResources.FilenameDot : TextResources.FilenameDotPath, value), paramName);
                 return true;
             }
 
-            return seenNotWhite && dotCount <= 0;
+            return seenNotWhite && dotCount < 0;
         }
 
         /// <summary>
@@ -1144,7 +1200,7 @@ namespace DieFledermaus
         /// </exception>
         public static bool IsValidFilename(string value)
         {
-            return IsValidFilename(value, false, false, nameof(value));
+            return IsValidFilename(value, false, AllowDirNames.No, nameof(value));
         }
 
         /// <summary>
@@ -1466,7 +1522,7 @@ namespace DieFledermaus
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
         private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
 
-        private bool _headerGotten, _allowDirNames;
+        private bool _headerGotten;
 
         internal const int Max8Bit = 256;
 
@@ -1550,7 +1606,7 @@ namespace DieFledermaus
             long headSize = baseHeadSize;
 
             int optLen = reader.ReadUInt16();
-            
+
             for (int i = 0; i < optLen; i++)
             {
                 string curForm = GetString(reader, ref headSize, false);
@@ -1633,13 +1689,14 @@ namespace DieFledermaus
                     {
                         if (fromEncrypted)
                             _encryptedOptions.InternalAdd(MausOptionToEncrypt.Filename);
+
+                        if (!IsValidFilename(filename, false, _allowDirNames, null))
+                            throw new InvalidDataException(TextResources.FormatFilename);
+
+                        _filename = filename;
                     }
                     else if (!filename.Equals(_filename, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
-
-                    if (!IsValidFilename(filename, false, _allowDirNames, null))
-                        throw new InvalidDataException(TextResources.FormatFilename);
-                    _filename = filename;
                     continue;
                 }
 

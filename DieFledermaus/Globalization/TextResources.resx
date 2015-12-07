@@ -186,21 +186,17 @@
   </data>
   <data name="FilenameBadSurrogate" xml:space="preserve">
     <value>The specified filename contains an unpaired surrogate character: {0}</value>
-    <comment>{0} = invalid character.</comment>
-  </data>
-  <data name="FilenameComponent" xml:space="preserve">
-    <value>The specified path contains an invalid element: {0}</value>
-    <comment>{0} = other message.</comment>
+    <comment>{0} = invalid character</comment>
   </data>
   <data name="FilenameControl" xml:space="preserve">
     <value>The specified filename contained a non-whitespace control character.</value>
   </data>
   <data name="FilenameDot" xml:space="preserve">
     <value>The specified value "{0}" is not a valid filename.</value>
-    <comment>{0} = filename.</comment>
+    <comment>{0} = filename</comment>
   </data>
   <data name="FilenameEDirLengthLong" xml:space="preserve">
-    <value>The specified path has a length greater than 254 UTF-8 bytes, counting the trailing forward-slash.</value>
+    <value>The specified path has a length greater than 255 UTF-8 bytes, counting the trailing forward-slash.</value>
   </data>
   <data name="FilenameForwardSlash" xml:space="preserve">
     <value>The specified filename contains a forward-slash character "/".</value>
@@ -296,5 +292,31 @@
   </data>
   <data name="ArchiveEmpty" xml:space="preserve">
     <value>The archive does not contain any entries.</value>
+  </data>
+  <data name="FilenameControlPath" xml:space="preserve">
+    <value>The specified path contained a non-whitespace control character.</value>
+  </data>
+  <data name="FilenameDotPath" xml:space="preserve">
+    <value>The specified path contains an invalid element: {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="FilenamePathDoubleSlash" xml:space="preserve">
+    <value>The specified path has a double forward-slash.</value>
+  </data>
+  <data name="FilenamePathLeadingSlash" xml:space="preserve">
+    <value>The specified path has a leading forward-slash.</value>
+  </data>
+  <data name="FilenameWhitespacePath" xml:space="preserve">
+    <value>The specified path contains a filename or directory name containing only whitespace.</value>
+  </data>
+  <data name="FilenameBadSurrogatePath" xml:space="preserve">
+    <value>The specified path contains an unpaired surrogate character: {0}</value>
+    <comment>{0} = invalid character</comment>
+  </data>
+  <data name="FilenameEmptyPath" xml:space="preserve">
+    <value>The specified path has a length of 0.</value>
+  </data>
+  <data name="FilenameLengthLongPath" xml:space="preserve">
+    <value>The specified path has a length greater than 256 UTF-8 bytes.</value>
   </data>
 </root>
