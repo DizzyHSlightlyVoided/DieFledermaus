@@ -217,6 +217,7 @@ namespace DieFledermaus
             _key = DieFledermausStream.FillBuffer(_keySizes.MaxSize >> 3);
             _iv = DieFledermausStream.FillBuffer(_blockByteCount);
             _salt = DieFledermausStream.FillBuffer(_key.Length);
+            _encryptedOptions = new SettableOptions(this);
         }
         #endregion
 
@@ -514,6 +515,9 @@ namespace DieFledermaus
 
                 if (curOption.Equals(DieFledermausStream._encAes, StringComparison.Ordinal))
                 {
+                    if (!fromEncrypted)
+                        _encryptedOptions = new SettableOptions(this);
+
                     if (_gotEnc)
                     {
                         if (_encFmt != MausEncryptionFormat.Aes)
@@ -581,6 +585,8 @@ namespace DieFledermaus
                         _comment = comment;
                     else if (!_comment.Equals(comment, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBadZ);
+                    else if (fromEncrypted)
+                        _encryptedOptions.InternalAdd(MauZOptionToEncrypt.Comment);
 
                     continue;
                 }
@@ -647,6 +653,12 @@ namespace DieFledermaus
                 _comment = value;
             }
         }
+
+        private SettableOptions _encryptedOptions;
+        /// <summary>
+        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current instance is not encrypted.
+        /// </summary>
+        public SettableOptions EncryptedOptions { get { return _encryptedOptions; } }
 
         private void _ensureCanSetKey()
         {
@@ -1345,11 +1357,8 @@ namespace DieFledermaus
                 }
             }
 
-            if (!string.IsNullOrEmpty(_comment))
-            {
-                options.Add(DieFledermausStream._bComment);
-                options.Add(DieFledermausStream._textEncoding.GetBytes(_comment));
-            }
+            if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
+                AddComment(options);
 
             long curOffset = BaseOffset;
             AddSize(options, ref length, ref curOffset);
@@ -1365,6 +1374,9 @@ namespace DieFledermaus
 
                 length += size;
                 curOffset += size;
+
+                if (_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
+                    AddComment(encryptedOptions);
 
                 //TODO: Other encrypted options
 
@@ -1441,6 +1453,15 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
                 writer.Flush();
 #endif
+            }
+        }
+
+        private void AddComment(List<byte[]> options)
+        {
+            if (!string.IsNullOrEmpty(_comment))
+            {
+                options.Add(DieFledermausStream._bComment);
+                options.Add(DieFledermausStream._textEncoding.GetBytes(_comment));
             }
         }
 
@@ -2100,6 +2121,53 @@ namespace DieFledermaus
                 }
             }
         }
+
+        /// <summary>
+        /// A collection of <see cref="MauZOptionToEncrypt"/> values.
+        /// </summary>
+        public class SettableOptions : MausSettableOptions<MauZOptionToEncrypt>
+        {
+            private DieFledermauZArchive _archive;
+
+            internal SettableOptions(DieFledermauZArchive archive)
+            {
+                _archive = archive;
+            }
+
+            /// <summary>
+            /// Gets a value indicating whether the current instance is read-only.
+            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode; <c>false</c> otherwise.
+            /// </summary>
+            /// <remarks>
+            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
+            /// however, it may still be changed by the base stream.
+            /// </remarks>
+            public override bool IsReadOnly
+            {
+                get { return _archive._baseStream == null || _archive._mode == MauZArchiveMode.Read; }
+            }
+
+            /// <summary>
+            /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
+            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
+            /// <c>false</c> otherwise.
+            /// </summary>
+            public override bool IsFrozen
+            {
+                get { return _archive._baseStream == null || (_archive._mode == MauZArchiveMode.Read && _archive._headerGotten); }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates values to encrypt in a <see cref="DieFledermauZArchive"/>.
+    /// </summary>
+    public enum MauZOptionToEncrypt
+    {
+        /// <summary>
+        /// Indicates that <see cref="DieFledermauZArchive.Comment"/> will be encrypted.
+        /// </summary>
+        Comment,
     }
 
     /// <summary>
