@@ -160,7 +160,7 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/>
         /// again if this exception is caught.
         /// </exception>
         public override DieFledermauZItem Decrypt()

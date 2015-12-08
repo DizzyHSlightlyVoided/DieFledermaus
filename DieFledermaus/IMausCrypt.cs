@@ -45,22 +45,6 @@ namespace DieFledermaus
         MausEncryptionFormat EncryptionFormat { get; }
 
         /// <summary>
-        /// Gets and sets the key associated with the current instance, or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is the wrong length according to <see cref="KeySizes"/>.
-        /// </exception>
-        byte[] Key { get; set; }
-        /// <summary>
         /// Gets and sets the initialization vector of the current instance, or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
@@ -109,88 +93,69 @@ namespace DieFledermaus
         KeySizes KeySizes { get; }
 
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the maximum key size.
+        /// Gets and sets the number of bits in the key.
         /// </summary>
-        /// <param name="password">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        void SetPassword(string password);
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
+        /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current archive is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
+        /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
         /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        void SetPassword(string password, int keyByteSize);
+        int KeySize { get; set; }
 
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the maximum key size.
+        /// Gets and sets the password used for the current instance.
         /// </summary>
-        /// <param name="password">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        void SetPassword(SecureString password);
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
+        /// <para>The current instance is disposed.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is disposed.</para>
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current archive is not encrypted.
+        /// The current instance is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has a length of 0.
+        /// </exception>
+        /// <remarks>
+        /// A set operation will dispose of the previous value, as will disposing of the current instance.
+        /// </remarks>
+        SecureString Password { get; set; }
+
+        /// <summary>
+        /// Sets the password used for the current instance.
+        /// </summary>
+        /// <param name="password">The password to set.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// <para>The current instance is disposed.</para>
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="password"/> is <c>null</c>.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
-        /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="password"/> has a length of 0.
         /// </exception>
-        void SetPassword(SecureString password, int keyByteSize);
+        /// <remarks>
+        /// This method will dispose of any previous value of <see cref="Password"/>
+        /// </remarks>
+        void SetPassword(string password);
 
         /// <summary>
         /// Decrypts the current instance.
@@ -198,7 +163,7 @@ namespace DieFledermaus
         void Decrypt();
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// Determines whether the specified value is a valid length for the key, in bits.
         /// </summary>
         /// <param name="bitCount">The number of bits to test.</param>
         /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
@@ -206,7 +171,7 @@ namespace DieFledermaus
         bool IsValidKeyBitSize(int bitCount);
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// Determines whether the specified value is a valid length for the key, in bytes.
         /// </summary>
         /// <param name="byteCount">The number of bytes to test.</param>
         /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid bit count according to <see cref="KeySizes"/>;

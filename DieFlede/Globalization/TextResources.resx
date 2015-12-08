@@ -321,12 +321,6 @@
   <data name="EncryptedPrompt1Pwd" xml:space="preserve">
     <value>Enter password</value>
   </data>
-  <data name="EncryptedPrompt2KeyHex" xml:space="preserve">
-    <value>Enter encryption key (hexadecimal)</value>
-  </data>
-  <data name="EncryptedPrompt3KeyB64" xml:space="preserve">
-    <value>Enter encryption key (base64)</value>
-  </data>
   <data name="HelpMAes" xml:space="preserve">
     <value>Encrypt using AES encryption.</value>
     <comment>Help description.</comment>
@@ -334,25 +328,12 @@
   <data name="EncryptedBadKey" xml:space="preserve">
     <value>The key or password is incorrect!</value>
   </data>
-  <data name="EncryptInvalidBase64" xml:space="preserve">
-    <value>The specified key is not a valid Base64 value.</value>
-  </data>
-  <data name="EncryptInvalidHex" xml:space="preserve">
-    <value>The specified key is not a valid hexadecimal value.</value>
-  </data>
-  <data name="EncryptInvalidKeyLength" xml:space="preserve">
-    <value>The number of bytes in the specified key is invalid.</value>
-  </data>
   <data name="KeepSecret" xml:space="preserve">
     <value>Keep it secret. Keep it safe.</value>
     <comment>A quote from Gandalf in "Lord of the Rings."</comment>
   </data>
   <data name="EncryptionNoOpts" xml:space="preserve">
     <value>Encryption can only be used in interactive mode.</value>
-  </data>
-  <data name="EncryptKeyLength" xml:space="preserve">
-    <value>Key size must be equal to {0} bits ({1} bytes).</value>
-    <comment>{0} = bit count, {1} bit count.</comment>
   </data>
   <data name="OverRename" xml:space="preserve">
     <value>rename</value>

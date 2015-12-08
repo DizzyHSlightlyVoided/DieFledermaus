@@ -62,9 +62,9 @@ namespace DieFledermaus
         /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// <para>Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/>, <see cref="DieFledermauZItem.IV"/>, and
+        /// <para>Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.IV"/>, and
         /// <see cref="DieFledermauZItem.Salt"/> to randomly-generated values. Subsequently setting this property to <c>false</c> will
-        /// set these properties to <c>null</c>, and the old values will not be remembered or saved.</para>
+        /// clear the password and set these properties to <c>null</c>, and the old values will not be remembered or saved.</para>
         /// <para>Setting this to <c>false</c> will also set <see cref="EncryptComment"/> <c>false</c>.</para>
         /// </remarks>
         public bool EncryptPath
@@ -145,7 +145,7 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/>
         /// again if this exception is caught.
         /// </exception>
         public override DieFledermauZItem Decrypt()

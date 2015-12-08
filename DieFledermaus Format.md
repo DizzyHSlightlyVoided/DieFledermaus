@@ -60,7 +60,7 @@ A decoder must not attempt to decode an archive if it finds any unexpected or un
 
 Encryption
 ----------
-DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. Both text-based passwords and raw binary keys are supported. An encoder may use only text-based passwords without any options for setting binary keys, but a decoder must allow both passwords and binary keys.
+DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. For the sake of consistency, an encoder must derive the key from a UTF-8 text-based password. A decoder which is intended more for programmers than for end-users may allow setting the key directly.
 
 An encoder should use 256-bit keys, as they are the most secure. A decoder must be able to decode all key sizes, of course.
 
@@ -82,8 +82,6 @@ The encrypted data contains:
 Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 iterations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
-
-The random **Salt** value must be included in the **Data** field even if a binary key is used rather than a text-based password. This is for two reasons: 1. in order to simplify the specification so that it only has a single format, and 2. to avoid revealing anything about the key to an attacker.
 
 Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document. That said, an encoder must require that a password should be one byte long at minimum. You've got to have *some* standards.
 

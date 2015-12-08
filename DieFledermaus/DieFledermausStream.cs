@@ -606,11 +606,11 @@ namespace DieFledermaus
             _encFmt = encryptionFormat;
             if (_encFmt == MausEncryptionFormat.None) return;
             _encryptedOptions = new SettableOptions(this);
-            _key = FillBuffer(_keySizes.MaxSize >> 3);
+            _keySize = _keySizes.MaxSize;
             do
             {
                 _iv = FillBuffer(_blockByteCount);
-                _salt = FillBuffer(_key.Length);
+                _salt = FillBuffer(_keySize >> 3);
             }
             while (_entry != null && (_entry.Archive.Entries.Any(_checkOtherEntry) ||
                 (_entry.Archive.EncryptionFormat == _encFmt && _checkOther(_entry.Archive.IV, _entry.Archive.Salt))));
@@ -845,45 +845,37 @@ namespace DieFledermaus
             }
         }
 
-        private byte[] _key;
+        private int _keySize;
         /// <summary>
-        /// Gets and sets the key used to encrypt the DieFledermaus stream.
+        /// Gets and sets the number of bits in the key.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, the current stream is not encrypted.
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current stream is in read-mode and the stream has already been successfully decrypted.
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
         /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is an invalid length according to <see cref="KeySizes"/>.
-        /// </exception>
-        public byte[] Key
+        public int KeySize
         {
-            get
-            {
-                if (_key == null) return null;
-                return (byte[])_key.Clone();
-            }
+            get { return _keySize; }
             set
             {
-                _ensureCanSetKey();
-                if (value == null) throw new ArgumentNullException(nameof(value));
-
-                if (!IsValidKeyByteSize(value.Length))
-                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
-                _key = (byte[])value.Clone();
+                _ensureCanWrite();
+                if (_encFmt == MausEncryptionFormat.None)
+                    throw new NotSupportedException(TextResources.NotEncrypted);
+                if (!IsValidKeyBitSize(value))
+                    throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
+                _keySize = value;
             }
         }
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// Determines whether the specified value is a valid length for a key in bytes.
         /// </summary>
         /// <param name="byteCount">The number of bytes to test.</param>
         /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
@@ -896,7 +888,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// Determines whether the specified value is a valid length for a key in bits.
         /// </summary>
         /// <param name="bitCount">The number of bits to test.</param>
         /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
@@ -906,41 +898,6 @@ namespace DieFledermaus
             if (_keySizes == null) return false;
 
             return IsValidKeyBitSize(bitCount, _keySizes);
-        }
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
-        /// </summary>
-        /// <param name="byteCount">The number of bytes to test.</param>
-        /// <param name="encryptionFormat">The encryption format to test for.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <paramref name="encryptionFormat"/>;
-        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
-        /// </exception>
-        public static bool IsValidKeyByteSize(int byteCount, MausEncryptionFormat encryptionFormat)
-        {
-            int blockByteCount;
-            var keySizes = _getKeySizes(encryptionFormat, out blockByteCount);
-            if (keySizes == null || byteCount > int.MaxValue >> 3) return false;
-            return IsValidKeyBitSize(byteCount << 3, keySizes);
-        }
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
-        /// </summary>
-        /// <param name="bitCount">The number of bits to test.</param>
-        /// <param name="encryptionFormat">The encryption format to test for.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
-        /// </exception>
-        public static bool IsValidKeyBitSize(int bitCount, MausEncryptionFormat encryptionFormat)
-        {
-            int blockByteCount;
-            var keySizes = _getKeySizes(encryptionFormat, out blockByteCount);
-            return keySizes != null && IsValidKeyBitSize(bitCount, keySizes);
         }
 
         internal static bool IsValidKeyBitSize(int bitCount, KeySizes _keySizes)
@@ -1053,7 +1010,7 @@ namespace DieFledermaus
             if (value.Length == 0)
             {
                 if (throwOnInvalid)
-                    throw new ArgumentException(TextResources.FilenameLengthZero, paramName);
+                    throw new ArgumentException(dirFormat == AllowDirNames.No ? TextResources.FilenameLengthZero : TextResources.FilenameLengthZeroPath, paramName);
                 return false;
             }
             if (dirFormat == AllowDirNames.EmptyDir || dirFormat == AllowDirNames.Unknown)
@@ -1203,8 +1160,48 @@ namespace DieFledermaus
             return IsValidFilename(value, false, AllowDirNames.No, nameof(value));
         }
 
+        private SecureString _password;
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// Gets and sets the password used by the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// <para>The current stream is closed.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is disposed.</para>
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has a length of 0.
+        /// </exception>
+        /// <remarks>
+        /// A set operation will dispose of the previous value, as will disposing of the current instance.
+        /// </remarks>
+        public SecureString Password
+        {
+            get { return _password; }
+            set
+            {
+                _ensureCanSetKey();
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+                if (value.Length == 0)
+                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                if (_password != null)
+                    _password.Dispose();
+                _password = value;
+            }
+        }
+
+        /// <summary>
+        /// Sets the password used by the current instance.
         /// </summary>
         /// <param name="password">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
@@ -1214,7 +1211,7 @@ namespace DieFledermaus
         /// The current stream is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="password"/> is <c>null</c>.
@@ -1222,164 +1219,58 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// <paramref name="password"/> has a length of 0.
         /// </exception>
+        /// <remarks>
+        /// This method will dispose of any previous value of <see cref="Password"/>
+        /// </remarks>
         public void SetPassword(string password)
         {
             _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
+            _password = GetPassword(password);
         }
 
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
+        /// Sets the password used by the current instance.
         /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
+        /// <param name="value">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current stream is not encrypted.
+        /// The current archive is disposed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// The current stream is in read-mode and the stream has already been successfully decrypted.
+        /// The current archive is in read-mode and the stream has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
+        /// <paramref name="value"/> has a length of 0.
         /// </exception>
-        public void SetPassword(string password, int keyByteSize)
+        /// <remarks>
+        /// This method will dispose of any previous value of <see cref="Password"/>
+        /// </remarks>
+        public void SetPassword(SecureString value)
         {
-            _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
+            Password = value;
         }
 
-        internal static byte[] SetPassword(string password, byte[] _salt, int _pkCount, int keyByteSize, KeySizes keySizes)
+        internal static SecureString GetPassword(string password)
         {
             if (password == null)
                 throw new ArgumentNullException(nameof(password));
-            if (!IsValidKeyBitSize(keyByteSize << 3, keySizes))
-                throw new ArgumentOutOfRangeException(nameof(keyByteSize), keyByteSize, TextResources.KeyLength);
             if (password.Length == 0)
                 throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
-            byte[] bytes = null;
-            GCHandle hStrBytes = default(GCHandle);
+            SecureString ss = new SecureString();
+            for (int i = 0; i < password.Length; i++)
+                ss.AppendChar(password[i]);
 
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                bytes = new byte[_textEncoding.GetByteCount(password)];
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try { }
-                finally
-                {
-                    hStrBytes = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-                }
-
-                _textEncoding.GetBytes(password, 0, password.Length, bytes, 0);
-
-                return SetPassword(ref bytes, _salt, _pkCount, keyByteSize);
-            }
-            finally
-            {
-                if (bytes != null)
-                    Array.Clear(bytes, 0, bytes.Length);
-
-                if (hStrBytes.IsAllocated)
-                    hStrBytes.Free();
-            }
+            return ss;
         }
 
-        private static byte[] SetPassword(ref byte[] data, byte[] _salt, int _pkCount, int keyLength)
+        internal static byte[] GetKey(SecureString password, byte[] _salt, int _pkCount, int keyLength)
         {
+            keyLength >>= 3;
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
-
-            try
-            {
-#if NOCRYPTOCLOSE
-                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount);
-#else
-                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(data, _salt, _pkCount + minPkCount))
-#endif
-                {
-                    return pbkdf2.GetBytes(keyLength);
-                }
-            }
-            finally
-            {
-                Array.Clear(data, 0, data.Length);
-                data = null;
-            }
-        }
-
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current stream is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current stream is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        public void SetPassword(SecureString password)
-        {
-            _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
-        }
-
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current stream is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current stream is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        public void SetPassword(SecureString password, int keyByteSize)
-        {
-            _ensureCanSetKey();
-            _key = SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
-        }
-
-        internal static byte[] SetPassword(SecureString password, byte[] salt, int pkCount, int keyByteSize, KeySizes keySizes)
-        {
-            if (password == null)
-                throw new ArgumentNullException(nameof(password));
-            if (!IsValidKeyBitSize(keyByteSize << 3, keySizes))
-                throw new ArgumentOutOfRangeException(nameof(keyByteSize), keyByteSize, TextResources.KeyLength);
-            if (password.Length == 0)
-                throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
 
             char[] data = new char[password.Length];
             IntPtr pData = IntPtr.Zero;
@@ -1426,7 +1317,14 @@ namespace DieFledermaus
                     data = null;
                 }
 
-                return SetPassword(ref bytes, salt, pkCount, keyByteSize);
+#if NOCRYPTOCLOSE
+                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, _pkCount + minPkCount);
+#else
+                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, _pkCount + minPkCount))
+#endif
+                {
+                    return pbkdf2.GetBytes(keyLength);
+                }
             }
             finally
             {
@@ -1506,9 +1404,9 @@ namespace DieFledermaus
         #endregion
 
         internal const int _blockByteCtAes = 16;
-        internal const int _keyBitAes256 = 256, _keyByteAes256 = _keyBitAes256 >> 3;
-        internal const int _keyBitAes128 = 128, _keyByteAes128 = _keyBitAes128 >> 3;
-        internal const int _keyBitAes192 = 192, _keyByteAes192 = _keyBitAes192 >> 3;
+        internal const int _keyBitAes256 = 256;
+        internal const int _keyBitAes128 = 128;
+        internal const int _keyBitAes192 = 192;
         internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
         internal static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
@@ -1671,9 +1569,12 @@ namespace DieFledermaus
                     }
                     else throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    if (_keySizes == null)
+                    if (_keySize == 0)
+                    {
+                        _keySize = keyBits;
                         _keySizes = new KeySizes(keyBits, keyBits, 0);
-                    else if (keyBits != _keySizes.MinSize && keyBits != _keySizes.MaxSize)
+                    }
+                    else if (keyBits != _keySize)
                         throw new InvalidDataException(TextResources.FormatBad);
                     _encFmt = MausEncryptionFormat.Aes;
                     continue;
@@ -1825,7 +1726,7 @@ namespace DieFledermaus
         private LzmaDictionarySize _lzmaDictSize;
 
         /// <summary>
-        /// Attempts to pre-load the data in the current instance, and test whether <see cref="Key"/> is set to the correct value
+        /// Attempts to pre-load the data in the current instance, and test whether the correct password is set.
         /// if the current stream is encrypted and to decrypt any encrypted options.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
@@ -1835,7 +1736,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
         /// again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
@@ -1859,7 +1760,7 @@ namespace DieFledermaus
         {
             if (_headerGotten) return;
 
-            if (_key == null && _encFmt != MausEncryptionFormat.None)
+            if (_password == null && _encFmt != MausEncryptionFormat.None)
                 throw new CryptographicException(TextResources.KeyNotSet);
 
             GetBuffer();
@@ -1868,10 +1769,12 @@ namespace DieFledermaus
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                var bufferStream = Decrypt();
+                byte[] _key = GetKey(_password, _salt, _pkCount, _keySize);
+                var bufferStream = Decrypt(_key);
 
                 if (!CompareBytes(ComputeHmac(bufferStream, _key), _hashExpected))
                     throw new CryptographicException(TextResources.BadKey);
+                Array.Clear(_key, 0, _key.Length);
                 bufferStream.Reset();
 
 #if NOLEAVEOPEN
@@ -2018,7 +1921,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
         /// again if this exception is caught.
         /// </exception>
         /// <exception cref="ArgumentNullException">
@@ -2074,7 +1977,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="Key"/> is not set to the correct value. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
         /// again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
@@ -2157,7 +2060,7 @@ namespace DieFledermaus
             return alg;
         }
 
-        private MausBufferStream Decrypt()
+        private MausBufferStream Decrypt(byte[] _key)
         {
             MausBufferStream output = new MausBufferStream();
 
@@ -2172,7 +2075,7 @@ namespace DieFledermaus
             return output;
         }
 
-        private MausBufferStream Encrypt()
+        private MausBufferStream Encrypt(byte[] _key)
         {
             MausBufferStream output = new MausBufferStream();
             byte[] firstBuffer = new byte[_key.Length + _iv.Length];
@@ -2219,6 +2122,8 @@ namespace DieFledermaus
                         _bufferStream.Dispose();
                     if (!_leaveOpen)
                         _baseStream.Dispose();
+                    if (_password != null)
+                        _password.Dispose();
                 }
             }
             finally
@@ -2249,7 +2154,7 @@ namespace DieFledermaus
                 return;
             if (_bufferStream == null || _mode != CompressionMode.Compress || _bufferStream.Length == 0)
                 return;
-            if (_encFmt != MausEncryptionFormat.None && _key == null)
+            if (_encFmt != MausEncryptionFormat.None && _password == null)
                 throw new InvalidOperationException(TextResources.KeyNotSet);
 
             _bufferStream.Reset();
@@ -2314,15 +2219,15 @@ namespace DieFledermaus
                     if (_encFmt == MausEncryptionFormat.Aes)
                     {
                         formats.Add(_encBAes);
-                        switch (_key.Length)
+                        switch (_keySize)
                         {
-                            case _keyByteAes256:
+                            default:
                                 formats.Add(_keyBAes256);
                                 break;
-                            case _keyByteAes192:
+                            case _keyBitAes192:
                                 formats.Add(_keyBAes192);
                                 break;
-                            case _keyByteAes128:
+                            case _keyBitAes128:
                                 formats.Add(_keyBAes128);
                                 break;
                         }
@@ -2390,7 +2295,9 @@ namespace DieFledermaus
                         }
                     }
 
-                    using (MausBufferStream output = Encrypt())
+                    byte[] _key = GetKey(_password, _salt, _pkCount, _keySize);
+
+                    using (MausBufferStream output = Encrypt(_key))
                     {
                         writer.Write(output.Length);
                         writer.Write((long)_pkCount);
@@ -2401,6 +2308,7 @@ namespace DieFledermaus
 
                         output.BufferCopyTo(_baseStream, false);
                     }
+                    Array.Clear(_key, 0, _key.Length);
                 }
             }
 #if NOLEAVEOPEN

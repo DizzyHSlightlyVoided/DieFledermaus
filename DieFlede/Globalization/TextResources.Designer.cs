@@ -160,51 +160,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter encryption key (hexadecimal).
-        /// </summary>
-        internal static string EncryptedPrompt2KeyHex {
-            get {
-                return ResourceManager.GetString("EncryptedPrompt2KeyHex", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enter encryption key (base64).
-        /// </summary>
-        internal static string EncryptedPrompt3KeyB64 {
-            get {
-                return ResourceManager.GetString("EncryptedPrompt3KeyB64", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified key is not a valid Base64 value..
-        /// </summary>
-        internal static string EncryptInvalidBase64 {
-            get {
-                return ResourceManager.GetString("EncryptInvalidBase64", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified key is not a valid hexadecimal value..
-        /// </summary>
-        internal static string EncryptInvalidHex {
-            get {
-                return ResourceManager.GetString("EncryptInvalidHex", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The number of bytes in the specified key is invalid..
-        /// </summary>
-        internal static string EncryptInvalidKeyLength {
-            get {
-                return ResourceManager.GetString("EncryptInvalidKeyLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Encryption can only be used in interactive mode..
         /// </summary>
         internal static string EncryptionNoOpts {
@@ -219,15 +174,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string EncryptionNoOptsEx {
             get {
                 return ResourceManager.GetString("EncryptionNoOptsEx", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Key size must be equal to {0} bits ({1} bytes)..
-        /// </summary>
-        internal static string EncryptKeyLength {
-            get {
-                return ResourceManager.GetString("EncryptKeyLength", resourceCulture);
             }
         }
         

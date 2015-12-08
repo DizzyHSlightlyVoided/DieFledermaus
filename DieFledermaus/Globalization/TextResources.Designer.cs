@@ -187,7 +187,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The computed SHA-512 checksum did not match the expected value..
+        ///   Looks up a localized string similar to The computed checksum did not match the expected value..
         /// </summary>
         internal static string BadChecksum {
             get {
@@ -196,7 +196,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The key or password is invalid..
+        ///   Looks up a localized string similar to The password is invalid..
         /// </summary>
         internal static string BadKey {
             get {
@@ -331,15 +331,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified path has a length of 0..
-        /// </summary>
-        internal static string FilenameEmptyPath {
-            get {
-                return ResourceManager.GetString("FilenameEmptyPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified filename contains a forward-slash character &quot;/&quot;..
         /// </summary>
         internal static string FilenameForwardSlash {
@@ -358,20 +349,20 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified path has a length greater than 256 UTF-8 bytes..
-        /// </summary>
-        internal static string FilenameLengthLongPath {
-            get {
-                return ResourceManager.GetString("FilenameLengthLongPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified filename is empty..
         /// </summary>
         internal static string FilenameLengthZero {
             get {
                 return ResourceManager.GetString("FilenameLengthZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path has a length of 0..
+        /// </summary>
+        internal static string FilenameLengthZeroPath {
+            get {
+                return ResourceManager.GetString("FilenameLengthZeroPath", resourceCulture);
             }
         }
         
@@ -493,7 +484,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a key or password..
+        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a password..
         /// </summary>
         internal static string KeyNotSet {
             get {
@@ -502,7 +493,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a key or password..
+        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a password..
         /// </summary>
         internal static string KeyNotSetZ {
             get {
@@ -547,15 +538,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified password contained invalid UTF-8 characters..
-        /// </summary>
-        internal static string PasswordInvalidUtf8 {
-            get {
-                return ResourceManager.GetString("PasswordInvalidUtf8", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to A password must be at least 1 character long..
         /// </summary>
         internal static string PasswordZeroLength {
@@ -570,15 +552,6 @@ namespace DieFledermaus.Globalization {
         internal static string SaltLength {
             get {
                 return ResourceManager.GetString("SaltLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to File-spanning is not supported..
-        /// </summary>
-        internal static string SpanningNotSupported {
-            get {
-                return ResourceManager.GetString("SpanningNotSupported", resourceCulture);
             }
         }
         

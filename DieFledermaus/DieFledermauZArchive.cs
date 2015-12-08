@@ -214,9 +214,9 @@ namespace DieFledermaus
             _keySizes = DieFledermausStream._getKeySizes(encryptionFormat, out _blockByteCount);
             _encFmt = encryptionFormat;
             if (encryptionFormat == MausEncryptionFormat.None) return;
-            _key = DieFledermausStream.FillBuffer(_keySizes.MaxSize >> 3);
+            _keySize = _keySizes.MaxSize;
             _iv = DieFledermausStream.FillBuffer(_blockByteCount);
-            _salt = DieFledermausStream.FillBuffer(_key.Length);
+            _salt = DieFledermausStream.FillBuffer(_keySize >> 3);
             _encryptedOptions = new SettableOptions(this);
         }
         #endregion
@@ -464,7 +464,7 @@ namespace DieFledermaus
         /// An I/O error occurred.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// <see cref="DieFledermauZItem.Key"/> is not set to the correct value. It is safe to attempt to call <see cref="Decrypt()"/>
+        /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/>
         /// again if this exception is caught.
         /// </exception>
         public void Decrypt()
@@ -488,6 +488,11 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
+            if (_password == null)
+                throw new CryptographicException(TextResources.KeyNotSetZ);
+
+            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize);
+
             using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = algorithm.CreateDecryptor())
             using (MausBufferStream newBufferStream = new MausBufferStream())
@@ -510,6 +515,7 @@ namespace DieFledermaus
                     ReadDecrypted(reader, ref curOffset);
                 }
             }
+            Array.Clear(_key, 0, _key.Length);
         }
 
         private bool _gotEnc;
@@ -576,9 +582,12 @@ namespace DieFledermaus
                     }
                     else throw new NotSupportedException(TextResources.FormatUnknownZ);
 
-                    if (_keySizes == null)
+                    if (_keySize == 0)
+                    {
+                        _keySize = keySize;
                         _keySizes = new KeySizes(keySize, keySize, 0);
-                    else if (_keySizes.MaxSize != keySize)
+                    }
+                    else if (_keySize != keySize)
                         throw new InvalidDataException(TextResources.FormatBadZ);
 
                     continue;
@@ -787,45 +796,77 @@ namespace DieFledermaus
             }
         }
 
-        private byte[] _key;
+        private int _keySize;
         /// <summary>
-        /// Gets and sets the key used to encrypt the DieFledermaus stream.
+        /// Gets and sets the number of bits in the key.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current archive is disposed.
+        /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, the current archive is not encrypted.
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
+        /// </exception>
+        public int KeySize
+        {
+            get { return _keySize; }
+            set
+            {
+                EnsureCanWrite();
+                if (_encFmt == MausEncryptionFormat.None)
+                    throw new NotSupportedException(TextResources.NotEncrypted);
+                if (!IsValidKeyBitSize(value))
+                    throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
+                _keySize = value;
+            }
+        }
+
+        private SecureString _password;
+        /// <summary>
+        /// Gets and sets the password used by the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// <para>The current stream is closed.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is disposed.</para>
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current archive is in read-mode and the stream has already been successfully decrypted.
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is an invalid length according to <see cref="KeySizes"/>.
+        /// In a set operation, the specified value has a length of 0.
         /// </exception>
-        public byte[] Key
+        /// <remarks>
+        /// A set operation will dispose of the previous value, as will disposing of the current instance.
+        /// </remarks>
+        public SecureString Password
         {
-            get
-            {
-                if (_key == null) return null;
-                return (byte[])_key.Clone();
-            }
+            get { return _password; }
             set
             {
                 _ensureCanSetKey();
-                if (value == null) throw new ArgumentNullException(nameof(value));
-
-                if (!DieFledermausStream.IsValidKeyBitSize(value.Length << 3, _keySizes))
-                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
-                _key = (byte[])value.Clone();
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+                if (value.Length == 0)
+                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                if (_password != null)
+                    _password.Dispose();
+                _password = value;
             }
         }
 
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password.
+        /// Sets the password used by the current instance.
         /// </summary>
         /// <param name="password">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
@@ -840,93 +881,37 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// <paramref name="password"/> has a length of 0.
         /// </exception>
+        /// <remarks>
+        /// This method will dispose of any previous value of <see cref="Password"/>
+        /// </remarks>
         public void SetPassword(string password)
         {
             _ensureCanSetKey();
-            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
+            _password = DieFledermausStream.GetPassword(password);
         }
 
         /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
+        /// Sets the password used by the current instance.
         /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
+        /// <param name="value">The password to set.</param>
         /// <exception cref="ObjectDisposedException">
         /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current archive is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The current archive is in read-mode and the stream has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
+        /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
+        /// <paramref name="value"/> has a length of 0.
         /// </exception>
-        public void SetPassword(string password, int keyByteSize)
+        /// <remarks>
+        /// This method will dispose of any previous value of <see cref="Password"/>
+        /// </remarks>
+        public void SetPassword(SecureString value)
         {
-            _ensureCanSetKey();
-            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
-        }
-
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current archive is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        public void SetPassword(SecureString password)
-        {
-            _ensureCanSetKey();
-            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount, _salt.Length, _keySizes);
-        }
-
-        /// <summary>
-        /// Sets <see cref="Key"/> to a value derived from the specified password, using the specified key size.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <param name="keyByteSize">The length of <see cref="Key"/> to set, in bytes (1/8 the number of bits).</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current archive is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="keyByteSize"/> is invalid according to <see cref="KeySizes"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        public void SetPassword(SecureString password, int keyByteSize)
-        {
-            _ensureCanSetKey();
-            _key = DieFledermausStream.SetPassword(password, _salt, _pkCount, keyByteSize, _keySizes);
+            Password = value;
         }
 
         /// <summary>
@@ -1202,7 +1187,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bits.
+        /// Determines whether the specified value is a valid length for a key, in bits.
         /// </summary>
         /// <param name="bitCount">The number of bits to test.</param>
         /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
@@ -1215,7 +1200,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Determines whether the specified value is a valid length for <see cref="Key"/>, in bytes.
+        /// Determines whether the specified value is a valid length for a key, in bytes.
         /// </summary>
         /// <param name="byteCount">The number of bytes to test.</param>
         /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
@@ -1293,6 +1278,8 @@ namespace DieFledermaus
                 {
                     if (!_leaveOpen)
                         _baseStream.Dispose();
+                    if (_password != null)
+                        _password.Dispose();
                 }
             }
             finally
@@ -1339,15 +1326,15 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.Aes)
             {
                 options.Add(DieFledermausStream._encBAes);
-                switch (_key.Length)
+                switch (_keySize)
                 {
                     default:
                         options.Add(DieFledermausStream._keyBAes256);
                         break;
-                    case DieFledermausStream._keyByteAes192:
+                    case DieFledermausStream._keyBitAes192:
                         options.Add(DieFledermausStream._keyBAes192);
                         break;
-                    case DieFledermausStream._keyByteAes128:
+                    case DieFledermausStream._keyBitAes128:
                         options.Add(DieFledermausStream._keyBAes128);
                         break;
                 }
@@ -1366,7 +1353,7 @@ namespace DieFledermaus
             else
             {
                 encryptedOptions = new List<byte[]>();
-                long size = _key.Length + _addSize;
+                long size = (_keySize >> 3) + _addSize;
 
                 length += size;
                 curOffset += size;
@@ -1407,6 +1394,8 @@ namespace DieFledermaus
                             WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position
                                 + sizeof(int) + sizeof(long)); //Size of "all-entries" + size of entry count
                         }
+
+                        byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize);
 
                         cryptStream.Reset();
                         hmac = DieFledermausStream.ComputeHmac(cryptStream, _key);

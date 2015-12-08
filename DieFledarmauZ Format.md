@@ -70,7 +70,7 @@ Encryption
 ----------
 There are two ways to deal with encryption. One is to encrypt each entry individually, using the usual format for DieFledermaus streams.
 
-The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES` value from the DieFledermaus's **Format**. Everything after **Total Size** is encrypted, and the following fields are inserted after **Options**:
+The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES` value from the DieFledermaus's **Format**. As with DieFledermaus, an encoder must use a PBKDF2-encoded password. Everything after **Total Size** is encrypted, and the following fields are inserted after **Options**:
 * **PBKDF2 Value:** Same as that of a DieFledermaus stream.
 * **HMAC:** An SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext file.
 * **Salt:** The [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password, with a length equal to that of the key.

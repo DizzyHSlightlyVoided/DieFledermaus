@@ -158,10 +158,10 @@
     <value>The current archive is in create-mode.</value>
   </data>
   <data name="BadChecksum" xml:space="preserve">
-    <value>The computed SHA-512 checksum did not match the expected value.</value>
+    <value>The computed checksum did not match the expected value.</value>
   </data>
   <data name="BadKey" xml:space="preserve">
-    <value>The key or password is invalid.</value>
+    <value>The password is invalid.</value>
   </data>
   <data name="CollectBadArray" xml:space="preserve">
     <value>The specified array is invalid.</value>
@@ -229,7 +229,7 @@
     <value>The specified value is an invalid length.</value>
   </data>
   <data name="KeyNotSet" xml:space="preserve">
-    <value>The DieFledermaus stream is encrypted, and requires a key or password.</value>
+    <value>The DieFledermaus stream is encrypted, and requires a password.</value>
   </data>
   <data name="NotEncrypted" xml:space="preserve">
     <value>The DieFledermaus stream is not encrypted.</value>
@@ -244,9 +244,6 @@
   </data>
   <data name="OutOfRangeLessThanZero" xml:space="preserve">
     <value>The specified value is less than 0.</value>
-  </data>
-  <data name="PasswordInvalidUtf8" xml:space="preserve">
-    <value>The specified password contained invalid UTF-8 characters.</value>
   </data>
   <data name="PasswordZeroLength" xml:space="preserve">
     <value>A password must be at least 1 character long.</value>
@@ -275,14 +272,11 @@
   <data name="VersionTooLowZ" xml:space="preserve">
     <value>The DieFledermauZ version number is lower than the supported minimum.</value>
   </data>
-  <data name="SpanningNotSupported" xml:space="preserve">
-    <value>File-spanning is not supported.</value>
-  </data>
   <data name="FormatBadZ" xml:space="preserve">
     <value>The DieFledermauZ archive contains invalid or contradictory formats.</value>
   </data>
   <data name="KeyNotSetZ" xml:space="preserve">
-    <value>The DieFledermauZ archive is encrypted, and requires a key or password.</value>
+    <value>The DieFledermauZ archive is encrypted, and requires a password.</value>
   </data>
   <data name="IvLength" xml:space="preserve">
     <value>The specified IV must be the same length as the block size.</value>
@@ -313,10 +307,7 @@
     <value>The specified path contains an unpaired surrogate character: {0}</value>
     <comment>{0} = invalid character</comment>
   </data>
-  <data name="FilenameEmptyPath" xml:space="preserve">
+  <data name="FilenameLengthZeroPath" xml:space="preserve">
     <value>The specified path has a length of 0.</value>
-  </data>
-  <data name="FilenameLengthLongPath" xml:space="preserve">
-    <value>The specified path has a length greater than 256 UTF-8 bytes.</value>
   </data>
 </root>
