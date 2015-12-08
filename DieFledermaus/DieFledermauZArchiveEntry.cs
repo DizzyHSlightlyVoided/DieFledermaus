@@ -128,14 +128,17 @@ namespace DieFledermaus
         /// <summary>
         /// Opens the archive entry for writing.
         /// </summary>
-        /// <returns>A writeable stream to which the data will be written..</returns>
+        /// <returns>A writeable stream.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance has been deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para><see cref="DieFledermauZItem.Archive"/> is in read-only mode.</para>
+        /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>The current instance is already open for writing.</para>
         /// <para>-OR-</para>
-        /// <para>The current instance has already been open for writing.</para>
+        /// <para>The current instance was previously open for writing, and data was written to the stream before it was closed.</para>
         /// </exception>
         public Stream OpenWrite()
         {
@@ -149,6 +152,17 @@ namespace DieFledermaus
                 _writingStream.Disposing += _writingStream_Disposing;
                 return _writingStream;
             }
+        }
+
+        private void _writingStream_Disposing(object sender, DisposeEventArgs e)
+        {
+            if (e.Length == 0)
+            {
+                _writingStream = null;
+                return;
+            }
+            _writingStream.Reset();
+            _writingStream.BufferCopyTo(MausStream, false);
         }
 
         /// <summary>
@@ -226,17 +240,11 @@ namespace DieFledermaus
             }
         }
 
-        private void _writingStream_Disposing(object sender, EventArgs e)
-        {
-            _writingStream.Reset();
-            _writingStream.BufferCopyTo(MausStream, false);
-        }
-
         internal override MausBufferStream GetWritten()
         {
             lock (_lock)
             {
-                if (_writingStream == null || _writingStream.CanRead)
+                if (_writingStream == null || _writingStream.CanRead || _writingStream.CanWrite)
                     throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, MausStream.Filename));
                 return base.GetWritten();
             }

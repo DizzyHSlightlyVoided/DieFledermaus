@@ -219,7 +219,7 @@ namespace DieFledermaus
             _position = _length;
         }
 
-        internal event EventHandler Disposing;
+        internal event EventHandler<DisposeEventArgs> Disposing;
 
         protected override void Dispose(bool disposing)
         {
@@ -227,10 +227,9 @@ namespace DieFledermaus
                 return;
 
             if (Disposing != null)
-                Disposing(this, EventArgs.Empty);
+                Disposing(this, new DisposeEventArgs(_length));
 
             _firstBuffer = _currentBuffer = null;
-            _length = _position = _currentPos = 0;
             Disposing = null;
             base.Dispose(disposing);
         }
@@ -251,5 +250,16 @@ namespace DieFledermaus
             newFirst.Next = _firstBuffer;
             _firstBuffer = newFirst;
         }
+    }
+
+    internal class DisposeEventArgs : EventArgs
+    {
+        public DisposeEventArgs(long length)
+        {
+            _length = length;
+        }
+
+        private readonly long _length;
+        public long Length { get { return _length; } }
     }
 }
