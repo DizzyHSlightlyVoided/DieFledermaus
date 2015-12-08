@@ -1,6 +1,6 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-* Version 0.96
+* Version 0.97
 
 The DieFledermaus file format is simply a [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE)- or [Lempel-Ziv-Markov chain](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number; it has been extended with the DieFledermauZ [archive file](https://en.wikipedia.org/wiki/Archive_file) format, which can contain multiple files. The names exist solely to be a bilingual pun. The file formats are specified in [DieFledermaus Format.md](DieFledermaus Format.md) and [DieFledermauZ Format.md](DieFledermauZ Format.md).
 

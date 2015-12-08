@@ -1,6 +1,6 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 0.96
+Version 0.97
 ------------
 * File Extension: ".maus"
 * Byte order: little-endian
@@ -21,7 +21,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Structure
 ---------
-Any encoder or decoder must support version 0.96 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
+Any encoder or decoder must support version 0.97 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless a specific filename is requested by the user.
 
@@ -43,7 +43,7 @@ Some elements in **Format** require more information than just the current value
 If no element in **Format** specifies the compression format, the decoder must use the DEFLATE algorithm.
 
 The following values are defined for the default implementation:
-* `Name` - *One parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifer "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension. The maximum length of the filename is 256 UTF-8 bytes.
+* `Name` - *One parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifier "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension. The maximum length of the filename is 256 UTF-8 bytes.
 * `NK` - *No parameters.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
 * `DEF` - *No parameters.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
 * `LZMA` - *No parameters.* Indicates that the file is compressed using the [Lempel-Ziv-Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size must be less than or equal to 64 megabytes.
@@ -68,7 +68,7 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
 * **Decompressed Length** is replaced with the **PBKDF2 Value**, which is still a signed 64-bit integer to make the structure more straightforward. This value is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive.
 * If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
-* **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the plaintext to be incrypted.
+* **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the *compressed* data, rather than a direct SHA-512 hash of the *uncompressed* data.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
  2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
@@ -79,7 +79,7 @@ The encrypted data contains:
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 interations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
+Most end-users are likely to be more interested in using a text-based password than a fixed-length sequence of unintelligible bytes. For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 iterations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
