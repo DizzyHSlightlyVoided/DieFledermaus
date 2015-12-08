@@ -60,7 +60,7 @@ namespace DieFledermaus.Cli
             }
         }
 
-        private HashSet<ClParam> _setParams = new HashSet<ClParam>();
+        private HashSet<ClParam> _setParams = new HashSet<ClParam>(), _badParams = new HashSet<ClParam>();
 
         public bool Parse(string[] args)
         {
@@ -69,6 +69,8 @@ namespace DieFledermaus.Cli
 
             Dictionary<string, ClParam> stringDict = new Dictionary<string, ClParam>(_params.Count, StringComparer.OrdinalIgnoreCase);
             Dictionary<char, ClParam> charDict = new Dictionary<char, ClParam>(_params.Count);
+
+            bool result = false;
 
             for (int i = 0; i < _params.Count; i++)
             {
@@ -129,7 +131,8 @@ namespace DieFledermaus.Cli
                         if (string.IsNullOrEmpty(curVal))
                         {
                             Console.Error.WriteLine(TextResources.ParamReqArg, curArg);
-                            return true;
+                            result = true;
+                            continue;
                         }
                     }
 
@@ -137,11 +140,12 @@ namespace DieFledermaus.Cli
                         return true;
 
                     curParam.IsSet = true;
-                    if (curParam.SetAction != null && curParam.SetAction(this))
-                        return true;
 
-                    if (GetBadParams(_setParams, curParam))
-                        return true;
+                    if (GetBadParams(curParam))
+                    {
+                        result = true;
+                        continue;
+                    }
 
                     _setParams.Add(curParam);
 
@@ -224,17 +228,22 @@ namespace DieFledermaus.Cli
                             if (curParam.TakesValue)
                             {
                                 Console.Error.WriteLine(TextResources.ParamReqArg, curKey);
-                                return true;
+                                result = true;
+                                continue;
                             }
                         }
                         else if (curParam.SetValue(curVal))
-                            return true;
+                        {
+                            result = true;
+                            continue;
+                        }
 
                         curParam.IsSet = true;
-                        if (curParam.SetAction != null && curParam.SetAction(this))
-                            return true;
-                        if (GetBadParams(_setParams, curParam))
-                            return true;
+                        if (GetBadParams(curParam))
+                        {
+                            result = true;
+                            continue;
+                        }
 
                         _setParams.Add(curParam);
                     }
@@ -249,7 +258,7 @@ namespace DieFledermaus.Cli
                 _setParams.Add(_rawParam);
             }
             _disposed = true;
-            return false;
+            return result;
         }
 
         private void CurParam_SetChanged(object sender, EventArgs e)
@@ -261,31 +270,38 @@ namespace DieFledermaus.Cli
                 _setParams.Remove(curParam);
         }
 
-        private static bool GetBadParams(HashSet<ClParam> setParams, ClParam curParam)
+        private bool GetBadParams(ClParam curParam)
         {
-            ClParam[] badParams = curParam.MutualExclusives.Where(p => setParams.Contains(p))
-                .Concat(setParams.Where(p => p.MutualExclusives.Contains(curParam))).ToArray();
+            ClParam[] badParams = curParam.MutualExclusives.Where(p => _setParams.Contains(p) && !_badParams.Contains(p))
+                .Concat(_setParams.Where(p => p.MutualExclusives.Contains(curParam) && !_badParams.Contains(p))).Distinct().ToArray();
 
             if (badParams.Length == 0) return false;
+
+            HashSet<ClParam> seenParams = new HashSet<ClParam>();
+
+            _badParams.Add(curParam);
 
             for (int i = 0; i < badParams.Length; i++)
             {
                 Func<ClParam, string> message;
                 var cParam = badParams[i];
+                _badParams.Add(cParam);
                 if (cParam.OtherMessages.TryGetValue(curParam, out message))
                 {
                     Console.Error.WriteLine(message(curParam));
-                    return true;
+                    continue;
                 }
 
                 if (curParam.OtherMessages.TryGetValue(cParam, out message))
                 {
                     Console.Error.WriteLine(message(cParam));
-                    return true;
+                    continue;
                 }
+                seenParams.Add(cParam);
             }
 
-            Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", badParams.Select(i => i.Key)));
+            if (seenParams.Count != 0)
+                Console.Error.WriteLine(TextResources.MutuallyExclusive, string.Join(", ", badParams.Concat(new ClParam[] { curParam }).Select(i => i.Key)));
 
             return true;
         }
@@ -338,8 +354,6 @@ namespace DieFledermaus.Cli
         }
 
         public event EventHandler SetChanged;
-
-        public Func<ClParser, bool> SetAction;
 
         private string _key;
         public string Key
