@@ -64,7 +64,7 @@ namespace DieFledermaus
 
         internal readonly object _lock = new object();
 
-        private DieFledermauZArchive _arch;
+        internal DieFledermauZArchive _arch;
         /// <summary>
         /// Gets the <see cref="DieFledermauZArchive"/> containing the current instance, or <c>null</c> if
         /// the current instance has been deleted.
@@ -80,6 +80,28 @@ namespace DieFledermaus
         /// Gets the number of bytes in a single block of data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockByteCount { get { return MausStream.BlockByteCount; } }
+
+        /// <summary>
+        /// Gets and sets a comment on the file.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string Comment
+        {
+            get { return MausStream.Comment; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.Comment = value;
+            }
+        }
 
         private string _path;
         /// <summary>
@@ -421,14 +443,14 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 _arch.Delete(this);
-                DoDelete();
+                DoDelete(true);
             }
         }
 
-        internal virtual void DoDelete()
+        internal virtual void DoDelete(bool deleteMaus)
         {
             _arch = null;
-            if (MausStream != null)
+            if (deleteMaus && MausStream != null)
                 MausStream.Dispose();
             if (_bufferStream != null)
                 _bufferStream.Dispose();

@@ -398,8 +398,11 @@ namespace DieFledermaus
 
             if (path == null)
             {
-                if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount << 1))
+                if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount * 3) +
+                    DieFledermausStream.Max8Bit + DieFledermausStream.Max16Bit)
+                {
                     returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
+                }
                 else
                     returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset, curOffset);
             }
@@ -1296,7 +1299,7 @@ namespace DieFledermaus
             {
                 _baseStream = null;
                 for (int i = 0; i < _entries.Count; i++)
-                    _entries[i].DoDelete();
+                    _entries[i].DoDelete(false);
             }
         }
 

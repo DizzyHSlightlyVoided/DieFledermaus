@@ -62,9 +62,10 @@ namespace DieFledermaus
         /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/>, <see cref="DieFledermauZItem.IV"/>, and
+        /// <para>Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.Key"/>, <see cref="DieFledermauZItem.IV"/>, and
         /// <see cref="DieFledermauZItem.Salt"/> to randomly-generated values. Subsequently setting this property to <c>false</c> will
-        /// set these properties to <c>null</c>, and the old values will not be remembered or saved.
+        /// set these properties to <c>null</c>, and the old values will not be remembered or saved.</para>
+        /// <para>Setting this to <c>false</c> will also set <see cref="EncryptComment"/> <c>false</c>.</para>
         /// </remarks>
         public bool EncryptPath
         {
@@ -77,15 +78,52 @@ namespace DieFledermaus
                     if (value && MausStream.EncryptionFormat == MausEncryptionFormat.None)
                     {
                         MausStream.Dispose();
-                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes);
+                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes)
+                        {
+                            Comment = MausStream.Comment
+                        };
                         MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
                     }
                     else if (!value && MausStream.EncryptionFormat != MausEncryptionFormat.None)
                     {
                         MausStream.Dispose();
-                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None);
+                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None)
+                        {
+                            Comment = MausStream.Comment
+                        };
                     }
                     _enc = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a value indicating whether <see cref="DieFledermauZItem.Comment"/> will be encrypted.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <remarks>
+        /// Setting this property to <c>true</c> will also set <see cref="EncryptPath"/> <c>true</c>.
+        /// </remarks>
+        public bool EncryptComment
+        {
+            get { return MausStream.EncryptedOptions != null && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
+            set
+            {
+                if (value)
+                {
+                    EncryptPath = true;
+                    MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Comment);
+                }
+                else
+                {
+                    EnsureCanWrite();
+                    if (MausStream.EncryptedOptions != null)
+                        MausStream.EncryptedOptions.Remove(MausOptionToEncrypt.Comment);
                 }
             }
         }
@@ -122,7 +160,9 @@ namespace DieFledermaus
         internal static void CheckStream(DieFledermausStream stream)
         {
             const int ForwardSlashReadByte = '/';
-            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > 254 || stream.ReadByte() != ForwardSlashReadByte || stream.ReadByte() >= 0)
+            int readByte1 = -5, readByte2 = -5;
+            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > byte.MaxValue || (readByte1 = stream.ReadByte()) != ForwardSlashReadByte || (readByte2 = stream.ReadByte()) >= 0 ||
+                stream.ModifiedTime.HasValue || stream.CreatedTime.HasValue)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
 

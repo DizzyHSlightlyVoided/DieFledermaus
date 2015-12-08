@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
@@ -82,13 +83,15 @@ namespace DieFledermaus
             if (MausStream.Filename.EndsWith("/"))
             {
                 DieFledermauZEmptyDirectory.CheckStream(MausStream);
+                if (!DieFledermauZArchive.IsValidEmptyDirectoryPath(MausStream.Filename))
+                    throw new InvalidDataException(TextResources.InvalidDataMaus);
                 returner = new DieFledermauZEmptyDirectory(Archive, null, MausStream, Offset, RealOffset);
             }
             else returner = new DieFledermauZArchiveEntry(Archive, null, MausStream, Offset, RealOffset);
 
             Archive.Entries.ReplaceElement(Archive.Entries.IndexOf(this), returner);
             _isDecrypted = true;
-            DoDelete();
+            DoDelete(false);
             return returner;
         }
     }
