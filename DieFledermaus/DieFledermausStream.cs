@@ -1911,6 +1911,7 @@ namespace DieFledermaus
                     _bufferStream = lzmaStream;
                     if (_bufferStream.Length < _uncompressedLength || _bufferStream.Length == 0)
                         throw new EndOfStreamException();
+                    _bufferStream.Reset();
                     break;
                 case MausCompressionFormat.None:
                     break;
@@ -1947,9 +1948,9 @@ namespace DieFledermaus
                     if (_bufferStream.Length < _uncompressedLength || _bufferStream.Length == 0)
                         throw new EndOfStreamException();
 #endif
+                    _bufferStream.Reset();
                     break;
             }
-            _bufferStream.Reset();
 
             if (_encFmt == MausEncryptionFormat.None && !CompareBytes(ComputeHash(_bufferStream), _hashExpected))
                 throw new InvalidDataException(TextResources.BadChecksum);
