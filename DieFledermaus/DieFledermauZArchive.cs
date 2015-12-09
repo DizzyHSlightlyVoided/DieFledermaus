@@ -1306,6 +1306,8 @@ namespace DieFledermaus
 
             if (_entries.Count == 0)
                 throw new InvalidOperationException(TextResources.ArchiveEmpty);
+            if (_encFmt != MausEncryptionFormat.None && _password == null)
+                throw new InvalidOperationException(TextResources.KeyNotSetZ);
 
             long length = 16;
 
