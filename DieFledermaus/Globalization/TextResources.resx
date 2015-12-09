@@ -310,4 +310,7 @@
   <data name="FilenameLengthZeroPath" xml:space="preserve">
     <value>The specified path has a length of 0.</value>
   </data>
+  <data name="PasswordDisposed" xml:space="preserve">
+    <value>The SecureString containing the password is disposed.</value>
+  </data>
 </root>

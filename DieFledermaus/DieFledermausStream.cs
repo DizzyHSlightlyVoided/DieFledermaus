@@ -1192,8 +1192,15 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                if (value.Length == 0)
-                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                try
+                {
+                    if (value.Length == 0)
+                        throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                }
+                catch (ObjectDisposedException)
+                {
+                    throw new ObjectDisposedException(nameof(value), TextResources.PasswordDisposed);
+                }
                 if (_password != null)
                     _password.Dispose();
                 _password = value;
@@ -1272,7 +1279,15 @@ namespace DieFledermaus
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
-            char[] data = new char[password.Length];
+            char[] data;
+            try
+            {
+                data = new char[password.Length];
+            }
+            catch (ObjectDisposedException)
+            {
+                throw new ObjectDisposedException(null, TextResources.PasswordDisposed);
+            }
             IntPtr pData = IntPtr.Zero;
             byte[] bytes = null;
             GCHandle hData = default(GCHandle), hBytes = default(GCHandle);

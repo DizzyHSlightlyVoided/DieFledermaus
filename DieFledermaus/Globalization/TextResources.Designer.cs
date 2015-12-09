@@ -538,6 +538,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The SecureString containing the password is disposed..
+        /// </summary>
+        internal static string PasswordDisposed {
+            get {
+                return ResourceManager.GetString("PasswordDisposed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A password must be at least 1 character long..
         /// </summary>
         internal static string PasswordZeroLength {

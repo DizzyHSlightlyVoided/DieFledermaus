@@ -857,8 +857,15 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                if (value.Length == 0)
-                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                try
+                {
+                    if (value.Length == 0)
+                        throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
+                }
+                catch (ObjectDisposedException)
+                {
+                    throw new ObjectDisposedException(nameof(value), TextResources.PasswordDisposed);
+                }
                 if (_password != null)
                     _password.Dispose();
                 _password = value;
