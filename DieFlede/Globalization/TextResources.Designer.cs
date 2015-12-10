@@ -70,6 +70,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value &quot;{0}&quot; is invalid for the &quot;{1}&quot; parameter..
+        /// </summary>
+        internal static string BadEnumValue {
+            get {
+                return ResourceManager.GetString("BadEnumValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         internal static string Cancel {
@@ -309,6 +318,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpMExtract {
             get {
                 return ResourceManager.GetString("HelpMExtract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Indicates the compression format..
+        /// </summary>
+        internal static string HelpMFormat {
+            get {
+                return ResourceManager.GetString("HelpMFormat", resourceCulture);
             }
         }
         
@@ -628,6 +646,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to none.
+        /// </summary>
+        internal static string PFormatNone {
+            get {
+                return ResourceManager.GetString("PFormatNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to archive.
         /// </summary>
         internal static string PNameArchive {
@@ -660,6 +687,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameFile {
             get {
                 return ResourceManager.GetString("PNameFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to format.
+        /// </summary>
+        internal static string PNameFormat {
+            get {
+                return ResourceManager.GetString("PNameFormat", resourceCulture);
             }
         }
         

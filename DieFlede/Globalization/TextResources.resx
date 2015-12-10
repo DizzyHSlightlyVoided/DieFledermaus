@@ -402,6 +402,7 @@
   </data>
   <data name="PNameSingle" xml:space="preserve">
     <value>single</value>
+    <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="EncryptedExEntry" xml:space="preserve">
     <value>Encrypted entry: {0}</value>
@@ -442,5 +443,22 @@
   </data>
   <data name="HelpMEntry2" xml:space="preserve">
     <value>When extracting, lists the files you want to extract. Wildcards accepted.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="BadEnumValue" xml:space="preserve">
+    <value>The value "{0}" is invalid for the "{1}" parameter.</value>
+    <comment>{0} = user-input value, {1} = param name</comment>
+  </data>
+  <data name="HelpMFormat" xml:space="preserve">
+    <value>Indicates the compression format.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PFormatNone" xml:space="preserve">
+    <value>none</value>
+    <comment>No compression</comment>
+  </data>
+  <data name="PNameFormat" xml:space="preserve">
+    <value>format</value>
+    <comment>Localized parameter name, keep this unique</comment>
   </data>
 </root>

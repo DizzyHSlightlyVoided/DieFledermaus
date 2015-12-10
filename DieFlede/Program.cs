@@ -63,6 +63,22 @@ namespace DieFledermaus.Cli
             create.MutualExclusives.Add(list);
             create.OtherMessages.Add(list, NoOutputCreate);
 
+            ClParamEnum<MausCompressionFormat> cFormat;
+            {
+                Dictionary<string, MausCompressionFormat> locArgs = new Dictionary<string, MausCompressionFormat>();
+                locArgs.Add("DEFLATE", MausCompressionFormat.Deflate);
+                locArgs.Add("LZMA", MausCompressionFormat.Lzma);
+                locArgs.Add(TextResources.PFormatNone, MausCompressionFormat.None);
+
+                Dictionary<string, MausCompressionFormat> unArgs = new Dictionary<string, MausCompressionFormat>() { { "none", MausCompressionFormat.None } };
+
+                cFormat = new ClParamEnum<MausCompressionFormat>(TextResources.HelpMFormat, locArgs, unArgs, '\0', "format", TextResources.PNameFormat);
+                cFormat.MutualExclusives.Add(extract);
+                cFormat.MutualExclusives.Add(list);
+                cFormat.OtherMessages.Add(extract, NoEntryExtract);
+                cFormat.OtherMessages.Add(list, NoEntryExtract);
+            }
+
             ClParamFlag single = new ClParamFlag(TextResources.HelpMSingle, 'n', "single", TextResources.PNameSingle);
 
             ClParamFlag interactive = new ClParamFlag(TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
@@ -98,7 +114,7 @@ namespace DieFledermaus.Cli
             extract.MutualExclusives.Add(hide);
             extract.OtherMessages.Add(hide, NoEntryExtract);
 
-            ClParam[] clParams = { create, extract, help, list, single, entryFile, archiveFile, outFile, interactive, verbose, skipexist, overwrite, encAes, hide };
+            ClParam[] clParams = { create, extract, help, list, single, entryFile, archiveFile, outFile, interactive, verbose, cFormat, skipexist, overwrite, encAes, hide };
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -225,7 +241,7 @@ namespace DieFledermaus.Cli
                         FileInfo entryInfo = new FileInfo(entry);
                         using (FileStream fs = File.OpenRead(entry))
                         {
-                            MausCompressionFormat compFormat = MausCompressionFormat.Deflate;
+                            MausCompressionFormat compFormat = cFormat.Value.HasValue ? cFormat.Value.Value : MausCompressionFormat.Deflate;
                             MausEncryptionFormat encFormat = MausEncryptionFormat.None;
 
                             if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
@@ -282,11 +298,11 @@ namespace DieFledermaus.Cli
                     #region Create - Archive
                     else
                     {
-                        MausCompressionFormat compFormat = MausCompressionFormat.Deflate;
+                        MausCompressionFormat compFormat = cFormat.Value.HasValue ? cFormat.Value.Value : MausCompressionFormat.Deflate;
                         streams = new List<FileStream>(entryFile.Count);
                         List<FileInfo> fileInfos = new List<FileInfo>(streams.Capacity);
 
-                        var entries = entryFile.Values.Select(Path.GetFullPath).ToArray();
+                        var entries = entryFile.Values.Select(Path.GetFullPath).Distinct().ToArray();
 
                         for (int i = 0; i < entries.Length; i++)
                         {
@@ -676,7 +692,7 @@ namespace DieFledermaus.Cli
 
                     IEnumerable<string> paramList;
 
-                    ClParamValue cParamValue = curParam as ClParamValue;
+                    ClParamValueBase cParamValue = curParam as ClParamValueBase;
                     if (cParamValue != null)
                     {
                         paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", cParamValue.ArgName, ">") }.

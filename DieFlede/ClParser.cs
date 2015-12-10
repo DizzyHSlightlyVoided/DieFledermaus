@@ -386,9 +386,9 @@ namespace DieFledermaus.Cli
         }
     }
 
-    internal class ClParamValue : ClParam
+    internal abstract class ClParamValueBase : ClParam
     {
-        public ClParamValue(string helpMessage, string argName, char shortName, params string[] longNames)
+        public ClParamValueBase(string helpMessage, string argName, char shortName, params string[] longNames)
             : base(helpMessage, shortName, longNames)
         {
             ArgName = argName;
@@ -399,6 +399,14 @@ namespace DieFledermaus.Cli
         public override bool TakesValue
         {
             get { return true; }
+        }
+    }
+
+    internal class ClParamValue : ClParamValueBase
+    {
+        public ClParamValue(string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(helpMessage, argName, shortName, longNames)
+        {
         }
 
         public string Value;
@@ -427,9 +435,9 @@ namespace DieFledermaus.Cli
         {
             if (IsSet)
             {
-                if (Value != null && Value.Length != 0)
-                    return Key + "=" + string.Join(",", Value);
-                else if (IsSet)
+                if (!string.IsNullOrEmpty(Value))
+                    return Key + "=" + Value;
+                else
                     return Key;
             }
 
@@ -456,15 +464,12 @@ namespace DieFledermaus.Cli
         }
     }
 
-    internal class ClParamMulti : ClParam
+    internal class ClParamMulti : ClParamValueBase
     {
         public ClParamMulti(string helpMessage, string argName, char shortName, params string[] longNames)
-            : base(helpMessage, shortName, longNames)
+            : base(helpMessage, argName, shortName, longNames)
         {
-            ArgName = argName;
         }
-
-        public readonly string ArgName;
 
         public override bool TakesValue
         {
@@ -475,12 +480,75 @@ namespace DieFledermaus.Cli
 
         public string[] Values { get { return _vals.Distinct().ToArray(); } }
 
-        public int Count { get { return _vals.Count; } }
+        public int Count { get { return Values.Length; } }
 
         public override bool SetValue(string value)
         {
             _vals.Add(value);
             return false;
+        }
+    }
+
+    internal class ClParamEnum<TEnum> : ClParamValueBase
+        where TEnum : struct
+    {
+        public ClParamEnum(string helpMessage, Dictionary<string, TEnum> locArgs, Dictionary<string, TEnum> unArgs, char shortName, params string[] longNames)
+            : base(helpMessage, string.Join("|", locArgs.Keys), shortName, longNames)
+        {
+            _args = new Dictionary<string, TEnum>(unArgs, StringComparer.OrdinalIgnoreCase);
+            foreach (var curKVP in locArgs)
+            {
+                if (!_args.ContainsKey(curKVP.Key))
+                    _args.Add(curKVP.Key, curKVP.Value);
+            }
+        }
+
+        private Dictionary<string, TEnum> _args;
+
+        public TEnum? Value;
+        public string StrValue;
+
+        public override bool SetValue(string value)
+        {
+            if (value == null)
+            {
+                Value = null;
+                return false;
+            }
+            value = value.Trim();
+
+            TEnum newValue;
+
+            if (!_args.TryGetValue(value, out newValue))
+            {
+                Console.Error.WriteLine(TextResources.BadEnumValue, value, Key);
+                return true;
+            }
+
+            if (!Value.HasValue)
+            {
+                StrValue = value;
+            }
+            else if (!Value.Value.Equals(newValue))
+            {
+                Console.Error.WriteLine(TextResources.ParamDup, Key, value);
+                return true;
+            }
+            Value = newValue;
+            return false;
+        }
+
+        public override string ToString()
+        {
+            if (IsSet)
+            {
+                if (Value.HasValue)
+                    return Key + "=" + Value.Value;
+                else
+                    return Key;
+            }
+
+            return base.ToString();
         }
     }
 }
