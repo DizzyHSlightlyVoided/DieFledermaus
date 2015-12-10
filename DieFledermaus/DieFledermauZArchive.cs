@@ -494,7 +494,7 @@ namespace DieFledermaus
             if (_password == null)
                 throw new CryptographicException(TextResources.KeyNotSetZ);
 
-            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize);
+            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
 
             using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = algorithm.CreateDecryptor())
@@ -506,7 +506,7 @@ namespace DieFledermaus
 
                 newBufferStream.Reset();
 
-                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key), _hashExpected))
+                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key, _useSha3), _hashExpected))
                     throw new CryptographicException(TextResources.BadKey);
 
                 newBufferStream.Reset();
@@ -596,6 +596,14 @@ namespace DieFledermaus
                     continue;
                 }
 
+                if (curOption.Equals(DieFledermausStream._kSha3, StringComparison.Ordinal))
+                {
+                    if (fromEncrypted && !_useSha3)
+                        throw new InvalidDataException(TextResources.FormatBad);
+                    _useSha3 = true;
+                    continue;
+                }
+
                 if (curOption.Equals(DieFledermausStream._kComment, StringComparison.Ordinal))
                 {
                     CheckAdvance(optLen, ref i);
@@ -614,6 +622,9 @@ namespace DieFledermaus
 
                 throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
+
+            if (_encFmt == MausEncryptionFormat.None && (_useSha3))
+                throw new InvalidDataException(TextResources.FormatBadZ);
         }
 
         private static void CheckAdvance(int optLen, ref int i)
@@ -828,6 +839,27 @@ namespace DieFledermaus
             }
         }
 
+        private bool _useSha3;
+        /// <summary>
+        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// If the current instance is not encrypted, specifies the default <see cref="DieFledermauZItem.UseSha3"/> value.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        public bool UseSha3
+        {
+            get { return _useSha3; }
+            set
+            {
+                EnsureCanWrite();
+                _useSha3 = value;
+            }
+        }
+
         private SecureString _password;
         /// <summary>
         /// Gets and sets the password used by the current instance.
@@ -998,6 +1030,7 @@ namespace DieFledermaus
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
             _entryDict.Add(path, _entries.Count);
             _entries.Add(entry);
+            entry.UseSha3 = _useSha3;
             return entry;
         }
 
@@ -1283,6 +1316,7 @@ namespace DieFledermaus
             DieFledermauZEmptyDirectory empty = new DieFledermauZEmptyDirectory(this, pathSlash);
             _entryDict.Add(pathSlash, _entries.Count);
             _entries.Add(empty);
+            empty.UseSha3 = _useSha3;
             return empty;
         }
 
@@ -1497,6 +1531,9 @@ namespace DieFledermaus
                         options.Add(DieFledermausStream._keyBAes128);
                         break;
                 }
+
+                if (_useSha3)
+                    options.Add(DieFledermausStream._bSha3);
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
@@ -1554,10 +1591,10 @@ namespace DieFledermaus
                                 + sizeof(int) + sizeof(long)); //Size of "all-entries" + size of entry count
                         }
 
-                        byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize);
+                        byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
 
                         cryptStream.Reset();
-                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key);
+                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key, _useSha3);
                         cryptStream.Reset();
 
                         using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))

@@ -17,7 +17,7 @@ Features
 
 DieFlede
 ========
-A command-line utility for creating DieFledermaus files. The name is an even worse pun.
+A command-line utility for creating DieFledermaus files, using the DieFledermaus class library. The name is an even worse pun.
 
 Usage:
 ------
@@ -45,9 +45,11 @@ On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http
 
 Class Library
 =============
-The library contains a public type, `DieFledermaus.DieFledermausStream`, which provides much the same functionality as the [`System.IO.Compression.DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx) or [`System.IO.Compression.GZipStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.gzipstream.aspx) classes. Unlike either of these classes, however, DieFledermausStream must read part of the underlying stream before [`Stream.Read()`](https://msdn.microsoft.com/en-us/library/system.io.stream.read%28v=vs.110%29.aspx) is called.
+The DieFledermaus library contains a public type, `DieFledermaus.DieFledermausStream`, which provides much the same functionality as the [`System.IO.Compression.DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx) or [`System.IO.Compression.GZipStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.gzipstream.aspx) classes. Unlike either of these classes, however, DieFledermausStream must read part of the underlying stream before [`Stream.Read()`](https://msdn.microsoft.com/en-us/library/system.io.stream.read%28v=vs.110%29.aspx) is called.
 
 It also contains `DieFledermaus.DieFledermauZArchive`, which is more or less modelled after [`System.IO.Compression.ZipArchive`](https://msdn.microsoft.com/en-us/library/system.io.compression.ziparchive.aspx).
+
+The DieFledermaus library computes SHA-3 data using the [C# Bouncy Castle library](http://www.bouncycastle.org/). For information on third-party licenses, see [LICENSE-ThirdParty.md](LICENSE-ThirdParty.md).
 
 Disclaimer
 ==========

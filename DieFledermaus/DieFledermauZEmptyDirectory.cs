@@ -80,7 +80,8 @@ namespace DieFledermaus
                         MausStream.Dispose();
                         MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes)
                         {
-                            Comment = MausStream.Comment
+                            Comment = MausStream.Comment,
+                            UseSha3 = MausStream.UseSha3
                         };
                         MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
                     }
@@ -89,7 +90,8 @@ namespace DieFledermaus
                         MausStream.Dispose();
                         MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None)
                         {
-                            Comment = MausStream.Comment
+                            Comment = MausStream.Comment,
+                            UseSha3 = MausStream.UseSha3
                         };
                     }
                     _enc = value;

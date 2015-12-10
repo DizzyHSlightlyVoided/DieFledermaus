@@ -27,8 +27,9 @@ The structure of a DieFledermauZ file is as follows:
 
 ### Options
 The following elements are specified for the **Options** field:
-* `Kom` - *1 parameter* - Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
-* `AES` - *1 parameter* - Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus. See below for further information.
+* `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
+* `AES` - *1 parameter.* Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus. See below for further information.
+* `SHA3` - *No parameters.* Indicates that the file uses SHA-3/512 hashes and HMACs instead of SHA-512. Only valid when the file is encrypted.
 
 Entry List
 ----------
@@ -72,7 +73,7 @@ There are two ways to deal with encryption. One is to encrypt each entry individ
 
 The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES` value from the DieFledermaus's **Format**. As with DieFledermaus, an encoder must use a PBKDF2-encoded password. Everything after **Options** is encrypted, and the following plaintext fields are inserted between **Options** and the encrypted values:
 * **PBKDF2 Value:** Same as that of a DieFledermaus stream.
-* **HMAC:** An SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext file, including any encrypted values.
+* **HMAC:** An SHA-512 (or SHA-3/512, if `SHA3` is enabled) [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext file, including any encrypted values.
 * **Salt:** The [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password, with a length equal to that of the key.
 * **IV:** The initialization vector.
 * **Encrypted Data:** The encrypted data.

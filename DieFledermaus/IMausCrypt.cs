@@ -78,6 +78,17 @@ namespace DieFledermaus
         byte[] Salt { get; set; }
 
         /// <summary>
+        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        bool UseSha3 { get; set; }
+
+        /// <summary>
         /// Gets the number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         int BlockSize { get; }

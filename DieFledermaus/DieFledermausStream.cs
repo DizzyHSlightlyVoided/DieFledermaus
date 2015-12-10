@@ -41,6 +41,10 @@ using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Macs;
+using Org.BouncyCastle.Crypto.Parameters;
 using SevenZip;
 using SevenZip.Compression.LZMA;
 
@@ -1163,6 +1167,26 @@ namespace DieFledermaus
             return IsValidFilename(value, false, AllowDirNames.No, nameof(value));
         }
 
+        private bool _useSha3;
+        /// <summary>
+        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-mode.
+        /// </exception>
+        public bool UseSha3
+        {
+            get { return _useSha3; }
+            set
+            {
+                _ensureCanWrite();
+                _useSha3 = value;
+            }
+        }
+
         private SecureString _password;
         /// <summary>
         /// Gets and sets the password used by the current instance.
@@ -1276,9 +1300,9 @@ namespace DieFledermaus
             return ss;
         }
 
-        internal static byte[] GetKey(SecureString password, byte[] _salt, int _pkCount, int keyLength)
+        internal static byte[] GetKey(SecureString password, byte[] _salt, int _pkCount, int keySize, bool sha3)
         {
-            keyLength >>= 3;
+            int keyLength = keySize >> 3;
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
@@ -1335,10 +1359,20 @@ namespace DieFledermaus
                     data = null;
                 }
 
+                int pkCount = _pkCount + minPkCount;
+
+                if (sha3)
+                {
+                    Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(new Sha3Digest(hashBitSize));
+                    gen.Init(bytes, _salt, pkCount);
+                    KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
+                    return kParam.GetKey();
+                }
+
 #if NOCRYPTOCLOSE
-                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, _pkCount + minPkCount);
+                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, pkCount);
 #else
-                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, _pkCount + minPkCount))
+                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, pkCount))
 #endif
                 {
                     return pbkdf2.GetBytes(keyLength);
@@ -1435,6 +1469,8 @@ namespace DieFledermaus
             _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
         internal static readonly byte[] _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
+        internal const string _kSha3 = "SHA3";
+        internal static readonly byte[] _bSha3 = { (byte)'S', (byte)'H', (byte)'A', (byte)'3' };
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
         private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
@@ -1542,6 +1578,14 @@ namespace DieFledermaus
 
                     gotFormat = true;
                     _cmpFmt = cmpFmt;
+                    continue;
+                }
+
+                if (curForm.Equals(_kSha3, StringComparison.Ordinal))
+                {
+                    if (fromEncrypted && !_useSha3)
+                        throw new InvalidDataException(TextResources.FormatBad);
+                    _useSha3 = true;
                     continue;
                 }
 
@@ -1740,7 +1784,7 @@ namespace DieFledermaus
         internal long CompressedLength { get { return _compLength; } }
 
         private byte[] _hashExpected;
-        internal const int hashLength = 64, minPkCount = 9001;
+        internal const int hashLength = 64, hashBitSize = hashLength << 3, minPkCount = 9001;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;
 
@@ -1788,10 +1832,10 @@ namespace DieFledermaus
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                byte[] _key = GetKey(_password, _salt, _pkCount, _keySize);
+                byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
                 var bufferStream = Decrypt(_key);
 
-                if (!CompareBytes(ComputeHmac(bufferStream, _key), _hashExpected))
+                if (!CompareBytes(ComputeHmac(bufferStream, _key, _useSha3), _hashExpected))
                     throw new CryptographicException(TextResources.BadKey);
                 Array.Clear(_key, 0, _key.Length);
                 bufferStream.Reset();
@@ -1863,18 +1907,18 @@ namespace DieFledermaus
                             while ((read = _deflateStream.Read(readBuffer, 0, Max16Bit)) != 0)
                                 _bufferStream.Write(readBuffer, 0, read);
                         }
-                    }
 #else
-                        _deflateStream.CopyTo(_bufferStream);
-                    }
-                    if (_bufferStream.Length < _uncompressedLength || _bufferStream.Length == 0)
-                        throw new EndOfStreamException();
+                        _deflateStream.CopyTo(_bufferStream, Max16Bit);
+
+                        if (_bufferStream.Length < _uncompressedLength || _bufferStream.Length == 0)
+                            throw new EndOfStreamException();
 #endif
+                    }
                     _bufferStream.Reset();
                     break;
             }
 
-            if (_encFmt == MausEncryptionFormat.None && !CompareBytes(ComputeHash(_bufferStream), _hashExpected))
+            if (_encFmt == MausEncryptionFormat.None && !CompareBytes(ComputeHash(_bufferStream, _useSha3), _hashExpected))
                 throw new InvalidDataException(TextResources.BadChecksum);
 
             _headerGotten = true;
@@ -1906,7 +1950,13 @@ namespace DieFledermaus
 
         internal static bool CompareBytes(byte[] hashComputed, byte[] _hashExpected)
         {
-            for (int i = 0; i < hashLength; i++)
+            if (hashComputed == _hashExpected)
+                return true;
+
+            if (hashComputed.Length != _hashExpected.Length)
+                return false;
+
+            for (int i = 0; i < hashComputed.Length; i++)
             {
                 if (hashComputed[i] != _hashExpected[i])
                     return false;
@@ -2045,16 +2095,42 @@ namespace DieFledermaus
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
-        internal static byte[] ComputeHash(Stream inputStream)
+
+        internal static byte[] ComputeHash(Stream inputStream, bool sha3)
         {
+            if (sha3)
+            {
+                Sha3Digest shaHash = new Sha3Digest(hashBitSize);
+                return ComputeWithStream(inputStream, shaHash.BlockUpdate, shaHash.DoFinal);
+            }
+
             using (SHA512Managed shaHash = new SHA512Managed())
                 return shaHash.ComputeHash(inputStream);
         }
 
-        internal static byte[] ComputeHmac(Stream inputStream, byte[] key)
+        internal static byte[] ComputeHmac(Stream inputStream, byte[] key, bool sha3)
         {
+            if (sha3)
+            {
+                HMac hmac = new HMac(new Sha3Digest(hashBitSize));
+                hmac.Init(new KeyParameter(key));
+                return ComputeWithStream(inputStream, hmac.BlockUpdate, hmac.DoFinal);
+            }
+
             using (HMACSHA512 hmac = new HMACSHA512(key))
                 return hmac.ComputeHash(inputStream);
+        }
+
+        private static byte[] ComputeWithStream(Stream inputStream, Action<byte[], int, int> update, Func<byte[], int, int> doFinal)
+        {
+            byte[] buffer = new byte[Max16Bit];
+            int read;
+            while ((read = inputStream.Read(buffer, 0, Max16Bit)) != 0)
+                update(buffer, 0, read);
+
+            byte[] output = new byte[hashLength];
+            doFinal(output, 0);
+            return output;
         }
 
         internal static byte[] FillBuffer(int length)
@@ -2235,6 +2311,9 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
 
+                    if (_useSha3)
+                        formats.Add(_bSha3);
+
                     if (_encFmt == MausEncryptionFormat.Aes)
                     {
                         formats.Add(_encBAes);
@@ -2261,7 +2340,7 @@ namespace DieFledermaus
                     writer.Write(_bufferStream.Length);
 
                     _bufferStream.Reset();
-                    byte[] hashChecksum = ComputeHash(_bufferStream);
+                    byte[] hashChecksum = ComputeHash(_bufferStream, _useSha3);
                     writer.Write(hashChecksum);
 
                     if (_bufferStream != compressedStream)
@@ -2314,7 +2393,7 @@ namespace DieFledermaus
                         }
                     }
 
-                    byte[] _key = GetKey(_password, _salt, _pkCount, _keySize);
+                    byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
 
                     using (MausBufferStream output = Encrypt(_key))
                     {
@@ -2322,7 +2401,7 @@ namespace DieFledermaus
                         writer.Write((long)_pkCount);
 
                         _bufferStream.Reset();
-                        byte[] hashHmac = ComputeHmac(_bufferStream, _key);
+                        byte[] hashHmac = ComputeHmac(_bufferStream, _key, _useSha3);
                         _baseStream.Write(hashHmac, 0, hashLength);
 
                         output.BufferCopyTo(_baseStream, false);

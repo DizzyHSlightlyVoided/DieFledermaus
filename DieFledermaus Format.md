@@ -32,7 +32,7 @@ A DieFledermaus stream contains the following fields:
 3. **Format:** An array of length-prefixed strings describing the format.
 4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
 5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
-6. **Checksum:** A SHA-512 hash of the decompressed value.
+6. **Checksum:** An [SHA-512](https://en.wikipedia.org/wiki/SHA-2) hash of the decompressed value.
 7. **Data:** The compressed data itself.
 
 ### Format
@@ -53,6 +53,7 @@ The following values are defined for the default implementation:
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
 * `Mod` - *One parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
 * `Kom` - *Between 2 and 257 parameters* **Kom**mentar ("comment"). A textual comment. The first parameter is the number of remaining parameters, and a value of 0 means 256. The remaining parameters contain the UTF-8 text of the comment. All but the last parameter must contain 256 bytes. All told, the length of the comment must be less than or equal to 65536. Beyond that, the comment can be anything.
+* `SHA3` - *No parameters.* The **Checksum** uses [SHA-3/512](https://en.wikipedia.org/wiki/SHA-3) instead of SHA-512 in both encrypted and unencrypted forms, and the password key is derived from an SHA-3/512 HMAC instead of an SHA-1 HMAC. According to most recent security analysis, SHA-2 remains a perfectly cromulent hashing algorithm, and so SHA-3 is intended to be an alternative to SHA-2 for the time being, rather than a replacement.
 
 If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 
@@ -68,18 +69,18 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
 * **Decompressed Length** is replaced with the **PBKDF2 Value**, which is still a signed 64-bit integer to make the structure more straightforward. This value is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive.
 * If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
-* **Checksum** contains an SHA-512 [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the *compressed* data, rather than a direct SHA-512 hash of the *uncompressed* data.
+* **Checksum** contains an SHA-512 (or SHA-3/512) [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the *compressed* data, rather than a direct SHA-512 hash of the *uncompressed* data.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
  2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
  3. **Encrypted Data:** The encrypted data itself.
 
 The encrypted data contains:
-1. **Encrypted Format:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename (`Name`). This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
+1. **Encrypted Format:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename. This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-For the purposes of a DieFledermaus file, the UTF-8 encoding of a textual password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC, with at least 9001 iterations and an output length equal to that of the key. The implementation is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes.aspx).
+In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC (or SHA-3/512 if `SHA3` is enabled), with at least 9001 iterations and an output length equal to that of the key.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 

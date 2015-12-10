@@ -84,6 +84,25 @@ namespace DieFledermaus
         public int BlockByteCount { get { return MausStream.BlockByteCount; } }
 
         /// <summary>
+        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="Archive"/> is in read-only mode.
+        /// </exception>
+        public bool UseSha3
+        {
+            get { return MausStream.UseSha3; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.UseSha3 = value;
+            }
+        }
+
+        /// <summary>
         /// Gets and sets the number of bits in the key.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
