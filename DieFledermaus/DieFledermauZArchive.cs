@@ -35,12 +35,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+#if COMPLVL
+using System.IO.Compression;
+#endif
 
 namespace DieFledermaus
 {
