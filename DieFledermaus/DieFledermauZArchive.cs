@@ -35,6 +35,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography;
@@ -921,8 +922,9 @@ namespace DieFledermaus
             Password = value;
         }
 
+        #region Create
         /// <summary>
-        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using the specified compression format and encryption format.
         /// </summary>
         /// <param name="path">The path to the entry within the archive's file structure.</param>
         /// <param name="compressionFormat">The compression format of the archive entry.</param>
@@ -950,6 +952,7 @@ namespace DieFledermaus
         public DieFledermauZArchiveEntry Create(string path, MausCompressionFormat compressionFormat, MausEncryptionFormat encryptionFormat)
         {
             EnsureCanWrite();
+            DieFledermausStream.IsValidFilename(path, true, DieFledermausStream.AllowDirNames.Yes, nameof(path));
             ICompressionFormat compFormat;
 
             switch (compressionFormat)
@@ -971,6 +974,11 @@ namespace DieFledermaus
                     throw new InvalidEnumArgumentException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
             }
 
+            return Create(path, compFormat, encryptionFormat);
+        }
+
+        private DieFledermauZArchiveEntry Create(string path, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
+        {
             switch (encryptionFormat)
             {
                 case MausEncryptionFormat.Aes:
@@ -979,8 +987,6 @@ namespace DieFledermaus
                 default:
                     throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
             }
-
-            DieFledermausStream.IsValidFilename(path, true, DieFledermausStream.AllowDirNames.Yes, nameof(path));
 
             if (_entryDict.ContainsKey(path))
                 throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
@@ -994,7 +1000,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using the specified compression format and no encryption.
         /// </summary>
         /// <param name="path">The path to the entry within the archive's file structure.</param>
         /// <param name="compressionFormat">The compression format of the archive entry.</param>
@@ -1026,7 +1032,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using DEFLATE compression and the specified encryption format.
         /// </summary>
         /// <param name="path">The path to the entry within the archive's file structure.</param>
         /// <param name="encryptionFormat">The encryption format of the archive entry.</param>
@@ -1054,11 +1060,11 @@ namespace DieFledermaus
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, MausEncryptionFormat encryptionFormat)
         {
-            return Create(path, 0, encryptionFormat);
+            return Create(path, MausCompressionFormat.Deflate, encryptionFormat);
         }
 
         /// <summary>
-        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive.
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using DEFLATE compressoin and no encryption.
         /// </summary>
         /// <param name="path">The path to the entry within the archive's file structure.</param>
         /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
@@ -1082,8 +1088,150 @@ namespace DieFledermaus
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path)
         {
-            return Create(path, 0, 0);
+            return Create(path, MausCompressionFormat.Deflate, 0);
         }
+
+#if COMPLVL
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using DEFLATE compression
+        /// and the specified encryption format.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="compressionLevel">The compression level of the DEFLATE compression.</param>
+        /// <param name="encryptionFormat">The encryption format of the archive entry.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
+        {
+            EnsureCanWrite();
+            DieFledermausStream.IsValidFilename(path, true, DieFledermausStream.AllowDirNames.Yes, nameof(path));
+
+            DeflateCompressionFormat compFormat = new DeflateCompressionFormat() { CompressionLevel = compressionLevel };
+
+            return Create(path, compFormat, encryptionFormat);
+        }
+
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using DEFLATE compression.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="compressionLevel">The compression level of the DEFLATE compression.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel)
+        {
+            return Create(path, compressionLevel, MausEncryptionFormat.None);
+        }
+#endif
+
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using LZMA compression
+        /// and the specified encryption format.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="dictionarySize">Options for the LZMA dictionary size.</param>
+        /// <param name="encryptionFormat">The encryption format of the archive entry.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, LzmaDictionarySize dictionarySize, MausEncryptionFormat encryptionFormat)
+        {
+            EnsureCanWrite();
+            DieFledermausStream.IsValidFilename(path, true, DieFledermausStream.AllowDirNames.Yes, nameof(path));
+
+            if (dictionarySize != LzmaDictionarySize.Default)
+                dictionarySize = LzmaDictionarySize.Size8m;
+            else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize, TextResources.OutOfRangeLzma);
+
+            LzmaCompressionFormat compFormat = new LzmaCompressionFormat() { DictionarySize = dictionarySize };
+
+            return Create(path, compFormat, encryptionFormat);
+        }
+
+        /// <summary>
+        /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using LZMA compression
+        /// and no encryption.
+        /// </summary>
+        /// <param name="path">The path to the entry within the archive's file structure.</param>
+        /// <param name="dictionarySize">Options for the LZMA dictionary size.</param>
+        /// <returns>The newly-created <see cref="DieFledermauZArchiveEntry"/> object.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        public DieFledermauZArchiveEntry Create(string path, LzmaDictionarySize dictionarySize)
+        {
+            return Create(path, dictionarySize, MausEncryptionFormat.None);
+        }
+        #endregion
 
         /// <summary>
         /// Adds a new empty directory to the current archive.

@@ -335,8 +335,8 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
-        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -351,8 +351,7 @@ namespace DieFledermaus
                 dictionarySize = LzmaDictionarySize.Size8m;
             else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize,
-                    string.Format(TextResources.OutOfRange, LzmaDictionarySize.MinValue, LzmaDictionarySize.MaxValue));
+                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize, TextResources.OutOfRangeLzma);
             }
             _lzmaDictSize = dictionarySize;
         }
@@ -366,8 +365,8 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
-        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -392,8 +391,8 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
-        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -417,8 +416,8 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="dictionarySize"/> is an integer value less than <see cref="LzmaDictionarySize.MinValue"/> or greater
-        /// than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
+        /// <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.

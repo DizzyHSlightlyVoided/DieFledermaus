@@ -511,15 +511,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified value must be greater than or equal to {0} and less than or equal to {1}..
-        /// </summary>
-        internal static string OutOfRange {
-            get {
-                return ResourceManager.GetString("OutOfRange", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The sum of the parameters &quot;{0}&quot; and &quot;{1}&quot; is greater than the length of the specified array..
         /// </summary>
         internal static string OutOfRangeLength {
@@ -534,6 +525,15 @@ namespace DieFledermaus.Globalization {
         internal static string OutOfRangeLessThanZero {
             get {
                 return ResourceManager.GetString("OutOfRangeLessThanZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value must either be LzmaDictionarySize.Default, or must be between LzmaDictionarySize.MinValue and LzmaDictionarySize.MaxValue..
+        /// </summary>
+        internal static string OutOfRangeLzma {
+            get {
+                return ResourceManager.GetString("OutOfRangeLzma", resourceCulture);
             }
         }
         
