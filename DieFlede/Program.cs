@@ -33,7 +33,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -226,7 +225,7 @@ namespace DieFledermaus.Cli
                     return Return(0, interactive);
             }
 
-            SecureString ssPassword = null;
+            string ssPassword = null;
             List<FileStream> streams = null;
             const string mausExt = ".maus";
             const int mausExtLen = 5;
@@ -600,7 +599,7 @@ namespace DieFledermaus.Cli
             }
         }
 
-        private static bool DoFailDecrypt(DieFledermauZItem entry, ClParamFlag interactive, int i, ref SecureString ssPassword)
+        private static bool DoFailDecrypt(DieFledermauZItem entry, ClParamFlag interactive, int i, ref string ssPassword)
         {
             if (entry.EncryptionFormat == MausEncryptionFormat.None || entry.IsDecrypted)
                 return false;
@@ -643,7 +642,7 @@ namespace DieFledermaus.Cli
             return string.Format(TextResources.ListEncryptedEntry, i + 1);
         }
 
-        private static bool CreateEncrypted(ClParamFlag encAes, out MausEncryptionFormat encFormat, out SecureString ssPassword)
+        private static bool CreateEncrypted(ClParamFlag encAes, out MausEncryptionFormat encFormat, out string ssPassword)
         {
             encFormat = MausEncryptionFormat.None;
             if (encAes.IsSet) //Only true if Interactive is also true
@@ -716,7 +715,6 @@ namespace DieFledermaus.Cli
                     Console.WriteLine(curParam.HelpMessage);
                     Console.WriteLine();
                 }
-
             }
         }
 
@@ -745,7 +743,7 @@ namespace DieFledermaus.Cli
             return false;
         }
 
-        private static bool EncryptionPrompt(IMausCrypt ds, MausEncryptionFormat encFormat, out SecureString ss)
+        private static bool EncryptionPrompt(IMausCrypt ds, MausEncryptionFormat encFormat, out string ss)
         {
             bool notFound1 = true;
             ss = null;
@@ -764,7 +762,7 @@ namespace DieFledermaus.Cli
                 {
                     case '1':
                         Console.Write(TextResources.EncryptedPrompt1Pwd + ":");
-                        ss = new SecureString();
+                        List<char> charList = new List<char>();
                         ConsoleKeyInfo cKey;
                         do
                         {
@@ -773,30 +771,29 @@ namespace DieFledermaus.Cli
                             if (cKey.Key == ConsoleKey.Backspace)
                             {
                                 Console.Write(":");
-                                if (ss.Length > 0)
-                                    ss.RemoveAt(ss.Length - 1);
+                                if (charList.Count > 0)
+                                    charList.RemoveAt(ss.Length - 1);
                             }
                             else if (cKey.Key != ConsoleKey.Enter)
                             {
                                 Console.Write("\b \b");
-                                ss.AppendChar(cKey.KeyChar);
+                                charList.Add(cKey.KeyChar);
                             }
                         }
                         while (cKey.Key != ConsoleKey.Enter);
                         Console.WriteLine();
-                        ss.MakeReadOnly();
+                        ss = new string(charList.ToArray());
 
                         if (ss.Length == 0)
                         {
                             Console.WriteLine(TextResources.PasswordZeroLength);
-                            ss.Dispose();
                             continue;
                         }
 
                         if (ds == null)
                             Console.WriteLine(TextResources.KeepSecret);
                         else
-                            ds.Password = ss;
+                            ds.SetPassword(ss);
                         break;
                     case '2':
                         return true;
