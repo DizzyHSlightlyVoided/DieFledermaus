@@ -56,6 +56,8 @@ namespace DieFledermaus
             Offset = curOffset;
             RealOffset = realOffset;
             MausStream._entry = this;
+            if (path != null)
+                _path = path;
         }
 
         internal readonly long Offset, RealOffset;
