@@ -1,6 +1,6 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 0.97
+Version 0.98
 ------------
 * File Extension: ".maus"
 * Byte order: little-endian
@@ -21,7 +21,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Structure
 ---------
-Any encoder or decoder must support version 0.97 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
+Any encoder or decoder must support version 0.98 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless a specific filename is requested by the user.
 
@@ -53,7 +53,7 @@ The following values are defined for the default implementation:
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
 * `Mod` - *One parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
 * `Kom` - *Between 2 and 257 parameters* **Kom**mentar ("comment"). A textual comment. The first parameter is the number of remaining parameters, and a value of 0 means 256. The remaining parameters contain the UTF-8 text of the comment. All but the last parameter must contain 256 bytes. All told, the length of the comment must be less than or equal to 65536. Beyond that, the comment can be anything.
-* `SHA3` - *No parameters.* The **Checksum** uses [SHA-3/512](https://en.wikipedia.org/wiki/SHA-3) instead of SHA-512 in both encrypted and unencrypted forms, and the password key is derived from an SHA-3/512 HMAC instead of an SHA-1 HMAC. According to most recent security analysis, SHA-2 remains a perfectly cromulent hashing algorithm, and so SHA-3 is intended to be an alternative to SHA-2 for the time being, rather than a replacement.
+* `SHA3` - *No parameters.* The **Checksum** uses [SHA-3/512](https://en.wikipedia.org/wiki/SHA-3) instead of SHA-512 in both encrypted and unencrypted forms, and the password key is derived from an SHA-3/512 HMAC instead of an SHA-512 HMAC. According to most recent security analysis, SHA-2 remains a perfectly cromulent hashing algorithm, and so SHA-3 is intended to be an alternative to SHA-2 for the time being, rather than a replacement.
 
 If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 
@@ -80,7 +80,7 @@ The encrypted data contains:
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-1 HMAC (or SHA-3/512 if `SHA3` is enabled), with at least 9001 iterations and an output length equal to that of the key.
+In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-512 HMAC (or SHA-3/512 if `SHA3` is enabled), with at least 9001 iterations and an output length equal to that of the key.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 

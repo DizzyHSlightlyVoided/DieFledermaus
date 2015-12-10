@@ -41,6 +41,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Macs;
@@ -62,7 +63,7 @@ namespace DieFledermaus
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 97, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 98, _minVersionShort = _versionShort;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
@@ -1361,22 +1362,17 @@ namespace DieFledermaus
 
                 int pkCount = _pkCount + minPkCount;
 
-                if (sha3)
-                {
-                    Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(new Sha3Digest(hashBitSize));
-                    gen.Init(bytes, _salt, pkCount);
-                    KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
-                    return kParam.GetKey();
-                }
+                IDigest digest;
 
-#if NOCRYPTOCLOSE
-                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, pkCount);
-#else
-                using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(bytes, _salt, pkCount))
-#endif
-                {
-                    return pbkdf2.GetBytes(keyLength);
-                }
+                if (sha3)
+                    digest = new Sha3Digest(hashBitSize);
+                else
+                    digest = new Sha512Digest();
+
+                Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(digest);
+                gen.Init(bytes, _salt, pkCount);
+                KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
+                return kParam.GetKey();
             }
             finally
             {
