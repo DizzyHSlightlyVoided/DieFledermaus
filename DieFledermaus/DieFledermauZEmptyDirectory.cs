@@ -131,7 +131,7 @@ namespace DieFledermaus
         /// <summary>
         /// Decrypts the current instance.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The current instance.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance has been deleted.
         /// </exception>

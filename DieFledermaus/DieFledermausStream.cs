@@ -452,6 +452,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
@@ -480,6 +481,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
                 : this(stream, compressionLevel, false)
         {
@@ -507,6 +509,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat, bool leaveOpen)
             : this(stream, compressionLevel, leaveOpen)
         {
@@ -533,6 +536,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
             : this(stream, compressionLevel, encryptionFormat, false)
         {
@@ -1409,6 +1413,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="offset">This parameter is ignored.</param>
         /// <param name="origin">This parameter is ignored.</param>
+        /// <returns>This method does not return.</returns>
         /// <exception cref="NotSupportedException">
         /// Always.
         /// </exception>

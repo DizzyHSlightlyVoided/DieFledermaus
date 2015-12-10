@@ -146,7 +146,7 @@ namespace DieFledermaus
         /// <summary>
         /// Decrypts the current instance.
         /// </summary>
-        /// <returns>The current instance, in decrypted form.</returns>
+        /// <returns>The current instance.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance has been deleted.
         /// </exception>
@@ -188,7 +188,7 @@ namespace DieFledermaus
         /// <summary>
         /// Opens the archive entry for reading.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A readable stream containing the decompressed file.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance has been deleted.
         /// </exception>

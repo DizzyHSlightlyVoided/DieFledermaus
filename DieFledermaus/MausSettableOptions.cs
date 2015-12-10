@@ -40,6 +40,7 @@ namespace DieFledermaus
     /// <summary>
     /// Base class for collections of settable <c>enum</c> values.
     /// </summary>
+    /// <typeparam name="TValue">The type of the values in the collection.</typeparam>
     [DebuggerTypeProxy(typeof(MausSettableOptions<>.DebugView))]
     [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
     public abstract class MausSettableOptions<TValue> : ICollection<TValue>, ICollection
@@ -185,6 +186,7 @@ namespace DieFledermaus
         /// Modifies the contents of the current instance so that it contains all elements which were either contained in the current instance
         /// or which are contained in the specified other collection, but not both.
         /// </summary>
+        /// <param name="other">The other collection to compare.</param>
         /// <exception cref="NotSupportedException">
         /// <see cref="IsReadOnly"/> is <c>true</c>.
         /// </exception>
