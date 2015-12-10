@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -17,16 +18,24 @@ namespace DieFledermaus.Tests
 
             using (MemoryStream ms = new MemoryStream())
             {
+                Console.WriteLine("Creating archive ...");
+                Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes);
+                    Console.WriteLine(" - Building empty directory: EmptyDir/");
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
                     SetPasswd(emptyDir);
+                    Console.WriteLine("Compressing archive ...");
+                    sw = Stopwatch.StartNew();
                 }
 
-                ms.Seek(0, SeekOrigin.Begin);
+                sw.Stop();
+                Console.WriteLine("Completed compression in {0}ms", sw.Elapsed.TotalMilliseconds);
+                Console.WriteLine();
+                Console.WriteLine("Decoding archive ...");
 
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Read, true))
                 {
@@ -34,7 +43,10 @@ namespace DieFledermaus.Tests
                     {
                         Console.WriteLine(" - Decrypting file ...");
                         SetPasswd(item);
-                        Console.WriteLine("Successfully decrypted " + item.Decrypt().Path);
+                        sw = Stopwatch.StartNew();
+                        var dItem = item.Decrypt();
+                        sw.Stop();
+                        Console.WriteLine("Successfully decrypted {0} in {1}ms", dItem.Path, sw.Elapsed.TotalMilliseconds);
                     }
 
                     byte[] getBuffer = new byte[bigBufferLength];
