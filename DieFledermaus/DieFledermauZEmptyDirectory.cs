@@ -162,8 +162,8 @@ namespace DieFledermaus
         internal static void CheckStream(DieFledermausStream stream)
         {
             const int ForwardSlashReadByte = '/';
-            int readByte1 = -5, readByte2 = -5;
-            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > byte.MaxValue || (readByte1 = stream.ReadByte()) != ForwardSlashReadByte || (readByte2 = stream.ReadByte()) >= 0 ||
+
+            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > byte.MaxValue || stream.ReadByte() != ForwardSlashReadByte || stream.ReadByte() >= 0 ||
                 stream.ModifiedTime.HasValue || stream.CreatedTime.HasValue)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
