@@ -404,7 +404,7 @@ namespace DieFledermaus
 
         private void _ensureCanSetKey()
         {
-            if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
+            if (_arch == null) throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new NotSupportedException(TextResources.NotEncrypted);
             if (_arch.Mode == MauZArchiveMode.Read && MausStream.IsDecrypted)
@@ -413,13 +413,13 @@ namespace DieFledermaus
 
         internal void EnsureCanWrite()
         {
-            if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
+            if (_arch == null) throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
             _arch.EnsureCanWrite();
         }
 
         internal void EnsureCanRead()
         {
-            if (_arch == null) throw new ObjectDisposedException(TextResources.ArchiveEntryDeleted);
+            if (_arch == null) throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
             _arch.EnsureCanRead();
         }
 
