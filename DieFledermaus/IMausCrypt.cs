@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Security;
 using System.Security.Cryptography;
 
 namespace DieFledermaus
@@ -123,9 +122,7 @@ namespace DieFledermaus
         /// Gets and sets the password used for the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// <para>The current instance is disposed.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is disposed.</para>
+        /// The current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current instance is not encrypted.
@@ -139,34 +136,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value has a length of 0.
         /// </exception>
-        /// <remarks>
-        /// A set operation will dispose of the previous value, as will disposing of the current instance.
-        /// </remarks>
-        SecureString Password { get; set; }
-
-        /// <summary>
-        /// Sets the password used for the current instance.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// <para>The current instance is disposed.</para>
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current instance is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        void SetPassword(string password);
+        string Password { get; set; }
 
         /// <summary>
         /// Decrypts the current instance.

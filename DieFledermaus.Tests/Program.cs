@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security;
 
 namespace DieFledermaus.Tests
 {
@@ -101,21 +100,7 @@ namespace DieFledermaus.Tests
         {
             const string passwd = "Correct Horse!Battery#Staple69105";
 
-            if (item.Archive.Mode == MauZArchiveMode.Create)
-            {
-                SecureString passwdSS = new SecureString();
-                {
-                    foreach (char c in passwd)
-                        passwdSS.AppendChar(c);
-                    passwdSS.MakeReadOnly();
-
-                    item.Password = passwdSS;
-                }
-            }
-            else
-            {
-                item.SetPassword(passwd);
-            }
+            item.Password = passwd;
 
             DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
             if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)

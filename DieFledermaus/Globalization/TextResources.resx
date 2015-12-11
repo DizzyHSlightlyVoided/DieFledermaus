@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
@@ -305,9 +305,6 @@
   </data>
   <data name="FilenameLengthZeroPath" xml:space="preserve">
     <value>The specified path has a length of 0.</value>
-  </data>
-  <data name="PasswordDisposed" xml:space="preserve">
-    <value>The SecureString containing the password is disposed.</value>
   </data>
   <data name="OutOfRangeLzma" xml:space="preserve">
     <value>The specified value must either be LzmaDictionarySize.Default, or must be between LzmaDictionarySize.MinValue and LzmaDictionarySize.MaxValue.</value>

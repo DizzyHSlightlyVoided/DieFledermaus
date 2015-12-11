@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
-using System.Security;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
@@ -317,9 +316,7 @@ namespace DieFledermaus
         /// Gets and sets the password used by the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// <para>The current stream is closed.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is disposed.</para>
+        /// The current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current stream is not encrypted.
@@ -333,10 +330,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value has a length of 0.
         /// </exception>
-        /// <remarks>
-        /// A set operation will dispose of the previous value, as will disposing of the current instance.
-        /// </remarks>
-        public SecureString Password
+        public string Password
         {
             get { return MausStream.Password; }
             set
@@ -344,62 +338,6 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 MausStream.Password = value;
             }
-        }
-
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has been deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(string password)
-        {
-            _ensureCanSetKey();
-            MausStream.SetPassword(password);
-        }
-
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="value">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has been deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="value"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(SecureString value)
-        {
-            _ensureCanSetKey();
-            MausStream.SetPassword(value);
         }
 
         private void _ensureCanSetKey()

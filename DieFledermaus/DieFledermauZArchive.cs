@@ -36,16 +36,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
-#if COMPLVL
-using System.IO.Compression;
-#endif
 
 namespace DieFledermaus
 {
+#if COMPLVL
+    using System.IO.Compression;
+#endif
     /// <summary>
     /// Represents a DieFledermauZ archive file.
     /// </summary>
@@ -860,7 +859,7 @@ namespace DieFledermaus
             }
         }
 
-        private SecureString _password;
+        private string _password;
         /// <summary>
         /// Gets and sets the password used by the current instance.
         /// </summary>
@@ -881,10 +880,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value has a length of 0.
         /// </exception>
-        /// <remarks>
-        /// A set operation will dispose of the previous value, as will disposing of the current instance.
-        /// </remarks>
-        public SecureString Password
+        public string Password
         {
             get { return _password; }
             set
@@ -892,68 +888,10 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                try
-                {
-                    if (value.Length == 0)
-                        throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
-                }
-                catch (ObjectDisposedException)
-                {
-                    throw new ObjectDisposedException(nameof(value), TextResources.PasswordDisposed);
-                }
-                if (_password != null)
-                    _password.Dispose();
+                if (value.Length == 0)
+                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
                 _password = value;
             }
-        }
-
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(string password)
-        {
-            _ensureCanSetKey();
-            _password = DieFledermausStream.GetPassword(password);
-        }
-
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="value">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="value"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(SecureString value)
-        {
-            Password = value;
         }
 
         #region Create
@@ -1469,8 +1407,6 @@ namespace DieFledermaus
                 {
                     if (!_leaveOpen)
                         _baseStream.Dispose();
-                    if (_password != null)
-                        _password.Dispose();
                 }
             }
             finally

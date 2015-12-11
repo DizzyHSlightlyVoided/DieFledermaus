@@ -262,7 +262,7 @@ namespace DieFledermaus.Cli
                             using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
                             {
                                 if (ssPassword != null)
-                                    ds.SetPassword(ssPassword);
+                                    ds.Password = ssPassword;
 
                                 try
                                 {
@@ -343,7 +343,7 @@ namespace DieFledermaus.Cli
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
                         {
                             if (hide.IsSet)
-                                archive.SetPassword(ssPassword);
+                                archive.Password = ssPassword;
 
                             for (int i = 0; i < fileInfos.Count; i++)
                             {
@@ -354,7 +354,7 @@ namespace DieFledermaus.Cli
 
                                 DieFledermauZArchiveEntry entry = archive.Create(curInfo.Name, compFormat, hide.IsSet ? MausEncryptionFormat.None : encFormat);
                                 if (encAes.IsSet && !hide.IsSet)
-                                    entry.SetPassword(ssPassword);
+                                    entry.Password = ssPassword;
 
                                 using (Stream writeStream = entry.OpenWrite())
                                     streams[i].CopyTo(writeStream);
@@ -617,7 +617,7 @@ namespace DieFledermaus.Cli
 
             try
             {
-                entry.SetPassword(ssPassword);
+                entry.Password = ssPassword;
 
                 entry = entry.Decrypt();
                 return false;
@@ -793,7 +793,7 @@ namespace DieFledermaus.Cli
                         if (ds == null)
                             Console.WriteLine(TextResources.KeepSecret);
                         else
-                            ds.SetPassword(ss);
+                            ds.Password = ss;
                         break;
                     case '2':
                         return true;

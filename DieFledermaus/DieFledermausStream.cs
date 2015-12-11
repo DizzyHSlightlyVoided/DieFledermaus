@@ -34,9 +34,6 @@ using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -1188,7 +1185,7 @@ namespace DieFledermaus
             }
         }
 
-        private SecureString _password;
+        private string _password;
         /// <summary>
         /// Gets and sets the password used by the current instance.
         /// </summary>
@@ -1209,10 +1206,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value has a length of 0.
         /// </exception>
-        /// <remarks>
-        /// A set operation will dispose of the previous value, as will disposing of the current instance.
-        /// </remarks>
-        public SecureString Password
+        public string Password
         {
             get { return _password; }
             set
@@ -1220,173 +1214,29 @@ namespace DieFledermaus
                 _ensureCanSetKey();
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                try
-                {
-                    if (value.Length == 0)
-                        throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
-                }
-                catch (ObjectDisposedException)
-                {
-                    throw new ObjectDisposedException(nameof(value), TextResources.PasswordDisposed);
-                }
-                if (_password != null)
-                    _password.Dispose();
+                if (value.Length == 0)
+                    throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
                 _password = value;
             }
         }
 
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="password">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current stream is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="password"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="password"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(string password)
-        {
-            _ensureCanSetKey();
-            _password = GetPassword(password);
-        }
-
-        /// <summary>
-        /// Sets the password used by the current instance.
-        /// </summary>
-        /// <param name="value">The password to set.</param>
-        /// <exception cref="ObjectDisposedException">
-        /// The current archive is disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The current archive is in read-mode and the stream has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="value"/> has a length of 0.
-        /// </exception>
-        /// <remarks>
-        /// This method will dispose of any previous value of <see cref="Password"/>
-        /// </remarks>
-        public void SetPassword(SecureString value)
-        {
-            Password = value;
-        }
-
-        internal static SecureString GetPassword(string password)
-        {
-            if (password == null)
-                throw new ArgumentNullException(nameof(password));
-            if (password.Length == 0)
-                throw new ArgumentException(TextResources.PasswordZeroLength, nameof(password));
-
-            SecureString ss = new SecureString();
-            for (int i = 0; i < password.Length; i++)
-                ss.AppendChar(password[i]);
-
-            return ss;
-        }
-
-        internal static byte[] GetKey(SecureString password, byte[] _salt, int _pkCount, int keySize, bool sha3)
+        internal static byte[] GetKey(string password, byte[] _salt, int _pkCount, int keySize, bool sha3)
         {
             int keyLength = keySize >> 3;
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
-            char[] data;
-            try
-            {
-                data = new char[password.Length];
-            }
-            catch (ObjectDisposedException)
-            {
-                throw new ObjectDisposedException(null, TextResources.PasswordDisposed);
-            }
-            IntPtr pData = IntPtr.Zero;
-            byte[] bytes = null;
-            GCHandle hData = default(GCHandle), hBytes = default(GCHandle);
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try { }
-                finally
-                {
-                    hData = GCHandle.Alloc(data, GCHandleType.Pinned);
-                }
+            IDigest digest;
 
-                try
-                {
-                    pData = Marshal.SecureStringToBSTR(password);
-                    Marshal.Copy(pData, data, 0, data.Length);
-                }
-                finally
-                {
-                    Marshal.ZeroFreeBSTR(pData);
-                    pData = IntPtr.Zero;
-                }
+            if (sha3)
+                digest = new Sha3Digest(hashBitSize);
+            else
+                digest = new Sha512Digest();
 
-                bytes = new byte[_textEncoding.GetByteCount(data)];
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try { }
-                finally
-                {
-                    hBytes = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-                }
-
-                try
-                {
-                    _textEncoding.GetBytes(data, 0, data.Length, bytes, 0);
-                }
-                finally
-                {
-                    Array.Clear(data, 0, data.Length);
-                    hData.Free();
-                    data = null;
-                }
-
-                int pkCount = _pkCount + minPkCount;
-
-                IDigest digest;
-
-                if (sha3)
-                    digest = new Sha3Digest(hashBitSize);
-                else
-                    digest = new Sha512Digest();
-
-                Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(digest);
-                gen.Init(bytes, _salt, pkCount);
-                KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
-                return kParam.GetKey();
-            }
-            finally
-            {
-                if (data != null)
-                    Array.Clear(data, 0, data.Length);
-                if (hData.IsAllocated)
-                    hData.Free();
-                if (bytes != null)
-                    Array.Clear(bytes, 0, bytes.Length);
-                if (hBytes.IsAllocated)
-                    hBytes.Free();
-                if (pData != IntPtr.Zero)
-                    Marshal.ZeroFreeBSTR(pData);
-            }
+            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(digest);
+            gen.Init(Encoding.UTF8.GetBytes(password), _salt, _pkCount + minPkCount);
+            KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
+            return kParam.GetKey();
         }
 
         /// <summary>
@@ -2213,8 +2063,6 @@ namespace DieFledermaus
                         _bufferStream.Dispose();
                     if (!_leaveOpen)
                         _baseStream.Dispose();
-                    if (_password != null)
-                        _password.Dispose();
                 }
             }
             finally
