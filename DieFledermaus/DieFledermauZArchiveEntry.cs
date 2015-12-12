@@ -101,6 +101,52 @@ namespace DieFledermaus
             }
         }
 
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current entry.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode, and the current instance is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode, and the current instance is either already verified, 
+        /// or <see cref="OpenRead()"/> has already been called.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in write-mode,
+        /// and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
+        /// and the specified value does not represent a valid public key.</para>
+        /// </exception>
+        public RSAParameters? RSASignParameters
+        {
+            get { return MausStream.RSASignParameters; }
+            set
+            {
+                if (_arch == null) throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
+                MausStream.RSASignParameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using an RSA private key.
+        /// </summary>
+        /// <remarks>
+        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <c>true</c> if and only if the current entry was 
+        /// signed when it was written.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
+        /// is not <c>null</c>.
+        /// </remarks>
+        public bool IsRSASigned { get { return MausStream.IsRSASigned; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance has been successfully verified using <see cref="RSASignParameters"/>.
+        /// </summary>
+        public bool IsRSASignVerified { get { return MausStream.IsRSASignVerified; } }
+
         private MausBufferStream _writingStream;
 
         /// <summary>
@@ -160,29 +206,24 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/>
-        /// again if this exception is caught.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
         public override DieFledermauZItem Decrypt()
         {
             EnsureCanRead();
             lock (_lock)
             {
-                DoDecrypt();
-                return this;
+                return DoDecrypt();
             }
         }
 
-        private void DoDecrypt()
+        private DieFledermauZItem DoDecrypt()
         {
+            if (_isDecrypted) return this;
             base.Decrypt();
-            if (_isDecrypted) return;
-            if (_writingStream == null)
-            {
-                _writingStream = new MausBufferStream();
-                MausStream.BufferCopyTo(_writingStream);
-            }
             _isDecrypted = true;
+            return this;
         }
 
         /// <summary>
@@ -204,12 +245,11 @@ namespace DieFledermaus
                 if (_writingStream == null)
                 {
                     if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
-                    {
                         SeekToFile();
-                        _writingStream = new MausBufferStream();
-                        MausStream.BufferCopyTo(_writingStream);
-                    }
-                    else DoDecrypt();
+                    else
+                        DoDecrypt();
+                    _writingStream = new MausBufferStream();
+                    MausStream.BufferCopyTo(_writingStream);
                 }
 
                 MausBufferStream mbs = new MausBufferStream();

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace DieFledermaus.Tests
 {
@@ -17,12 +18,20 @@ namespace DieFledermaus.Tests
 
             using (MemoryStream ms = new MemoryStream())
             {
+                RSAParameters publicKey, privateKey;
+
+                using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+                {
+                    publicKey = rsa.ExportParameters(false);
+                    privateKey = rsa.ExportParameters(true);
+                }
+
                 Console.WriteLine("Creating archive ...");
                 Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, privateKey);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, privateKey);
                     Console.WriteLine(" - Building empty directory: EmptyDir/");
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
@@ -50,15 +59,21 @@ namespace DieFledermaus.Tests
 
                     byte[] getBuffer = new byte[bigBufferLength];
 
-                    foreach (DieFledermauZArchiveEntry entry in archive.Entries.Where(i => i is DieFledermauZArchiveEntry))
+                    foreach (DieFledermauZArchiveEntry entry in archive.Entries.OfType<DieFledermauZArchiveEntry>())
                     {
+                        entry.RSASignParameters = publicKey;
+
                         Console.WriteLine(" - Reading file: " + entry.Path);
                         using (Stream outStream = entry.OpenRead())
                         {
-                            int read = outStream.Read(getBuffer, 0, bigBufferLength);
+                            if (entry.IsRSASignVerified)
+                                Console.WriteLine("RSA key is verified.");
+                            else
+                                Console.WriteLine("RSA key is NOT verified!");
 
+                            int read = outStream.Read(getBuffer, 0, bigBufferLength);
                             if (read == bigBufferLength)
-                                Console.WriteLine("Correct length!");
+                                Console.WriteLine("Correct length.");
                             else
                                 Console.WriteLine("Wrong length: " + read);
 
@@ -83,9 +98,11 @@ namespace DieFledermaus.Tests
             Console.ReadKey();
         }
 
-        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat)
+        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat, RSAParameters privateKey)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
+
+            entry.RSASignParameters = privateKey;
 
             Console.WriteLine(" - Building file: " + entry.Path);
 

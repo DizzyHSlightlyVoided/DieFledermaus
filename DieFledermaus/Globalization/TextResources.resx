@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
@@ -308,5 +308,23 @@
   </data>
   <data name="OutOfRangeLzma" xml:space="preserve">
     <value>The specified value must either be LzmaDictionarySize.Default, or must be between LzmaDictionarySize.MinValue and LzmaDictionarySize.MaxValue.</value>
+  </data>
+  <data name="RsaSigInvalid" xml:space="preserve">
+    <value>The RSA public key used to verify the signature is invalid.</value>
+  </data>
+  <data name="RsaSigLoaded" xml:space="preserve">
+    <value>The RSA signature cannot be verified after part of the stream has been loaded.</value>
+  </data>
+  <data name="RsaSigNone" xml:space="preserve">
+    <value>The current instance does not have an RSA signature.</value>
+  </data>
+  <data name="RsaSigVerified" xml:space="preserve">
+    <value>The RSA signature has already been verified.</value>
+  </data>
+  <data name="RsaNeedPrivate" xml:space="preserve">
+    <value>The specified value is not a valid private key.</value>
+  </data>
+  <data name="RsaNeedPublic" xml:space="preserve">
+    <value>The specified value is not a valid public or private key.</value>
   </data>
 </root>

@@ -43,6 +43,8 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Security;
 using SevenZip;
 using SevenZip.Compression.LZMA;
 
@@ -942,6 +944,99 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
+        private byte[] _rsaSignature;
+
+        private bool _rsaSignVerified;
+        /// <summary>
+        /// Gets a value indicating whether the current stream has been successfully verified using <see cref="RSASignParameters"/>.
+        /// </summary>
+        public bool IsRSASignVerified { get { return _rsaSignVerified; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using an RSA private key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// was signed when it was written.
+        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
+        /// is not <c>null</c>.
+        /// </remarks>
+        public bool IsRSASigned
+        {
+            get
+            {
+                if (_mode == CompressionMode.Compress)
+                    return _rsaSignParams.HasValue;
+                return _rsaSignature != null;
+            }
+        }
+
+        private RSAParameters? _rsaSignParams;
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode, and is either already verified, 
+        /// or <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/> have already been called.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// </exception>
+        public RSAParameters? RSASignParameters
+        {
+            get
+            {
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                return _rsaSignParams;
+            }
+            set
+            {
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (_mode == CompressionMode.Decompress)
+                {
+                    if (_rsaSignature == null)
+                        throw new NotSupportedException(TextResources.RsaSigNone);
+                    if (_rsaSignVerified)
+                        throw new InvalidOperationException(TextResources.RsaSigVerified);
+                    if (_bufferStream != null && _bufferStream.Position != 0)
+                        throw new InvalidOperationException(TextResources.RsaSigLoaded);
+                    if (value.HasValue)
+                    {
+                        try
+                        {
+                            DotNetUtilities.GetRsaPublicKey(value.Value);
+                        }
+                        catch (Exception x)
+                        {
+                            throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
+                        }
+                    }
+                }
+                else if (value.HasValue)
+                {
+                    try
+                    {
+                        DotNetUtilities.GetRsaKeyPair(value.Value);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value), x);
+                    }
+                }
+                _rsaSignParams = value;
+            }
+        }
+
         private string _comment;
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -1315,6 +1410,9 @@ namespace DieFledermaus
             _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
         internal static readonly byte[] _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
+        private const string _keyRsaSign = "RsaSig";
+        private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'i', (byte)'g' };
+
         internal const string _kSha3 = "SHA3";
         internal static readonly byte[] _bSha3 = { (byte)'S', (byte)'H', (byte)'A', (byte)'3' };
 
@@ -1432,6 +1530,22 @@ namespace DieFledermaus
                     if (fromEncrypted && !_useSha3)
                         throw new InvalidDataException(TextResources.FormatBad);
                     _useSha3 = true;
+                    continue;
+                }
+
+                if (curForm.Equals(_keyRsaSign, StringComparison.Ordinal))
+                {
+                    CheckAdvance(optLen, ref i);
+                    byte[] bytes = GetStringBytes(reader, ref headSize, false);
+
+                    if (bytes.Length != hashLength << 1)
+                        throw new InvalidDataException(TextResources.FormatBad);
+
+                    if (_rsaSignature == null)
+                        _rsaSignature = bytes;
+                    else if (!CompareBytes(bytes, _rsaSignature))
+                        throw new InvalidDataException(TextResources.FormatBad);
+
                     continue;
                 }
 
@@ -1645,8 +1759,8 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
-        /// again if this exception is caught.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
@@ -1667,7 +1781,11 @@ namespace DieFledermaus
 
         private void _readData()
         {
-            if (_headerGotten) return;
+            if (_headerGotten)
+            {
+                ReadRsaSigned();
+                return;
+            }
 
             if (_password == null && _encFmt != MausEncryptionFormat.None)
                 throw new CryptographicException(TextResources.KeyNotSet);
@@ -1696,7 +1814,10 @@ namespace DieFledermaus
                 }
 
                 _bufferStream.Close();
-                _bufferStream = bufferStream;
+                _bufferStream = new MausBufferStream();
+                bufferStream.BufferCopyTo(_bufferStream, true);
+
+                _bufferStream.Reset();
             }
 
             switch (_cmpFmt)
@@ -1766,8 +1887,30 @@ namespace DieFledermaus
 
             if (_encFmt == MausEncryptionFormat.None && !CompareBytes(ComputeHash(_bufferStream, _useSha3), _hashExpected))
                 throw new InvalidDataException(TextResources.BadChecksum);
+            _bufferStream.Reset();
 
             _headerGotten = true;
+
+            ReadRsaSigned();
+        }
+
+        private void ReadRsaSigned()
+        {
+            if (_rsaSignature == null || !_rsaSignParams.HasValue || _rsaSignVerified || _bufferStream.Position != 0)
+                return;
+
+            RsaDigestSigner signer = GetRsaSigner(_useSha3);
+            RsaKeyParameters rsaPublic = DotNetUtilities.GetRsaPublicKey(_rsaSignParams.Value);
+
+            signer.Init(false, rsaPublic);
+
+            ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
+
+            if (!signer.VerifySignature(_rsaSignature))
+                throw new CryptographicException(TextResources.RsaSigInvalid);
+
+            _rsaSignVerified = true;
+            _bufferStream.Reset();
         }
 
         internal void GetBuffer()
@@ -1836,8 +1979,8 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
-        /// again if this exception is caught.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="buffer"/> is <c>null</c>.
@@ -1869,6 +2012,7 @@ namespace DieFledermaus
 
         internal void BufferCopyTo(MausBufferStream other)
         {
+            _readData();
             _bufferStream.BufferCopyTo(other, false);
         }
 
@@ -1892,8 +2036,8 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// The password is not correct. It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/>
-        /// again if this exception is caught.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
@@ -1942,7 +2086,19 @@ namespace DieFledermaus
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
 
-        internal static byte[] ComputeHash(Stream inputStream, bool sha3)
+        private static RsaDigestSigner GetRsaSigner(bool sha3)
+        {
+            IDigest digest;
+            if (sha3)
+                digest = new Sha3Digest(hashBitSize);
+            else
+                digest = new Sha512Digest();
+
+            RsaDigestSigner signer = new RsaDigestSigner(digest);
+            return signer;
+        }
+
+        internal static byte[] ComputeHash(MausBufferStream inputStream, bool sha3)
         {
             if (sha3)
             {
@@ -1973,6 +2129,8 @@ namespace DieFledermaus
             int read;
             while ((read = inputStream.Read(buffer, 0, Max16Bit)) != 0)
                 update(buffer, 0, read);
+            if (doFinal == null)
+                return null;
 
             byte[] output = new byte[hashLength];
             doFinal(output, 0);
@@ -2097,6 +2255,22 @@ namespace DieFledermaus
                 throw new InvalidOperationException(TextResources.KeyNotSet);
 
             _bufferStream.Reset();
+
+            byte[] rsaSignature;
+
+            if (_rsaSignParams.HasValue)
+            {
+                RsaDigestSigner signer = GetRsaSigner(_useSha3);
+                var rsaKeys = DotNetUtilities.GetRsaKeyPair(_rsaSignParams.Value);
+                signer.Init(true, rsaKeys.Private);
+                ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
+
+                rsaSignature = signer.GenerateSignature();
+
+                _bufferStream.Reset();
+            }
+            else rsaSignature = null;
+
             MausBufferStream compressedStream;
             if (_cmpFmt == MausCompressionFormat.None)
                 compressedStream = _bufferStream;
@@ -2174,6 +2348,12 @@ namespace DieFledermaus
                                 break;
                         }
                     }
+                    else if (rsaSignature != null)
+                    {
+                        formats.Add(_keyBRsaSign);
+                        formats.Add(rsaSignature);
+                    }
+
 
                     WriteFormats(writer, formats);
                 }
@@ -2219,6 +2399,12 @@ namespace DieFledermaus
                                     FormatSetComment(formats);
                                     continue;
                             }
+                        }
+
+                        if (rsaSignature != null)
+                        {
+                            formats.Add(_keyBRsaSign);
+                            formats.Add(rsaSignature);
                         }
 
                         formats.Add(_bULen);

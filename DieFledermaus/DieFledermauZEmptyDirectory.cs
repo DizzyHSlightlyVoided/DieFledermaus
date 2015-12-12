@@ -163,9 +163,14 @@ namespace DieFledermaus
         {
             const int ForwardSlashReadByte = '/';
 
-            if (DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > byte.MaxValue || stream.ReadByte() != ForwardSlashReadByte || stream.ReadByte() >= 0 ||
-                stream.ModifiedTime.HasValue || stream.CreatedTime.HasValue)
+            if (HasNonDirValues(stream) || DieFledermausStream._textEncoding.GetByteCount(stream.Filename) > byte.MaxValue ||
+                stream.ReadByte() != ForwardSlashReadByte || stream.ReadByte() >= 0)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
+        }
+
+        internal static bool HasNonDirValues(DieFledermausStream stream)
+        {
+            return stream.ModifiedTime.HasValue || stream.CreatedTime.HasValue || stream.IsRSASigned;
         }
 
         internal override bool IsFilenameEncrypted

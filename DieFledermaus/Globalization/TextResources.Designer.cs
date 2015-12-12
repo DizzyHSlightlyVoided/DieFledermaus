@@ -547,6 +547,60 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified value is not a valid private key..
+        /// </summary>
+        internal static string RsaNeedPrivate {
+            get {
+                return ResourceManager.GetString("RsaNeedPrivate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value is not a valid public or private key..
+        /// </summary>
+        internal static string RsaNeedPublic {
+            get {
+                return ResourceManager.GetString("RsaNeedPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA public key used to verify the signature is invalid..
+        /// </summary>
+        internal static string RsaSigInvalid {
+            get {
+                return ResourceManager.GetString("RsaSigInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA signature cannot be verified after part of the stream has been loaded..
+        /// </summary>
+        internal static string RsaSigLoaded {
+            get {
+                return ResourceManager.GetString("RsaSigLoaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current instance does not have an RSA signature..
+        /// </summary>
+        internal static string RsaSigNone {
+            get {
+                return ResourceManager.GetString("RsaSigNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA signature has already been verified..
+        /// </summary>
+        internal static string RsaSigVerified {
+            get {
+                return ResourceManager.GetString("RsaSigVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified salt must be the maximum length specified for the KeySize..
         /// </summary>
         internal static string SaltLength {

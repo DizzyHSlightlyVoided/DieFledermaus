@@ -401,12 +401,11 @@ namespace DieFledermaus
             if (path == null)
             {
                 if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount * 3) +
-                    DieFledermausStream.Max8Bit + DieFledermausStream.Max16Bit)
+                    DieFledermausStream.Max8Bit + DieFledermausStream.Max16Bit || DieFledermauZEmptyDirectory.HasNonDirValues(mausStream))
                 {
                     returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
                 }
-                else
-                    returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset, curOffset);
+                else returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset, curOffset);
             }
             else
             {
