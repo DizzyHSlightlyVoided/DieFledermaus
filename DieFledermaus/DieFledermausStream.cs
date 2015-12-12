@@ -38,6 +38,8 @@ using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
@@ -972,6 +974,7 @@ namespace DieFledermaus
         }
 
         private RSAParameters? _rsaSignParams;
+        private RsaKeyParameters _rsaSignParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to sign the current stream.
         /// </summary>
@@ -1014,25 +1017,27 @@ namespace DieFledermaus
                     {
                         try
                         {
-                            DotNetUtilities.GetRsaPublicKey(value.Value);
+                            _rsaSignParamBC = DotNetUtilities.GetRsaPublicKey(value.Value);
                         }
                         catch (Exception x)
                         {
                             throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
                         }
                     }
+                    else _rsaSignParamBC = null;
                 }
                 else if (value.HasValue)
                 {
                     try
                     {
-                        DotNetUtilities.GetRsaKeyPair(value.Value);
+                        _rsaSignParamBC = (RsaPrivateCrtKeyParameters)DotNetUtilities.GetRsaKeyPair(value.Value).Private;
                     }
                     catch (Exception x)
                     {
                         throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value), x);
                     }
                 }
+                else _rsaSignParamBC = null;
                 _rsaSignParams = value;
             }
         }
@@ -1896,14 +1901,11 @@ namespace DieFledermaus
 
         private void ReadRsaSigned()
         {
-            if (_rsaSignature == null || !_rsaSignParams.HasValue || _rsaSignVerified || _bufferStream.Position != 0)
+            if (_rsaSignature == null || _rsaSignParamBC == null || _rsaSignVerified || _bufferStream.Position != 0)
                 return;
 
             RsaDigestSigner signer = GetRsaSigner(_useSha3);
-            RsaKeyParameters rsaPublic = DotNetUtilities.GetRsaPublicKey(_rsaSignParams.Value);
-
-            signer.Init(false, rsaPublic);
-
+            signer.Init(false, _rsaSignParamBC);
             ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
 
             if (!signer.VerifySignature(_rsaSignature))
@@ -2089,13 +2091,19 @@ namespace DieFledermaus
         private static RsaDigestSigner GetRsaSigner(bool sha3)
         {
             IDigest digest;
+            DerObjectIdentifier id;
             if (sha3)
+            {
                 digest = new Sha3Digest(hashBitSize);
+                id = NistObjectIdentifiers.IdSha3_512;
+            }
             else
+            {
                 digest = new Sha512Digest();
+                id = NistObjectIdentifiers.IdSha512;
+            }
 
-            RsaDigestSigner signer = new RsaDigestSigner(digest);
-            return signer;
+            return new RsaDigestSigner(digest, id);
         }
 
         internal static byte[] ComputeHash(MausBufferStream inputStream, bool sha3)
@@ -2258,11 +2266,10 @@ namespace DieFledermaus
 
             byte[] rsaSignature;
 
-            if (_rsaSignParams.HasValue)
+            if (_rsaSignParamBC != null)
             {
                 RsaDigestSigner signer = GetRsaSigner(_useSha3);
-                var rsaKeys = DotNetUtilities.GetRsaKeyPair(_rsaSignParams.Value);
-                signer.Init(true, rsaKeys.Private);
+                signer.Init(true, _rsaSignParamBC);
                 ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
 
                 rsaSignature = signer.GenerateSignature();

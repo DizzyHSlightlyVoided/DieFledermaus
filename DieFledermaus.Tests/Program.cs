@@ -67,9 +67,9 @@ namespace DieFledermaus.Tests
                         using (Stream outStream = entry.OpenRead())
                         {
                             if (entry.IsRSASignVerified)
-                                Console.WriteLine("RSA key is verified.");
+                                Console.WriteLine("RSA signature is verified.");
                             else
-                                Console.WriteLine("RSA key is NOT verified!");
+                                Console.WriteLine("RSA signature is NOT verified!");
 
                             int read = outStream.Read(getBuffer, 0, bigBufferLength);
                             if (read == bigBufferLength)
