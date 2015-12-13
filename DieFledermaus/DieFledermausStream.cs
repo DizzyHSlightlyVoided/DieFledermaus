@@ -1042,6 +1042,91 @@ namespace DieFledermaus
             }
         }
 
+        private byte[] _rsaKey;
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property returns <c>true</c> if and only if the original archive entry
+        /// had an RSA-encrypted key when it was written. Otherwise, this property
+        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
+        /// </remarks>
+        public bool HasRSAEncryptedKey
+        {
+            get
+            {
+                if (_mode == CompressionMode.Decompress)
+                    return _rsaKey != null;
+                return _rsaKeyParams.HasValue;
+            }
+        }
+
+        private RSAParameters? _rsaKeyParams;
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current stream is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current stream is in read-mode, and does not have an RSA-encrypted key.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value is not a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
+        /// </exception>
+        public RSAParameters? RSAKeyParameters
+        {
+            get { return _rsaKeyParams; }
+            set
+            {
+                _ensureCanSetKey();
+                SetRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
+                _rsaKeyParams = value;
+            }
+        }
+
+        internal static RsaKeyParameters SetRsaKey(RSAParameters? value, bool reading, byte[] _rsaKeyEncrypted)
+        {
+            if (reading)
+            {
+                if (_rsaKeyEncrypted == null)
+                    throw new NotSupportedException(); //TODO: No encrypted key.
+                if (value.HasValue)
+                {
+                    try
+                    {
+                        return (RsaPrivateCrtKeyParameters)DotNetUtilities.GetRsaKeyPair(value.Value).Private;
+                    }
+                    catch (Exception x)
+                    {
+                        throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value), x);
+                    }
+                }
+                return null;
+            }
+
+            if (value.HasValue)
+            {
+                try
+                {
+                    return DotNetUtilities.GetRsaPublicKey(value.Value);
+                }
+                catch (Exception x)
+                {
+                    throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
+                }
+            }
+
+            return null;
+        }
+
         private string _comment;
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -1418,6 +1503,9 @@ namespace DieFledermaus
         private const string _keyRsaSign = "RsaSig";
         private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'i', (byte)'g' };
 
+        internal const string _keyRsaKey = "RSASch";
+        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'S', (byte)'A', (byte)'S', (byte)'c', (byte)'h' };
+
         internal const string _kSha3 = "SHA3";
         internal static readonly byte[] _bSha3 = { (byte)'S', (byte)'H', (byte)'A', (byte)'3' };
 
@@ -1540,17 +1628,16 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_keyRsaSign, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
-                    byte[] bytes = GetStringBytes(reader, ref headSize, false);
+                    ReadBytes(reader, optLen, hashLength << 1, ref headSize, ref i, ref _rsaSignature);
+                    continue;
+                }
 
-                    if (bytes.Length != hashLength << 1)
+                if (curForm.Equals(_keyRsaKey, StringComparison.Ordinal))
+                {
+                    if (fromEncrypted && _rsaKey == null)
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    if (_rsaSignature == null)
-                        _rsaSignature = bytes;
-                    else if (!CompareBytes(bytes, _rsaSignature))
-                        throw new InvalidDataException(TextResources.FormatBad);
-
+                    ReadBytes(reader, optLen, 0, ref headSize, ref i, ref _rsaKey);
                     continue;
                 }
 
@@ -1672,7 +1759,29 @@ namespace DieFledermaus
                 throw new NotSupportedException(TextResources.FormatUnknown);
             }
 
+            if (_encFmt == MausEncryptionFormat.None)
+            {
+                if (_rsaKey != null)
+                    throw new InvalidDataException(TextResources.FormatBad);
+            }
+            else if (_rsaKey != null && _rsaKey.Length < _keySize >> 1)
+                throw new NotSupportedException(TextResources.FormatUnknown);
+
             return headSize;
+        }
+
+        internal static void ReadBytes(BinaryReader reader, int optLen, int byteLen, ref long headSize, ref int i, ref byte[] oldValue)
+        {
+            CheckAdvance(optLen, ref i);
+            byte[] bytes = GetStringBytes(reader, ref headSize, false);
+
+            if (byteLen != 0 && bytes.Length != byteLen)
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            if (oldValue == null)
+                oldValue = bytes;
+            else if (!CompareBytes(bytes, oldValue))
+                throw new InvalidDataException(TextResources.FormatBad);
         }
 
         internal static byte[] ReadBytes(BinaryReader reader, int size)
@@ -1792,7 +1901,7 @@ namespace DieFledermaus
                 return;
             }
 
-            if (_password == null && _encFmt != MausEncryptionFormat.None)
+            if (_password == null && (_rsaKey != null && !_rsaKeyParams.HasValue) && _encFmt != MausEncryptionFormat.None)
                 throw new CryptographicException(TextResources.KeyNotSet);
 
             GetBuffer();
@@ -1801,7 +1910,9 @@ namespace DieFledermaus
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
+                byte[] _key;
+                _key = DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _useSha3);
+
                 var bufferStream = Decrypt(_key);
 
                 if (!CompareBytes(ComputeHmac(bufferStream, _key, _useSha3), _hashExpected))
@@ -1897,6 +2008,29 @@ namespace DieFledermaus
             _headerGotten = true;
 
             ReadRsaSigned();
+        }
+
+        internal static byte[] DecryptKey(string _password, RSAParameters? rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize, int pkCount, bool sha3)
+        {
+            if (_password != null)
+                return GetKey(_password, salt, pkCount, keySize, sha3);
+            byte[] _key;
+
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                try
+                {
+                    rsa.ImportParameters(rsaKeyParams.Value);
+                    _key = rsa.Decrypt(rsaKey, false);
+                }
+                catch (CryptographicException x)
+                {
+                    throw new CryptographicException(null, x); //TODO: Incorrect RSA private key.
+                }
+                if (_key.Length != keySize >> 3)
+                    throw new CryptographicException();
+                return _key;
+            }
         }
 
         private void ReadRsaSigned()
@@ -2278,6 +2412,12 @@ namespace DieFledermaus
             }
             else rsaSignature = null;
 
+            byte[] _key, rsaKey;
+            if (_encFmt == MausEncryptionFormat.None)
+                _key = rsaKey = null;
+            else
+                _key = EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _useSha3, out rsaKey);
+
             MausBufferStream compressedStream;
             if (_cmpFmt == MausCompressionFormat.None)
                 compressedStream = _bufferStream;
@@ -2361,6 +2501,11 @@ namespace DieFledermaus
                         formats.Add(rsaSignature);
                     }
 
+                    if (rsaKey != null)
+                    {
+                        formats.Add(_keyBRsaKey);
+                        formats.Add(rsaKey);
+                    }
 
                     WriteFormats(writer, formats);
                 }
@@ -2430,8 +2575,6 @@ namespace DieFledermaus
                         }
                     }
 
-                    byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
-
                     using (MausBufferStream output = Encrypt(_key))
                     {
                         writer.Write(output.Length);
@@ -2449,6 +2592,31 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             _baseStream.Flush();
 #endif
+        }
+
+        internal static byte[] EncryptKey(string _password, RSAParameters? rsaKeyParams, byte[] _salt, int _pkCount, int _keySize, bool sha3, out byte[] rsaKey)
+        {
+            byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, sha3);
+
+            if (!rsaKeyParams.HasValue)
+            {
+                rsaKey = null;
+                return _key;
+            }
+
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.ImportParameters(rsaKeyParams.Value);
+                try
+                {
+                    rsaKey = rsa.Encrypt(_key, false);
+                }
+                catch (CryptographicException x)
+                {
+                    throw new CryptographicException(null, x); //TODO: Invalid RSA public key.
+                }
+            }
+            return _key;
         }
 
         private byte[] GetBytes(long value)

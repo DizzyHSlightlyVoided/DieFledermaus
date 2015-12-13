@@ -39,6 +39,26 @@ namespace DieFledermaus
     public interface IMausCrypt
     {
         /// <summary>
+        /// Gets and sets the password used for the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// In a set operation, the specified value is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has a length of 0.
+        /// </exception>
+        string Password { get; set; }
+
+        /// <summary>
         /// Gets the encryption format of the current instance.
         /// </summary>
         MausEncryptionFormat EncryptionFormat { get; }
@@ -119,26 +139,6 @@ namespace DieFledermaus
         int KeySize { get; set; }
 
         /// <summary>
-        /// Gets and sets the password used for the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value has a length of 0.
-        /// </exception>
-        string Password { get; set; }
-
-        /// <summary>
         /// Decrypts the current instance.
         /// </summary>
         void Decrypt();
@@ -158,5 +158,36 @@ namespace DieFledermaus
         /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid bit count according to <see cref="KeySizes"/>;
         /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
         bool IsValidKeyByteSize(int byteCount);
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
+        /// </summary>
+        /// <remarks>
+        /// If the current instance is in read-mode, this property returns <c>true</c> if and only if the original archive entry
+        /// had an RSA-encrypted key when it was written. If the current instance is in write-mode, this property
+        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
+        /// </remarks>
+        bool HasRSAEncryptedKey { get; }
+
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance is in read-mode, and does not have an RSA-encrypted key.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value is not a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value is not a valid private key.</para>
+        /// </exception>
+        RSAParameters? RSAKeyParameters { get; }
     }
 }

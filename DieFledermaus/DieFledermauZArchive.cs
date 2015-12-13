@@ -39,6 +39,7 @@ using System.Linq;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -489,10 +490,10 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            if (_password == null)
+            if (_password == null && !_rsaKeyParams.HasValue)
                 throw new CryptographicException(TextResources.KeyNotSetZ);
 
-            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
+            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _useSha3);
 
             using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = algorithm.CreateDecryptor())
@@ -594,6 +595,15 @@ namespace DieFledermaus
                     continue;
                 }
 
+                if (curOption.Equals(DieFledermausStream._keyRsaKey, StringComparison.Ordinal))
+                {
+                    if (fromEncrypted && _rsaKey == null)
+                        throw new InvalidDataException(TextResources.FormatBadZ);
+
+                    DieFledermausStream.ReadBytes(reader, optLen, 0, ref curOffset, ref i, ref _rsaKey);
+                    continue;
+                }
+
                 if (curOption.Equals(DieFledermausStream._kSha3, StringComparison.Ordinal))
                 {
                     if (fromEncrypted && !_useSha3)
@@ -621,7 +631,7 @@ namespace DieFledermaus
                 throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
 
-            if (_encFmt == MausEncryptionFormat.None && (_useSha3))
+            if (_encFmt == MausEncryptionFormat.None && (_useSha3 || _rsaKey != null))
                 throw new InvalidDataException(TextResources.FormatBadZ);
         }
 
@@ -855,6 +865,56 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 _useSha3 = value;
+            }
+        }
+
+        private byte[] _rsaKey;
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property returns <c>true</c> if and only if the original archive entry
+        /// had an RSA-encrypted key when it was written. Otherwise, this property
+        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
+        /// </remarks>
+        public bool HasRSAEncryptedKey
+        {
+            get
+            {
+                if (_mode == MauZArchiveMode.Read)
+                    return _rsaKey != null;
+                return _rsaKeyParams.HasValue;
+            }
+        }
+
+        private RSAParameters? _rsaKeyParams;
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current stream is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current stream is in read-mode, and does not have an RSA-encrypted key.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value is not a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
+        /// </exception>
+        public RSAParameters? RSAKeyParameters
+        {
+            get { return _rsaKeyParams; }
+            set
+            {
+                _ensureCanSetKey();
+                DieFledermausStream.SetRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
+                _rsaKeyParams = value;
             }
         }
 
@@ -1430,6 +1490,14 @@ namespace DieFledermaus
 
             long length = 16;
 
+            byte[] _key, rsaKey;
+
+            if (_encFmt == MausEncryptionFormat.None)
+                rsaKey = _key = null;
+            else
+                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _useSha3, out rsaKey);
+
+
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
             byte[][] paths = new byte[entries.Length][];
@@ -1469,6 +1537,12 @@ namespace DieFledermaus
 
                 if (_useSha3)
                     options.Add(DieFledermausStream._bSha3);
+
+                if (rsaKey != null)
+                {
+                    options.Add(DieFledermausStream._keyBRsaKey);
+                    options.Add(rsaKey);
+                }
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
@@ -1525,8 +1599,6 @@ namespace DieFledermaus
                             WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position
                                 + sizeof(int) + sizeof(long)); //Size of "all-entries" + size of entry count
                         }
-
-                        byte[] _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _useSha3);
 
                         cryptStream.Reset();
                         hmac = DieFledermausStream.ComputeHmac(cryptStream, _key, _useSha3);

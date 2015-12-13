@@ -50,7 +50,10 @@ namespace DieFledermaus.Tests
                     foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
                         Console.WriteLine(" - Decrypting file ...");
-                        SetPasswd(item);
+                        if (item.HasRSAEncryptedKey)
+                            item.RSAKeyParameters = privateKey;
+                        else
+                            SetPasswd(item);
                         sw = Stopwatch.StartNew();
                         var dItem = item.Decrypt();
                         sw.Stop();
@@ -107,7 +110,10 @@ namespace DieFledermaus.Tests
             Console.WriteLine(" - Building file: " + entry.Path);
 
             if (encFormat != MausEncryptionFormat.None)
+            {
+                entry.RSAKeyParameters = privateKey;
                 SetPasswd(entry);
+            }
 
             using (Stream stream = entry.OpenWrite())
                 stream.Write(bigBuffer, 0, bigBufferLength);
