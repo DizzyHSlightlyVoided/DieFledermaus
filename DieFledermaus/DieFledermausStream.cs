@@ -1503,8 +1503,8 @@ namespace DieFledermaus
         private const string _keyRsaSign = "RsaSig";
         private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'i', (byte)'g' };
 
-        internal const string _keyRsaKey = "RSASch";
-        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'S', (byte)'A', (byte)'S', (byte)'c', (byte)'h' };
+        internal const string _keyRsaKey = "RsaSch";
+        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'c', (byte)'h' };
 
         internal const string _kSha3 = "SHA3";
         internal static readonly byte[] _bSha3 = { (byte)'S', (byte)'H', (byte)'A', (byte)'3' };
