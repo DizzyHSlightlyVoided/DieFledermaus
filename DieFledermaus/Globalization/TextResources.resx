@@ -339,4 +339,10 @@
   <data name="RsaSigPrivInvalid" xml:space="preserve">
     <value>The RSA private key used to sign the stream is invalid.</value>
   </data>
+  <data name="KeyNotSetRsa" xml:space="preserve">
+    <value>The current stream is encrypted, and requires either a password or an RSA private key.</value>
+  </data>
+  <data name="KeyNotSetRsaZ" xml:space="preserve">
+    <value>The current archive is encrypted, and requires either a password or an RSA private key.</value>
+  </data>
 </root>

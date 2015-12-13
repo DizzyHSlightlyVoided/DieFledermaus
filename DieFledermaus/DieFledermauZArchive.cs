@@ -472,7 +472,7 @@ namespace DieFledermaus
         public void Decrypt()
         {
             EnsureCanRead();
-            _loadData();
+            _decryptData();
         }
 
         /// <summary>
@@ -480,7 +480,7 @@ namespace DieFledermaus
         /// </summary>
         public bool IsDecrypted { get { return _mode != MauZArchiveMode.Create && _headerGotten; } }
 
-        private void _loadData()
+        private void _decryptData()
         {
             if (_headerGotten)
                 return;
@@ -490,8 +490,13 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            if (_password == null && !_rsaKeyParams.HasValue)
-                throw new CryptographicException(TextResources.KeyNotSetZ);
+            if (_password == null)
+            {
+                if (_rsaKey == null)
+                    throw new CryptographicException(TextResources.KeyNotSetZ);
+                if (!_rsaKeyParams.HasValue)
+                    throw new CryptographicException(TextResources.KeyNotSetRsaZ);
+            }
 
             byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _useSha3);
 

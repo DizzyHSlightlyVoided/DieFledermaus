@@ -1901,8 +1901,13 @@ namespace DieFledermaus
                 return;
             }
 
-            if (_password == null && (_rsaKey != null && !_rsaKeyParams.HasValue) && _encFmt != MausEncryptionFormat.None)
-                throw new CryptographicException(TextResources.KeyNotSet);
+            if (_password == null && _encFmt != MausEncryptionFormat.None)
+            {
+                if (_rsaKey == null)
+                    throw new CryptographicException(TextResources.KeyNotSet);
+                if (!_rsaKeyParams.HasValue)
+                    throw new CryptographicException(TextResources.KeyNotSetRsa);
+            }
 
             GetBuffer();
 
@@ -2026,7 +2031,7 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.RsaKeyInvalid, x);
                 }
                 if (_key.Length != keySize >> 3)
-                    throw new CryptographicException();
+                    throw new CryptographicException(TextResources.RsaKeyInvalid);
                 return _key;
             }
         }

@@ -493,6 +493,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The current stream is encrypted, and requires either a password or an RSA private key..
+        /// </summary>
+        internal static string KeyNotSetRsa {
+            get {
+                return ResourceManager.GetString("KeyNotSetRsa", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current archive is encrypted, and requires either a password or an RSA private key..
+        /// </summary>
+        internal static string KeyNotSetRsaZ {
+            get {
+                return ResourceManager.GetString("KeyNotSetRsaZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a password..
         /// </summary>
         internal static string KeyNotSetZ {
