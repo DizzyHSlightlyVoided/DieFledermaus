@@ -619,15 +619,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The RSA signature cannot be verified after part of the stream has been loaded..
-        /// </summary>
-        internal static string RsaSigLoaded {
-            get {
-                return ResourceManager.GetString("RsaSigLoaded", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The current instance does not have an RSA signature..
         /// </summary>
         internal static string RsaSigNone {

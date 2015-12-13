@@ -312,9 +312,6 @@
   <data name="RsaSigInvalid" xml:space="preserve">
     <value>The RSA public key used to verify the signature is invalid.</value>
   </data>
-  <data name="RsaSigLoaded" xml:space="preserve">
-    <value>The RSA signature cannot be verified after part of the stream has been loaded.</value>
-  </data>
   <data name="RsaSigNone" xml:space="preserve">
     <value>The current instance does not have an RSA signature.</value>
   </data>

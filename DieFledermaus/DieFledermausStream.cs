@@ -40,8 +40,11 @@ using System.Text;
 using DieFledermaus.Globalization;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Encodings;
+using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -985,8 +988,7 @@ namespace DieFledermaus
         /// In a set operation, the current stream is in read-mode, and is not signed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current stream is in read-mode, and is either already verified, 
-        /// or <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/> have already been called.
+        /// In a set operation, the current stream is in read-mode, and has already been verified.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
@@ -1011,8 +1013,6 @@ namespace DieFledermaus
                         throw new NotSupportedException(TextResources.RsaSigNone);
                     if (_rsaSignVerified)
                         throw new InvalidOperationException(TextResources.RsaSigVerified);
-                    if (_bufferStream != null && _bufferStream.Position != 0)
-                        throw new InvalidOperationException(TextResources.RsaSigLoaded);
                     if (value.HasValue)
                     {
                         try
@@ -1897,7 +1897,7 @@ namespace DieFledermaus
         {
             if (_headerGotten)
             {
-                ReadRsaSigned();
+                VerifyRSASignature();
                 return;
             }
 
@@ -2003,14 +2003,20 @@ namespace DieFledermaus
                     _bufferStream.Reset();
                     break;
             }
-
-            if (_encFmt == MausEncryptionFormat.None && !CompareBytes(ComputeHash(_bufferStream, _useSha3), _hashExpected))
-                throw new InvalidDataException(TextResources.BadChecksum);
-            _bufferStream.Reset();
-
             _headerGotten = true;
 
-            ReadRsaSigned();
+            if (_encFmt == MausEncryptionFormat.None || _rsaSignature != null)
+            {
+                byte[] hashActual = ComputeHash(_bufferStream, _useSha3);
+                _bufferStream.Reset();
+                if (_encFmt == MausEncryptionFormat.None && !CompareBytes(hashActual, _hashExpected))
+                    throw new InvalidDataException(TextResources.BadChecksum);
+                if (_rsaSignature != null)
+                {
+                    _hashExpected = hashActual;
+                    VerifyRSASignature();
+                }
+            }
         }
 
         internal static byte[] DecryptKey(string _password, RSAParameters? rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize, int pkCount, bool sha3)
@@ -2036,20 +2042,75 @@ namespace DieFledermaus
             }
         }
 
-        private void ReadRsaSigned()
+        /// <summary>
+        /// Tests whether <see cref="RSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
+        /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="CryptographicException">
+        /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <remarks>This method may be called at any time after <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, or
+        /// <see cref="Read(byte[], int, int)"/> have been called.</remarks>
+        public bool VerifyRSASignature()
         {
-            if (_rsaSignature == null || _rsaSignParamBC == null || _rsaSignVerified || _bufferStream.Position != 0)
-                return;
+            if (_rsaSignVerified)
+                return true;
 
-            RsaDigestSigner signer = GetRsaSigner(_useSha3);
-            signer.Init(false, _rsaSignParamBC);
-            ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
+            if (_rsaSignature == null || _rsaSignParamBC == null || _rsaSignVerified)
+                return false;
+            var rsa = new Pkcs1Encoding(new RsaBlindedEngine());
+            byte[] sig, expected;
+            try
+            {
+                rsa.Init(false, _rsaSignParamBC);
+            }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.RsaKeyInvalid, x);
+            }
 
-            if (!signer.VerifySignature(_rsaSignature))
-                throw new CryptographicException(TextResources.RsaSigInvalid);
+            try
+            {
+                sig = rsa.ProcessBlock(_rsaSignature, 0, _rsaSignature.Length);
+            }
+            catch
+            {
+                return false;
+            }
 
+            var algId = new AlgorithmIdentifier(_useSha3 ? NistObjectIdentifiers.IdSha3_512 : NistObjectIdentifiers.IdSha512, DerNull.Instance);
+            DigestInfo dInfo = new DigestInfo(algId, _hashExpected);
+            expected = dInfo.GetDerEncoded();
+
+            if (CompareBytes(expected, sig))
+            {
+                _rsaSignVerified = true;
+                return true;
+            }
+
+            if (sig.Length != expected.Length - 2)
+                throw new CryptographicException(TextResources.RsaKeyInvalid);
+
+            int sigOffset = sig.Length - _hashExpected.Length - 2;
+            int expectedOffset = expected.Length - _hashExpected.Length - 2;
+
+            expected[1] -= 2;
+            expected[3] -= 2;
+
+            for (int i = 0; i < _hashExpected.Length; i++)
+            {
+                if (sig[sigOffset + i] != expected[expectedOffset + i])
+                    throw new CryptographicException(TextResources.RsaKeyInvalid);
+            }
+
+            for (int i = 0; i < sigOffset; i++)
+            {
+                if (sig[i] != expected[i])
+                    throw new CryptographicException(TextResources.RsaKeyInvalid);
+            }
             _rsaSignVerified = true;
-            _bufferStream.Reset();
+            return true;
         }
 
         internal void GetBuffer()
@@ -2226,24 +2287,6 @@ namespace DieFledermaus
             if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
 
-        private static RsaDigestSigner GetRsaSigner(bool sha3)
-        {
-            IDigest digest;
-            DerObjectIdentifier id;
-            if (sha3)
-            {
-                digest = new Sha3Digest(hashBitSize);
-                id = NistObjectIdentifiers.IdSha3_512;
-            }
-            else
-            {
-                digest = new Sha512Digest();
-                id = NistObjectIdentifiers.IdSha512;
-            }
-
-            return new RsaDigestSigner(digest, id);
-        }
-
         internal static byte[] ComputeHash(MausBufferStream inputStream, bool sha3)
         {
             if (sha3)
@@ -2406,7 +2449,20 @@ namespace DieFledermaus
 
             if (_rsaSignParamBC != null)
             {
-                RsaDigestSigner signer = GetRsaSigner(_useSha3);
+                IDigest digest;
+                DerObjectIdentifier id;
+                if (_useSha3)
+                {
+                    digest = new Sha3Digest(hashBitSize);
+                    id = NistObjectIdentifiers.IdSha3_512;
+                }
+                else
+                {
+                    digest = new Sha512Digest();
+                    id = NistObjectIdentifiers.IdSha512;
+                }
+
+                RsaDigestSigner signer = new RsaDigestSigner(digest, id);
                 try
                 {
                     signer.Init(true, _rsaSignParamBC);

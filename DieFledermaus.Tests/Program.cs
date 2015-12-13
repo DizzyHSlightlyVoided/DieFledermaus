@@ -65,6 +65,7 @@ namespace DieFledermaus.Tests
                     foreach (DieFledermauZArchiveEntry entry in archive.Entries.OfType<DieFledermauZArchiveEntry>())
                     {
                         entry.RSASignParameters = publicKey;
+                        entry.VerifyRSASignature();
 
                         Console.WriteLine(" - Reading file: " + entry.Path);
                         using (Stream outStream = entry.OpenRead())

@@ -147,6 +147,20 @@ namespace DieFledermaus
         /// </summary>
         public bool IsRSASignVerified { get { return MausStream.IsRSASignVerified; } }
 
+        /// <summary>
+        /// Tests whether <see cref="RSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
+        /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="CryptographicException">
+        /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <remarks>This method may be called at any time after <see cref="Decrypt()"/> or <see cref="OpenRead()"/> have been called.</remarks>
+        public bool VerifyRSASignature()
+        {
+            return MausStream.VerifyRSASignature();
+        }
+
         private MausBufferStream _writingStream;
 
         /// <summary>
