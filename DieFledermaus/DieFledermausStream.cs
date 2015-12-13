@@ -1906,8 +1906,6 @@ namespace DieFledermaus
 
             GetBuffer();
 
-            _bufferStream.Reset();
-
             if (_encFmt != MausEncryptionFormat.None)
             {
                 byte[] _key;
@@ -2056,6 +2054,7 @@ namespace DieFledermaus
 
             long length = _compLength;
             _bufferStream = GetBuffer(length, _baseStream);
+            _bufferStream.Reset();
         }
 
         internal static MausBufferStream GetBuffer(long length, Stream _baseStream)
