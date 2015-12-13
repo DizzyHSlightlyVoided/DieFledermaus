@@ -1097,7 +1097,7 @@ namespace DieFledermaus
             if (reading)
             {
                 if (_rsaKeyEncrypted == null)
-                    throw new NotSupportedException(); //TODO: No encrypted key.
+                    throw new NotSupportedException(TextResources.RsaKeyNone);
                 if (value.HasValue)
                 {
                     try
@@ -2023,7 +2023,7 @@ namespace DieFledermaus
                 }
                 catch (CryptographicException x)
                 {
-                    throw new CryptographicException(null, x); //TODO: Incorrect RSA private key.
+                    throw new CryptographicException(TextResources.RsaKeyInvalid, x);
                 }
                 if (_key.Length != keySize >> 3)
                     throw new CryptographicException();
@@ -2402,7 +2402,14 @@ namespace DieFledermaus
             if (_rsaSignParamBC != null)
             {
                 RsaDigestSigner signer = GetRsaSigner(_useSha3);
-                signer.Init(true, _rsaSignParamBC);
+                try
+                {
+                    signer.Init(true, _rsaSignParamBC);
+                }
+                catch (Exception x)
+                {
+                    throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
+                }
                 ComputeWithStream(_bufferStream, signer.BlockUpdate, null);
 
                 rsaSignature = signer.GenerateSignature();
@@ -2612,7 +2619,7 @@ namespace DieFledermaus
                 }
                 catch (CryptographicException x)
                 {
-                    throw new CryptographicException(null, x); //TODO: Invalid RSA public key.
+                    throw new CryptographicException(TextResources.RsaKeyPubInvalid, x);
                 }
             }
             return _key;

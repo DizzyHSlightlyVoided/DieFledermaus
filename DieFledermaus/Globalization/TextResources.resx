@@ -327,4 +327,16 @@
   <data name="RsaNeedPublic" xml:space="preserve">
     <value>The specified value is not a valid public or private key.</value>
   </data>
+  <data name="RsaKeyInvalid" xml:space="preserve">
+    <value>The RSA private key used to decrypt the stream key is invalid.</value>
+  </data>
+  <data name="RsaKeyNone" xml:space="preserve">
+    <value>The current instance does not have an RSA encryption key.</value>
+  </data>
+  <data name="RsaKeyPubInvalid" xml:space="preserve">
+    <value>The RSA public key used to encrypt the stream key is invalid.</value>
+  </data>
+  <data name="RsaSigPrivInvalid" xml:space="preserve">
+    <value>The RSA private key used to sign the stream is invalid.</value>
+  </data>
 </root>

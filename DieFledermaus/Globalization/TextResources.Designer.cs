@@ -547,6 +547,33 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The RSA private key used to decrypt the stream key is invalid..
+        /// </summary>
+        internal static string RsaKeyInvalid {
+            get {
+                return ResourceManager.GetString("RsaKeyInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current instance does not have an RSA encryption key..
+        /// </summary>
+        internal static string RsaKeyNone {
+            get {
+                return ResourceManager.GetString("RsaKeyNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA public key used to encrypt the stream key is invalid..
+        /// </summary>
+        internal static string RsaKeyPubInvalid {
+            get {
+                return ResourceManager.GetString("RsaKeyPubInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified value is not a valid private key..
         /// </summary>
         internal static string RsaNeedPrivate {
@@ -588,6 +615,15 @@ namespace DieFledermaus.Globalization {
         internal static string RsaSigNone {
             get {
                 return ResourceManager.GetString("RsaSigNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA private key used to sign the stream is invalid..
+        /// </summary>
+        internal static string RsaSigPrivInvalid {
+            get {
+                return ResourceManager.GetString("RsaSigPrivInvalid", resourceCulture);
             }
         }
         
