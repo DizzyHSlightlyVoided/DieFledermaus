@@ -1527,9 +1527,8 @@ namespace DieFledermaus
         internal const string _keyRsaKey = "RsaSch";
         internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'c', (byte)'h' };
 
-        internal const string _kSha3 = "SHA3", _kSha256 = "SHA256";
-        internal static readonly byte[] _bSha3 = { (byte)'S', (byte)'H', (byte)'A', (byte)'3' },
-            _bSha256 = { (byte)'S', (byte)'H', (byte)'A', (byte)'2', (byte)'5', (byte)'6' };
+        internal const string _kHash = "Hash";
+        internal static readonly byte[] _bHash = { (byte)'H', (byte)'a', (byte)'s', (byte)'h' };
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
         private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
@@ -1544,6 +1543,15 @@ namespace DieFledermaus
             { _cmpLzma, MausCompressionFormat.Lzma },
             { _cmpDef, MausCompressionFormat.Deflate }
         };
+
+        internal static readonly Dictionary<string, MausHashFunction> HashDict = new Dictionary<string, MausHashFunction>()
+        {
+            { "SHA256", MausHashFunction.Sha256 },
+            { "SHA512", MausHashFunction.Sha512 },
+            { "SHA3/256", MausHashFunction.Sha3_256 },
+            { "SHA3/512", MausHashFunction.Sha3_512 },
+        };
+        internal static readonly Dictionary<MausHashFunction, byte[]> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key.Select(c => (byte)c).ToArray());
 
         private const string _kFilename = "Name", _kULen = "DeL";
         private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' };
@@ -1623,7 +1631,7 @@ namespace DieFledermaus
             }
         }
 
-        bool gotFormat, gotULen;
+        bool gotFormat, gotULen, _gotHash;
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
             const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
@@ -1654,18 +1662,25 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kSha3, StringComparison.Ordinal))
+                if (curForm.Equals(_kHash, StringComparison.Ordinal))
                 {
-                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha3_256) == 0)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    _hashFunc |= MausHashFunction.Sha3_256;
-                    continue;
-                }
-                if (curForm.Equals(_kSha256, StringComparison.Ordinal))
-                {
-                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha512) != 0)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    _hashFunc &= ~MausHashFunction.Sha512;
+                    CheckAdvance(optLen, ref i);
+                    string newVal = GetString(reader, ref headSize, false);
+                    MausHashFunction hashFunc;
+                    if (!HashDict.TryGetValue(newVal, out hashFunc))
+                        throw new NotSupportedException(TextResources.FormatUnknownZ);
+
+                    if (_gotHash || fromEncrypted)
+                    {
+                        if (hashFunc != _hashFunc)
+                            throw new InvalidDataException(TextResources.FormatBadZ);
+                    }
+                    else
+                    {
+                        _hashFunc = hashFunc;
+                        _gotHash = true;
+                    }
+
                     continue;
                 }
 
@@ -2644,20 +2659,8 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
 
-                    switch (_hashFunc)
-                    {
-                        case MausHashFunction.Sha256:
-                        case MausHashFunction.Sha3_256:
-                            formats.Add(_bSha256);
-                            break;
-                    }
-                    switch (_hashFunc)
-                    {
-                        case MausHashFunction.Sha3_256:
-                        case MausHashFunction.Sha3_512:
-                            formats.Add(_bSha3);
-                            break;
-                    }
+                    formats.Add(_bHash);
+                    formats.Add(HashBDict[_hashFunc]);
 
                     if (_encFmt == MausEncryptionFormat.Aes)
                     {

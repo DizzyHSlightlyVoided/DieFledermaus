@@ -28,10 +28,9 @@ The structure of a DieFledermauZ file is as follows:
 ### Options
 The following elements are specified for the **Options** field:
 * `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
-* `AES` - *1 parameter.* Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus. See below for further information.
-* `SHA3` - *No parameters.* Indicates that the file uses SHA-3 hashes and HMACs instead of SHA-2. Must not be used unless the archive is encrypted. Same as DieFledermaus.
-* `SHA256` - *No parameters.* Indicates that the file uses 256-bit hashes and HMACs instead of 512-bit. Must not be used unless the archive is encrypted. Same as DieFledermaus.
-* `RsaSch` - *1 parameter.* The key is encrypted using an RSA public key, and may be decrypted using the corresponding private key. Same as in DieFledermaus. Must not be used unless the archive is encrypted.
+* `AES` - *1 parameter.* Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus; must be in plaintext. See below for further information.
+* `Hash` - *1 parameter.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
+* `RsaSch` - *1 parameter.* The key is encrypted using an RSA public key, and may be decrypted using the corresponding private key. Same as in DieFledermaus; must be in plaintext Must not be used unless the archive is encrypted.
 
 Entry List
 ----------

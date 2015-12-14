@@ -527,7 +527,7 @@ namespace DieFledermaus
             Array.Clear(_key, 0, _key.Length);
         }
 
-        private bool _gotEnc;
+        private bool _gotEnc, _gotHash;
 
         internal void ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
@@ -611,19 +611,25 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curOption.Equals(DieFledermausStream._kSha3, StringComparison.Ordinal))
+                if (curOption.Equals(DieFledermausStream._kHash, StringComparison.Ordinal))
                 {
-                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha3_256) == 0)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    _hashFunc |= MausHashFunction.Sha3_256;
-                    continue;
-                }
+                    CheckAdvance(optLen, ref i);
+                    string newVal = DieFledermausStream.GetString(reader, ref curOffset, false);
+                    MausHashFunction hashFunc;
+                    if (!DieFledermausStream.HashDict.TryGetValue(newVal, out hashFunc))
+                        throw new NotSupportedException(TextResources.FormatUnknownZ);
 
-                if (curOption.Equals(DieFledermausStream._kSha256, StringComparison.Ordinal))
-                {
-                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha512) != 0)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    _hashFunc &= ~MausHashFunction.Sha512;
+                    if (_gotHash || fromEncrypted)
+                    {
+                        if (hashFunc != _hashFunc)
+                            throw new InvalidDataException(TextResources.FormatBadZ);
+                    }
+                    else
+                    {
+                        _hashFunc = hashFunc;
+                        _gotHash = true;
+                    }
+
                     continue;
                 }
 
@@ -1558,21 +1564,8 @@ namespace DieFledermaus
                         break;
                 }
 
-                switch (_hashFunc)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha3_256:
-                        options.Add(DieFledermausStream._bSha256);
-                        break;
-                }
-
-                switch (_hashFunc)
-                {
-                    case MausHashFunction.Sha3_256:
-                    case MausHashFunction.Sha3_512:
-                        options.Add(DieFledermausStream._bSha3);
-                        break;
-                }
+                options.Add(DieFledermausStream._bHash);
+                options.Add(DieFledermausStream.HashBDict[_hashFunc]);
 
                 if (rsaKey != null)
                 {
