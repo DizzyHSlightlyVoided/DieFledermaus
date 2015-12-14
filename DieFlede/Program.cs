@@ -96,6 +96,7 @@ namespace DieFledermaus.Cli
 
             ClParamMulti entryFile = new ClParamMulti(parser, string.Join(Environment.NewLine, TextResources.HelpMEntry, TextResources.HelpMEntry2),
                 TextResources.HelpInput, 'e');
+            parser.RawParam = entryFile;
 
             ClParamValue outFile = new ClParamValue(parser, TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
                 TextResources.PNameOut, TextResources.PNameOutput);
