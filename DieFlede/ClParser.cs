@@ -40,12 +40,6 @@ namespace DieFledermaus.Cli
         private List<ClParam> _params = new List<ClParam>();
         public List<ClParam> Params { get { return _params; } }
 
-        public ClParser(int rawIndex, params ClParam[] parameters)
-        {
-            _rawParam = parameters[rawIndex];
-            _params.AddRange(parameters);
-        }
-
         private ClParam _rawParam;
         public ClParam RawParam
         {
@@ -321,8 +315,10 @@ namespace DieFledermaus.Cli
 
     internal abstract class ClParam
     {
-        protected ClParam(string helpMessage, char shortName, params string[] longNames)
+        protected ClParam(ClParser parser, string helpMessage, char shortName, params string[] longNames)
         {
+            parser.Params.Add(this);
+
             ShortName = shortName;
             LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             HelpMessage = helpMessage;
@@ -388,8 +384,8 @@ namespace DieFledermaus.Cli
 
     internal abstract class ClParamValueBase : ClParam
     {
-        public ClParamValueBase(string helpMessage, string argName, char shortName, params string[] longNames)
-            : base(helpMessage, shortName, longNames)
+        public ClParamValueBase(ClParser parser, string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(parser, helpMessage, shortName, longNames)
         {
             ArgName = argName;
         }
@@ -404,8 +400,8 @@ namespace DieFledermaus.Cli
 
     internal class ClParamValue : ClParamValueBase
     {
-        public ClParamValue(string helpMessage, string argName, char shortName, params string[] longNames)
-            : base(helpMessage, argName, shortName, longNames)
+        public ClParamValue(ClParser parser, string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(parser, helpMessage, argName, shortName, longNames)
         {
         }
 
@@ -447,8 +443,8 @@ namespace DieFledermaus.Cli
 
     internal class ClParamFlag : ClParam
     {
-        public ClParamFlag(string helpMessage, char shortName, params string[] longNames)
-            : base(helpMessage, shortName, longNames)
+        public ClParamFlag(ClParser parser, string helpMessage, char shortName, params string[] longNames)
+            : base(parser, helpMessage, shortName, longNames)
         {
         }
 
@@ -466,8 +462,8 @@ namespace DieFledermaus.Cli
 
     internal class ClParamMulti : ClParamValueBase
     {
-        public ClParamMulti(string helpMessage, string argName, char shortName, params string[] longNames)
-            : base(helpMessage, argName, shortName, longNames)
+        public ClParamMulti(ClParser parser, string helpMessage, string argName, char shortName, params string[] longNames)
+            : base(parser, helpMessage, argName, shortName, longNames)
         {
         }
 
@@ -492,8 +488,8 @@ namespace DieFledermaus.Cli
     internal class ClParamEnum<TEnum> : ClParamValueBase
         where TEnum : struct
     {
-        public ClParamEnum(string helpMessage, Dictionary<string, TEnum> locArgs, Dictionary<string, TEnum> unArgs, char shortName, params string[] longNames)
-            : base(helpMessage, string.Join("|", locArgs.Keys), shortName, longNames)
+        public ClParamEnum(ClParser parser, string helpMessage, Dictionary<string, TEnum> locArgs, Dictionary<string, TEnum> unArgs, char shortName, params string[] longNames)
+            : base(parser, helpMessage, string.Join("|", locArgs.Keys), shortName, longNames)
         {
             _args = new Dictionary<string, TEnum>(unArgs, StringComparer.OrdinalIgnoreCase);
             foreach (var curKVP in locArgs)

@@ -53,10 +53,11 @@ namespace DieFledermaus.Cli
             Console.WriteLine(TextResources.Disclaimer);
             Console.WriteLine();
 
-            ClParamFlag help = new ClParamFlag(TextResources.HelpMHelp, 'h', "help", TextResources.PNameHelp);
-            ClParamFlag create = new ClParamFlag(TextResources.HelpMCreate, 'c', "create", TextResources.PNameCreate);
-            ClParamFlag extract = new ClParamFlag(TextResources.HelpMExtract, 'x', "extract", TextResources.PNameExtract);
-            ClParamFlag list = new ClParamFlag(TextResources.HelpMList, 'l', "list", TextResources.PNameList);
+            ClParser parser = new ClParser();
+            ClParamFlag create = new ClParamFlag(parser, TextResources.HelpMCreate, 'c', "create", TextResources.PNameCreate);
+            ClParamFlag extract = new ClParamFlag(parser, TextResources.HelpMExtract, 'x', "extract", TextResources.PNameExtract);
+            ClParamFlag list = new ClParamFlag(parser, TextResources.HelpMList, 'l', "list", TextResources.PNameList);
+            ClParamFlag help = new ClParamFlag(parser, TextResources.HelpMHelp, 'h', "help", TextResources.PNameHelp);
             extract.MutualExclusives.Add(create);
             create.MutualExclusives.Add(extract);
             create.MutualExclusives.Add(list);
@@ -71,32 +72,32 @@ namespace DieFledermaus.Cli
 
                 Dictionary<string, MausCompressionFormat> unArgs = new Dictionary<string, MausCompressionFormat>() { { "none", MausCompressionFormat.None } };
 
-                cFormat = new ClParamEnum<MausCompressionFormat>(TextResources.HelpMFormat, locArgs, unArgs, '\0', "format", TextResources.PNameFormat);
+                cFormat = new ClParamEnum<MausCompressionFormat>(parser, TextResources.HelpMFormat, locArgs, unArgs, '\0', "format", TextResources.PNameFormat);
                 cFormat.MutualExclusives.Add(extract);
                 cFormat.MutualExclusives.Add(list);
                 cFormat.OtherMessages.Add(extract, NoEntryExtract);
                 cFormat.OtherMessages.Add(list, NoEntryExtract);
             }
 
-            ClParamFlag single = new ClParamFlag(TextResources.HelpMSingle, 'n', "single", TextResources.PNameSingle);
+            ClParamFlag single = new ClParamFlag(parser, TextResources.HelpMSingle, 'n', "single", TextResources.PNameSingle);
 
-            ClParamFlag interactive = new ClParamFlag(TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
+            ClParamFlag interactive = new ClParamFlag(parser, TextResources.HelpMInteractive, 'i', "interactive", TextResources.PNameInteractive);
 
-            ClParamFlag overwrite = new ClParamFlag(TextResources.HelpMOverwrite, 'w', "overWrite", TextResources.PNameOverwrite);
-            ClParamFlag skipexist = new ClParamFlag(TextResources.HelpMSkip, 's', "skip", "skip-existing",
+            ClParamFlag overwrite = new ClParamFlag(parser, TextResources.HelpMOverwrite, 'w', "overWrite", TextResources.PNameOverwrite);
+            ClParamFlag skipexist = new ClParamFlag(parser, TextResources.HelpMSkip, 's', "skip", "skip-existing",
                 TextResources.PNameSkip, TextResources.PNameSkipExisting);
             skipexist.MutualExclusives.Add(overwrite);
 
-            ClParamFlag verbose = new ClParamFlag(TextResources.HelpMVerbose, 'v', "verbose", TextResources.PNameVerbose);
+            ClParamFlag verbose = new ClParamFlag(parser, TextResources.HelpMVerbose, 'v', "verbose", TextResources.PNameVerbose);
 
-            ClParamValue archiveFile = new ClParamValue(TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
+            ClParamValue archiveFile = new ClParamValue(parser, TextResources.HelpMArchive, TextResources.HelpArchive, 'f', "file", "archive",
                 TextResources.PNameFile, TextResources.PNameArchive);
             archiveFile.ConvertValue = Path.GetFullPath;
 
-            ClParamMulti entryFile = new ClParamMulti(string.Join(Environment.NewLine, TextResources.HelpMEntry, TextResources.HelpMEntry2),
+            ClParamMulti entryFile = new ClParamMulti(parser, string.Join(Environment.NewLine, TextResources.HelpMEntry, TextResources.HelpMEntry2),
                 TextResources.HelpInput, 'e');
 
-            ClParamValue outFile = new ClParamValue(TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
+            ClParamValue outFile = new ClParamValue(parser, TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
                 TextResources.PNameOut, TextResources.PNameOutput);
             outFile.ConvertValue = Path.GetFullPath;
             outFile.MutualExclusives.Add(create);
@@ -105,15 +106,15 @@ namespace DieFledermaus.Cli
             outFile.MutualExclusives.Add(entryFile);
             entryFile.MutualExclusives.Add(outFile);
 
-            ClParamFlag encAes = new ClParamFlag(TextResources.HelpMAes, '\0', "AES");
+            ClParamFlag encAes = new ClParamFlag(parser, TextResources.HelpMAes, '\0', "AES");
             encAes.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(encAes, NoEntryExtract);
 
-            ClParamFlag hide = new ClParamFlag(TextResources.HelpMHide, '\0', "hide", TextResources.PNameHide);
+            ClParamFlag hide = new ClParamFlag(parser, TextResources.HelpMHide, '\0', "hide", TextResources.PNameHide);
             extract.MutualExclusives.Add(hide);
             extract.OtherMessages.Add(hide, NoEntryExtract);
 
-            ClParam[] clParams = { create, extract, help, list, single, entryFile, archiveFile, outFile, interactive, verbose, cFormat, skipexist, overwrite, encAes, hide };
+            ClParam[] clParams = parser.Params.ToArray();
 
             if (args.Length == 1 && args[0][0] != '-')
             {
@@ -121,16 +122,10 @@ namespace DieFledermaus.Cli
                 archiveFile.Value = args[0];
                 extract.IsSet = true;
             }
-            else
+            else if (parser.Parse(args))
             {
-                using (ClParser parser = new ClParser(Array.IndexOf(clParams, entryFile), clParams))
-                {
-                    if (parser.Parse(args))
-                    {
-                        ShowHelp(clParams, false);
-                        return Return(-1, interactive);
-                    }
-                }
+                ShowHelp(clParams, false);
+                return Return(-1, interactive);
             }
             bool acting = false;
 
