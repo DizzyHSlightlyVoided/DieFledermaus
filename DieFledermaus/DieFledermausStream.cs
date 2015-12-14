@@ -1418,7 +1418,7 @@ namespace DieFledermaus
             }
         }
 
-        internal static byte[] GetKey(string password, byte[] _salt, int _pkCount, int keySize, MausHashFunction hashAlg)
+        internal static byte[] GetKey(string password, byte[] _salt, int _pkCount, int keySize, MausHashFunction hashFunc)
         {
             int keyLength = keySize >> 3;
             if (_salt.Length > keyLength)
@@ -1426,7 +1426,7 @@ namespace DieFledermaus
 
             IDigest digest;
 
-            switch (hashAlg)
+            switch (hashFunc)
             {
                 case MausHashFunction.Sha256:
                     digest = new Sha256Digest();
@@ -1435,7 +1435,7 @@ namespace DieFledermaus
                     digest = new Sha512Digest();
                     break;
                 default:
-                    digest = new Sha3Digest(hashAlg == MausHashFunction.Sha512 ? hashBitSize512 : hashBitSize256);
+                    digest = new Sha3Digest(GetSha3Size(hashFunc));
                     break;
             }
 
@@ -1573,13 +1573,18 @@ namespace DieFledermaus
 
                 _hashFunc = MausHashFunction.Sha512;
                 _headSize = ReadFormat(reader, false);
-                switch (_hashFunc)
+                if (_encFmt == MausEncryptionFormat.None)
                 {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha3_256:
-                        _headSize -= hashLength256;
-                        break;
+                    if (_rsaKey != null)
+                        throw new InvalidDataException(TextResources.FormatBad);
                 }
+                else if (_rsaKey != null && _rsaKey.Length < _keySize >> 3)
+                    throw new InvalidDataException(TextResources.FormatBad);
+
+                int hashLength = GetHashLength(_hashFunc);
+                if (_rsaSignature != null && _rsaSignature.Length < hashLength)
+                    throw new InvalidDataException(TextResources.FormatBad);
+                _headSize += hashLength;
 
                 if (readMagNum)
                     _headSize += sizeof(int);
@@ -1600,7 +1605,7 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
                 else gotULen = true;
 
-                _hashExpected = ReadBytes(reader, HashSize);
+                _hashExpected = ReadBytes(reader, hashLength);
 
                 if (_encFmt != MausEncryptionFormat.None)
                 {
@@ -1618,26 +1623,11 @@ namespace DieFledermaus
             }
         }
 
-        private int HashSize
-        {
-            get
-            {
-                switch (_hashFunc)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha3_256:
-                        return hashLength256;
-                    default:
-                        return hashLength512;
-                }
-            }
-        }
-
         bool gotFormat, gotULen;
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
             const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
-                sizeof(long) + sizeof(long) + hashLength512; //compressed length, uncompressed length, hashLength;
+                sizeof(long) + sizeof(long); //compressed length, uncompressed length, hashLength;
 
             long headSize = baseHeadSize;
 
@@ -1681,7 +1671,7 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_keyRsaSign, StringComparison.Ordinal))
                 {
-                    ReadBytes(reader, optLen, hashLength512 << 1, ref headSize, ref i, ref _rsaSignature);
+                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignature);
                     continue;
                 }
 
@@ -1690,7 +1680,7 @@ namespace DieFledermaus
                     if (fromEncrypted && _rsaKey == null)
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    ReadBytes(reader, optLen, 0, ref headSize, ref i, ref _rsaKey);
+                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaKey);
                     continue;
                 }
 
@@ -1812,24 +1802,30 @@ namespace DieFledermaus
                 throw new NotSupportedException(TextResources.FormatUnknown);
             }
 
-            if (_encFmt == MausEncryptionFormat.None)
-            {
-                if (_rsaKey != null)
-                    throw new InvalidDataException(TextResources.FormatBad);
-            }
-            else if (_rsaKey != null && _rsaKey.Length < _keySize >> 1)
-                throw new NotSupportedException(TextResources.FormatUnknown);
-
             return headSize;
         }
 
-        internal static void ReadBytes(BinaryReader reader, int optLen, int byteLen, ref long headSize, ref int i, ref byte[] oldValue)
+        internal static int GetHashLength(MausHashFunction hashFunc)
+        {
+            switch (hashFunc)
+            {
+                case MausHashFunction.Sha512:
+                case MausHashFunction.Sha3_512:
+                    return 512 / 8;
+                default:
+                    return 256 / 8;
+            }
+        }
+
+        internal static int GetSha3Size(MausHashFunction hashFunc)
+        {
+            return 256 << (int)(hashFunc & MausHashFunction.Sha512);
+        }
+
+        internal static void ReadBytes(BinaryReader reader, int optLen, ref long headSize, ref int i, ref byte[] oldValue)
         {
             CheckAdvance(optLen, ref i);
             byte[] bytes = GetStringBytes(reader, ref headSize, false);
-
-            if (byteLen != 0 && bytes.Length != byteLen)
-                throw new InvalidDataException(TextResources.FormatBad);
 
             if (oldValue == null)
                 oldValue = bytes;
@@ -1911,7 +1907,7 @@ namespace DieFledermaus
         internal long CompressedLength { get { return _compLength; } }
 
         private byte[] _hashExpected;
-        internal const int hashLength256 = 32, hashLength512 = 64, hashBitSize256 = 256, hashBitSize512 = 512, minPkCount = 9001;
+        internal const int minPkCount = 9001;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;
 
@@ -2363,7 +2359,7 @@ namespace DieFledermaus
             {
                 case MausHashFunction.Sha3_256:
                 case MausHashFunction.Sha3_512:
-                    Sha3Digest shaHash = new Sha3Digest(hashFunc == MausHashFunction.Sha512 ? hashBitSize512 : hashBitSize256);
+                    Sha3Digest shaHash = new Sha3Digest(GetSha3Size(hashFunc));
                     return ComputeWithStream(inputStream, shaHash.BlockUpdate, GetFinal(shaHash));
             }
 
@@ -2383,7 +2379,7 @@ namespace DieFledermaus
                     digest = new Sha512Digest();
                     break;
                 default:
-                    digest = new Sha3Digest(hashFunc == MausHashFunction.Sha3_512 ? hashBitSize512 : hashBitSize256);
+                    digest = new Sha3Digest(GetSha3Size(hashFunc));
                     break;
             }
 
@@ -2560,11 +2556,11 @@ namespace DieFledermaus
                         id = NistObjectIdentifiers.IdSha512;
                         break;
                     case MausHashFunction.Sha3_256:
-                        digest = new Sha3Digest(hashBitSize256);
+                        digest = new Sha3Digest(256);
                         id = NistObjectIdentifiers.IdSha3_256;
                         break;
                     case MausHashFunction.Sha3_512:
-                        digest = new Sha3Digest(hashBitSize512);
+                        digest = new Sha3Digest(512);
                         id = NistObjectIdentifiers.IdSha3_512;
                         break;
                 }

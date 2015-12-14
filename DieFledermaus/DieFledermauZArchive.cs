@@ -275,17 +275,7 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 _pkCount = (int)pkValue;
 
-                int hashSize;
-                switch (_hashFunc)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha3_256:
-                        hashSize = DieFledermausStream.hashLength256;
-                        break;
-                    default:
-                        hashSize = DieFledermausStream.hashLength512;
-                        break;
-                }
+                int hashSize = DieFledermausStream.GetHashLength(_hashFunc);
 
                 _hashExpected = DieFledermausStream.ReadBytes(reader, hashSize);
                 _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
@@ -617,7 +607,7 @@ namespace DieFledermaus
                     if (fromEncrypted && _rsaKey == null)
                         throw new InvalidDataException(TextResources.FormatBadZ);
 
-                    DieFledermausStream.ReadBytes(reader, optLen, 0, ref curOffset, ref i, ref _rsaKey);
+                    DieFledermausStream.ReadBytes(reader, optLen, ref curOffset, ref i, ref _rsaKey);
                     continue;
                 }
 
@@ -1606,16 +1596,7 @@ namespace DieFledermaus
                 encryptedOptions = new List<byte[]>();
                 long size = (_keySize >> 3) + _addSize;
 
-                switch (_hashFunc)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha3_256:
-                        size += DieFledermausStream.hashLength256;
-                        break;
-                    default:
-                        size += DieFledermausStream.hashLength512;
-                        break;
-                }
+                size += DieFledermausStream.GetHashLength(_hashFunc);
 
                 length += size;
                 curOffset += size;
