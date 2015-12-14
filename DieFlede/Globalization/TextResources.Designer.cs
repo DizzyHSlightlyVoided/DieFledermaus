@@ -331,6 +331,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Indicates the hash function used by the current instance..
+        /// </summary>
+        internal static string HelpMHash {
+            get {
+                return ResourceManager.GetString("HelpMHash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Displays this extended help..
         /// </summary>
         internal static string HelpMHelp {
@@ -696,6 +705,24 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameFormat {
             get {
                 return ResourceManager.GetString("PNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to hash.
+        /// </summary>
+        internal static string PNameHash {
+            get {
+                return ResourceManager.GetString("PNameHash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to hash-func.
+        /// </summary>
+        internal static string PNameHashFunc {
+            get {
+                return ResourceManager.GetString("PNameHashFunc", resourceCulture);
             }
         }
         

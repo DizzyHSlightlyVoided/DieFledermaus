@@ -461,4 +461,16 @@
     <value>format</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
+  <data name="HelpMHash" xml:space="preserve">
+    <value>Indicates the hash function used by the current instance.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameHash" xml:space="preserve">
+    <value>hash</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameHashFunc" xml:space="preserve">
+    <value>hash-func</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
 </root>

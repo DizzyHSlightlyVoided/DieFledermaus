@@ -107,6 +107,14 @@ namespace DieFledermaus.Cli
             outFile.MutualExclusives.Add(entryFile);
             entryFile.MutualExclusives.Add(outFile);
 
+            ClParamEnum<MausHashFunction> hash;
+            {
+                Dictionary<string, MausHashFunction> locArgs =
+                    ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).ToDictionary(i => i.ToString());
+                hash = new ClParamEnum<MausHashFunction>(parser, TextResources.HelpMHash, locArgs, new Dictionary<string, MausHashFunction>(), 'h',
+                    "hash", "hash-funcs", TextResources.PNameHash, TextResources.PNameHashFunc);
+            }
+
             ClParamFlag encAes = new ClParamFlag(parser, TextResources.HelpMAes, '\0', "AES");
             encAes.MutualExclusives.Add(extract);
             extract.OtherMessages.Add(encAes, NoEntryExtract);
@@ -257,6 +265,9 @@ namespace DieFledermaus.Cli
                             using (Stream arStream = File.Create(archiveFile.Value))
                             using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
                             {
+                                if (hash.Value.HasValue)
+                                    ds.HashFunction = hash.Value.Value;
+
                                 if (ssPassword != null)
                                     ds.Password = ssPassword;
 
@@ -338,6 +349,8 @@ namespace DieFledermaus.Cli
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
                         {
+                            if (hash.Value.HasValue)
+                                archive.HashFunction = hash.Value.Value;
                             if (hide.IsSet)
                                 archive.Password = ssPassword;
 
