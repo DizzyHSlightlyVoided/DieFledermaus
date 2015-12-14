@@ -16,6 +16,7 @@ Terminology
 * **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form.
 * **re-encoder:** Any software which functions as both an encoder and a decoder.
 * **length-prefixed string:** In the DieFledermaus format, a length-prefixed string is a sequence of bytes, usually UTF-8 text, which is prefixed by the *length value*, an 8-bit or 16-bit unsigned integer indicating the length of the string (not including the length value itself). If the length value is 0, the actual length of the string is 256 for 8-bit length values and 65536 for 16-bit length values.
+* **the specified hash function:** A DieFledermaus must use one of the following cryptographic hash functions: [SHA-256, SHA-512](https://en.wikipedia.org/wiki/SHA-2), [SHA-3/256, or SHA-3/512](https://en.wikipedia.org/wiki/SHA-3). "The specified hash function" refers to whichever function the file is currently using.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -32,13 +33,15 @@ A DieFledermaus stream contains the following fields:
 3. **Format:** An array of length-prefixed strings describing the format.
 4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
 5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
-6. **Checksum:** An [SHA-512](https://en.wikipedia.org/wiki/SHA-2) hash of the decompressed value.
+6. **Checksum:** A hash of the decompressed value using the specified hash function.
 7. **Data:** The compressed data itself.
 
 ### Format
 **Format** is an array of 16-bit length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike the length-prefixed strings themselves, a 0-value in the **Format Length** means that there really are zero elements.
 
 Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for that element, which is thus known as a *parameterized element*. Format elements should have a length no greater than 256 UTF-8 bytes because I mean seriously c'mon. Parameters may be any length between 1 and 65536 UTF-8 bytes inclusive, depending on the requirements of the parameterized element.
+
+Some elements also must be in the plaintext, even if the file is encrypted, because they contain vital information about the encryption itself and/or the structure of the file. An encoder may also include them in the **Encrypted Format**, but only if they are also included in the **Format**.
 
 If no element in **Format** specifies the compression format, the decoder must use the DEFLATE algorithm.
 
@@ -52,12 +55,13 @@ The following values are defined for the default implementation:
 **De**komprimierte **L**änge. The parameter is a signed 64-bit integer containing the number of bytes in the uncompressed data. If the archive is not encrypted, this value must be equal to **Decompressed Length**. This value should be included in the **Encrypted Format** array when the archive is encrypted.
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
 * `Mod` - *One parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
-* `Kom` - *Between 2 and 257 parameters* **Kom**mentar ("comment"). A textual comment. The first parameter is the number of remaining parameters, and a value of 0 means 256. The remaining parameters contain the UTF-8 text of the comment. All but the last parameter must contain 256 bytes. All told, the length of the comment must be less than or equal to 65536. Beyond that, the comment can be anything.
-* `SHA3` - *No parameters.* The **Checksum** uses [SHA-3/512](https://en.wikipedia.org/wiki/SHA-3) instead of SHA-512 in both encrypted and unencrypted forms, and the password key is derived from an SHA-3/512 HMAC instead of an SHA-512 HMAC. According to most recent security analysis, SHA-2 remains a perfectly cromulent hashing algorithm, and so SHA-3 is intended to be an alternative to SHA-2 for the time being, rather than a replacement.
-* `RsaSig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using an SHA-512 hash (or SHA-3/512 if `SHA3` is enabled) of the uncompressed data with PKCS#1 v1.5 padding. The signature may be verified using the corresponding RSA public key.
+* `Kom` - *1 parameter* **Kom**mentar ("comment"). A textual comment.
+* `SHA3` - *No parameters.* The specified hash function uses [SHA-3](https://en.wikipedia.org/wiki/SHA-3). When this option is not present, the specified hash function uses [SHA-2](https://en.wikipedia.org/wiki/SHA-2) instead. According to most recent security analysis, SHA-2 remains a perfectly cromulent hashing algorithm, and so SHA-3 is intended to be an alternative to SHA-2 for the time being, rather than a replacement.
+* `SHA256` - *No parameters.* The specified hash function is the 256-bit form (SHA-256 and SHA-3/256). When this option is not present, the specified hash function is the 512-bit form (SHA-512 and SHA-3/512). This option should be enabled by default.
+* `RsaSig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#1 v1.5 padding. The signature may be verified using the corresponding RSA public key.
 * `RsaSch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#1 v1.5 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used.
 
-If a decoder encounters contradictory values (i.e. both `NC` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
+If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 
 A decoder must not attempt to decode an archive if it finds any unexpected or unknown values in the **Format** field; that doesn't make sense. It should, however, attempt to decode any *known* format, regardless of the file's version number.
 
@@ -71,7 +75,7 @@ An encoder should use 256-bit keys, as they are the most secure. A decoder must 
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
 * **Decompressed Length** is replaced with the **PBKDF2 Value**, which is still a signed 64-bit integer to make the structure more straightforward. This value is the number of [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) cycles, minus 9001. The number of cycles must be between 9001 and 2147483647 inclusive; therefore, the field must have a value between 0 and 2147474646 inclusive.
 * If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
-* **Checksum** contains an SHA-512 (or SHA-3/512) [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the binary key and the *compressed* data, rather than a direct SHA-512 hash of the *uncompressed* data.
+* **Checksum** contains an [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the specified hash function, the binary key derived from the password, and the *compressed* data, rather than a direct hash of the *uncompressed* data.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
  2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
@@ -82,11 +86,11 @@ The encrypted data contains:
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using a SHA-512 HMAC (or SHA-3/512 if `SHA3` is enabled), with at least 9001 iterations and an output length equal to that of the key.
+In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using an HMAC with specified hash function, with at least 9001 iterations and an output length equal to that of the key.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
-Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document. That said, an encoder must require a minimum length of 1 UTF-8 byte. You've got to have *some* standards.
+Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document. That said, an encoder must require a minimum length of 1 byte; you've got to have *some* standards.
 
 ### Padding
 AES is a **block cipher**, which divides the data in to *blocks* of a certain size (128 bits in the case of AES, or 16 bytes). The plaintext must be [padded](https://en.wikipedia.org/wiki/Padding_%28cryptography%29) using the PKCS7 algorithm, and the padding must be added *after* the HMAC is computed. If the length of the compressed plaintext is not a multiple of 16, it must be padded with enough bytes to make it a multiple of 16; the value of each padding byte is equal to the total number of bytes which were added. For example, if the original length is 50 bytes, 14 bytes are added to make a total of 64, and each byte has a value of `0x0e` (14 decimal). If the original value *is* a multiple of 16, then an extra block of 16 bytes must be added to the plaintext, each with a value of `0x10` (16 decimal). In short, extra bytes of padding must always be added to the encrypted value. The number of padding bytes must not exceed the size of a single block.

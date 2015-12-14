@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -83,21 +84,24 @@ namespace DieFledermaus
         public int BlockByteCount { get { return MausStream.BlockByteCount; } }
 
         /// <summary>
-        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="Archive"/> is in read-only mode.
+        /// In a set operation, <see cref="Archive"/> is in read-mode.
         /// </exception>
-        public bool UseSha3
+        /// <exception cref="InvalidEnumArgumentException">
+        /// The specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// </exception>
+        public MausHashFunction HashFunction
         {
-            get { return MausStream.UseSha3; }
+            get { return MausStream.HashFunction; }
             set
             {
                 EnsureCanWrite();
-                MausStream.UseSha3 = value;
+                MausStream.HashFunction = value;
             }
         }
 

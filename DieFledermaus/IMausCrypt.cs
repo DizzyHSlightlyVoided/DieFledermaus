@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.Security.Cryptography;
 
 namespace DieFledermaus
@@ -97,7 +98,7 @@ namespace DieFledermaus
         byte[] Salt { get; set; }
 
         /// <summary>
-        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
+        /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -105,7 +106,10 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
-        bool UseSha3 { get; set; }
+        /// <exception cref="InvalidEnumArgumentException">
+        /// The specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// </exception>
+        MausHashFunction HashFunction { get; set; }
 
         /// <summary>
         /// Gets the number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.

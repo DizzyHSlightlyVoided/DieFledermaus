@@ -17,7 +17,7 @@ Structure
 The structure of a DieFledermauZ file is as follows:
 
 * **Magic Number:** `mAuZ` (`6d 41 75 5a`)
-* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `00 1e` (hex) = integer `30` (decimal) = version 0.3.
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `00 28` (hex) = integer `40` (decimal) = version 0.4.
 * **Total Size:** A signed 64-bit integer, indicating the total size of the current file in bytes, starting from the `m` in `mAuZ`.
 * **Options:** An array of 16-bit length-prefixed strings, with the same form and structure as the **Format** field in a DieFledermaus file.
 * **Entry Count:** A signed 64-bit integer, indicating the number of entries in the archive.
@@ -29,7 +29,8 @@ The structure of a DieFledermauZ file is as follows:
 The following elements are specified for the **Options** field:
 * `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
 * `AES` - *1 parameter.* Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus. See below for further information.
-* `SHA3` - *No parameters.* Indicates that the file uses SHA-3/512 hashes and HMACs instead of SHA-512. Must not be used unless the archive is encrypted.
+* `SHA3` - *No parameters.* Indicates that the file uses SHA-3 hashes and HMACs instead of SHA-2. Must not be used unless the archive is encrypted. Same as DieFledermaus.
+* `SHA256` - *No parameters.* Indicates that the file uses 256-bit hashes and HMACs instead of 512-bit. Must not be used unless the archive is encrypted. Same as DieFledermaus.
 * `RsaSch` - *1 parameter.* The key is encrypted using an RSA public key, and may be decrypted using the corresponding private key. Same as in DieFledermaus. Must not be used unless the archive is encrypted.
 
 Entry List
@@ -73,8 +74,8 @@ Encryption
 There are two ways to deal with encryption. One is to encrypt each entry individually, using the usual format for DieFledermaus streams.
 
 The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES` value from the DieFledermaus's **Format**. As with DieFledermaus, an encoder must use a PBKDF2-encoded password. Everything after **Options** is encrypted, and the following plaintext fields are inserted between **Options** and the encrypted values:
-* **PBKDF2 Value:** Same as that of a DieFledermaus stream. Uses SHA-512 HMAC (or SHA-3/512 HMAC if `SHA3` is enabled).
-* **HMAC:** An SHA-512 (or SHA-3/512, if `SHA3` is enabled) [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext file, including any encrypted values.
+* **PBKDF2 Value:** Same as that of a DieFledermaus stream. Uses an HMAC with the specified hash function.
+* **HMAC:** An [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext content, including any encrypted values, using the specified hash function.
 * **Salt:** The [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password, with a length equal to that of the key.
 * **IV:** The initialization vector.
 * **Encrypted Data:** The encrypted data.

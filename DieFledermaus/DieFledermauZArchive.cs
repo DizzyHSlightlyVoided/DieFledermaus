@@ -39,7 +39,6 @@ using System.Linq;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
-using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -257,6 +256,7 @@ namespace DieFledermaus
                 if (totalSize < BaseOffset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 curOffset = BaseOffset;
+                _hashFunc = MausHashFunction.Sha512;
                 ReadOptions(reader, false);
 
                 if (_encFmt == MausEncryptionFormat.None)
@@ -275,11 +275,23 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 _pkCount = (int)pkValue;
 
-                _hashExpected = DieFledermausStream.ReadBytes(reader, DieFledermausStream.hashLength);
+                int hashSize;
+                switch (_hashFunc)
+                {
+                    case MausHashFunction.Sha256:
+                    case MausHashFunction.Sha3_256:
+                        hashSize = DieFledermausStream.hashLength256;
+                        break;
+                    default:
+                        hashSize = DieFledermausStream.hashLength512;
+                        break;
+                }
+
+                _hashExpected = DieFledermausStream.ReadBytes(reader, hashSize);
                 _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
                 _iv = DieFledermausStream.ReadBytes(reader, DieFledermausStream._blockByteCtAes);
 
-                curOffset += _salt.Length + _addSize - 12;
+                curOffset += hashSize + _salt.Length + _addSize - 12;
             }
         }
 
@@ -498,7 +510,7 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.KeyNotSetRsaZ);
             }
 
-            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _useSha3);
+            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
             using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = algorithm.CreateDecryptor())
@@ -510,7 +522,7 @@ namespace DieFledermaus
 
                 newBufferStream.Reset();
 
-                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key, _useSha3), _hashExpected))
+                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key, _hashFunc), _hashExpected))
                     throw new CryptographicException(TextResources.BadKey);
 
                 newBufferStream.Reset();
@@ -611,9 +623,17 @@ namespace DieFledermaus
 
                 if (curOption.Equals(DieFledermausStream._kSha3, StringComparison.Ordinal))
                 {
-                    if (fromEncrypted && !_useSha3)
+                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha3_256) == 0)
                         throw new InvalidDataException(TextResources.FormatBad);
-                    _useSha3 = true;
+                    _hashFunc |= MausHashFunction.Sha3_256;
+                    continue;
+                }
+
+                if (curOption.Equals(DieFledermausStream._kSha256, StringComparison.Ordinal))
+                {
+                    if (fromEncrypted && (_hashFunc & MausHashFunction.Sha512) != 0)
+                        throw new InvalidDataException(TextResources.FormatBad);
+                    _hashFunc &= ~MausHashFunction.Sha512;
                     continue;
                 }
 
@@ -635,9 +655,6 @@ namespace DieFledermaus
 
                 throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
-
-            if (_encFmt == MausEncryptionFormat.None && (_useSha3 || _rsaKey != null))
-                throw new InvalidDataException(TextResources.FormatBadZ);
         }
 
         private static void CheckAdvance(int optLen, ref int i)
@@ -852,10 +869,9 @@ namespace DieFledermaus
             }
         }
 
-        private bool _useSha3;
+        private MausHashFunction _hashFunc;
         /// <summary>
-        /// Gets and sets a value indicating whether the current instance uses SHA-3. If <c>false</c>, the current instance uses SHA-512 (SHA-2).
-        /// If the current instance is not encrypted, specifies the default <see cref="DieFledermauZItem.UseSha3"/> value.
+        /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -863,13 +879,26 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
-        public bool UseSha3
+        /// <exception cref="InvalidEnumArgumentException">
+        /// The specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// </exception>
+        public MausHashFunction HashFunction
         {
-            get { return _useSha3; }
+            get { return _hashFunc; }
             set
             {
                 EnsureCanWrite();
-                _useSha3 = value;
+                switch (value)
+                {
+                    case MausHashFunction.Sha256:
+                    case MausHashFunction.Sha512:
+                    case MausHashFunction.Sha3_256:
+                    case MausHashFunction.Sha3_512:
+                        _hashFunc = value;
+                        break;
+                    default:
+                        throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
+                }
             }
         }
 
@@ -1032,7 +1061,7 @@ namespace DieFledermaus
             DieFledermauZArchiveEntry entry = new DieFledermauZArchiveEntry(this, path, compFormat, encryptionFormat);
             _entryDict.Add(path, _entries.Count);
             _entries.Add(entry);
-            entry.UseSha3 = _useSha3;
+            entry.HashFunction = _hashFunc;
             return entry;
         }
 
@@ -1318,7 +1347,7 @@ namespace DieFledermaus
             DieFledermauZEmptyDirectory empty = new DieFledermauZEmptyDirectory(this, pathSlash);
             _entryDict.Add(pathSlash, _entries.Count);
             _entries.Add(empty);
-            empty.UseSha3 = _useSha3;
+            empty.HashFunction = _hashFunc;
             return empty;
         }
 
@@ -1500,8 +1529,7 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.None)
                 rsaKey = _key = null;
             else
-                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _useSha3, out rsaKey);
-
+                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
 
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
@@ -1540,8 +1568,21 @@ namespace DieFledermaus
                         break;
                 }
 
-                if (_useSha3)
-                    options.Add(DieFledermausStream._bSha3);
+                switch (_hashFunc)
+                {
+                    case MausHashFunction.Sha256:
+                    case MausHashFunction.Sha3_256:
+                        options.Add(DieFledermausStream._bSha256);
+                        break;
+                }
+
+                switch (_hashFunc)
+                {
+                    case MausHashFunction.Sha3_256:
+                    case MausHashFunction.Sha3_512:
+                        options.Add(DieFledermausStream._bSha3);
+                        break;
+                }
 
                 if (rsaKey != null)
                 {
@@ -1564,6 +1605,17 @@ namespace DieFledermaus
             {
                 encryptedOptions = new List<byte[]>();
                 long size = (_keySize >> 3) + _addSize;
+
+                switch (_hashFunc)
+                {
+                    case MausHashFunction.Sha256:
+                    case MausHashFunction.Sha3_256:
+                        size += DieFledermausStream.hashLength256;
+                        break;
+                    default:
+                        size += DieFledermausStream.hashLength512;
+                        break;
+                }
 
                 length += size;
                 curOffset += size;
@@ -1606,7 +1658,7 @@ namespace DieFledermaus
                         }
 
                         cryptStream.Reset();
-                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key, _useSha3);
+                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key, _hashFunc);
                         cryptStream.Reset();
 
                         using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
@@ -1668,8 +1720,8 @@ namespace DieFledermaus
             }
         }
 
-        private const long _addSize = DieFledermausStream._blockByteCtAes + DieFledermausStream.hashLength + sizeof(long);
-        //Respectively, IV, HMAC, and PBKDF2 value
+        private const long _addSize = DieFledermausStream._blockByteCtAes + sizeof(long);
+        //Respectively, IV and PBKDF2 values
 
         private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, BinaryWriter writer, long curOffset)
         {
