@@ -77,26 +77,20 @@ namespace DieFledermaus
                     EnsureCanWrite();
                     if (value && MausStream.EncryptionFormat == MausEncryptionFormat.None)
                     {
-                        MausStream.Dispose();
-                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes)
-                        {
-                            Comment = MausStream.Comment,
-                            HashFunction = MausStream.HashFunction
-                        };
+                        Replace(new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes));
                         MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
                     }
                     else if (!value && MausStream.EncryptionFormat != MausEncryptionFormat.None)
-                    {
-                        MausStream.Dispose();
-                        MausStream = new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None)
-                        {
-                            Comment = MausStream.Comment,
-                            HashFunction = MausStream.HashFunction
-                        };
-                    }
+                        Replace(new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None));
                     _enc = value;
                 }
             }
+        }
+
+        private void Replace(DieFledermausStream newStream)
+        {
+            MausStream.Dispose(newStream);
+            MausStream = newStream;
         }
 
         /// <summary>
