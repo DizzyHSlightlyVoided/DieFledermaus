@@ -193,7 +193,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the specified value is not a valid private key.</para>
         /// </exception>
-        public RSAParameters? RSAKeyParameters
+        public virtual RSAParameters? RSAKeyParameters
         {
             get { return MausStream.RSAKeyParameters; }
             set

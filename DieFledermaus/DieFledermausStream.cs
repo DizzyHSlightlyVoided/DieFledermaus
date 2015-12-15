@@ -989,6 +989,9 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, both the specified value and <see cref="RSAKeyParameters"/> are not <c>null</c>, and they both
+        /// refer to the same key.</para>
         /// </exception>
         public RSAParameters? RSASignParameters
         {
@@ -1002,6 +1005,10 @@ namespace DieFledermaus
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+
+                if (CompareValues(value, _rsaKeyParams))
+                    throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
+
                 if (_mode == CompressionMode.Decompress)
                 {
                     if (_rsaSignature == null)
@@ -1035,6 +1042,16 @@ namespace DieFledermaus
                 else _rsaSignParamBC = null;
                 _rsaSignParams = value;
             }
+        }
+
+        internal static bool CompareValues(RSAParameters? x, RSAParameters? y)
+        {
+            if (!x.HasValue || !y.HasValue)
+                return false;
+            RSAParameters xVal = x.Value, yVal = y.Value;
+
+            return xVal.Exponent != null && yVal.Exponent != null && yVal.Modulus != null && yVal.Modulus != null &&
+                CompareBytes(xVal.Exponent, yVal.Exponent) && CompareBytes(xVal.Modulus, yVal.Modulus);
         }
 
         private byte[] _rsaKey;
@@ -1076,6 +1093,9 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is in write-mode, and the specified value is not a valid public key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, both the specified value and <see cref="RSASignParameters"/> are not <c>null</c>, and they both
+        /// refer to the same key.</para>
         /// </exception>
         public RSAParameters? RSAKeyParameters
         {
@@ -1083,6 +1103,10 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
+
+                if (CompareValues(value, _rsaSignParams))
+                    throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
+
                 _rsaKeyParamBC = SetRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
                 _rsaKeyParams = value;
             }
@@ -2808,15 +2832,17 @@ namespace DieFledermaus
                 writer.Write(curForm);
             }
         }
-        #endregion
 
         internal void Dispose(DieFledermausStream other)
         {
             other._comment = _comment;
             other._hashFunc = _hashFunc;
             other.Progress = Progress;
+            other._rsaKeyParamBC = _rsaKeyParamBC;
+            other._rsaKeyParams = _rsaKeyParams;
             Dispose();
         }
+        #endregion
 
         /// <summary>
         /// Raised when the current stream is reading or writing data, and the progress changes meaningfully.

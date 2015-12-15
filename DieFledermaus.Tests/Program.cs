@@ -18,11 +18,11 @@ namespace DieFledermaus.Tests
 
             using (MemoryStream ms = new MemoryStream())
             {
-                RSAParameters publicKey, privateKey;
+                RSAParameters publicKeySig, privateKeySig, publicKeyEnc, privateKeyEnc;
 
                 using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                 {
-                    const string xmlKey = "<RSAKeyValue><!-- Not suitable for use outside the test-app. --><Modulus>2/xGqjup0HUXsCipNDvXX4Y" +
+                    const string xmlSig = "<RSAKeyValue><!-- Not suitable for use outside the test-app. --><Modulus>2/xGqjup0HUXsCipNDvXX4Y" +
                         "L0cyc5CK5a5ksyPk6AGFHz4nGneGA72WBBodtziI+cBWujChTQyMMNiQ+h0JOvFYnvMB8u4bkOPrf2rqscA/04nDodkXRqXoIlyHGp0VOBGfA5f4UU" +
                         "AMZzLwUrLkBpdUwv3e3mQ2jDAz5+eva2cs=</Modulus><Exponent>AQAB</Exponent><P>6WoHJlCCQp8kQGqN+/b73E6nS/x/yYX1kW/xlqDPp" +
                         "MtPcbUlq5YNqL3+qQT9ynoFHjbnFYfTiupKmillojmKxQ==</P><Q>8UWZ8AvsKkV9QAYxYr6lAtuyEn0Vvqo4xX9rglNKpYIrdhPcr3DnMb8ekIGm" +
@@ -32,18 +32,33 @@ namespace DieFledermaus.Tests
                         "aUGNPx0oQZ9sGhfjSNqgEn1pxUtO7WqPboiIbL0RR0SffdTR1FXyPb8eOAgTbyeheXiX9zw7Yj2h8iW6DBeCnQbaNA/p3Iw8RBYcTPdz9YLhFOBid2" +
                         "M26OC/aBozT6h7jLhyuNVkWnFh5Een5QGobtwuvJHkhSIBWUkuevk=</D></RSAKeyValue>";
 
-                    rsa.FromXmlString(xmlKey);
+                    rsa.FromXmlString(xmlSig);
 
-                    publicKey = rsa.ExportParameters(false);
-                    privateKey = rsa.ExportParameters(true);
+                    publicKeySig = rsa.ExportParameters(false);
+                    privateKeySig = rsa.ExportParameters(true);
+
+                    const string xmlEnc = "<RSAKeyValue><!-- Not suitable for use outside the test-app. --><Modulus>tLxR5IiTcQ93LArqHYeC4o5" +
+                        "JTBavu6z1G1F9LG2/q/cqZql6bNHzK6XGVYfEVxgl2Lxes3g+4xFcUvC0qPifkyEN8F4l8gmIdtR4KAT+8aSH7xdgVIXexIWDXlk7DfAKHo3KVTy7j" +
+                        "7ZF1596TsGATGrNx3UWH/x/9bR5ltuLfbU=</Modulus><Exponent>AQAB</Exponent><P>zdUnz0+Nh4T6rjTXfoyxCBjCOjoajgfZLO0iw20dD" +
+                        "PlQpUXq5Wp+LSDwjSZCyIJPXkdSLtT19lmxq0xNOgvYwQ==</P><Q>4Mk/DjUo0NEwoHUmJdVG/2qdfWQewI7v8gJKo/GfaVEAPp7urkye4eTuIJz/" +
+                        "ckNef296Emi9cI+ZFmVgY8NN9Q==</Q><DP>dAb3JO6UOlNkt/TDkOugE49ZVVdRhsS30JJwKTeFy71yj2fFTMNmEuxhjT+HH94M/Xk4w3t6lv7in0" +
+                        "wosFLjQQ==</DP><DQ>bgZTFNM0TTF3SbLNn0sLW02GFLAC1WGhVKWGf0RvMI9zPTNxxGLAifUSEWiHKBiNknawG36k6wl+dxXb3jjkWQ==</DQ><I" +
+                        "nverseQ>k/TWXiewe45/3BmL1BPr6uLBPfQ4sYGFcOwXRhKiLDaE6d3VcVXoIb58DH5BHSMtLMkwOBo8mfaCFiKsV0V0xA==</InverseQ><D>Kg1B" +
+                        "HqPabm1zRHebplg/z1fc3QvQQqII+5y3u60jci8VmgJn3kbxReAR6BepSrxvHeEiRa6+LxX8fb3Mwx3p/qz6H6uimCFv+tt8ryaAj6GFjJhysONpZ6" +
+                        "ij1mVn5jsmMgOMRfv68XRRsaoH9a2pYTeht7wF6KnbfxXzBqVbG4E=</D></RSAKeyValue>";
+
+                    rsa.FromXmlString(xmlEnc);
+
+                    publicKeyEnc = rsa.ExportParameters(false);
+                    privateKeyEnc = rsa.ExportParameters(true);
                 }
 
                 Console.WriteLine("Creating archive ...");
                 Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, privateKey);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, privateKey);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, publicKeyEnc, privateKeySig);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, publicKeyEnc, privateKeySig);
                     Console.WriteLine(" - Building empty directory: EmptyDir/");
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
@@ -63,7 +78,7 @@ namespace DieFledermaus.Tests
                     {
                         Console.WriteLine(" - Decrypting file ...");
                         if (item.HasRSAEncryptedKey)
-                            item.RSAKeyParameters = privateKey;
+                            item.RSAKeyParameters = privateKeyEnc;
                         else
                             SetPasswd(item);
                         sw = Stopwatch.StartNew();
@@ -76,7 +91,7 @@ namespace DieFledermaus.Tests
 
                     foreach (DieFledermauZArchiveEntry entry in archive.Entries.OfType<DieFledermauZArchiveEntry>())
                     {
-                        entry.RSASignParameters = publicKey;
+                        entry.RSASignParameters = publicKeySig;
                         entry.VerifyRSASignature();
 
                         Console.WriteLine(" - Reading file: " + entry.Path);
@@ -114,17 +129,18 @@ namespace DieFledermaus.Tests
             Console.ReadKey();
         }
 
-        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat, RSAParameters privateKey)
+        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat,
+            RSAParameters publicKeyEnc, RSAParameters privateKeySig)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
 
-            entry.RSASignParameters = privateKey;
+            entry.RSASignParameters = privateKeySig;
 
             Console.WriteLine(" - Building file: " + entry.Path);
 
             if (encFormat != MausEncryptionFormat.None)
             {
-                entry.RSAKeyParameters = privateKey;
+                entry.RSAKeyParameters = publicKeyEnc;
                 SetPasswd(entry);
             }
 

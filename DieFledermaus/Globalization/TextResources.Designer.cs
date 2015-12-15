@@ -592,6 +592,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The RSA signing key and the RSA encryption key must be different..
+        /// </summary>
+        internal static string RsaKeySigSame {
+            get {
+                return ResourceManager.GetString("RsaKeySigSame", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified value is not a valid private key..
         /// </summary>
         internal static string RsaNeedPrivate {

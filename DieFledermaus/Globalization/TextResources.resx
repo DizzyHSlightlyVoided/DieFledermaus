@@ -342,4 +342,7 @@
   <data name="KeyNotSetRsaZ" xml:space="preserve">
     <value>The current archive is encrypted, and requires either a password or an RSA private key.</value>
   </data>
+  <data name="RsaKeySigSame" xml:space="preserve">
+    <value>The RSA signing key and the RSA encryption key must be different.</value>
+  </data>
 </root>
