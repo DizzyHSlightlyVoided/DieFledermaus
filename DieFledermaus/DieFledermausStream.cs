@@ -2016,27 +2016,24 @@ namespace DieFledermaus
                 byte[] _key;
                 _key = DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
-                var bufferStream = Decrypt(_key);
-
-                if (!CompareBytes(ComputeHmac(bufferStream, _key, _hashFunc), _hashExpected))
-                    throw new CryptographicException(TextResources.BadKey);
-                Array.Clear(_key, 0, _key.Length);
-                bufferStream.Reset();
-
-#if NOLEAVEOPEN
-                BinaryReader reader = new BinaryReader(bufferStream);
-#else
-                using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
-#endif
+                using (MausBufferStream bufferStream = Decrypt(_key, _iv, _bufferStream, _hashExpected, _hashFunc))
                 {
-                    ReadFormat(reader, true);
+                    Array.Clear(_key, 0, _key.Length);
+#if NOLEAVEOPEN
+                    BinaryReader reader = new BinaryReader(bufferStream);
+#else
+                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
+#endif
+                    {
+                        ReadFormat(reader, true);
+                    }
+
+                    _bufferStream.Close();
+                    _bufferStream = new MausBufferStream();
+                    bufferStream.BufferCopyTo(_bufferStream, true);
+
+                    _bufferStream.Reset();
                 }
-
-                _bufferStream.Close();
-                _bufferStream = new MausBufferStream();
-                bufferStream.BufferCopyTo(_bufferStream, true);
-
-                _bufferStream.Reset();
             }
 
             switch (_cmpFmt)
@@ -2407,7 +2404,7 @@ namespace DieFledermaus
             return alg;
         }
 
-        private MausBufferStream Decrypt(byte[] _key)
+        internal static MausBufferStream Decrypt(byte[] _key, byte[] _iv, MausBufferStream _bufferStream, byte[] _hmac, MausHashFunction hashFunc)
         {
             MausBufferStream output = new MausBufferStream();
 
@@ -2423,18 +2420,17 @@ namespace DieFledermaus
                 catch (CryptographicException) { }
             }
             output.Reset();
+
+            byte[] actualHmac = ComputeHmac(output, _key, hashFunc);
+            if (!CompareBytes(actualHmac, _hmac))
+                throw new CryptographicException(TextResources.BadKey);
+
+            output.Reset();
             return output;
         }
 
-        private MausBufferStream Encrypt(byte[] _key)
+        internal static byte[] Encrypt(MausBufferStream output, MausBufferStream _bufferStream, byte[] _key, byte[] _iv, MausHashFunction hashFunc)
         {
-            MausBufferStream output = new MausBufferStream();
-            byte[] firstBuffer = new byte[_key.Length + _iv.Length];
-            Array.Copy(_salt, firstBuffer, _key.Length);
-            Array.Copy(_iv, 0, firstBuffer, _key.Length, _iv.Length);
-
-            output.Prepend(firstBuffer);
-
             using (SymmetricAlgorithm alg = GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = alg.CreateEncryptor())
             {
@@ -2444,7 +2440,8 @@ namespace DieFledermaus
                 cs.FlushFinalBlock();
             }
             output.Reset();
-            return output;
+            _bufferStream.Reset();
+            return ComputeHmac(_bufferStream, _key, hashFunc);
         }
 
         #region Disposal
@@ -2508,7 +2505,7 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            byte[] rsaSignature;
+            byte[] rsaSignature, hashChecksum;
 
             if (_rsaSignParamBC != null)
             {
@@ -2522,10 +2519,11 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
                 }
                 rsaSignature = ComputeWithStream(_bufferStream, signer.BlockUpdate, signer.GenerateSignature);
+                hashChecksum = signer.GetFinalHash();
 
                 _bufferStream.Reset();
             }
-            else rsaSignature = null;
+            else rsaSignature = hashChecksum = null;
 
             byte[] _key, rsaKey;
             if (_encFmt == MausEncryptionFormat.None)
@@ -2629,9 +2627,11 @@ namespace DieFledermaus
                 {
                     writer.Write(compressedStream.Length);
                     writer.Write(_bufferStream.Length);
-
-                    _bufferStream.Reset();
-                    byte[] hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                    if (hashChecksum == null)
+                    {
+                        _bufferStream.Reset();
+                        hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                    }
                     writer.Write(hashChecksum);
 
                     if (_bufferStream != compressedStream)
@@ -2690,13 +2690,14 @@ namespace DieFledermaus
                         }
                     }
 
-                    using (MausBufferStream output = Encrypt(_key))
+                    using (MausBufferStream output = new MausBufferStream())
                     {
+                        output.Write(_salt, 0, _key.Length);
+                        output.Write(_iv, 0, _iv.Length);
+                        byte[] hashHmac = Encrypt(output, _bufferStream, _key, _iv, _hashFunc);
+
                         writer.Write(output.Length);
                         writer.Write((long)_pkCount);
-
-                        _bufferStream.Reset();
-                        byte[] hashHmac = ComputeHmac(_bufferStream, _key, _hashFunc);
                         writer.Write(hashHmac);
 
                         output.BufferCopyTo(_baseStream, false);

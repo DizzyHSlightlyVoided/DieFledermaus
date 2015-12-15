@@ -503,30 +503,12 @@ namespace DieFledermaus
 
             byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
-            using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
-            using (ICryptoTransform transform = algorithm.CreateDecryptor())
-            using (MausBufferStream newBufferStream = new MausBufferStream())
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(_key, _iv, _bufferStream, _hashExpected, _hashFunc))
+            using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
-                CryptoStream cs = new CryptoStream(newBufferStream, transform, CryptoStreamMode.Write);
-                _bufferStream.BufferCopyTo(cs, false);
-                try
-                {
-                    cs.FlushFinalBlock();
-                }
-                catch (CryptographicException) { }
-                newBufferStream.Reset();
-
-                if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key, _hashFunc), _hashExpected))
-                    throw new CryptographicException(TextResources.BadKey);
-
-                newBufferStream.Reset();
-
-                using (BinaryReader reader = new BinaryReader(newBufferStream))
-                {
-                    ReadOptions(reader, true);
-                    long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
-                    ReadDecrypted(reader, ref curOffset);
-                }
+                ReadOptions(reader, true);
+                long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
+                ReadDecrypted(reader, ref curOffset);
             }
             Array.Clear(_key, 0, _key.Length);
         }
@@ -1630,16 +1612,8 @@ namespace DieFledermaus
                         }
 
                         cryptStream.Reset();
-                        hmac = DieFledermausStream.ComputeHmac(cryptStream, _key, _hashFunc);
-                        cryptStream.Reset();
 
-                        using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
-                        using (ICryptoTransform transform = algorithm.CreateEncryptor())
-                        {
-                            CryptoStream cs = new CryptoStream(dataStream, transform, CryptoStreamMode.Write);
-                            cryptStream.BufferCopyTo(cs, false);
-                            cs.FlushFinalBlock();
-                        }
+                        hmac = DieFledermausStream.Encrypt(dataStream, cryptStream, _key, _iv, _hashFunc);
                     }
                 }
                 dataStream.Reset();
@@ -1662,7 +1636,7 @@ namespace DieFledermaus
                     {
                         writer.Write((long)_pkCount);
                         writer.Write(hmac);
-                        writer.Write(_salt);
+                        writer.Write(_salt, 0, _key.Length);
                         writer.Write(_iv);
                     }
                     dataStream.BufferCopyTo(_baseStream, false);

@@ -67,15 +67,26 @@ namespace DieFledermaus
 
         public void Reset()
         {
+            _hash = null;
             _digest.Reset();
+        }
+
+        private byte[] _hash;
+
+        public byte[] GetFinalHash()
+        {
+            if (_hash == null)
+            {
+                _hash = new byte[_digest.GetDigestSize()];
+                _digest.DoFinal(_hash, 0);
+            }
+            return _hash;
         }
 
         public byte[] GenerateSignature()
         {
-            byte[] hash = new byte[_digest.GetDigestSize()];
-            _digest.DoFinal(hash, 0);
 
-            byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hash), _engine.GetInputBlockSize());
+            byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(GetFinalHash()), _engine.GetInputBlockSize());
 
             return _engine.ProcessBlock(message, 0, message.Length);
         }
