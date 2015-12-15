@@ -1970,7 +1970,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
@@ -2047,7 +2047,7 @@ namespace DieFledermaus
                         throw new InvalidDataException();
                     try
                     {
-                        decoder.Code(_bufferStream, lzmaStream, _bufferStream.Length - optLen, -1);
+                        decoder.Code(_bufferStream, lzmaStream, _bufferStream.Length - optLen, -1, null);
                     }
                     catch (DataErrorException)
                     {
@@ -2528,7 +2528,7 @@ namespace DieFledermaus
                 encoder.SetCoderProperties(ids, props);
 
                 encoder.WriteCoderProperties(compressedStream);
-                encoder.Code(_bufferStream, compressedStream, _bufferStream.Length, -1);
+                encoder.Code(_bufferStream, compressedStream, _bufferStream.Length, -1, null);
             }
             else
             {

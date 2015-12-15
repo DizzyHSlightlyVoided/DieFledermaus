@@ -1,6 +1,7 @@
 // LzmaEncoder.cs
 
 using System;
+using DieFledermaus;
 
 namespace SevenZip.Compression.LZMA
 {
@@ -1270,7 +1271,7 @@ namespace SevenZip.Compression.LZMA
         }
 
 
-        public void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize)
+        public void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize, ICodeProgress progress)
         {
             _needReleaseMFStream = false;
             try
@@ -1282,6 +1283,10 @@ namespace SevenZip.Compression.LZMA
                     Int64 processedInSize;
                     Int64 processedOutSize;
                     CodeOneBlock(out processedInSize, out processedOutSize, out finished);
+                    if (progress != null && !finished)
+                    {
+                        progress.SetProgress(processedInSize, processedOutSize);
+                    }
                 }
                 while (!finished);
             }

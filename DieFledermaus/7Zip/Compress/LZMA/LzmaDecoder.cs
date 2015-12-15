@@ -1,6 +1,7 @@
 // LzmaDecoder.cs
 
 using System;
+using DieFledermaus;
 
 namespace SevenZip.Compression.LZMA
 {
@@ -230,7 +231,7 @@ namespace SevenZip.Compression.LZMA
             m_PosAlignDecoder.Init();
         }
 
-        public void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize)
+        public void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize, ICodeProgress progress)
         {
             Init(inStream, outStream);
 

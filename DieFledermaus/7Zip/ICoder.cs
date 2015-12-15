@@ -1,6 +1,7 @@
 // ICoder.h
 
 using System;
+using DieFledermaus;
 
 namespace SevenZip
 {
@@ -37,10 +38,13 @@ namespace SevenZip
         /// <param name="outSize">
         /// output Size. -1 if unknown.
         /// </param>
+        /// <param name="progress">
+        /// callback progress reference.
+        /// </param>
         /// <exception cref="SevenZip.DataErrorException">
         /// if input stream is not valid
         /// </exception>
-        void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize);
+        void Code(System.IO.Stream inStream, System.IO.Stream outStream, Int64 inSize, Int64 outSize, ICodeProgress progress);
     };
 
     /// <summary>
