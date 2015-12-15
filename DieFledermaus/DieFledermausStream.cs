@@ -2337,46 +2337,23 @@ namespace DieFledermaus
         internal static byte[] ComputeHash(MausBufferStream inputStream, MausHashFunction hashFunc)
         {
             IDigest shaHash = GetDigestObject(hashFunc);
-            return ComputeWithStream(inputStream, shaHash.BlockUpdate, GetFinal(shaHash));
+
+            inputStream.BufferCopyTo(shaHash.BlockUpdate);
+
+            byte[] output = new byte[shaHash.GetDigestSize()];
+            shaHash.DoFinal(output, 0);
+            return output;
         }
 
-        internal static byte[] ComputeHmac(Stream inputStream, byte[] key, MausHashFunction hashFunc)
+        internal static byte[] ComputeHmac(MausBufferStream inputStream, byte[] key, MausHashFunction hashFunc)
         {
             HMac hmac = new HMac(GetDigestObject(hashFunc));
             hmac.Init(new KeyParameter(key));
-            return ComputeWithStream(inputStream, hmac.BlockUpdate, GetFinal(hmac));
-        }
+            inputStream.BufferCopyTo(hmac.BlockUpdate);
 
-        private static Func<byte[]> GetFinal(HMac hmac)
-        {
-            return delegate ()
-            {
-                byte[] output = new byte[hmac.GetMacSize()];
-                hmac.DoFinal(output, 0);
-                return output;
-            };
-        }
-
-        private static Func<byte[]> GetFinal(IDigest digest)
-        {
-            return delegate ()
-            {
-                byte[] output = new byte[digest.GetDigestSize()];
-                digest.DoFinal(output, 0);
-                return output;
-            };
-        }
-
-        private static byte[] ComputeWithStream(Stream inputStream, Action<byte[], int, int> update, Func<byte[]> doFinal)
-        {
-            byte[] buffer = new byte[Max16Bit];
-            int read;
-            while ((read = inputStream.Read(buffer, 0, Max16Bit)) != 0)
-                update(buffer, 0, read);
-            if (doFinal == null)
-                return null;
-
-            return doFinal();
+            byte[] output = new byte[hmac.GetMacSize()];
+            hmac.DoFinal(output, 0);
+            return output;
         }
 
         internal static byte[] FillBuffer(int length)
@@ -2515,7 +2492,8 @@ namespace DieFledermaus
                 {
                     throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
                 }
-                rsaSignature = ComputeWithStream(_bufferStream, signer.BlockUpdate, signer.GenerateSignature);
+                _bufferStream.BufferCopyTo(signer.BlockUpdate);
+                rsaSignature = signer.GenerateSignature();
                 hashChecksum = signer.GetFinalHash();
 
                 _bufferStream.Reset();

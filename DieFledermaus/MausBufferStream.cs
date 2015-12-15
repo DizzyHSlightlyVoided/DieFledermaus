@@ -185,34 +185,39 @@ namespace DieFledermaus
         public void BufferCopyTo(Stream destination, bool forceWrite)
         {
             MausBufferStream qbs = destination as MausBufferStream;
-            if (qbs != null && !forceWrite)
+            if (qbs == null || forceWrite)
             {
-                if (qbs._currentBuffer == qbs._firstBuffer && qbs._firstBuffer.End == 0)
-                {
-                    qbs._firstBuffer = _firstBuffer;
-                    qbs._length = _length;
-                }
-                else
-                {
-                    qbs._currentBuffer.Next = _firstBuffer;
-                    qbs._length += _length;
-                }
-                qbs.Reset();
-                _position = _length;
-                _currentBuffer = null;
+                BufferCopyTo(destination.Write);
                 return;
             }
 
+            if (qbs._currentBuffer == qbs._firstBuffer && qbs._firstBuffer.End == 0)
+            {
+                qbs._firstBuffer = _firstBuffer;
+                qbs._length = _length;
+            }
+            else
+            {
+                qbs._currentBuffer.Next = _firstBuffer;
+                qbs._length += _length;
+            }
+            qbs.Reset();
+            _position = _length;
+            _currentBuffer = null;
+        }
+
+        public void BufferCopyTo(Action<byte[], int, int> write)
+        {
             if (_currentPos != 0)
             {
-                destination.Write(_currentBuffer.Data, _currentPos, _currentBuffer.End - _currentPos);
+                write(_currentBuffer.Data, _currentPos, _currentBuffer.End - _currentPos);
                 _currentBuffer = _currentBuffer.Next;
                 _currentPos = 0;
             }
 
             while (_currentBuffer != null)
             {
-                destination.Write(_currentBuffer.Data, 0, _currentBuffer.End);
+                write(_currentBuffer.Data, 0, _currentBuffer.End);
                 _currentBuffer = _currentBuffer.Next;
             }
 
