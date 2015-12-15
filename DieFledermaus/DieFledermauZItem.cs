@@ -47,6 +47,7 @@ namespace DieFledermaus
             _bufferStream = new MausBufferStream();
             _arch = archive;
             MausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
+            MausStream.Progress += MausStream_Progress;
         }
 
         internal DieFledermauZItem(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)
@@ -58,6 +59,18 @@ namespace DieFledermaus
             MausStream._entry = this;
             if (path != null)
                 _path = path;
+            MausStream.Progress += MausStream_Progress;
+        }
+
+        /// <summary>
+        /// Raised when the stream is reading or writing data, and the progress changes meaningfully.
+        /// </summary>
+        public event MausProgressEventHandler Progress;
+
+        private void MausStream_Progress(object sender, MausProgressEventArgs e)
+        {
+            if (Progress != null)
+                Progress(this, e);
         }
 
         internal readonly long Offset, RealOffset;
@@ -439,6 +452,7 @@ namespace DieFledermaus
                 MausStream.Dispose();
             if (_bufferStream != null)
                 _bufferStream.Dispose();
+            Progress = null;
         }
 
         /// <summary>

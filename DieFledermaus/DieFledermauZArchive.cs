@@ -40,6 +40,7 @@ using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
 using Org.BouncyCastle.Crypto.Parameters;
+using SevenZip;
 
 namespace DieFledermaus
 {
@@ -54,7 +55,7 @@ namespace DieFledermaus
     /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <c>null</c> path if the DieFledermaus stream does not have
     /// a filename set.
     /// </remarks>
-    public class DieFledermauZArchive : IDisposable, IMausCrypt
+    public class DieFledermauZArchive : IDisposable, IMausCrypt, IMausProgress
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
@@ -488,6 +489,7 @@ namespace DieFledermaus
             if (_headerGotten)
                 return;
 
+            OnProgress(MausProgressState.LoadingData);
             if (_bufferStream == null)
                 _bufferStream = DieFledermausStream.GetBuffer(totalSize - curOffset, _baseStream);
 
@@ -501,9 +503,10 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.KeyNotSetRsaZ);
             }
 
+            OnProgress(MausProgressState.BuildingKey);
             byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(_key, _iv, _bufferStream, _hashExpected, _hashFunc))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _iv, _bufferStream, _hashExpected, _hashFunc))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
@@ -511,6 +514,7 @@ namespace DieFledermaus
                 ReadDecrypted(reader, ref curOffset);
             }
             Array.Clear(_key, 0, _key.Length);
+            OnProgress(MausProgressState.CompletedLoading);
         }
 
         private bool _gotEnc, _gotHash;
@@ -1505,12 +1509,16 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.None)
                 rsaKey = _key = null;
             else
+            {
+                OnProgress(MausProgressState.BuildingKey);
                 _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParamBC, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
+            }
 
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];
             byte[][] paths = new byte[entries.Length][];
 
+            OnProgress(MausProgressState.ArchiveCompressingEntries);
             for (int i = 0; i < entries.Length; i++)
             {
                 var curEntry = entries[i];
@@ -1584,6 +1592,7 @@ namespace DieFledermaus
 
             using (MausBufferStream dataStream = new MausBufferStream())
             {
+                OnProgress(MausProgressState.ArchiveBuildingEntries);
                 byte[] hmac = null;
                 if (_encFmt == MausEncryptionFormat.None)
                 {
@@ -1613,7 +1622,7 @@ namespace DieFledermaus
 
                         cryptStream.Reset();
 
-                        hmac = DieFledermausStream.Encrypt(dataStream, cryptStream, _key, _iv, _hashFunc);
+                        hmac = DieFledermausStream.Encrypt(this, dataStream, cryptStream, _key, _iv, _hashFunc);
                     }
                 }
                 dataStream.Reset();
@@ -1625,6 +1634,7 @@ namespace DieFledermaus
                 using (BinaryWriter writer = new BinaryWriter(_baseStream, DieFledermausStream._textEncoding, true))
 #endif
                 {
+                    OnProgress(MausProgressState.WritingHead);
                     writer.Write(_mHead);
                     writer.Write(_versionShort);
 
@@ -1645,6 +1655,7 @@ namespace DieFledermaus
                 writer.Flush();
 #endif
             }
+            OnProgress(MausProgressState.CompletedWriting);
         }
 
         private void AddComment(List<byte[]> options)
@@ -1722,6 +1733,34 @@ namespace DieFledermaus
         internal void AddPath(string path, DieFledermauZItem item)
         {
             _entryDict.Add(path, _entries.IndexOf(item));
+        }
+
+        /// <summary>
+        /// Raised when the current instance is reading or writing, and the 
+        /// </summary>
+        public event MausProgressEventHandler Progress;
+
+        private void OnProgress(MausProgressState state)
+        {
+            if (Progress != null)
+                Progress(this, new MausProgressEventArgs(state));
+        }
+
+        void IMausProgress.OnProgress(MausProgressState state)
+        {
+            OnProgress(state);
+        }
+
+        void ICodeProgress.SetProgress(long inSize, long outSize)
+        {
+            MausProgressState state;
+            if (_mode == MauZArchiveMode.Create)
+                state = MausProgressState.CompressingWithSize;
+            else
+                state = MausProgressState.DecompressingWithSize;
+
+            if (Progress != null)
+                Progress(this, new MausProgressEventArgs(state, inSize, outSize));
         }
 
         /// <summary>
