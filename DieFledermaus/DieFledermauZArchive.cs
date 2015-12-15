@@ -1736,7 +1736,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Raised when the current instance is reading or writing, and the 
+        /// Raised when the current archive is reading or writing data, and the progress changes meaningfully.
         /// </summary>
         public event MausProgressEventHandler Progress;
 

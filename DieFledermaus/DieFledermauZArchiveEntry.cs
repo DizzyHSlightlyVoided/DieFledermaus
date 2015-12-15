@@ -220,7 +220,7 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
         public override DieFledermauZItem Decrypt()

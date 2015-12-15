@@ -63,7 +63,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Raised when the stream is reading or writing data, and the progress changes meaningfully.
+        /// Raised when the current instance is reading or writing data, and the progress changes meaningfully.
         /// </summary>
         public event MausProgressEventHandler Progress;
 
