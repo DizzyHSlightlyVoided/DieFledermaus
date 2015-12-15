@@ -21,6 +21,20 @@ namespace SevenZip
         public InvalidParamException() : base("Invalid Parameter") { }
     }
 
+    internal interface ICodeProgress
+    {
+        /// <summary>
+        /// Callback progress.
+        /// </summary>
+        /// <param name="inSize">
+        /// input size. -1 if unknown.
+        /// </param>
+        /// <param name="outSize">
+        /// output size. -1 if unknown.
+        /// </param>
+        void SetProgress(Int64 inSize, Int64 outSize);
+    };
+
     internal interface ICoder
     {
         /// <summary>

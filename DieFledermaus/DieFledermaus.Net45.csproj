@@ -62,7 +62,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>TextResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="ICodeProgress.cs" />
     <Compile Include="IMausCrypt.cs" />
     <Compile Include="MausBufferStream.cs" />
     <Compile Include="MausSettableOptions.cs" />
