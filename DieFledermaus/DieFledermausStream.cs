@@ -359,9 +359,7 @@ namespace DieFledermaus
             if (dictionarySize == 0)
                 dictionarySize = LzmaDictionarySize.Size8m;
             else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
-            {
                 throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize, TextResources.OutOfRangeLzma);
-            }
             _lzmaDictSize = dictionarySize;
         }
 
@@ -590,6 +588,7 @@ namespace DieFledermaus
                 _allowDirNames = AllowDirNames.Yes;
             _getHeader(readMagNum);
         }
+        #endregion
 
 #if COMPLVL
         private CompressionLevel _cmpLvl;
@@ -608,7 +607,6 @@ namespace DieFledermaus
             }
         }
 #endif
-        #endregion
 
         internal DieFledermauZItem _entry;
 
@@ -1369,17 +1367,10 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                switch (value)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha512:
-                    case MausHashFunction.Sha3_256:
-                    case MausHashFunction.Sha3_512:
-                        _hashFunc = value;
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
-                }
+                if (HashBDict.ContainsKey(value))
+                    _hashFunc = value;
+                else
+                    throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
             }
         }
 
@@ -1424,22 +1415,7 @@ namespace DieFledermaus
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
-            IDigest digest;
-
-            switch (hashFunc)
-            {
-                case MausHashFunction.Sha256:
-                    digest = new Sha256Digest();
-                    break;
-                case MausHashFunction.Sha512:
-                    digest = new Sha512Digest();
-                    break;
-                default:
-                    digest = new Sha3Digest(GetSha3Size(hashFunc));
-                    break;
-            }
-
-            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(digest);
+            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(GetDigestObject(hashFunc));
             gen.Init(Encoding.UTF8.GetBytes(password), _salt, _pkCount + minPkCount);
             KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
             return kParam.GetKey();
@@ -1544,13 +1520,8 @@ namespace DieFledermaus
             { _cmpDef, MausCompressionFormat.Deflate }
         };
 
-        internal static readonly Dictionary<string, MausHashFunction> HashDict = new Dictionary<string, MausHashFunction>()
-        {
-            { "SHA256", MausHashFunction.Sha256 },
-            { "SHA512", MausHashFunction.Sha512 },
-            { "SHA3/256", MausHashFunction.Sha3_256 },
-            { "SHA3/512", MausHashFunction.Sha3_512 },
-        };
+        internal static readonly Dictionary<string, MausHashFunction> HashDict = ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).
+            ToDictionary(i => i.ToString().Replace('_', '/').ToUpper());
         internal static readonly Dictionary<MausHashFunction, byte[]> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key.Select(c => (byte)c).ToArray());
 
         private const string _kFilename = "Name", _kULen = "DeL";
@@ -1665,9 +1636,9 @@ namespace DieFledermaus
                 if (curForm.Equals(_kHash, StringComparison.Ordinal))
                 {
                     CheckAdvance(optLen, ref i);
-                    string newVal = GetString(reader, ref headSize, false);
+                    string hashName = GetString(reader, ref headSize, false);
                     MausHashFunction hashFunc;
-                    if (!HashDict.TryGetValue(newVal, out hashFunc))
+                    if (!HashDict.TryGetValue(hashName, out hashFunc))
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
                     if (_gotHash || fromEncrypted)
@@ -1824,17 +1795,81 @@ namespace DieFledermaus
         {
             switch (hashFunc)
             {
+                case MausHashFunction.Sha224:
+                case MausHashFunction.Sha3_224:
+                    return 224 / 8;
+                case MausHashFunction.Sha384:
+                case MausHashFunction.Sha3_384:
+                    return 384 / 8;
                 case MausHashFunction.Sha512:
                 case MausHashFunction.Sha3_512:
                     return 512 / 8;
-                default:
+                case MausHashFunction.Sha256:
+                case MausHashFunction.Sha3_256:
                     return 256 / 8;
             }
+            throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
         }
 
-        internal static int GetSha3Size(MausHashFunction hashFunc)
+        internal static int GetHashBitSize(MausHashFunction hashFunc)
         {
-            return 256 << (int)(hashFunc & MausHashFunction.Sha512);
+            switch (hashFunc)
+            {
+                case MausHashFunction.Sha224:
+                case MausHashFunction.Sha3_224:
+                    return 224;
+                case MausHashFunction.Sha256:
+                case MausHashFunction.Sha3_256:
+                    return 256;
+                case MausHashFunction.Sha384:
+                case MausHashFunction.Sha3_384:
+                    return 256;
+                case MausHashFunction.Sha512:
+                case MausHashFunction.Sha3_512:
+                    return 512;
+            }
+            throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
+        }
+
+        private static DerObjectIdentifier GetHashId(MausHashFunction hashFunc)
+        {
+            switch (hashFunc)
+            {
+                case MausHashFunction.Sha224:
+                    return NistObjectIdentifiers.IdSha224;
+                case MausHashFunction.Sha256:
+                    return NistObjectIdentifiers.IdSha256;
+                case MausHashFunction.Sha384:
+                    return NistObjectIdentifiers.IdSha384;
+                case MausHashFunction.Sha512:
+                    return NistObjectIdentifiers.IdSha512;
+                case MausHashFunction.Sha3_224:
+                    return NistObjectIdentifiers.IdSha3_224;
+                case MausHashFunction.Sha3_256:
+                    return NistObjectIdentifiers.IdSha3_256;
+                case MausHashFunction.Sha3_384:
+                    return NistObjectIdentifiers.IdSha3_384;
+                case MausHashFunction.Sha3_512:
+                    return NistObjectIdentifiers.IdSha3_512;
+            }
+            throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
+        }
+
+        private static IDigest GetDigestObject(MausHashFunction hashFunc)
+        {
+            switch (hashFunc)
+            {
+                case MausHashFunction.Sha224:
+                    return new Sha224Digest();
+                case MausHashFunction.Sha256:
+                    return new Sha256Digest();
+                case MausHashFunction.Sha384:
+                    return new Sha384Digest();
+                case MausHashFunction.Sha512:
+                    return new Sha512Digest();
+                default:
+                    return new Sha3Digest(GetHashBitSize(hashFunc));
+            }
         }
 
         internal static void ReadBytes(BinaryReader reader, int optLen, ref long headSize, ref int i, ref byte[] oldValue)
@@ -2144,21 +2179,7 @@ namespace DieFledermaus
             }
 
             DerObjectIdentifier derId;
-            switch (_hashFunc)
-            {
-                case MausHashFunction.Sha256:
-                    derId = NistObjectIdentifiers.IdSha256;
-                    break;
-                case MausHashFunction.Sha512:
-                    derId = NistObjectIdentifiers.IdSha512;
-                    break;
-                case MausHashFunction.Sha3_256:
-                    derId = NistObjectIdentifiers.IdSha3_256;
-                    break;
-                default:
-                    derId = NistObjectIdentifiers.IdSha3_512;
-                    break;
-            }
+            derId = GetHashId(_hashFunc);
 
             var algId = new AlgorithmIdentifier(derId, DerNull.Instance);
             DigestInfo dInfo = new DigestInfo(algId, _hashExpected);
@@ -2370,35 +2391,13 @@ namespace DieFledermaus
 
         internal static byte[] ComputeHash(MausBufferStream inputStream, MausHashFunction hashFunc)
         {
-            switch (hashFunc)
-            {
-                case MausHashFunction.Sha3_256:
-                case MausHashFunction.Sha3_512:
-                    Sha3Digest shaHash = new Sha3Digest(GetSha3Size(hashFunc));
-                    return ComputeWithStream(inputStream, shaHash.BlockUpdate, GetFinal(shaHash));
-            }
-
-            using (HashAlgorithm shaHash = hashFunc == MausHashFunction.Sha512 ? (HashAlgorithm)new SHA512Managed() : new SHA256Managed())
-                return shaHash.ComputeHash(inputStream);
+            IDigest shaHash = GetDigestObject(hashFunc);
+            return ComputeWithStream(inputStream, shaHash.BlockUpdate, GetFinal(shaHash));
         }
 
         internal static byte[] ComputeHmac(Stream inputStream, byte[] key, MausHashFunction hashFunc)
         {
-            IDigest digest;
-            switch (hashFunc)
-            {
-                case MausHashFunction.Sha256:
-                    digest = new Sha256Digest();
-                    break;
-                case MausHashFunction.Sha512:
-                    digest = new Sha512Digest();
-                    break;
-                default:
-                    digest = new Sha3Digest(GetSha3Size(hashFunc));
-                    break;
-            }
-
-            HMac hmac = new HMac(digest);
+            HMac hmac = new HMac(GetDigestObject(hashFunc));
             hmac.Init(new KeyParameter(key));
             return ComputeWithStream(inputStream, hmac.BlockUpdate, GetFinal(hmac));
         }
@@ -2417,7 +2416,7 @@ namespace DieFledermaus
         {
             return delegate ()
             {
-                byte[] output = new byte[digest.GetByteLength()];
+                byte[] output = new byte[digest.GetDigestSize()];
                 digest.DoFinal(output, 0);
                 return output;
             };
@@ -2558,29 +2557,7 @@ namespace DieFledermaus
 
             if (_rsaSignParamBC != null)
             {
-                IDigest digest;
-                DerObjectIdentifier id;
-                switch (_hashFunc)
-                {
-                    default:
-                        digest = new Sha256Digest();
-                        id = NistObjectIdentifiers.IdSha256;
-                        break;
-                    case MausHashFunction.Sha512:
-                        digest = new Sha512Digest();
-                        id = NistObjectIdentifiers.IdSha512;
-                        break;
-                    case MausHashFunction.Sha3_256:
-                        digest = new Sha3Digest(256);
-                        id = NistObjectIdentifiers.IdSha3_256;
-                        break;
-                    case MausHashFunction.Sha3_512:
-                        digest = new Sha3Digest(512);
-                        id = NistObjectIdentifiers.IdSha3_512;
-                        break;
-                }
-
-                RsaDigestSigner signer = new RsaDigestSigner(digest, id);
+                RsaDigestSigner signer = new RsaDigestSigner(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
                 try
                 {
                     signer.Init(true, _rsaSignParamBC);
@@ -2996,6 +2973,22 @@ namespace DieFledermaus
         /// The SHA-3/512 hash function.
         /// </summary>
         Sha3_512,
+        /// <summary>
+        /// The SHA-224 hash function (SHA-2).
+        /// </summary>
+        Sha224,
+        /// <summary>
+        /// The SHA-384 hash function (SHA-2).
+        /// </summary>
+        Sha384,
+        /// <summary>
+        /// The SHA-3/224 hash function.
+        /// </summary>
+        Sha3_224,
+        /// <summary>
+        /// The SHA-3/384 hash function.
+        /// </summary>
+        Sha3_384,
     }
 
     /// <summary>

@@ -56,7 +56,15 @@ The following values are defined for the default implementation:
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
 * `Mod` - *One parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
 * `Kom` - *1 parameter* **Kom**mentar ("comment"). A textual comment.
-* `Hash` - *1 parameter* Indicates the specified hash function. Valid values of the parameter are `SHA256`, `SHA512` (the default if no hash function is specified), `SHA3/256`, and `SHA3/512`. Must be in plaintext.
+* `Hash` - *1 parameter* Indicates the specified hash function. Valid values of the parameter are:
+ - `SHA224`
+ - `SHA256`
+ - `SHA384`
+ - `SHA512` (the default if nothing is specified)
+ - `SHA3/224`
+ - `SHA3/256`
+ - `SHA3/384`
+ - `SHA3/512` 
 * `RsaSig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#1 v1.5 padding. The signature may be verified using the corresponding RSA public key.
 * `RsaSch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#1 v1.5 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Must be in plaintext.
 

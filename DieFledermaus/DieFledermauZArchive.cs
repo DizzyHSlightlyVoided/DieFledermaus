@@ -884,17 +884,10 @@ namespace DieFledermaus
             set
             {
                 EnsureCanWrite();
-                switch (value)
-                {
-                    case MausHashFunction.Sha256:
-                    case MausHashFunction.Sha512:
-                    case MausHashFunction.Sha3_256:
-                    case MausHashFunction.Sha3_512:
-                        _hashFunc = value;
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
-                }
+                if (DieFledermausStream.HashBDict.ContainsKey(value))
+                    _hashFunc = value;
+                else
+                    throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
             }
         }
 

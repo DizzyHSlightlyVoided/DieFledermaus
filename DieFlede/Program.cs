@@ -111,7 +111,7 @@ namespace DieFledermaus.Cli
             {
                 Dictionary<string, MausHashFunction> locArgs =
                     ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).ToDictionary(i => i.ToString());
-                hash = new ClParamEnum<MausHashFunction>(parser, TextResources.HelpMHash, locArgs, new Dictionary<string, MausHashFunction>(), 'h',
+                hash = new ClParamEnum<MausHashFunction>(parser, TextResources.HelpMHash, locArgs, new Dictionary<string, MausHashFunction>(), 'H',
                     "hash", "hash-funcs", TextResources.PNameHash, TextResources.PNameHashFunc);
             }
 
