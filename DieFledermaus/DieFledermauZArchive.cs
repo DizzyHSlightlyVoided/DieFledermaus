@@ -39,6 +39,7 @@ using System.Linq;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -500,7 +501,7 @@ namespace DieFledermaus
                     throw new CryptographicException(TextResources.KeyNotSetRsaZ);
             }
 
-            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
+            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
             using (SymmetricAlgorithm algorithm = DieFledermausStream.GetAlgorithm(_key, _iv))
             using (ICryptoTransform transform = algorithm.CreateDecryptor())
@@ -508,8 +509,11 @@ namespace DieFledermaus
             {
                 CryptoStream cs = new CryptoStream(newBufferStream, transform, CryptoStreamMode.Write);
                 _bufferStream.BufferCopyTo(cs, false);
-                cs.FlushFinalBlock();
-
+                try
+                {
+                    cs.FlushFinalBlock();
+                }
+                catch (CryptographicException) { }
                 newBufferStream.Reset();
 
                 if (!DieFledermausStream.CompareBytes(DieFledermausStream.ComputeHmac(newBufferStream, _key, _hashFunc), _hashExpected))
@@ -911,6 +915,7 @@ namespace DieFledermaus
         }
 
         private RSAParameters? _rsaKeyParams;
+        private RsaKeyParameters _rsaKeyParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
         /// </summary>
@@ -936,7 +941,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                DieFledermausStream.SetRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
+                _rsaKeyParamBC = DieFledermausStream.SetRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
                 _rsaKeyParams = value;
             }
         }
@@ -1518,7 +1523,7 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.None)
                 rsaKey = _key = null;
             else
-                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
+                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParamBC, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
 
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];

@@ -1060,6 +1060,7 @@ namespace DieFledermaus
         }
 
         private RSAParameters? _rsaKeyParams;
+        private RsaKeyParameters _rsaKeyParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
         /// </summary>
@@ -1085,7 +1086,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                SetRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
+                _rsaKeyParamBC = SetRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
                 _rsaKeyParams = value;
             }
         }
@@ -1497,11 +1498,11 @@ namespace DieFledermaus
             _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
         internal static readonly byte[] _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
 
-        private const string _keyRsaSign = "RsaSig";
-        private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'i', (byte)'g' };
+        private const string _keyRsaSign = "Rsa-Sig";
+        private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'-', (byte)'S', (byte)'i', (byte)'g' };
 
-        internal const string _keyRsaKey = "RsaSch";
-        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'s', (byte)'a', (byte)'S', (byte)'c', (byte)'h' };
+        internal const string _keyRsaKey = "Rsa-Sch";
+        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'s', (byte)'a', (byte)'-', (byte)'S', (byte)'c', (byte)'h' };
 
         internal const string _kHash = "Hash";
         internal static readonly byte[] _bHash = { (byte)'H', (byte)'a', (byte)'s', (byte)'h' };
@@ -2013,7 +2014,7 @@ namespace DieFledermaus
             if (_encFmt != MausEncryptionFormat.None)
             {
                 byte[] _key;
-                _key = DecryptKey(_password, _rsaKeyParams, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
+                _key = DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
                 var bufferStream = Decrypt(_key);
 
@@ -2118,27 +2119,27 @@ namespace DieFledermaus
             }
         }
 
-        internal static byte[] DecryptKey(string _password, RSAParameters? rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize, int pkCount, MausHashFunction hashAlg)
+        internal static byte[] DecryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize,
+            int pkCount, MausHashFunction hashAlg)
         {
             if (_password != null)
                 return GetKey(_password, salt, pkCount, keySize, hashAlg);
             byte[] _key;
 
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            RsaEngine rsa = new RsaEngine();
+            try
             {
-                try
-                {
-                    rsa.ImportParameters(rsaKeyParams.Value);
-                    _key = rsa.Decrypt(rsaKey, false);
-                }
-                catch (CryptographicException x)
-                {
-                    throw new CryptographicException(TextResources.RsaKeyInvalid, x);
-                }
-                if (_key.Length != keySize >> 3)
-                    throw new CryptographicException(TextResources.RsaKeyInvalid);
-                return _key;
+                rsa.Init(false, rsaKeyParams);
+                _key = Pkcs7Provider.RemovePadding(rsa.ProcessBlock(rsaKey, 0, rsaKey.Length), rsa.GetOutputBlockSize());
             }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.RsaKeyInvalid, x);
+            }
+
+            if (_key.Length != keySize >> 3)
+                throw new CryptographicException(TextResources.RsaKeyInvalid);
+            return _key;
         }
 
         /// <summary>
@@ -2158,61 +2159,11 @@ namespace DieFledermaus
 
             if (_rsaSignature == null || _rsaSignParamBC == null || _rsaSignVerified)
                 return false;
-            var rsa = new Pkcs1Encoding(new RsaBlindedEngine());
-            byte[] sig, expected;
-            try
-            {
-                rsa.Init(false, _rsaSignParamBC);
-            }
-            catch (Exception x)
-            {
-                throw new CryptographicException(TextResources.RsaKeyInvalid, x);
-            }
 
-            try
-            {
-                sig = rsa.ProcessBlock(_rsaSignature, 0, _rsaSignature.Length);
-            }
-            catch
-            {
-                return false;
-            }
+            RsaSigningProvider rsa = new RsaSigningProvider(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
+            rsa.Init(false, _rsaSignParamBC);
 
-            DerObjectIdentifier derId;
-            derId = GetHashId(_hashFunc);
-
-            var algId = new AlgorithmIdentifier(derId, DerNull.Instance);
-            DigestInfo dInfo = new DigestInfo(algId, _hashExpected);
-            expected = dInfo.GetDerEncoded();
-
-            if (CompareBytes(expected, sig))
-            {
-                _rsaSignVerified = true;
-                return true;
-            }
-
-            if (sig.Length != expected.Length - 2)
-                throw new CryptographicException(TextResources.RsaSigInvalid);
-
-            int sigOffset = sig.Length - _hashExpected.Length - 2;
-            int expectedOffset = expected.Length - _hashExpected.Length - 2;
-
-            expected[1] -= 2;
-            expected[3] -= 2;
-
-            for (int i = 0; i < _hashExpected.Length; i++)
-            {
-                if (sig[sigOffset + i] != expected[expectedOffset + i])
-                    throw new CryptographicException(TextResources.RsaSigInvalid);
-            }
-
-            for (int i = 0; i < sigOffset; i++)
-            {
-                if (sig[i] != expected[i])
-                    throw new CryptographicException(TextResources.RsaSigInvalid);
-            }
-            _rsaSignVerified = true;
-            return true;
+            return _rsaSignVerified = rsa.VerifyHash(_hashExpected, _rsaSignature);
         }
 
         internal void GetBuffer()
@@ -2465,7 +2416,11 @@ namespace DieFledermaus
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
                 _bufferStream.BufferCopyTo(cs, false);
-                cs.FlushFinalBlock();
+                try
+                {
+                    cs.FlushFinalBlock();
+                }
+                catch (CryptographicException) { }
             }
             output.Reset();
             return output;
@@ -2557,7 +2512,7 @@ namespace DieFledermaus
 
             if (_rsaSignParamBC != null)
             {
-                RsaDigestSigner signer = new RsaDigestSigner(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
+                RsaSigningProvider signer = new RsaSigningProvider(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
                 try
                 {
                     signer.Init(true, _rsaSignParamBC);
@@ -2576,7 +2531,7 @@ namespace DieFledermaus
             if (_encFmt == MausEncryptionFormat.None)
                 _key = rsaKey = null;
             else
-                _key = EncryptKey(_password, _rsaKeyParams, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
+                _key = EncryptKey(_password, _rsaKeyParamBC, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
 
             MausBufferStream compressedStream;
             if (_cmpFmt == MausCompressionFormat.None)
@@ -2754,29 +2709,29 @@ namespace DieFledermaus
 #endif
         }
 
-        internal static byte[] EncryptKey(string _password, RSAParameters? rsaKeyParams, byte[] _salt, int _pkCount, int _keySize,
+        internal static byte[] EncryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] _salt, int _pkCount, int _keySize,
             MausHashFunction hashFunc, out byte[] rsaKey)
         {
             byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, hashFunc);
 
-            if (!rsaKeyParams.HasValue)
+            if (rsaKeyParams == null)
             {
                 rsaKey = null;
                 return _key;
             }
 
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            RsaEngine engine = new RsaEngine();
+            try
             {
-                rsa.ImportParameters(rsaKeyParams.Value);
-                try
-                {
-                    rsaKey = rsa.Encrypt(_key, false);
-                }
-                catch (CryptographicException x)
-                {
-                    throw new CryptographicException(TextResources.RsaKeyPubInvalid, x);
-                }
+                engine.Init(true, rsaKeyParams);
             }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.RsaKeyPubInvalid, x);
+            }
+            byte[] paddedKey = Pkcs7Provider.AddPadding(_key, engine.GetInputBlockSize());
+            rsaKey = engine.ProcessBlock(paddedKey, 0, paddedKey.Length);
+
             return _key;
         }
 
