@@ -60,7 +60,7 @@ namespace DieFledermaus
     /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
     /// to <see cref="Read(byte[], int, int)"/>.
     /// </remarks>
-    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress
+    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausStream
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
@@ -778,6 +778,32 @@ namespace DieFledermaus
             {
                 _ensureCanWrite();
                 _timeM = value;
+            }
+        }
+
+        private byte[] _hashExpected;
+        /// <summary>
+        /// Gets the hash of the uncompressed data, or <c>null</c> if the current instance is in write-mode or has not yet been decrypted.
+        /// </summary>
+        public byte[] Hash
+        {
+            get
+            {
+                if (_hashExpected == null || !_headerGotten) return null;
+                return (byte[])_hashExpected.Clone();
+            }
+        }
+
+        private byte[] _hmacExpected;
+        /// <summary>
+        /// Gets the loaded HMAC of the encrypted data, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// </summary>
+        public byte[] HMAC
+        {
+            get
+            {
+                if (_hmacExpected == null) return null;
+                return (byte[])_hmacExpected.Clone();
             }
         }
 
@@ -1606,10 +1632,14 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
                 else gotULen = true;
 
-                _hashExpected = ReadBytes(reader, hashLength);
+                byte[] hash = ReadBytes(reader, hashLength);
 
-                if (_encFmt != MausEncryptionFormat.None)
+                if (_encFmt == MausEncryptionFormat.None)
+                    _hashExpected = hash;
+                else
                 {
+                    _hmacExpected = hash;
+
                     int keySize = _keySizes.MaxSize >> 3;
                     _salt = ReadBytes(reader, keySize);
 
@@ -1978,7 +2008,6 @@ namespace DieFledermaus
         private long _compLength;
         internal long CompressedLength { get { return _compLength; } }
 
-        private byte[] _hashExpected;
         internal const int minPkCount = 9001;
         private int _pkCount;
         private LzmaDictionarySize _lzmaDictSize;
@@ -2014,6 +2043,43 @@ namespace DieFledermaus
 
         void IMausCrypt.Decrypt() { LoadData(); }
 
+        /// <summary>
+        /// Computes the hash of the unencrypted data.
+        /// </summary>
+        /// <returns>The hash of the unencrypted data.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// The current stream is in read-mode, and 
+        /// either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The current stream is in read-mode, and contains invalid data.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        /// <remarks>When the current stream is in read-mode, returns the same value as <see cref="Hash"/>.
+        /// In write-mode, this method computes the hash from the written data.</remarks>
+        public byte[] ComputeHash()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+
+            if (_mode == CompressionMode.Compress)
+            {
+                using (MausBufferStream tempStream = new MausBufferStream())
+                {
+                    tempStream.Prepend(_bufferStream);
+                    return ComputeHash(tempStream, _hashFunc);
+                }
+            }
+
+            return _hashExpected;
+        }
+
         private void _readData()
         {
             if (_headerGotten)
@@ -2038,7 +2104,7 @@ namespace DieFledermaus
                 OnProgress(MausProgressState.BuildingKey);
                 _key = DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
-                using (MausBufferStream bufferStream = Decrypt(this, _key, _iv, _bufferStream, _hashExpected, _hashFunc))
+                using (MausBufferStream bufferStream = Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
                 {
                     Array.Clear(_key, 0, _key.Length);
 #if NOLEAVEOPEN
@@ -2126,25 +2192,24 @@ namespace DieFledermaus
                     break;
             }
             _headerGotten = true;
-            if (Progress != null)
-                Progress(this, new MausProgressEventArgs(MausProgressState.CompletedLoading, oldLength, _bufferStream.Length));
+            OnProgress(new MausProgressEventArgs(MausProgressState.CompletedLoading, oldLength, _bufferStream.Length));
 
+            OnProgress(_encFmt == MausEncryptionFormat.None ? MausProgressState.VerifyingHash : MausProgressState.ComputingHash);
+            byte[] hashActual = ComputeHash(_bufferStream, _hashFunc);
+            _bufferStream.Reset();
             if (_encFmt == MausEncryptionFormat.None || _rsaSignature != null)
             {
-                byte[] hashActual = ComputeHash(_bufferStream, _hashFunc);
-                _bufferStream.Reset();
                 if (_encFmt == MausEncryptionFormat.None)
                 {
-                    OnProgress(MausProgressState.VerifyingHash);
                     if (!CompareBytes(hashActual, _hashExpected))
                         throw new InvalidDataException(TextResources.BadChecksum);
+                    OnProgress(new MausProgressEventArgs(MausProgressState.VerifyingHashCompleted, hashActual));
                 }
+                _hashExpected = hashActual;
                 if (_rsaSignature != null)
-                {
-                    _hashExpected = hashActual;
                     VerifyRSASignature();
-                }
             }
+            else _hashExpected = hashActual;
         }
 
         internal static byte[] DecryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize,
@@ -2458,7 +2523,10 @@ namespace DieFledermaus
             output.Reset();
             _bufferStream.Reset();
             o.OnProgress(MausProgressState.ComputingHMAC);
-            return ComputeHmac(_bufferStream, _key, hashFunc);
+            byte[] hmac = ComputeHmac(_bufferStream, _key, hashFunc);
+            o.OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHMACCompleted, hmac));
+            return hmac;
+
         }
 
         #region Disposal
@@ -2537,10 +2605,11 @@ namespace DieFledermaus
                 }
                 OnProgress(MausProgressState.ComputingHash);
                 _bufferStream.BufferCopyTo(signer.BlockUpdate);
+                hashChecksum = signer.GetFinalHash();
+                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
 
                 OnProgress(MausProgressState.SigningRSA);
                 rsaSignature = signer.GenerateSignature();
-                hashChecksum = signer.GetFinalHash();
 
                 _bufferStream.Reset();
             }
@@ -2658,7 +2727,9 @@ namespace DieFledermaus
                     if (hashChecksum == null)
                     {
                         _bufferStream.Reset();
+                        OnProgress(MausProgressState.ComputingHash);
                         hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                     }
                     writer.Write(hashChecksum);
 
@@ -2733,8 +2804,7 @@ namespace DieFledermaus
                     Array.Clear(_key, 0, _key.Length);
                 }
             }
-            if (Progress != null)
-                Progress(this, new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, _bufferStream.Length));
+            OnProgress(new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, _bufferStream.Length));
 #if NOLEAVEOPEN
             _baseStream.Flush();
 #endif
@@ -2851,13 +2921,23 @@ namespace DieFledermaus
 
         private void OnProgress(MausProgressState state)
         {
-            if (Progress != null)
-                Progress(this, new MausProgressEventArgs(state));
+            OnProgress(new MausProgressEventArgs(state));
         }
 
         void IMausProgress.OnProgress(MausProgressState state)
         {
-            OnProgress(state);
+            OnProgress(new MausProgressEventArgs(state));
+        }
+
+        private void OnProgress(MausProgressEventArgs e)
+        {
+            if (Progress != null)
+                Progress(this, e);
+        }
+
+        void IMausProgress.OnProgress(MausProgressEventArgs e)
+        {
+            OnProgress(e);
         }
 
         void ICodeProgress.SetProgress(long inSize, long outSize)

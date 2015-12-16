@@ -242,9 +242,9 @@ namespace DieFledermaus
         internal void Prepend(MausBufferStream other)
         {
             _length += other._length;
-            other._currentBuffer.Next = _firstBuffer;
+            if (_firstBuffer != null && _firstBuffer.End != 0)
+                other._currentBuffer.Next = _firstBuffer;
             _firstBuffer = other._firstBuffer;
-            other.Dispose();
             Reset();
         }
 

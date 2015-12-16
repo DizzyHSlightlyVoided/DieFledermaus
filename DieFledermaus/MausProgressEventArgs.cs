@@ -43,9 +43,8 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="state">The current progress state.</param>
         public MausProgressEventArgs(MausProgressState state)
+            : this(state, -1, -1)
         {
-            _state = state;
-            _inSize = _outSize = -1;
         }
 
         /// <summary>
@@ -59,6 +58,18 @@ namespace DieFledermaus
             _state = state;
             _inSize = inSize;
             _outSize = outSize;
+        }
+
+        /// <summary>
+        /// Creates a new instance with the specified values.
+        /// </summary>
+        /// <param name="state">The current progress state.</param>
+        /// <param name="hash">A computed hash or HMAC value.</param>
+        public MausProgressEventArgs(MausProgressState state, byte[] hash)
+            : this(state, -1, -1)
+        {
+            if (hash != null)
+                _hash = (byte[])hash.Clone();
         }
 
         private MausProgressState _state;
@@ -78,6 +89,20 @@ namespace DieFledermaus
         /// Gets the output size of the processed data, or -1 if unknown.
         /// </summary>
         public long OutputSize { get { return _outSize; } }
+
+        private byte[] _hash;
+        /// <summary>
+        /// Gets a computed hash or HMAC value, or <c>null</c> if none is specified.
+        /// </summary>
+        public byte[] Hash
+        {
+            get
+            {
+                if (_hash == null)
+                    return null;
+                return (byte[])_hash.Clone();
+            }
+        }
     }
 
     /// <summary>
@@ -130,6 +155,14 @@ namespace DieFledermaus
         /// </summary>
         ArchiveBuildingEntries,
         /// <summary>
+        /// Finished computing the hash of the uncompressed data.
+        /// </summary>
+        ComputingHashCompleted,
+        /// <summary>
+        /// Finished computing the HMAC of the compressed data.
+        /// </summary>
+        ComputingHMACCompleted,
+        /// <summary>
         /// The stream is done writing.
         /// </summary>
         CompletedWriting = int.MinValue,
@@ -153,6 +186,10 @@ namespace DieFledermaus
         /// Verifying the hash of the decompressed data.
         /// </summary>
         VerifyingHash = ComputingHash | LoadingData,
+        /// <summary>
+        /// Finished verifying the hash of the decompressed data.
+        /// </summary>
+        VerifyingHashCompleted = ComputingHashCompleted | LoadingData,
         /// <summary>
         /// Decrypting the encrypted data.
         /// </summary>
@@ -179,5 +216,6 @@ namespace DieFledermaus
         event MausProgressEventHandler Progress;
 
         void OnProgress(MausProgressState state);
+        void OnProgress(MausProgressEventArgs e);
     }
 }

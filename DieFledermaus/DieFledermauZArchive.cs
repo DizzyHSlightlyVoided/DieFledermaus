@@ -279,7 +279,7 @@ namespace DieFledermaus
 
                 int hashSize = DieFledermausStream.GetHashLength(_hashFunc);
 
-                _hashExpected = DieFledermausStream.ReadBytes(reader, hashSize);
+                _hmacExpected = DieFledermausStream.ReadBytes(reader, hashSize);
                 _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
                 _iv = DieFledermausStream.ReadBytes(reader, DieFledermausStream._blockByteCtAes);
 
@@ -506,7 +506,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.BuildingKey);
             byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
 
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _iv, _bufferStream, _hashExpected, _hashFunc))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
@@ -659,6 +659,20 @@ namespace DieFledermaus
                 _entryDict[_entries[i].Path] = i;
         }
 
+        private byte[] _hmacExpected;
+        /// <summary>
+        /// Gets the loaded HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// </summary>
+        public byte[] HMAC
+        {
+            get
+            {
+                if (_hmacExpected == null)
+                    return null;
+                return (byte[])_hmacExpected.Clone();
+            }
+        }
+
         private readonly EntryList _entriesRO;
         /// <summary>
         /// Gets a collection containing all entries in the current archive.
@@ -753,7 +767,6 @@ namespace DieFledermaus
         }
 
         private int _pkCount;
-        private byte[] _hashExpected;
 
         private byte[] _iv;
         /// <summary>
@@ -1742,13 +1755,23 @@ namespace DieFledermaus
 
         private void OnProgress(MausProgressState state)
         {
-            if (Progress != null)
-                Progress(this, new MausProgressEventArgs(state));
+            OnProgress(new MausProgressEventArgs(state));
         }
 
         void IMausProgress.OnProgress(MausProgressState state)
         {
-            OnProgress(state);
+            OnProgress(new MausProgressEventArgs(state));
+        }
+
+        private void OnProgress(MausProgressEventArgs e)
+        {
+            if (Progress != null)
+                Progress(this, e);
+        }
+
+        void IMausProgress.OnProgress(MausProgressEventArgs e)
+        {
+            OnProgress(e);
         }
 
         void ICodeProgress.SetProgress(long inSize, long outSize)

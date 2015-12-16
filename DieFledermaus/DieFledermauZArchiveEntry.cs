@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -39,7 +40,7 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a single file entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
-    public class DieFledermauZArchiveEntry : DieFledermauZItem
+    public class DieFledermauZArchiveEntry : DieFledermauZItem, IMausStream
     {
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
             : base(archive, path, compFormat, encFormat)
@@ -231,6 +232,10 @@ namespace DieFledermaus
             }
             _writingStream.Reset();
             _writingStream.BufferCopyTo(MausStream, false);
+            MausBufferStream newStream = new MausBufferStream();
+            _writingStream.Reset();
+            newStream.Prepend(_writingStream);
+            _writingStream = newStream;
         }
 
         /// <summary>
@@ -280,21 +285,20 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// <see cref="DieFledermauZItem.Archive"/> is in write-only mode.
         /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
+        /// </exception>
         public Stream OpenRead()
         {
             lock (_lock)
             {
                 EnsureCanRead();
 
-                if (_writingStream == null)
-                {
-                    if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
-                        SeekToFile();
-                    else
-                        DoDecrypt();
-                    _writingStream = new MausBufferStream();
-                    MausStream.BufferCopyTo(_writingStream);
-                }
+                LoadData();
 
                 MausBufferStream mbs = new MausBufferStream();
                 _writingStream.BufferCopyTo(mbs, false);
@@ -302,11 +306,58 @@ namespace DieFledermaus
             }
         }
 
+        private void LoadData()
+        {
+            if (_writingStream != null)
+                return;
+            if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
+                SeekToFile();
+            else
+                DoDecrypt();
+            _writingStream = new MausBufferStream();
+            MausStream.BufferCopyTo(_writingStream);
+        }
+
+        /// <summary>
+        /// Returns the hash of the uncompressed data.
+        /// </summary>
+        /// <returns>The hash of the uncompressed data.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has been deleted.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and the stream contains invalid data.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and 
+        /// either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
+        /// </exception>
+        /// <remarks>When <see cref="DieFledermauZItem.Archive"/> is in read-mode, returns the same value as <see cref="DieFledermauZItem.Hash"/>.
+        /// In write-mode, this method computes the hash from the written data.</remarks>
+        public byte[] ComputeHash()
+        {
+            if (_arch == null)
+                throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
+
+            if (_arch.Mode == MauZArchiveMode.Read)
+            {
+                LoadData();
+                return MausStream.Hash;
+            }
+
+            if (_writingStream == null || _writingStream.CanWrite)
+                throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, Path));
+
+            _writingStream.Reset();
+            return DieFledermausStream.ComputeHash(_writingStream, HashFunction);
+        }
+
         internal override MausBufferStream GetWritten()
         {
             lock (_lock)
             {
-                if (_writingStream == null || _writingStream.CanRead || _writingStream.CanWrite)
+                if (_writingStream == null || _writingStream.CanWrite)
                     throw new InvalidOperationException(string.Format(TextResources.ArchiveNotWritten, MausStream.Filename));
                 return base.GetWritten();
             }

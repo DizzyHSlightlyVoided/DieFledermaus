@@ -79,6 +79,18 @@ namespace DieFledermaus
 
         internal readonly object _lock = new object();
 
+        /// <summary>
+        /// Gets the hash of the uncompressed data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
+        /// the current instance has not yet been decrypted.
+        /// </summary>
+        public virtual byte[] Hash { get { return MausStream.Hash; } }
+
+        /// <summary>
+        /// Gets the loaded HMAC of the encrypted data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
+        /// the current instance is not encrypted.
+        /// </summary>
+        public byte[] HMAC { get { return MausStream.HMAC; } }
+
         internal DieFledermauZArchive _arch;
         /// <summary>
         /// Gets the <see cref="DieFledermauZArchive"/> containing the current instance, or <c>null</c> if

@@ -127,6 +127,11 @@ namespace DieFledermaus
         KeySizes KeySizes { get; }
 
         /// <summary>
+        /// Gets the HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// </summary>
+        byte[] HMAC { get; }
+
+        /// <summary>
         /// Gets and sets the number of bits in the key.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
@@ -198,5 +203,28 @@ namespace DieFledermaus
         /// Raised when the current instance is reading or writing data, and the progress state meaningfully changes.
         /// </summary>
         event MausProgressEventHandler Progress;
+    }
+
+    internal interface IMausStream
+    {
+        MausCompressionFormat CompressionFormat { get; }
+
+        DateTime? CreatedTime { get; }
+
+        DateTime? ModifiedTime { get; }
+
+        RSAParameters? RSASignParameters { get; }
+
+        bool IsRSASigned { get; }
+
+        bool IsRSASignVerified { get; }
+
+        bool VerifyRSASignature();
+
+        DieFledermausStream.SettableOptions EncryptedOptions { get; }
+
+        byte[] Hash { get; }
+
+        byte[] ComputeHash();
     }
 }

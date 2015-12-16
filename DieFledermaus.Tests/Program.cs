@@ -95,13 +95,13 @@ namespace DieFledermaus.Tests
                         entry.VerifyRSASignature();
 
                         Console.WriteLine(" - Reading file: " + entry.Path);
+                        Console.WriteLine("Hash: " + GetString(entry.ComputeHash()));
+                        if (entry.IsRSASignVerified)
+                            Console.WriteLine("RSA signature is verified.");
+                        else
+                            Console.WriteLine("RSA signature is NOT verified!");
                         using (Stream outStream = entry.OpenRead())
                         {
-                            if (entry.IsRSASignVerified)
-                                Console.WriteLine("RSA signature is verified.");
-                            else
-                                Console.WriteLine("RSA signature is NOT verified!");
-
                             int read = outStream.Read(getBuffer, 0, bigBufferLength);
                             if (read == bigBufferLength)
                                 Console.WriteLine("Correct length.");
@@ -146,6 +146,8 @@ namespace DieFledermaus.Tests
 
             using (Stream stream = entry.OpenWrite())
                 stream.Write(bigBuffer, 0, bigBufferLength);
+
+            Console.WriteLine("Hash: " + GetString(entry.ComputeHash()));
         }
 
         private static void SetPasswd(DieFledermauZItem item)
@@ -157,6 +159,10 @@ namespace DieFledermaus.Tests
             DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
             if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
                 entry.EncryptedOptions.AddAll();
+        }
+        private static string GetString(byte[] hash)
+        {
+            return string.Concat(hash.Select(i => i.ToString("x2", System.Globalization.NumberFormatInfo.InvariantInfo)));
         }
     }
 }
