@@ -232,13 +232,25 @@ namespace DieFledermaus
         /// </summary>
         /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
         /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="DieFledermauZItem.Archive"/> is in write-only mode.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
         /// <exception cref="CryptographicException">
         /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
-        /// <remarks>This method may be called at any time after <see cref="Decrypt()"/> or <see cref="OpenRead()"/> have been called.</remarks>
         public bool VerifyRSASignature()
         {
-            return MausStream.VerifyRSASignature();
+            lock(_lock)
+            {
+                LoadData();
+                return MausStream.VerifyRSASignature();
+            }
         }
 
         private MausBufferStream _writingStream;
