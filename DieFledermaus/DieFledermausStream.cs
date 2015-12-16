@@ -1833,13 +1833,13 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeC, ref headSize, optLen, ref i);
+                    GetDate(reader, ref _timeC, ref headSize, optLen, ref i, fromEncrypted, MausOptionToEncrypt.CreatedTime);
                     continue;
                 }
 
                 if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeM, ref headSize, optLen, ref i);
+                    GetDate(reader, ref _timeM, ref headSize, optLen, ref i, fromEncrypted, MausOptionToEncrypt.ModTime);
                     continue;
                 }
 
@@ -1970,7 +1970,7 @@ namespace DieFledermaus
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
-        private void GetDate(BinaryReader reader, ref DateTime? curTime, ref long curOffset, int optLen, ref int i)
+        private void GetDate(BinaryReader reader, ref DateTime? curTime, ref long curOffset, int optLen, ref int i, bool fromEncrypted, MausOptionToEncrypt option)
         {
             CheckAdvance(optLen, ref i);
 
@@ -1981,10 +1981,17 @@ namespace DieFledermaus
 
             DateTime newVal = new DateTime(value, DateTimeKind.Utc);
 
-            if (curTime.HasValue && curTime.Value != newVal)
-                throw new InvalidDataException(TextResources.FormatBad);
-
-            curTime = newVal;
+            if (curTime.HasValue)
+            {
+                if (curTime.Value != newVal)
+                    throw new InvalidDataException(TextResources.FormatBad);
+            }
+            else
+            {
+                if (fromEncrypted)
+                    _encryptedOptions.Add(option);
+                curTime = newVal;
+            }
         }
 
         private static long GetValueInt64(BinaryReader reader, ref long curOffset)
@@ -2723,8 +2730,11 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Compression))
                         FormatSetCompression(formats);
 
+                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.CreatedTime))
+                        FormatSetTimes(formats, _bTimeC, _timeC);
+
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
-                        FormatSetTimes(formats);
+                        FormatSetTimes(formats, _bTimeM, _timeM);
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
@@ -2801,8 +2811,11 @@ namespace DieFledermaus
                                 case MausOptionToEncrypt.Compression:
                                     FormatSetCompression(formats);
                                     continue;
+                                case MausOptionToEncrypt.CreatedTime:
+                                    FormatSetTimes(formats, _bTimeC, _timeC);
+                                    continue;
                                 case MausOptionToEncrypt.ModTime:
-                                    FormatSetTimes(formats);
+                                    FormatSetTimes(formats, _bTimeM, _timeM);
                                     continue;
                                 case MausOptionToEncrypt.Comment:
                                     FormatSetComment(formats);
@@ -2879,7 +2892,7 @@ namespace DieFledermaus
             return _key;
         }
 
-        private byte[] GetBytes(long value)
+        private static byte[] GetBytes(long value)
         {
             return new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) };
@@ -2910,18 +2923,12 @@ namespace DieFledermaus
             }
         }
 
-        private void FormatSetTimes(List<byte[]> formats)
+        private static void FormatSetTimes(List<byte[]> formats, byte[] bTime, DateTime? dateTime)
         {
-            if (_timeC.HasValue)
+            if (dateTime.HasValue)
             {
-                formats.Add(_bTimeC);
-                formats.Add(GetBytes(_timeC.Value.ToUniversalTime().Ticks));
-            }
-
-            if (_timeM.HasValue)
-            {
-                formats.Add(_bTimeM);
-                formats.Add(GetBytes(_timeM.Value.ToUniversalTime().Ticks));
+                formats.Add(bTime);
+                formats.Add(GetBytes(dateTime.Value.ToUniversalTime().Ticks));
             }
         }
 
@@ -3091,7 +3098,11 @@ namespace DieFledermaus
         /// </summary>
         Compression,
         /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.CreatedTime"/> and <see cref="DieFledermausStream.ModifiedTime"/> will be encrypted.
+        /// Indicates that <see cref="DieFledermausStream.CreatedTime"/> will be encrypted.
+        /// </summary>
+        CreatedTime,
+        /// <summary>
+        /// Indicates that <see cref="DieFledermausStream.ModifiedTime"/> will be encrypted.
         /// </summary>
         ModTime,
         /// <summary>
