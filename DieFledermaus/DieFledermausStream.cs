@@ -1164,10 +1164,60 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (value != null && (value.Length == 0 || _textEncoding.GetByteCount(value) > Max16Bit))
-                    throw new ArgumentException(TextResources.CommentLength, nameof(value));
+                _comBytes = CheckComment(value);
                 _comment = value;
             }
+        }
+
+        private byte[] _comBytes;
+        /// <summary>
+        /// Gets and sets a binary representation of a comment on the file.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536.
+        /// </exception>
+        public byte[] CommentBytes
+        {
+            get
+            {
+                if (_comBytes == null) return null;
+                return (byte[])_comBytes.Clone();
+            }
+            set
+            {
+                _ensureCanWrite();
+                CheckComment(value);
+                if (value == null)
+                {
+                    _comBytes = null;
+                    _comment = null;
+                }
+                else
+                {
+                    _comBytes = (byte[])value.Clone();
+                    _comment = _textEncoding.GetString(value);
+                }
+            }
+        }
+
+        internal static byte[] CheckComment(string value)
+        {
+            if (value == null) return null;
+            byte[] bytes = _textEncoding.GetBytes(value);
+            CheckComment(bytes);
+            return bytes;
+        }
+
+        internal static void CheckComment(byte[] value)
+        {
+            if (value != null && value.Length == 0 || value.Length > Max16Bit)
+                throw new ArgumentException(TextResources.CommentLength, nameof(value));
         }
 
         private SettableOptions _encryptedOptions;
@@ -1796,14 +1846,19 @@ namespace DieFledermaus
                 if (curForm.Equals(_kComment, StringComparison.Ordinal))
                 {
                     CheckAdvance(optLen, ref i);
-                    byte[] buffer = GetStringBytes(reader, ref headSize, false);
+                    byte[] comBytes = GetStringBytes(reader, ref headSize, false);
 
-                    string comment = _textEncoding.GetString(buffer);
+                    if (_comBytes == null)
+                    {
+                        if (fromEncrypted)
+                            _encryptedOptions.InternalAdd(MausOptionToEncrypt.Comment);
 
-                    if (_comment != null && !_comment.Equals(comment, StringComparison.Ordinal))
+                        _comment = _textEncoding.GetString(comBytes);
+                        _comBytes = comBytes;
+                    }
+                    else if (!CompareBytes(comBytes, _comBytes))
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    _comment = comment;
                     continue;
                 }
 
@@ -2876,7 +2931,7 @@ namespace DieFledermaus
                 return;
 
             formats.Add(_bComment);
-            formats.Add(_textEncoding.GetBytes(_comment));
+            formats.Add(_comBytes);
         }
 
         internal static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
@@ -2894,6 +2949,7 @@ namespace DieFledermaus
         internal void Dispose(DieFledermausStream other)
         {
             other._comment = _comment;
+            other._comBytes = _comBytes;
             other._hashFunc = _hashFunc;
             other.Progress = Progress;
             other._rsaKeyParamBC = _rsaKeyParamBC;

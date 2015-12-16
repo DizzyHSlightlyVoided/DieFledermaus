@@ -627,14 +627,17 @@ namespace DieFledermaus
                 {
                     CheckAdvance(optLen, ref i);
 
-                    string comment = DieFledermausStream.GetString(reader, ref curOffset, false);
+                    byte[] comBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset, false);
 
-                    if (_comment == null)
-                        _comment = comment;
-                    else if (!_comment.Equals(comment, StringComparison.Ordinal))
+                    if (_comBytes == null)
+                    {
+                        if (fromEncrypted)
+                            _encryptedOptions.InternalAdd(MauZOptionToEncrypt.Comment);
+                        _comBytes = comBytes;
+                        _comment = DieFledermausStream._textEncoding.GetString(comBytes);
+                    }
+                    else if (!DieFledermausStream.CompareBytes(comBytes, _comBytes))
                         throw new InvalidDataException(TextResources.FormatBadZ);
-                    else if (fromEncrypted)
-                        _encryptedOptions.InternalAdd(MauZOptionToEncrypt.Comment);
 
                     continue;
                 }
@@ -710,11 +713,48 @@ namespace DieFledermaus
             set
             {
                 EnsureCanWrite();
-                if (value != null && (value.Length == 0 || DieFledermausStream._textEncoding.GetByteCount(value) > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.CommentLength);
+                _comBytes = DieFledermausStream.CheckComment(value);
                 _comment = value;
             }
         }
+
+        private byte[] _comBytes;
+        /// <summary>
+        /// Gets and sets a binary representation of a comment on the file.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536.
+        /// </exception>
+        public byte[] CommentBytes
+        {
+            get
+            {
+                if (_comBytes == null) return null;
+                return (byte[])_comBytes.Clone();
+            }
+            set
+            {
+                EnsureCanWrite();
+                DieFledermausStream.CheckComment(value);
+                if (value == null)
+                {
+                    _comment = null;
+                    _comBytes = null;
+                }
+                else
+                {
+                    _comBytes = (byte[])value.Clone();
+                    _comment = DieFledermausStream._textEncoding.GetString(value);
+                }
+            }
+        }
+
 
         private SettableOptions _encryptedOptions;
         /// <summary>
@@ -1690,7 +1730,7 @@ namespace DieFledermaus
             if (!string.IsNullOrEmpty(_comment))
             {
                 options.Add(DieFledermausStream._bComment);
-                options.Add(DieFledermausStream._textEncoding.GetBytes(_comment));
+                options.Add(_comBytes);
             }
         }
 

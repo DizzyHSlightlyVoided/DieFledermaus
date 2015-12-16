@@ -177,6 +177,28 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Gets and sets a binary representation of a comment on the file.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance has been deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public byte[] CommentBytes
+        {
+            get { return MausStream.CommentBytes; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CommentBytes = value;
+            }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether the current instance has an RSA-encrypted key.
         /// </summary>
         /// <remarks>

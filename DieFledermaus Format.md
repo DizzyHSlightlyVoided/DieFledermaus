@@ -55,7 +55,7 @@ The following values are defined for the default implementation:
 **De**komprimierte **L**änge. The parameter is a signed 64-bit integer containing the number of bytes in the uncompressed data. If the archive is not encrypted, this value must be equal to **Decompressed Length**. This value should be included in the **Encrypted Format** array when the archive is encrypted.
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
 * `Mod` - *One parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
-* `Kom` - *1 parameter.* **Kom**mentar ("comment"). A textual comment.
+* `Kom` - *1 parameter.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder; it can either be treated as a raw binary value, or as UTF-8 string of text (or indeed any other text encoding).
 * `Hash` - *1 parameter.* Indicates the specified hash function. Valid values of the parameter are:
  - `SHA224`
  - `SHA256`
