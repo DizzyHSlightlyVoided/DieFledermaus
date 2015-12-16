@@ -197,7 +197,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is in read-mode, and the specified value is not a valid private key.</para>
         /// </exception>
-        RSAParameters? RSAKeyParameters { get; }
+        RSAParameters? RSAKeyParameters { get; set; }
 
         /// <summary>
         /// Raised when the current instance is reading or writing data, and the progress state meaningfully changes.
@@ -214,6 +214,10 @@ namespace DieFledermaus
         DateTime? ModifiedTime { get; }
 
         RSAParameters? RSASignParameters { get; }
+
+        string RSASignId { get; }
+
+        byte[] RSASignIdBytes { get; }
 
         bool IsRSASigned { get; }
 

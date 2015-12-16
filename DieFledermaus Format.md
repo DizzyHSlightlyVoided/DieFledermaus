@@ -41,7 +41,7 @@ A DieFledermaus stream contains the following fields:
 
 Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for that element, which is thus known as a *parameterized element*. Format elements should have a length no greater than 256 UTF-8 bytes because I mean seriously c'mon. Parameters may be any length between 1 and 65536 UTF-8 bytes inclusive, depending on the requirements of the parameterized element.
 
-Some elements also must be in the plaintext, even if the file is encrypted, because they contain vital information about the encryption itself and/or the structure of the file. An encoder may also include them in the **Encrypted Format**, but only if they are also included in the **Format**.
+Some elements also must be in the plaintext, even if the file is encrypted, because they contain vital information about the encryption itself and/or the structure of the file. An encoder may also include them in the **Encrypted Format**, but only if they are also included in the plaintext **Format**. Other elements are potentially sensitive enough that, if the file is encrypted, they should only be in the **Encrypted Format**, not the plaintext **Format**.
 
 If no element in **Format** specifies the compression format, the decoder must use the DEFLATE algorithm.
 
@@ -64,9 +64,10 @@ The following values are defined for the default implementation:
  - `SHA3/224`
  - `SHA3/256`
  - `SHA3/384`
- - `SHA3/512` 
-* `Rsa-Sig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#7 padding. The signature may be verified using the corresponding RSA public key.
-* `Rsa-Sch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#7 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Must be in plaintext.
+ - `SHA3/512`
+* `Rsa-Sig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#7 padding. The signature may be verified using the corresponding RSA public key. Should be encrypted.
+* `Rsa-Sig-Id` - *One parameter.* A value (string or binary) which identifies the public key an encoder should use to verify `Rsa-Sig`. Usable only if `Rsa-Sig` is also present. Should be encrypted.
+* `Rsa-Sch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#7 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Encoders and decoders must make sure that the same key is not used for `Rsa-Sig` and `Rsa-Sch`. Must be in plaintext.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 

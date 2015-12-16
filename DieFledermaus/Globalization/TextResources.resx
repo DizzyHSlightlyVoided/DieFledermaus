@@ -345,4 +345,13 @@
   <data name="RsaKeySigSame" xml:space="preserve">
     <value>The RSA signing key and the RSA encryption key must be different.</value>
   </data>
+  <data name="RsaIdLength" xml:space="preserve">
+    <value>The length of an RSA key-identifier must either be null or must have a length between 1 and 65536.</value>
+  </data>
+  <data name="RsaKeyIdNotSet" xml:space="preserve">
+    <value>The current instance's key is not RSA-encrypted.</value>
+  </data>
+  <data name="RsaSigIdNotSet" xml:space="preserve">
+    <value>The current instance is not signed.</value>
+  </data>
 </root>

@@ -1042,6 +1042,70 @@ namespace DieFledermaus
             }
         }
 
+        private byte[] _rsaSignId;
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] RSASignIdBytes
+        {
+            get { return _rsaSignId; }
+            set
+            {
+                _ensureCanWrite();
+                if (!_rsaSignParams.HasValue)
+                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                if (value == null)
+                    _rsaSignId = null;
+                else if (value.Length == 0 || value.Length > Max16Bit)
+                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                else
+                    _rsaSignId = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string RSASignId
+        {
+            get
+            {
+                if (_rsaSignId == null) return null;
+                return _textEncoding.GetString(_rsaSignId);
+            }
+            set
+            {
+                if (value == null)
+                    RSASignIdBytes = null;
+                else
+                    RSASignIdBytes = _textEncoding.GetBytes(value);
+            }
+        }
+
         internal static bool CompareValues(RSAParameters? x, RSAParameters? y)
         {
             if (!x.HasValue || !y.HasValue)
@@ -1145,7 +1209,6 @@ namespace DieFledermaus
             return null;
         }
 
-        private string _comment;
         /// <summary>
         /// Gets and sets a comment on the file.
         /// </summary>
@@ -1160,12 +1223,15 @@ namespace DieFledermaus
         /// </exception>
         public string Comment
         {
-            get { return _comment; }
+            get
+            {
+                if (_comBytes == null) return null;
+                return _textEncoding.GetString(_comBytes);
+            }
             set
             {
                 _ensureCanWrite();
                 _comBytes = CheckComment(value);
-                _comment = value;
             }
         }
 
@@ -1184,25 +1250,12 @@ namespace DieFledermaus
         /// </exception>
         public byte[] CommentBytes
         {
-            get
-            {
-                if (_comBytes == null) return null;
-                return (byte[])_comBytes.Clone();
-            }
+            get { return _comBytes; }
             set
             {
                 _ensureCanWrite();
                 CheckComment(value);
-                if (value == null)
-                {
-                    _comBytes = null;
-                    _comment = null;
-                }
-                else
-                {
-                    _comBytes = (byte[])value.Clone();
-                    _comment = _textEncoding.GetString(value);
-                }
+                _comBytes = value;
             }
         }
 
@@ -1556,20 +1609,29 @@ namespace DieFledermaus
         internal const int _keyBitAes256 = 256;
         internal const int _keyBitAes128 = 128;
         internal const int _keyBitAes192 = 192;
+
+        internal static byte[] GetBytes(string s)
+        {
+            byte[] b = new byte[s.Length];
+            for (int i = 0; i < s.Length; i++)
+                b[i] = (byte)s[i];
+            return b;
+        }
+
         internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
         internal static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
-        private const string _cmpNone = "NK", _cmpDef = "DEF", _cmpLzma = "LZMA";
-        internal const string _encAes = "AES";
-        private static readonly byte[] _cmpBNone = { (byte)'N', (byte)'K' }, _cmpBDef = { (byte)'D', (byte)'E', (byte)'F' },
-            _cmpBLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
-        internal static readonly byte[] _encBAes = { (byte)'A', (byte)'E', (byte)'S' };
+        private const string _kCmpNone = "NK", _kCmpDef = "DEF", _kCmpLzma = "LZMA";
+        internal const string _kEncAes = "AES";
+        private static readonly byte[] _bCmpNone = { (byte)'N', (byte)'K' }, _bCmpDef = { (byte)'D', (byte)'E', (byte)'F' },
+            _bCmpLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
+        internal static readonly byte[] _bEncAes = { (byte)'A', (byte)'E', (byte)'S' };
 
-        private const string _keyRsaSign = "Rsa-Sig";
-        private static readonly byte[] _keyBRsaSign = { (byte)'R', (byte)'s', (byte)'a', (byte)'-', (byte)'S', (byte)'i', (byte)'g' };
+        private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id";
+        private static readonly byte[] _bRsaSig = GetBytes(_kRsaSig), _bRsaSigId = GetBytes(_kRsaSigId);
 
-        internal const string _keyRsaKey = "Rsa-Sch";
-        internal static readonly byte[] _keyBRsaKey = { (byte)'R', (byte)'s', (byte)'a', (byte)'-', (byte)'S', (byte)'c', (byte)'h' };
+        internal const string _kRsaKey = "Rsa-Sch";
+        internal static readonly byte[] _bRsaKey = GetBytes(_kRsaKey);
 
         internal const string _kHash = "Hash";
         internal static readonly byte[] _bHash = { (byte)'H', (byte)'a', (byte)'s', (byte)'h' };
@@ -1583,9 +1645,9 @@ namespace DieFledermaus
 
         private static readonly Dictionary<string, MausCompressionFormat> _formDict = new Dictionary<string, MausCompressionFormat>(StringComparer.Ordinal)
         {
-            { _cmpNone, MausCompressionFormat.None },
-            { _cmpLzma, MausCompressionFormat.Lzma },
-            { _cmpDef, MausCompressionFormat.Deflate }
+            { _kCmpNone, MausCompressionFormat.None },
+            { _kCmpLzma, MausCompressionFormat.Lzma },
+            { _kCmpDef, MausCompressionFormat.Deflate }
         };
 
         internal static readonly Dictionary<string, MausHashFunction> HashDict = ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).
@@ -1626,6 +1688,9 @@ namespace DieFledermaus
                         throw new InvalidDataException(TextResources.FormatBad);
                 }
                 else if (_rsaKey != null && _rsaKey.Length < _keySize >> 3)
+                    throw new InvalidDataException(TextResources.FormatBad);
+
+                if (_rsaSignId != null && _rsaSignature == null)
                     throw new InvalidDataException(TextResources.FormatBad);
 
                 int hashLength = GetHashLength(_hashFunc);
@@ -1727,13 +1792,19 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_keyRsaSign, StringComparison.Ordinal))
+                if (curForm.Equals(_kRsaSig, StringComparison.Ordinal))
                 {
                     ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignature);
                     continue;
                 }
 
-                if (curForm.Equals(_keyRsaKey, StringComparison.Ordinal))
+                if (curForm.Equals(_kRsaSigId, StringComparison.Ordinal))
+                {
+                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignId);
+                    continue;
+                }
+
+                if (curForm.Equals(_kRsaKey, StringComparison.Ordinal))
                 {
                     if (fromEncrypted && _rsaKey == null)
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -1742,7 +1813,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_encAes, StringComparison.Ordinal))
+                if (curForm.Equals(_kEncAes, StringComparison.Ordinal))
                 {
                     if (!fromEncrypted)
                         _encryptedOptions = new SettableOptions(this);
@@ -1853,7 +1924,6 @@ namespace DieFledermaus
                         if (fromEncrypted)
                             _encryptedOptions.InternalAdd(MausOptionToEncrypt.Comment);
 
-                        _comment = _textEncoding.GetString(comBytes);
                         _comBytes = comBytes;
                     }
                     else if (!CompareBytes(comBytes, _comBytes))
@@ -2744,7 +2814,7 @@ namespace DieFledermaus
 
                     if (_encFmt == MausEncryptionFormat.Aes)
                     {
-                        formats.Add(_encBAes);
+                        formats.Add(_bEncAes);
                         switch (_keySize)
                         {
                             default:
@@ -2758,15 +2828,11 @@ namespace DieFledermaus
                                 break;
                         }
                     }
-                    else if (rsaSignature != null)
-                    {
-                        formats.Add(_keyBRsaSign);
-                        formats.Add(rsaSignature);
-                    }
+                    else WriteRsaSig(rsaSignature, formats);
 
                     if (rsaKey != null)
                     {
-                        formats.Add(_keyBRsaKey);
+                        formats.Add(_bRsaKey);
                         formats.Add(rsaKey);
                     }
 
@@ -2823,11 +2889,7 @@ namespace DieFledermaus
                             }
                         }
 
-                        if (rsaSignature != null)
-                        {
-                            formats.Add(_keyBRsaSign);
-                            formats.Add(rsaSignature);
-                        }
+                        WriteRsaSig(rsaSignature, formats);
 
                         formats.Add(_bULen);
                         formats.Add(GetBytes(_bufferStream.Length));
@@ -2864,6 +2926,20 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             _baseStream.Flush();
 #endif
+        }
+
+        private void WriteRsaSig(byte[] rsaSignature, List<byte[]> formats)
+        {
+            if (rsaSignature == null)
+                return;
+            formats.Add(_bRsaSig);
+            formats.Add(rsaSignature);
+
+            if (_rsaSignId != null)
+            {
+                formats.Add(_bRsaSigId);
+                formats.Add(_rsaSignId);
+            }
         }
 
         internal static byte[] EncryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] _salt, int _pkCount, int _keySize,
@@ -2912,13 +2988,13 @@ namespace DieFledermaus
             switch (_cmpFmt)
             {
                 case MausCompressionFormat.None:
-                    formats.Add(_cmpBNone);
+                    formats.Add(_bCmpNone);
                     break;
                 case MausCompressionFormat.Lzma:
-                    formats.Add(_cmpBLzma);
+                    formats.Add(_bCmpLzma);
                     break;
                 default:
-                    formats.Add(_cmpBDef);
+                    formats.Add(_bCmpDef);
                     break;
             }
         }
@@ -2934,7 +3010,7 @@ namespace DieFledermaus
 
         private void FormatSetComment(List<byte[]> formats)
         {
-            if (string.IsNullOrEmpty(_comment))
+            if (_comBytes == null || _comBytes.Length == 0)
                 return;
 
             formats.Add(_bComment);
@@ -2955,7 +3031,6 @@ namespace DieFledermaus
 
         internal void Dispose(DieFledermausStream other)
         {
-            other._comment = _comment;
             other._comBytes = _comBytes;
             other._hashFunc = _hashFunc;
             other.Progress = Progress;

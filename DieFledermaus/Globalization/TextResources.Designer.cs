@@ -565,6 +565,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The length of an RSA key-identifier must either be null or must have a length between 1 and 65536..
+        /// </summary>
+        internal static string RsaIdLength {
+            get {
+                return ResourceManager.GetString("RsaIdLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current instance&apos;s key is not RSA-encrypted..
+        /// </summary>
+        internal static string RsaKeyIdNotSet {
+            get {
+                return ResourceManager.GetString("RsaKeyIdNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The RSA private key used to decrypt the stream key is invalid..
         /// </summary>
         internal static string RsaKeyInvalid {
@@ -615,6 +633,15 @@ namespace DieFledermaus.Globalization {
         internal static string RsaNeedPublic {
             get {
                 return ResourceManager.GetString("RsaNeedPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current instance is not signed..
+        /// </summary>
+        internal static string RsaSigIdNotSet {
+            get {
+                return ResourceManager.GetString("RsaSigIdNotSet", resourceCulture);
             }
         }
         

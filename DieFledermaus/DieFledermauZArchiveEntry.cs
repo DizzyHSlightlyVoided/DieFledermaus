@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -132,6 +131,56 @@ namespace DieFledermaus
             {
                 if (_arch == null) throw new ObjectDisposedException(null, TextResources.ArchiveEntryDeleted);
                 MausStream.RSASignParameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string RSASignId
+        {
+            get { return MausStream.RSASignId; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.RSASignId = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] RSASignIdBytes
+        {
+            get { return MausStream.RSASignIdBytes; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.RSASignIdBytes = value;
             }
         }
 

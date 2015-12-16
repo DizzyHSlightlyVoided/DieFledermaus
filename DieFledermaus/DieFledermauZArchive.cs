@@ -527,7 +527,7 @@ namespace DieFledermaus
             {
                 string curOption = DieFledermausStream.GetString(reader, ref curOffset, false);
 
-                if (curOption.Equals(DieFledermausStream._encAes, StringComparison.Ordinal))
+                if (curOption.Equals(DieFledermausStream._kEncAes, StringComparison.Ordinal))
                 {
                     if (!fromEncrypted)
                         _encryptedOptions = new SettableOptions(this);
@@ -592,7 +592,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curOption.Equals(DieFledermausStream._keyRsaKey, StringComparison.Ordinal))
+                if (curOption.Equals(DieFledermausStream._kRsaKey, StringComparison.Ordinal))
                 {
                     if (fromEncrypted && _rsaKey == null)
                         throw new InvalidDataException(TextResources.FormatBadZ);
@@ -1605,7 +1605,7 @@ namespace DieFledermaus
             List<byte[]> options = new List<byte[]>();
             if (_encFmt == MausEncryptionFormat.Aes)
             {
-                options.Add(DieFledermausStream._encBAes);
+                options.Add(DieFledermausStream._bEncAes);
                 switch (_keySize)
                 {
                     default:
@@ -1624,7 +1624,7 @@ namespace DieFledermaus
 
                 if (rsaKey != null)
                 {
-                    options.Add(DieFledermausStream._keyBRsaKey);
+                    options.Add(DieFledermausStream._bRsaKey);
                     options.Add(rsaKey);
                 }
             }
