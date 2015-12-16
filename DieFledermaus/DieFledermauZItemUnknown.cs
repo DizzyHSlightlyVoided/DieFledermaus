@@ -47,9 +47,6 @@ namespace DieFledermaus
         {
         }
 
-        /// <summary>
-        /// Gets a value indicating 
-        /// </summary>
         internal override bool IsFilenameEncrypted
         {
             get { return true; }

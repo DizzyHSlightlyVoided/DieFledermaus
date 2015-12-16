@@ -115,6 +115,7 @@ namespace DieFledermaus
                 DieFledermausStream.CheckWrite(stream);
                 _baseStream = stream;
                 _mode = mode;
+                _entriesRO = new EntryList(this);
             }
             else if (mode == MauZArchiveMode.Read)
             {
@@ -131,7 +132,6 @@ namespace DieFledermaus
             else throw new InvalidEnumArgumentException(nameof(mode), (int)mode, typeof(MauZArchiveMode));
 
             _leaveOpen = leaveOpen;
-            _entriesRO = new EntryList(this);
         }
 
         /// <summary>
@@ -289,6 +289,7 @@ namespace DieFledermaus
 
         private void ReadDecrypted(BinaryReader reader, ref long curOffset)
         {
+            _entriesRO = new EntryList(this);
             _headerGotten = true;
             long entryCount = reader.ReadInt64();
             if (entryCount <= 0)
@@ -458,13 +459,12 @@ namespace DieFledermaus
         /// The current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current instance is in write-only mode.
+        /// <para>The current instance is in write-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>The stream contains unsupported options.</para>
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The stream contained invalid data.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The stream contained unsupported optoins.
         /// </exception>
         /// <exception cref="IOException">
         /// An I/O error occurred.
@@ -673,9 +673,9 @@ namespace DieFledermaus
             }
         }
 
-        private readonly EntryList _entriesRO;
+        private EntryList _entriesRO;
         /// <summary>
-        /// Gets a collection containing all entries in the current archive.
+        /// Gets a collection containing all entries in the current archive, or <c>null</c> if the current instance is encrypted and has not yet been decrypted.
         /// </summary>
         public EntryList Entries { get { return _entriesRO; } }
 
@@ -950,9 +950,7 @@ namespace DieFledermaus
         /// Gets and sets the password used by the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// <para>The current stream is closed.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is disposed.</para>
+        /// The current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current stream is not encrypted.
@@ -1082,8 +1080,8 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directories.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, MausCompressionFormat compressionFormat)
         {
@@ -1114,8 +1112,8 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directories.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, MausEncryptionFormat encryptionFormat)
         {
@@ -1142,8 +1140,8 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directories.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path)
         {
@@ -1178,6 +1176,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
         {
             EnsureCanWrite();
@@ -1211,6 +1213,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel)
         {
             return Create(path, compressionLevel, MausEncryptionFormat.None);
@@ -1246,6 +1252,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, LzmaDictionarySize dictionarySize, MausEncryptionFormat encryptionFormat)
         {
             EnsureCanWrite();
@@ -1286,6 +1296,10 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
+        /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, LzmaDictionarySize dictionarySize)
         {
             return Create(path, dictionarySize, MausEncryptionFormat.None);
@@ -1312,8 +1326,8 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains any existing empty directories as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directories.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path)
         {
@@ -1809,7 +1823,7 @@ namespace DieFledermaus
             /// </summary>
             /// <param name="index">The index of the element to get.</param>
             /// <exception cref="ArgumentOutOfRangeException">
-            /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
+            /// <paramref name="index"/> is less than 0 or is greater than or equal to <see cref="Count"/>.
             /// </exception>
             public DieFledermauZItem this[int index]
             {

@@ -56,7 +56,7 @@ namespace DieFledermaus
         /// Gets and sets a value indicating whether the filename will be encrypted within the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current stream is disposed.
+        /// The current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
@@ -97,7 +97,7 @@ namespace DieFledermaus
         /// Gets and sets a value indicating whether <see cref="DieFledermauZItem.Comment"/> will be encrypted.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current stream is disposed.
+        /// The current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
@@ -107,7 +107,7 @@ namespace DieFledermaus
         /// </remarks>
         public bool EncryptComment
         {
-            get { return MausStream.EncryptedOptions != null && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
+            get { return _enc && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
             set
             {
                 if (value)

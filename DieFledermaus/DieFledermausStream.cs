@@ -58,7 +58,7 @@ namespace DieFledermaus
     /// </summary>
     /// <remarks>
     /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
-    /// to <see cref="Read(byte[], int, int)"/>.
+    /// to <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/>.
     /// </remarks>
     public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausStream
     {
@@ -92,9 +92,9 @@ namespace DieFledermaus
 
         #region Constructors
         /// <summary>
-        /// Creates a new instance with the specified mode.
+        /// Creates a new instance in the specified mode.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to read to or write from.</param>
         /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
@@ -144,7 +144,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance with the specified mode.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to read to or write from.</param>
         /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -168,7 +168,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode, with the specified compression and encryption formats.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
@@ -196,7 +196,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode, with the specified compression and encryption formats.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
@@ -222,7 +222,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode, with the specified compression and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
@@ -263,7 +263,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode, with the specified compression format and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -285,7 +285,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with the specified encryption format.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
@@ -310,7 +310,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with the specified encryption format.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -333,7 +333,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
         /// <c>false</c> to close <paramref name="stream"/>.</param>
@@ -363,7 +363,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="stream"/> is <c>null</c>.
@@ -386,7 +386,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
@@ -413,7 +413,7 @@ namespace DieFledermaus
         /// <summary>
         /// Creates a new instance in write-mode with LZMA encryption, using the specified dictionary size and no encryption.
         /// </summary>
-        /// <param name="stream">The stream containing compressed data.</param>
+        /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
@@ -648,34 +648,6 @@ namespace DieFledermaus
             return true;
         }
 
-        /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for the specified encryption scheme.
-        /// </summary>
-        /// <param name="encryptionFormat">The encryption format to check.</param>
-        /// <param name="blockBitCount">When this method returns, contains the number of bits in a single block of encrypted data,
-        /// or <c>none</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>. This parameter is
-        /// passed uninitialized.</param>
-        /// <returns>A <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for <paramref name="encryptionFormat"/>,
-        /// or <c>null</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/></returns>
-        public static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat, out int blockBitCount)
-        {
-            KeySizes sizes = _getKeySizes(encryptionFormat, out blockBitCount);
-            blockBitCount <<= 3;
-            return sizes;
-        }
-
-        /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for the specified encryption scheme.
-        /// </summary>
-        /// <param name="encryptionFormat">The encryption format to check.</param>
-        /// <returns>A <see cref="System.Security.Cryptography.KeySizes"/> value indicating the valid key sizes for <paramref name="encryptionFormat"/>,
-        /// or <c>null</c> if <paramref name="encryptionFormat"/> is <see cref="MausEncryptionFormat.None"/></returns>
-        public static KeySizes GetKeySizes(MausEncryptionFormat encryptionFormat)
-        {
-            int blockByteCount;
-            return _getKeySizes(encryptionFormat, out blockByteCount);
-        }
-
         internal static KeySizes _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
         {
             switch (encryptionFormat)
@@ -700,7 +672,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets a value indicating whether the current stream supports reading. Always returns <c>false</c>.
+        /// Gets a value indicating whether the current stream supports seeking. Always returns <c>false</c>.
         /// </summary>
         public override bool CanSeek
         {
@@ -886,7 +858,7 @@ namespace DieFledermaus
         /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// <para>In a set operation, the current instance is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
@@ -1427,9 +1399,7 @@ namespace DieFledermaus
         /// Gets and sets the password used by the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// <para>The current stream is closed.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is disposed.</para>
+        /// The current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current stream is not encrypted.
@@ -2013,8 +1983,8 @@ namespace DieFledermaus
         private LzmaDictionarySize _lzmaDictSize;
 
         /// <summary>
-        /// Attempts to pre-load the data in the current instance, and test whether the correct password is set.
-        /// if the current stream is encrypted and to decrypt any encrypted options.
+        /// Attempts to pre-load the data in the current instance. If the current stream is encrypted,
+        /// attempts to decrypt the current instance using either <see cref="Password"/> or <see cref="RSASignParameters"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
@@ -2023,8 +1993,9 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
-        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
+        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
+        /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
@@ -2051,9 +2022,10 @@ namespace DieFledermaus
         /// The current stream is closed.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// The current stream is in read-mode, and 
-        /// either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
-        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
+        /// The current stream is in read-mode, and
+        /// either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
+        /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The current stream is in read-mode, and contains invalid data.
@@ -2062,7 +2034,7 @@ namespace DieFledermaus
         /// An I/O error occurred.
         /// </exception>
         /// <remarks>When the current stream is in read-mode, returns the same value as <see cref="Hash"/>.
-        /// In write-mode, this method computes the hash from the written data.</remarks>
+        /// In write-mode, this method computes the hash from the current written data.</remarks>
         public byte[] ComputeHash()
         {
             if (_baseStream == null)
@@ -2084,7 +2056,7 @@ namespace DieFledermaus
         {
             if (_headerGotten)
             {
-                VerifyRSASignature();
+                _verifyRSASignature();
                 return;
             }
 
@@ -2207,7 +2179,7 @@ namespace DieFledermaus
                 }
                 _hashExpected = hashActual;
                 if (_rsaSignature != null)
-                    VerifyRSASignature();
+                    _verifyRSASignature();
             }
             else _hashExpected = hashActual;
         }
@@ -2240,12 +2212,26 @@ namespace DieFledermaus
         /// </summary>
         /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
         /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
         /// <exception cref="CryptographicException">
         /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
-        /// <remarks>This method may be called at any time after <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, or
-        /// <see cref="Read(byte[], int, int)"/> have been called.</remarks>
         public bool VerifyRSASignature()
+        {
+            _ensureCanRead();
+            lock (_lock)
+            {
+                _readData();
+            }
+            return _verifyRSASignature();
+        }
+
+        private bool _verifyRSASignature()
         {
             if (_rsaSignVerified)
                 return true;
@@ -2328,8 +2314,9 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
-        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
+        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
+        /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="buffer"/> is <c>null</c>.
@@ -2385,8 +2372,9 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptographicException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not set to the correct value.
-        /// It is safe to attempt to call <see cref="LoadData()"/> or <see cref="Read(byte[], int, int)"/> again if this exception is caught.
+        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
+        /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
@@ -3057,7 +3045,7 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// Options for which hash function is used.
+    /// Specifies which hash function is used.
     /// </summary>
     public enum MausHashFunction
     {

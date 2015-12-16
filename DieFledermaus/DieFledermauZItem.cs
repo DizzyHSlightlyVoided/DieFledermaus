@@ -83,7 +83,7 @@ namespace DieFledermaus
         /// Gets the hash of the uncompressed data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
         /// the current instance has not yet been decrypted.
         /// </summary>
-        public virtual byte[] Hash { get { return MausStream.Hash; } }
+        public byte[] Hash { get { return MausStream.Hash; } }
 
         /// <summary>
         /// Gets the loaded HMAC of the encrypted data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
