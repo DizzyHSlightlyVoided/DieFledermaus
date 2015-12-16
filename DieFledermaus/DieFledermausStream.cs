@@ -1610,34 +1610,18 @@ namespace DieFledermaus
         internal const int _keyBitAes128 = 128;
         internal const int _keyBitAes192 = 192;
 
-        internal static byte[] GetBytes(string s)
-        {
-            byte[] b = new byte[s.Length];
-            for (int i = 0; i < s.Length; i++)
-                b[i] = (byte)s[i];
-            return b;
-        }
-
         internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
-        internal static readonly byte[] _keyBAes256 = { 0, 1 }, _keyBAes128 = { 128, 0 }, _keyBAes192 = { 192, 0 };
 
         private const string _kCmpNone = "NK", _kCmpDef = "DEF", _kCmpLzma = "LZMA";
         internal const string _kEncAes = "AES";
-        private static readonly byte[] _bCmpNone = { (byte)'N', (byte)'K' }, _bCmpDef = { (byte)'D', (byte)'E', (byte)'F' },
-            _bCmpLzma = { (byte)'L', (byte)'Z', (byte)'M', (byte)'A' };
-        internal static readonly byte[] _bEncAes = { (byte)'A', (byte)'E', (byte)'S' };
 
         private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id";
-        private static readonly byte[] _bRsaSig = GetBytes(_kRsaSig), _bRsaSigId = GetBytes(_kRsaSigId);
 
         internal const string _kRsaKey = "Rsa-Sch";
-        internal static readonly byte[] _bRsaKey = GetBytes(_kRsaKey);
 
         internal const string _kHash = "Hash";
-        internal static readonly byte[] _bHash = { (byte)'H', (byte)'a', (byte)'s', (byte)'h' };
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
-        private static readonly byte[] _bTimeC = { (byte)'E', (byte)'r', (byte)'s' }, _bTimeM = { (byte)'M', (byte)'o', (byte)'d' };
 
         private bool _headerGotten;
 
@@ -1652,12 +1636,10 @@ namespace DieFledermaus
 
         internal static readonly Dictionary<string, MausHashFunction> HashDict = ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).
             ToDictionary(i => i.ToString().Replace('_', '/').ToUpper());
-        internal static readonly Dictionary<MausHashFunction, byte[]> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key.Select(c => (byte)c).ToArray());
+        internal static readonly Dictionary<MausHashFunction, string> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key);
 
         private const string _kFilename = "Name", _kULen = "DeL";
-        private static readonly byte[] _bFilename = { (byte)'N', (byte)'a', (byte)'m', (byte)'e' }, _bULen = { (byte)'D', (byte)'e', (byte)'L' };
         internal static string _kComment = "Kom";
-        internal static readonly byte[] _bComment = { (byte)'K', (byte)'o', (byte)'m' };
 
         private long _headSize;
         internal long HeadLength { get { return _headSize; } }
@@ -2792,7 +2774,7 @@ namespace DieFledermaus
                 writer.Write(_head);
                 writer.Write(_versionShort);
                 {
-                    List<byte[]> formats = new List<byte[]>();
+                    ByteOptionList formats = new ByteOptionList();
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Filename))
                         FormatSetFilename(formats);
@@ -2801,42 +2783,31 @@ namespace DieFledermaus
                         FormatSetCompression(formats);
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.CreatedTime))
-                        FormatSetTimes(formats, _bTimeC, _timeC);
+                        FormatSetTimes(formats, _kTimeC, _timeC);
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
-                        FormatSetTimes(formats, _bTimeM, _timeM);
+                        FormatSetTimes(formats, _kTimeM, _timeM);
 
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
 
-                    formats.Add(_bHash);
+                    formats.Add(_kHash);
                     formats.Add(HashBDict[_hashFunc]);
 
                     if (_encFmt == MausEncryptionFormat.Aes)
                     {
-                        formats.Add(_bEncAes);
-                        switch (_keySize)
-                        {
-                            default:
-                                formats.Add(_keyBAes256);
-                                break;
-                            case _keyBitAes192:
-                                formats.Add(_keyBAes192);
-                                break;
-                            case _keyBitAes128:
-                                formats.Add(_keyBAes128);
-                                break;
-                        }
+                        formats.Add(_kEncAes);
+                        formats.Add((short)_keySize);
                     }
                     else WriteRsaSig(rsaSignature, formats);
 
                     if (rsaKey != null)
                     {
-                        formats.Add(_bRsaKey);
+                        formats.Add(_kRsaKey);
                         formats.Add(rsaKey);
                     }
 
-                    WriteFormats(writer, formats);
+                    formats.Write(writer);
                 }
 
                 if (_encFmt == MausEncryptionFormat.None)
@@ -2865,7 +2836,7 @@ namespace DieFledermaus
                 {
                     using (MausBufferStream opts = new MausBufferStream())
                     {
-                        List<byte[]> formats = new List<byte[]>();
+                        ByteOptionList formats = new ByteOptionList();
 
                         foreach (MausOptionToEncrypt opt in _encryptedOptions)
                         {
@@ -2878,10 +2849,10 @@ namespace DieFledermaus
                                     FormatSetCompression(formats);
                                     continue;
                                 case MausOptionToEncrypt.CreatedTime:
-                                    FormatSetTimes(formats, _bTimeC, _timeC);
+                                    FormatSetTimes(formats, _kTimeC, _timeC);
                                     continue;
                                 case MausOptionToEncrypt.ModTime:
-                                    FormatSetTimes(formats, _bTimeM, _timeM);
+                                    FormatSetTimes(formats, _kTimeM, _timeM);
                                     continue;
                                 case MausOptionToEncrypt.Comment:
                                     FormatSetComment(formats);
@@ -2891,8 +2862,8 @@ namespace DieFledermaus
 
                         WriteRsaSig(rsaSignature, formats);
 
-                        formats.Add(_bULen);
-                        formats.Add(GetBytes(_bufferStream.Length));
+                        formats.Add(_kULen);
+                        formats.Add(_bufferStream.Length);
 
                         if (compressedStream != _bufferStream)
                         {
@@ -2902,7 +2873,7 @@ namespace DieFledermaus
 
                         using (BinaryWriter formatWriter = new BinaryWriter(opts))
                         {
-                            WriteFormats(formatWriter, formats);
+                            formats.Write(formatWriter);
                             _bufferStream.Prepend(opts);
                         }
                     }
@@ -2928,16 +2899,16 @@ namespace DieFledermaus
 #endif
         }
 
-        private void WriteRsaSig(byte[] rsaSignature, List<byte[]> formats)
+        private void WriteRsaSig(byte[] rsaSignature, ByteOptionList formats)
         {
             if (rsaSignature == null)
                 return;
-            formats.Add(_bRsaSig);
+            formats.Add(_kRsaSig);
             formats.Add(rsaSignature);
 
             if (_rsaSignId != null)
             {
-                formats.Add(_bRsaSigId);
+                formats.Add(_kRsaSigId);
                 formats.Add(_rsaSignId);
             }
         }
@@ -2968,65 +2939,47 @@ namespace DieFledermaus
             return _key;
         }
 
-        private static byte[] GetBytes(long value)
-        {
-            return new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
-                (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) };
-        }
-
-        private void FormatSetFilename(List<byte[]> formats)
+        private void FormatSetFilename(ByteOptionList formats)
         {
             if (_filename != null)
             {
-                formats.Add(_bFilename);
+                formats.Add(_kFilename);
                 formats.Add(_textEncoding.GetBytes(_filename));
             }
         }
 
-        private void FormatSetCompression(List<byte[]> formats)
+        private void FormatSetCompression(ByteOptionList formats)
         {
             switch (_cmpFmt)
             {
                 case MausCompressionFormat.None:
-                    formats.Add(_bCmpNone);
+                    formats.Add(_kCmpNone);
                     break;
                 case MausCompressionFormat.Lzma:
-                    formats.Add(_bCmpLzma);
+                    formats.Add(_kCmpLzma);
                     break;
                 default:
-                    formats.Add(_bCmpDef);
+                    formats.Add(_kCmpDef);
                     break;
             }
         }
 
-        private static void FormatSetTimes(List<byte[]> formats, byte[] bTime, DateTime? dateTime)
+        private static void FormatSetTimes(ByteOptionList formats, string kTime, DateTime? dateTime)
         {
-            if (dateTime.HasValue)
-            {
-                formats.Add(bTime);
-                formats.Add(GetBytes(dateTime.Value.ToUniversalTime().Ticks));
-            }
+            if (!dateTime.HasValue)
+                return;
+
+            formats.Add(kTime);
+            formats.Add(dateTime.Value.ToUniversalTime().Ticks);
         }
 
-        private void FormatSetComment(List<byte[]> formats)
+        private void FormatSetComment(ByteOptionList formats)
         {
             if (_comBytes == null || _comBytes.Length == 0)
                 return;
 
-            formats.Add(_bComment);
+            formats.Add(_kComment);
             formats.Add(_comBytes);
-        }
-
-        internal static void WriteFormats(BinaryWriter writer, List<byte[]> formats)
-        {
-            writer.Write((ushort)formats.Count);
-
-            for (int i = 0; i < formats.Count; i++)
-            {
-                byte[] curForm = formats[i];
-                writer.Write((ushort)curForm.Length);
-                writer.Write(curForm);
-            }
         }
 
         internal void Dispose(DieFledermausStream other)

@@ -1602,29 +1602,18 @@ namespace DieFledermaus
                 paths[i] = curPath;
             }
 
-            List<byte[]> options = new List<byte[]>();
+            ByteOptionList options = new ByteOptionList();
             if (_encFmt == MausEncryptionFormat.Aes)
             {
-                options.Add(DieFledermausStream._bEncAes);
-                switch (_keySize)
-                {
-                    default:
-                        options.Add(DieFledermausStream._keyBAes256);
-                        break;
-                    case DieFledermausStream._keyBitAes192:
-                        options.Add(DieFledermausStream._keyBAes192);
-                        break;
-                    case DieFledermausStream._keyBitAes128:
-                        options.Add(DieFledermausStream._keyBAes128);
-                        break;
-                }
+                options.Add(DieFledermausStream._kEncAes);
+                options.Add((short)_keySize);
 
-                options.Add(DieFledermausStream._bHash);
+                options.Add(DieFledermausStream._kHash);
                 options.Add(DieFledermausStream.HashBDict[_hashFunc]);
 
                 if (rsaKey != null)
                 {
-                    options.Add(DieFledermausStream._bRsaKey);
+                    options.Add(DieFledermausStream._kRsaKey);
                     options.Add(rsaKey);
                 }
             }
@@ -1635,13 +1624,13 @@ namespace DieFledermaus
             long curOffset = BaseOffset;
             AddSize(options, ref length, ref curOffset);
 
-            List<byte[]> encryptedOptions;
+            ByteOptionList encryptedOptions;
 
             if (_encFmt == MausEncryptionFormat.None)
                 encryptedOptions = null;
             else
             {
-                encryptedOptions = new List<byte[]>();
+                encryptedOptions = new ByteOptionList();
                 long size = (_keySize >> 3) + _addSize;
 
                 size += DieFledermausStream.GetHashLength(_hashFunc);
@@ -1682,7 +1671,7 @@ namespace DieFledermaus
                         using (BinaryWriter cryptWriter = new BinaryWriter(cryptStream, DieFledermausStream._textEncoding, true))
 #endif
                         {
-                            DieFledermausStream.WriteFormats(cryptWriter, encryptedOptions);
+                            encryptedOptions.Write(cryptWriter);
                             WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position
                                 + sizeof(int) + sizeof(long)); //Size of "all-entries" + size of entry count
                         }
@@ -1707,7 +1696,7 @@ namespace DieFledermaus
 
                     writer.Write(length);
 
-                    DieFledermausStream.WriteFormats(writer, options);
+                    options.Write(writer);
 
                     if (_encFmt != MausEncryptionFormat.None)
                     {
@@ -1725,23 +1714,20 @@ namespace DieFledermaus
             OnProgress(MausProgressState.CompletedWriting);
         }
 
-        private void AddComment(List<byte[]> options)
+        private void AddComment(ByteOptionList options)
         {
             if (!string.IsNullOrEmpty(_comment))
             {
-                options.Add(DieFledermausStream._bComment);
+                options.Add(DieFledermausStream._kComment);
                 options.Add(_comBytes);
             }
         }
 
-        private static void AddSize(List<byte[]> options, ref long length, ref long curOffset)
+        private static void AddSize(ByteOptionList options, ref long length, ref long curOffset)
         {
-            for (int i = 0; i < options.Count; i++)
-            {
-                long curL = 2L + options[i].Length;
-                length += curL;
-                curOffset += curL;
-            }
+            long size = options.GetSize();
+            length += size;
+            curOffset += size;
         }
 
         private const long _addSize = DieFledermausStream._blockByteCtAes + sizeof(long);

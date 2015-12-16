@@ -50,6 +50,7 @@
     <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBit.cs" />
     <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
     <Compile Include="7Zip\ICoder.cs" />
+    <Compile Include="ByteOptionList.cs" />
     <Compile Include="DieFledermausStream.cs" />
     <Compile Include="DieFledermauZArchive.cs" />
     <Compile Include="DieFledermauZArchiveEntry.cs" />
