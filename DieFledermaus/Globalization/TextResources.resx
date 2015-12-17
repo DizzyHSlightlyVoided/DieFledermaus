@@ -354,4 +354,16 @@
   <data name="RsaSigIdNotSet" xml:space="preserve">
     <value>The current instance is not signed.</value>
   </data>
+  <data name="DsaSigInvalid" xml:space="preserve">
+    <value>The DSA public key used to verify the signature is invalid.</value>
+  </data>
+  <data name="DsaSigPrivInvalid" xml:space="preserve">
+    <value>The DSA private key used to sign the stream is invalid.</value>
+  </data>
+  <data name="EcdsaSigInvalid" xml:space="preserve">
+    <value>The ECDSA public key used to verify the signature is invalid.</value>
+  </data>
+  <data name="EcdsaSigPrivInvalid" xml:space="preserve">
+    <value>The ECDSA private key used to sign the stream is invalid.</value>
+  </data>
 </root>

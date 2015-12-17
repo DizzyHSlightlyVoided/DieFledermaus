@@ -38,6 +38,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
+
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
@@ -47,6 +48,8 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
+
 using SevenZip;
 using SevenZip.Compression.LZMA;
 
@@ -942,6 +945,7 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
+        #region RSA Signature
         private byte[] _rsaSignature;
 
         private bool _rsaSignVerified;
@@ -1001,19 +1005,24 @@ namespace DieFledermaus
                 if (CompareValues(value, _rsaKeyParamBC))
                     throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
 
-                if (_mode == CompressionMode.Decompress)
-                {
-                    if (_rsaSignature == null)
-                        throw new NotSupportedException(TextResources.RsaSigNone);
-                    if (_rsaSignVerified)
-                        throw new InvalidOperationException(TextResources.RsaSigVerified);
-                    if (value != null && value.IsPrivate)
-                        throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
-                }
-                else if (value != null && !value.IsPrivate)
-                    throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
+                CheckSignParam(value, _rsaSignature, _rsaSignVerified);
                 _rsaSignParamBC = value;
             }
+        }
+
+        private void CheckSignParam(AsymmetricKeyParameter value, object signature, bool signVerified)
+        {
+            if (_mode == CompressionMode.Decompress)
+            {
+                if (signature == null)
+                    throw new NotSupportedException(TextResources.RsaSigNone);
+                if (signVerified)
+                    throw new InvalidOperationException(TextResources.RsaSigVerified);
+                if (value != null && value.IsPrivate)
+                    throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
+            }
+            else if (value != null && !value.IsPrivate)
+                throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
         }
 
         private byte[] _rsaSignId;
@@ -1085,7 +1094,256 @@ namespace DieFledermaus
             return x != null && y != null && x.Exponent != null && x.Exponent.Equals(y.Exponent) &&
                 x.Modulus != null && x.Modulus.Equals(y.Modulus);
         }
+        #endregion
 
+        #region DSA Signature
+        private DerIntegerPair _dsaSignature;
+
+        private bool _dsaSignVerified;
+        /// <summary>
+        /// Gets a value indicating whether the current stream has been successfully verified using <see cref="DSASignParameters"/>.
+        /// </summary>
+        public bool IsDSASignVerified { get { return _dsaSignVerified; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using a DSA private key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// was signed when it was written.
+        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
+        /// is not <c>null</c>.
+        /// </remarks>
+        public bool IsDSASigned
+        {
+            get
+            {
+                if (_mode == CompressionMode.Decompress)
+                    return _dsaSignature != null;
+                return _dsaSignParamBC != null;
+            }
+        }
+
+        private DsaKeyParameters _dsaSignParamBC;
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// </exception>
+        public DsaKeyParameters DSASignParameters
+        {
+            get { return _dsaSignParamBC; }
+            set
+            {
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                CheckSignParam(value, _dsaSignature, _dsaSignVerified);
+                _dsaSignParamBC = value;
+            }
+        }
+
+        private byte[] _dsaSignId;
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] DSASignIdBytes
+        {
+            get { return _dsaSignId; }
+            set
+            {
+                _ensureCanWrite();
+                if (_dsaSignParamBC == null)
+                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                if (value == null)
+                    _dsaSignId = null;
+                else if (value.Length == 0 || value.Length > Max16Bit)
+                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                else
+                    _dsaSignId = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="DSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string DSASignId
+        {
+            get
+            {
+                if (_dsaSignId == null) return null;
+                return _textEncoding.GetString(_dsaSignId);
+            }
+            set
+            {
+                if (value == null)
+                    DSASignIdBytes = null;
+                else
+                    DSASignIdBytes = _textEncoding.GetBytes(value);
+            }
+        }
+        #endregion
+
+        #region ECDSA Signature
+        private DerIntegerPair _ecdsaSignature;
+
+        private bool _ecdsaSignVerified;
+        /// <summary>
+        /// Gets a value indicating whether the current stream has been successfully verified using <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        public bool IsECDSASignVerified { get { return _ecdsaSignVerified; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using an ECDSA private key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// was signed when it was written.
+        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
+        /// is not <c>null</c>.
+        /// </remarks>
+        public bool IsECDSASigned
+        {
+            get
+            {
+                if (_mode == CompressionMode.Decompress)
+                    return _ecdsaSignature != null;
+                return _ecdsaSignParamBC != null;
+            }
+        }
+
+        private ECKeyParameters _ecdsaSignParamBC;
+
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// </exception>
+        public ECKeyParameters ECDSASignParameters
+        {
+            get { return _ecdsaSignParamBC; }
+            set
+            {
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified);
+                _ecdsaSignParamBC = value;
+            }
+        }
+
+        private byte[] _ecdsaSignId;
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] ECDSASignIdBytes
+        {
+            get { return _ecdsaSignId; }
+            set
+            {
+                _ensureCanWrite();
+                if (_ecdsaSignParamBC == null)
+                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                if (value == null)
+                    _ecdsaSignId = null;
+                else if (value.Length == 0 || value.Length > Max16Bit)
+                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                else
+                    _ecdsaSignId = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string ECDSASignId
+        {
+            get
+            {
+                if (_ecdsaSignId == null) return null;
+                return _textEncoding.GetString(_ecdsaSignId);
+            }
+            set
+            {
+                if (value == null)
+                    ECDSASignIdBytes = null;
+                else
+                    ECDSASignIdBytes = _textEncoding.GetBytes(value);
+            }
+        }
+        #endregion
+
+        #region RSA Key
         private byte[] _rsaKey;
         /// <summary>
         /// Gets a value indicating whether the current instance has an RSA-encrypted key.
@@ -1155,6 +1413,7 @@ namespace DieFledermaus
             else if (value != null && value.IsPrivate)
                 throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
         }
+        #endregion
 
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -1562,7 +1821,9 @@ namespace DieFledermaus
         private const string _kCmpNone = "NK", _kCmpDef = "DEF", _kCmpLzma = "LZMA";
         internal const string _kEncAes = "AES";
 
-        private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id";
+        private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id",
+            _kDsaSig = "Dsa-Sig", _kDsaSigId = "Dsa-Sig-Id",
+            _kECDsaSig = "ECDsa-Sig", _kECDsaSigId = "ECDsa-Sig-Id";
 
         internal const string _kRsaKey = "Rsa-Sch";
 
@@ -1619,7 +1880,7 @@ namespace DieFledermaus
                 else if (_rsaKey != null && _rsaKey.Length < _keySize >> 3)
                     throw new InvalidDataException(TextResources.FormatBad);
 
-                if (_rsaSignId != null && _rsaSignature == null)
+                if ((_rsaSignId != null && _rsaSignature == null) || (_dsaSignId != null && _dsaSignature == null) || (_ecdsaSignId != null && _ecdsaSignature == null))
                     throw new InvalidDataException(TextResources.FormatBad);
 
                 int hashLength = GetHashLength(_hashFunc);
@@ -1731,6 +1992,30 @@ namespace DieFledermaus
                 if (curForm.Equals(_kRsaSigId, StringComparison.Ordinal))
                 {
                     ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignId);
+                    continue;
+                }
+
+                if (curForm.Equals(_kDsaSig, StringComparison.Ordinal))
+                {
+                    GetDsaValue(reader, optLen, ref i, ref headSize, fromEncrypted, ref _dsaSignature);
+                    continue;
+                }
+
+                if (curForm.Equals(_kDsaSigId, StringComparison.Ordinal))
+                {
+                    ReadBytes(reader, optLen, ref headSize, ref i, ref _dsaSignId);
+                    continue;
+                }
+
+                if (curForm.Equals(_kECDsaSig, StringComparison.Ordinal))
+                {
+                    GetDsaValue(reader, optLen, ref i, ref headSize, fromEncrypted, ref _ecdsaSignature);
+                    continue;
+                }
+
+                if (curForm.Equals(_kECDsaSigId, StringComparison.Ordinal))
+                {
+                    ReadBytes(reader, optLen, ref headSize, ref i, ref _ecdsaSignId);
                     continue;
                 }
 
@@ -1866,6 +2151,53 @@ namespace DieFledermaus
             }
 
             return headSize;
+        }
+
+        private class DerIntegerPair
+        {
+            public DerIntegerPair(DerInteger dR, DerInteger dS)
+            {
+                R = dR;
+                S = dS;
+            }
+
+            public readonly DerInteger R;
+            public readonly DerInteger S;
+        }
+
+        private static void GetDsaValue(BinaryReader reader, int optLen, ref int i, ref long curSize, bool fromEncrypted, ref DerIntegerPair existing)
+        {
+            CheckAdvance(optLen, ref i);
+
+            byte[] message = GetStringBytes(reader, ref curSize, false);
+
+            Asn1Sequence seq;
+            try
+            {
+                seq = (Asn1Sequence)Asn1Object.FromByteArray(message);
+            }
+            catch
+            {
+                throw new InvalidDataException(TextResources.FormatBad);
+            }
+
+            if (seq.Count != 2)
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            DerIntegerPair newVal;
+            try
+            {
+                newVal = new DerIntegerPair((DerInteger)seq[0], (DerInteger)seq[1]);
+            }
+            catch
+            {
+                throw new InvalidDataException(TextResources.FormatBad);
+            }
+
+            if (existing == null)
+                existing = newVal;
+            else if (!existing.R.Equals(newVal.R) || !existing.S.Equals(newVal.S))
+                throw new InvalidDataException(TextResources.FormatBad);
         }
 
         internal static void ReadBytes(BinaryReader reader, int optLen, ref long headSize, ref int i, ref byte[] oldValue)
@@ -2270,6 +2602,7 @@ namespace DieFledermaus
             return _key;
         }
 
+        #region Verify RSA
         /// <summary>
         /// Tests whether <see cref="RSASignParameters"/> is valid.
         /// </summary>
@@ -2299,7 +2632,7 @@ namespace DieFledermaus
             if (_rsaSignVerified)
                 return true;
 
-            if (_rsaSignature == null || _rsaSignParamBC == null || _rsaSignVerified)
+            if (_rsaSignature == null || _rsaSignParamBC == null)
                 return false;
 
             OnProgress(MausProgressState.VerifyingRSASignature);
@@ -2351,6 +2684,118 @@ namespace DieFledermaus
             catch (Exception x)
             {
                 throw new CryptographicException(TextResources.RsaSigInvalid, x);
+            }
+        }
+        #endregion
+
+        #region Verify DSA
+        /// <summary>
+        /// Tests whether <see cref="DSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><c>true</c> if <see cref="DSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
+        /// signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="DSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        public bool VerifyDSASignature()
+        {
+            _ensureCanRead();
+            lock (_lock)
+            {
+                _readData();
+            }
+            return _verifyDSASignature();
+        }
+
+        private bool _verifyDSASignature()
+        {
+            if (_dsaSignVerified)
+                return true;
+
+            if (_dsaSignature == null || _dsaSignParamBC == null)
+                return false;
+            OnProgress(MausProgressState.VerifyingDSASignature);
+            try
+            {
+                DsaSigner signer = new DsaSigner(GetDsaCalc());
+
+                return _dsaSignVerified = VerifyDsaSignature(_hashExpected, _dsaSignature, signer, _dsaSignParamBC);
+            }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.DsaSigInvalid, x);
+            }
+        }
+        #endregion
+
+        #region Verify ECDSA
+        /// <summary>
+        /// Tests whether <see cref="ECDSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><c>true</c> if <see cref="ECDSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
+        /// signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptographicException">
+        /// <see cref="ECDSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        public bool VerifyECDSASignature()
+        {
+            _ensureCanRead();
+            lock (_lock)
+            {
+                _readData();
+            }
+            return _verifyECDSASignature();
+        }
+
+        private bool _verifyECDSASignature()
+        {
+            if (_ecdsaSignVerified)
+                return true;
+
+            if (_ecdsaSignature == null || _ecdsaSignParamBC == null)
+                return false;
+            OnProgress(MausProgressState.VerifyingECDSASignature);
+            try
+            {
+                ECDsaSigner signer = new ECDsaSigner(GetDsaCalc());
+
+                return _ecdsaSignVerified = VerifyDsaSignature(_hashExpected, _ecdsaSignature, signer, _ecdsaSignParamBC);
+            }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.EcdsaSigInvalid, x);
+            }
+        }
+        #endregion
+
+        private HMacDsaKCalculator GetDsaCalc()
+        {
+            return new HMacDsaKCalculator(GetDigestObject(_hashFunc));
+        }
+
+        private static bool VerifyDsaSignature(byte[] hash, DerIntegerPair pair, IDsa signer, ICipherParameters key)
+        {
+            signer.Init(false, key);
+
+            try
+            {
+                return signer.VerifySignature(hash, pair.R.Value, pair.S.Value);
+            }
+            catch (IOException)
+            {
+                return false;
             }
         }
 
@@ -2685,30 +3130,65 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            byte[] rsaSignature, hashChecksum;
+            byte[] rsaSignature, dsaSignature, ecdsaSignature, hashChecksum;
 
-            if (_rsaSignParamBC != null)
+            if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
             {
                 OnProgress(MausProgressState.ComputingHash);
                 hashChecksum = ComputeHash(_bufferStream, _hashFunc);
                 OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
-                try
+                if (_rsaSignParamBC != null)
                 {
-                    RsaBlindedEngine _engine = new RsaBlindedEngine();
-                    _engine.Init(true, _rsaSignParamBC);
+                    OnProgress(MausProgressState.SigningRSA);
+                    try
+                    {
+                        RsaBlindedEngine _engine = new RsaBlindedEngine();
+                        _engine.Init(true, _rsaSignParamBC);
 
-                    byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hashChecksum, GetHashId(_hashFunc)), _engine.GetInputBlockSize());
+                        byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hashChecksum, GetHashId(_hashFunc)), _engine.GetInputBlockSize());
 
-                    rsaSignature = _engine.ProcessBlock(message, 0, message.Length);
+                        rsaSignature = _engine.ProcessBlock(message, 0, message.Length);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
+                    }
+                    _bufferStream.Reset();
                 }
-                catch (Exception x)
+                else rsaSignature = null;
+                if (_dsaSignParamBC != null)
                 {
-                    throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
-                }
+                    OnProgress(MausProgressState.SigningDSA);
+                    try
+                    {
+                        DsaSigner signer = new DsaSigner(GetDsaCalc());
 
-                _bufferStream.Reset();
+                        dsaSignature = GenerateDsaSignature(hashChecksum, signer, _dsaSignParamBC);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptographicException(TextResources.DsaSigPrivInvalid, x);
+                    }
+                    _bufferStream.Reset();
+                }
+                else dsaSignature = null;
+                if (_ecdsaSignParamBC != null)
+                {
+                    OnProgress(MausProgressState.SigningECDSA);
+                    try
+                    {
+                        ECDsaSigner signer = new ECDsaSigner(GetDsaCalc());
+                        ecdsaSignature = GenerateDsaSignature(hashChecksum, signer, _ecdsaSignParamBC);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptographicException(TextResources.EcdsaSigPrivInvalid, x);
+                    }
+                    _bufferStream.Reset();
+                }
+                else ecdsaSignature = null;
             }
-            else rsaSignature = hashChecksum = null;
+            else rsaSignature = dsaSignature = ecdsaSignature = hashChecksum = null;
 
             byte[] _key, rsaKey;
             if (_encFmt == MausEncryptionFormat.None)
@@ -2792,7 +3272,7 @@ namespace DieFledermaus
                         formats.Add(_kEncAes);
                         formats.Add((short)_keySize);
                     }
-                    else WriteRsaSig(rsaSignature, formats);
+                    else WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
                     if (rsaKey != null)
                     {
@@ -2853,7 +3333,7 @@ namespace DieFledermaus
                             }
                         }
 
-                        WriteRsaSig(rsaSignature, formats);
+                        WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
                         formats.Add(_kULen);
                         formats.Add(_bufferStream.Length);
@@ -2900,7 +3380,23 @@ namespace DieFledermaus
             return dInfo.GetDerEncoded();
         }
 
-        private void WriteRsaSig(byte[] rsaSignature, ByteOptionList formats)
+        private static byte[] GenerateDsaSignature(byte[] hash, IDsa signer, ICipherParameters key)
+        {
+            signer.Init(true, key);
+
+            var ints = signer.GenerateSignature(hash);
+
+            return new DerSequence(new DerInteger(ints[0]), new DerInteger(ints[1])).GetDerEncoded();
+        }
+
+        private void WriteRsaSig(byte[] rsaSignature, byte[] dsaSignature, byte[] ecdsaSignature, ByteOptionList formats)
+        {
+            WriteRsaSig(rsaSignature, _rsaSignId, _kRsaSig, formats);
+            WriteRsaSig(dsaSignature, _dsaSignId, _kDsaSig, formats);
+            WriteRsaSig(ecdsaSignature, _ecdsaSignId, _kECDsaSig, formats);
+        }
+
+        private static void WriteRsaSig(byte[] rsaSignature, byte[] _rsaSignId, string _kRsaSig, ByteOptionList formats)
         {
             if (rsaSignature == null)
                 return;

@@ -268,6 +268,42 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DSA public key used to verify the signature is invalid..
+        /// </summary>
+        internal static string DsaSigInvalid {
+            get {
+                return ResourceManager.GetString("DsaSigInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DSA private key used to sign the stream is invalid..
+        /// </summary>
+        internal static string DsaSigPrivInvalid {
+            get {
+                return ResourceManager.GetString("DsaSigPrivInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ECDSA public key used to verify the signature is invalid..
+        /// </summary>
+        internal static string EcdsaSigInvalid {
+            get {
+                return ResourceManager.GetString("EcdsaSigInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ECDSA private key used to sign the stream is invalid..
+        /// </summary>
+        internal static string EcdsaSigPrivInvalid {
+            get {
+                return ResourceManager.GetString("EcdsaSigPrivInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified filename contains an unpaired surrogate character: {0}.
         /// </summary>
         internal static string FilenameBadSurrogate {

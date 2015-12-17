@@ -16,7 +16,7 @@ Terminology
 * **decoder:** Any application, library, or other software which restores the data in a DieFledermaus stream to its original form.
 * **re-encoder:** Any software which functions as both an encoder and a decoder.
 * **length-prefixed string:** In the DieFledermaus format, a length-prefixed string is a sequence of bytes, usually UTF-8 text, which is prefixed by the *length value*, an 8-bit or 16-bit unsigned integer indicating the length of the string (not including the length value itself). If the length value is 0, the actual length of the string is 256 for 8-bit length values and 65536 for 16-bit length values.
-* **the specified hash function:** A DieFledermaus must use one of the following cryptographic hash functions: [SHA-256, SHA-512](https://en.wikipedia.org/wiki/SHA-2), [SHA-3/256, or SHA-3/512](https://en.wikipedia.org/wiki/SHA-3). "The specified hash function" refers to whichever function the file is currently using.
+* **the specified hash function:** A DieFledermaus file must use one of the following cryptographic hash functions: [SHA-256, SHA-512](https://en.wikipedia.org/wiki/SHA-2), [SHA-3/256, or SHA-3/512](https://en.wikipedia.org/wiki/SHA-3). "The specified hash function" refers to whichever function the file is currently using.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -66,8 +66,12 @@ The following values are defined for the default implementation:
  - `SHA3/384`
  - `SHA3/512`
 * `Rsa-Sig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#7 padding. The signature may be verified using the corresponding RSA public key. Should be encrypted.
-* `Rsa-Sig-Id` - *One parameter.* A value (string or binary) which identifies the public key an encoder should use to verify `Rsa-Sig`. Usable only if `Rsa-Sig` is also present. Should be encrypted.
-* `Rsa-Sch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#7 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Encoders and decoders must make sure that the same key is not used for `Rsa-Sig` and `Rsa-Sch`. Must be in plaintext.
+* `Rsa-Sig-Id` - *One parameter.* A value (string or binary) which identifies the RSA public key an encoder should use to verify `Rsa-Sig`. Usable only if `Rsa-Sig` is also present. Should be encrypted.
+* `Dsa-Sig` - *One parameter.* Same as `Rsa-Sig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted using [DER encoding](https://en.wikipedia.org/wiki/X.690). The message value *k* is generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Should be encrypted.
+* `Dsa-Sig-Id` - *One parameter.* A value which identifies the DSA public key used by `Dsa-Sig`. Usable only if `Dsa-Sig` is also present. Should be encrypted.
+* `ECDsa-Sig` - *One parameter.* Same as `Dsa-Sig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm.
+* `ECDsa-Sig-Id` - *One parameter.* A value which identifies the ECDSA public key used by `ECDsa-Sig`. Usable only if `ECDsa-Sig` is also present. Should be encrypted.
+* `Rsa-Sch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#7 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Encoders and decoders must make sure that the same key is not used for `Rsa-Sig` and `Rsa-Sch` because that would just be silly. Must be in plaintext.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 

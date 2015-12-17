@@ -214,7 +214,7 @@ namespace DieFledermaus
 
         DateTime? ModifiedTime { get; }
 
-        RsaKeyParameters RSASignParameters { get; }
+        RsaKeyParameters RSASignParameters { get; set; }
 
         string RSASignId { get; }
 
@@ -225,6 +225,30 @@ namespace DieFledermaus
         bool IsRSASignVerified { get; }
 
         bool VerifyRSASignature();
+
+        DsaKeyParameters DSASignParameters { get; set; }
+
+        string DSASignId { get; }
+
+        byte[] DSASignIdBytes { get; }
+
+        bool IsDSASigned { get; }
+
+        bool IsDSASignVerified { get; }
+
+        bool VerifyDSASignature();
+
+        ECKeyParameters ECDSASignParameters { get; set; }
+
+        string ECDSASignId { get; }
+
+        byte[] ECDSASignIdBytes { get; }
+
+        bool IsECDSASigned { get; }
+
+        bool IsECDSASignVerified { get; }
+
+        bool VerifyECDSASignature();
 
         DieFledermausStream.SettableOptions EncryptedOptions { get; }
 

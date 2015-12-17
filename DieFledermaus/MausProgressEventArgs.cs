@@ -163,6 +163,14 @@ namespace DieFledermaus
         /// </summary>
         ComputingHMACCompleted,
         /// <summary>
+        /// Signing the hash of the uncompressed data using <see cref="DieFledermausStream.DSASignParameters"/>.
+        /// </summary>
+        SigningDSA,
+        /// <summary>
+        /// Signing the hash of the uncompressed data using <see cref="DieFledermausStream.ECDSASignParameters"/>.
+        /// </summary>
+        SigningECDSA,
+        /// <summary>
         /// The stream is done writing.
         /// </summary>
         CompletedWriting = int.MinValue,
@@ -182,6 +190,14 @@ namespace DieFledermaus
         /// Verifying the RSA signature.
         /// </summary>
         VerifyingRSASignature = SigningRSA | LoadingData,
+        /// <summary>
+        /// Verifying the DSA signature.
+        /// </summary>
+        VerifyingDSASignature = SigningDSA | LoadingData,
+        /// <summary>
+        /// Verifying the ECDSA signature.
+        /// </summary>
+        VerifyingECDSASignature = SigningECDSA | LoadingData,
         /// <summary>
         /// Verifying the hash of the decompressed data.
         /// </summary>
