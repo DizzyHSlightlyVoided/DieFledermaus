@@ -182,12 +182,13 @@ namespace DieFledermaus
             }
         }
 
-        public void BufferCopyTo(Stream destination, bool forceWrite)
+        internal void BufferCopyTo(Stream destination, bool forceWrite)
         {
+            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             MausBufferStream qbs = destination as MausBufferStream;
             if (qbs == null || forceWrite)
             {
-                BufferCopyTo(destination.Write);
+                _bufferCopyTo(destination.Write);
                 return;
             }
 
@@ -206,7 +207,13 @@ namespace DieFledermaus
             _currentBuffer = null;
         }
 
-        public void BufferCopyTo(Action<byte[], int, int> write)
+        internal void BufferCopyTo(WriteDelegate write)
+        {
+            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            _bufferCopyTo(write);
+        }
+
+        private void _bufferCopyTo(WriteDelegate write)
         {
             if (_currentPos != 0)
             {
@@ -223,6 +230,8 @@ namespace DieFledermaus
 
             _position = _length;
         }
+
+        internal delegate void WriteDelegate(byte[] buffer, int offset, int count);
 
         internal event EventHandler<DisposeEventArgs> Disposing;
 
