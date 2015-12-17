@@ -92,8 +92,6 @@ namespace DieFledermaus.Tests
                         Console.WriteLine("Successfully decrypted {0} in {1}ms", dItem.Path, sw.Elapsed.TotalMilliseconds);
                     }
 
-                    byte[] getBuffer = new byte[bigBufferLength];
-
                     foreach (DieFledermauZArchiveEntry entry in archive.Entries.OfType<DieFledermauZArchiveEntry>())
                     {
                         entry.RSASignParameters = publicKeySig;

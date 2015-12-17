@@ -48,14 +48,11 @@ namespace DieFledermaus
         private IDigest _digest;
         private AlgorithmIdentifier _id;
         private RsaBlindedEngine _engine = new RsaBlindedEngine();
-        private Pkcs7Padding _padding = new Pkcs7Padding();
 
         public string AlgorithmName
         {
             get { return _digest.AlgorithmName + "withRSA"; }
         }
-
-        private bool _forSigning;
 
         public void Init(bool forSigning, ICipherParameters parameters)
         {
@@ -67,7 +64,6 @@ namespace DieFledermaus
                     throw new ArgumentException("Private key needed for signing.", nameof(parameters));
                 throw new ArgumentException("Public key needed for verification.", nameof(parameters));
             }
-            _forSigning = forSigning;
             Reset();
             _engine.Init(forSigning, parameters);
         }
