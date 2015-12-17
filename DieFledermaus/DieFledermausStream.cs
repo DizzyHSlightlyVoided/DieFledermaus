@@ -40,6 +40,7 @@ using System.Text;
 using DieFledermaus.Globalization;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
@@ -2300,7 +2301,55 @@ namespace DieFledermaus
                 return false;
 
             OnProgress(MausProgressState.VerifyingRSASignature);
-            return _rsaSignVerified = RsaSigningProvider.VerifyHash(_hashExpected, _rsaSignature, _rsaSignParamBC, GetHashId(_hashFunc));
+            try
+            {
+                RsaBlindedEngine _engine = new RsaBlindedEngine();
+                _engine.Init(false, _rsaSignParamBC);
+
+                byte[] sig;
+                try
+                {
+                    sig = Pkcs7Provider.RemovePadding(_engine.ProcessBlock(_rsaSignature, 0, _rsaSignature.Length), _engine.GetOutputBlockSize());
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+                if (DieFledermausStream.CompareBytes(_hashExpected, sig))
+                    return true;
+
+                byte[] expected = GetDerEncoded(_hashExpected, GetHashId(_hashFunc));
+
+                if (sig.Length == expected.Length)
+                    return DieFledermausStream.CompareBytes(expected, sig);
+
+                if (sig.Length != expected.Length - 2)
+                    return false;
+
+                int sigOffset = sig.Length - _hashExpected.Length - 2;
+                int expectedOffset = expected.Length - _hashExpected.Length - 2;
+
+                expected[1] -= 2;      // adjust lengths
+                expected[3] -= 2;
+
+                for (int i = 0; i < _hashExpected.Length; i++)
+                {
+                    if (sig[sigOffset + i] != expected[expectedOffset + i])
+                        return false;
+                }
+
+                for (int i = 0; i < sigOffset; i++)
+                {
+                    if (sig[i] != expected[i])  // check header less NULL
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception x)
+            {
+                throw new CryptographicException(TextResources.RsaSigInvalid, x);
+            }
         }
 
         internal void GetBuffer()
@@ -2643,7 +2692,12 @@ namespace DieFledermaus
                 OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                 try
                 {
-                    rsaSignature = RsaSigningProvider.GenerateSignature(hashChecksum, _rsaSignParamBC, GetHashId(_hashFunc));
+                    RsaBlindedEngine _engine = new RsaBlindedEngine();
+                    _engine.Init(true, _rsaSignParamBC);
+
+                    byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hashChecksum, GetHashId(_hashFunc)), _engine.GetInputBlockSize());
+
+                    rsaSignature = _engine.ProcessBlock(message, 0, message.Length);
                 }
                 catch (Exception x)
                 {
@@ -2834,6 +2888,14 @@ namespace DieFledermaus
 #if NOLEAVEOPEN
             _baseStream.Flush();
 #endif
+        }
+
+        private static byte[] GetDerEncoded(byte[] hash, DerObjectIdentifier derId)
+        {
+            AlgorithmIdentifier _id = new AlgorithmIdentifier(derId, DerNull.Instance);
+            DigestInfo dInfo = new DigestInfo(_id, hash);
+
+            return dInfo.GetDerEncoded();
         }
 
         private void WriteRsaSig(byte[] rsaSignature, ByteOptionList formats)

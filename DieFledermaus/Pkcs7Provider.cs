@@ -29,80 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
-    internal static class RsaSigningProvider
-    {
-        public static byte[] GenerateSignature(byte[] hash, RsaKeyParameters keyParam, DerObjectIdentifier derId)
-        {
-            RsaBlindedEngine _engine = new RsaBlindedEngine();
-            _engine.Init(true, keyParam);
-
-            byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hash, derId), _engine.GetInputBlockSize());
-
-            return _engine.ProcessBlock(message, 0, message.Length);
-        }
-
-        public static bool VerifyHash(byte[] hash, byte[] signature, RsaKeyParameters keyParam, DerObjectIdentifier derId)
-        {
-            RsaBlindedEngine _engine = new RsaBlindedEngine();
-            _engine.Init(false, keyParam);
-
-            byte[] sig;
-            try
-            {
-                sig = Pkcs7Provider.RemovePadding(_engine.ProcessBlock(signature, 0, signature.Length), _engine.GetOutputBlockSize());
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            if (DieFledermausStream.CompareBytes(hash, sig))
-                return true;
-
-            byte[] expected = GetDerEncoded(hash, derId);
-
-            if (sig.Length == expected.Length)
-                return DieFledermausStream.CompareBytes(expected, sig);
-
-            if (sig.Length != expected.Length - 2)
-                return false;
-
-            int sigOffset = sig.Length - hash.Length - 2;
-            int expectedOffset = expected.Length - hash.Length - 2;
-
-            expected[1] -= 2;      // adjust lengths
-            expected[3] -= 2;
-
-            for (int i = 0; i < hash.Length; i++)
-            {
-                if (sig[sigOffset + i] != expected[expectedOffset + i])
-                    return false;
-            }
-
-            for (int i = 0; i < sigOffset; i++)
-            {
-                if (sig[i] != expected[i])  // check header less NULL
-                    return false;
-            }
-
-            return true;
-        }
-
-        private static byte[] GetDerEncoded(byte[] hash, DerObjectIdentifier derId)
-        {
-            AlgorithmIdentifier _id = new AlgorithmIdentifier(derId, DerNull.Instance);
-            DigestInfo dInfo = new DigestInfo(_id, hash);
-
-            return dInfo.GetDerEncoded();
-        }
-    }
-
     internal static class Pkcs7Provider
     {
         public static byte[] AddPadding(byte[] unpadded, int blockSize)

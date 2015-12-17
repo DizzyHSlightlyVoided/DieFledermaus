@@ -68,7 +68,7 @@
     <Compile Include="MausProgressEventArgs.cs" />
     <Compile Include="MausSettableOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RsaSigningProvider.cs" />
+    <Compile Include="Pkcs7Provider.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Globalization\TextResources.resx">
