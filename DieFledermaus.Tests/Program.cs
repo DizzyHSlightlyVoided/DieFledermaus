@@ -2,13 +2,14 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
+using System.Xml.Linq;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Math;
 
 namespace DieFledermaus.Tests
 {
-    class Program
+    internal static class Program
     {
         const int bigBufferLength = 70000;
         [STAThread]
@@ -22,7 +23,6 @@ namespace DieFledermaus.Tests
             {
                 RsaKeyParameters publicKeySig, privateKeySig, publicKeyEnc, privateKeyEnc;
 
-                using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                 {
                     const string xmlSig = "<RSAKeyValue><!-- Not suitable for use outside the test-app. --><Modulus>2/xGqjup0HUXsCipNDvXX4Y" +
                         "L0cyc5CK5a5ksyPk6AGFHz4nGneGA72WBBodtziI+cBWujChTQyMMNiQ+h0JOvFYnvMB8u4bkOPrf2rqscA/04nDodkXRqXoIlyHGp0VOBGfA5f4UU" +
@@ -34,9 +34,7 @@ namespace DieFledermaus.Tests
                         "aUGNPx0oQZ9sGhfjSNqgEn1pxUtO7WqPboiIbL0RR0SffdTR1FXyPb8eOAgTbyeheXiX9zw7Yj2h8iW6DBeCnQbaNA/p3Iw8RBYcTPdz9YLhFOBid2" +
                         "M26OC/aBozT6h7jLhyuNVkWnFh5Een5QGobtwuvJHkhSIBWUkuevk=</D></RSAKeyValue>";
 
-                    rsa.FromXmlString(xmlSig);
-
-                    var keyPair = DotNetUtilities.GetRsaKeyPair(rsa.ExportParameters(true));
+                    var keyPair = GetKeyPair(xmlSig);
                     publicKeySig = (RsaKeyParameters)keyPair.Public;
                     privateKeySig = (RsaKeyParameters)keyPair.Private;
 
@@ -50,9 +48,7 @@ namespace DieFledermaus.Tests
                         "HqPabm1zRHebplg/z1fc3QvQQqII+5y3u60jci8VmgJn3kbxReAR6BepSrxvHeEiRa6+LxX8fb3Mwx3p/qz6H6uimCFv+tt8ryaAj6GFjJhysONpZ6" +
                         "ij1mVn5jsmMgOMRfv68XRRsaoH9a2pYTeht7wF6KnbfxXzBqVbG4E=</D></RSAKeyValue>";
 
-                    rsa.FromXmlString(xmlEnc);
-
-                    keyPair = DotNetUtilities.GetRsaKeyPair(rsa.ExportParameters(true));
+                    keyPair = GetKeyPair(xmlEnc);
 
                     publicKeyEnc = (RsaKeyParameters)keyPair.Public;
                     privateKeyEnc = (RsaKeyParameters)keyPair.Private;
@@ -109,6 +105,22 @@ namespace DieFledermaus.Tests
 
             Console.WriteLine("Press any key to continue ...");
             Console.ReadKey();
+        }
+
+        private static AsymmetricCipherKeyPair GetKeyPair(string xml)
+        {
+            XElement root = XDocument.Parse(xml).Root;
+
+            RsaKeyParameters publicKey = new RsaKeyParameters(false, root.GetBigInt("Modulus"), root.GetBigInt("Exponent"));
+            RsaKeyParameters privateKey = new RsaPrivateCrtKeyParameters(publicKey.Modulus, publicKey.Exponent, root.GetBigInt("D"),
+                  root.GetBigInt("P"), root.GetBigInt("Q"), root.GetBigInt("DP"), root.GetBigInt("DQ"), root.GetBigInt("InverseQ"));
+
+            return new AsymmetricCipherKeyPair(publicKey, privateKey);
+        }
+
+        public static BigInteger GetBigInt(this XElement node, XName name)
+        {
+            return new BigInteger(1, Convert.FromBase64String(node.Element(name).Value));
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat,
