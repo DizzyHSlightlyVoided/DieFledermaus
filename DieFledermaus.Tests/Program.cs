@@ -58,8 +58,8 @@ namespace DieFledermaus.Tests
                 Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, publicKeyEnc, privateKeySig);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, publicKeyEnc, privateKeySig);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, privateKeySig);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, privateKeySig);
                     Console.WriteLine(" - Building empty directory: EmptyDir/");
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
                     emptyDir.EncryptPath = true;
@@ -78,10 +78,7 @@ namespace DieFledermaus.Tests
                     foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
                         Console.WriteLine(" - Decrypting file ...");
-                        if (item.HasRSAEncryptedKey)
-                            item.RSAKeyParameters = privateKeyEnc;
-                        else
-                            SetPasswd(item);
+                        SetPasswd(item);
                         sw = Stopwatch.StartNew();
                         var dItem = item.Decrypt();
                         sw.Stop();
@@ -124,7 +121,7 @@ namespace DieFledermaus.Tests
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat,
-            RsaKeyParameters publicKeyEnc, RsaKeyParameters privateKeySig)
+            RsaKeyParameters privateKeySig)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
 
@@ -134,7 +131,6 @@ namespace DieFledermaus.Tests
 
             if (encFormat != MausEncryptionFormat.None)
             {
-                entry.RSAKeyParameters = publicKeyEnc;
                 SetPasswd(entry);
             }
 

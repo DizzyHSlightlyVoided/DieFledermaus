@@ -990,9 +990,6 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, both the specified value and <see cref="RSAKeyParameters"/> are not <c>null</c>, and they both
-        /// refer to the same key.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
@@ -1001,9 +998,6 @@ namespace DieFledermaus
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-
-                if (CompareValues(value, _rsaKeyParamBC))
-                    throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
 
                 CheckSignParam(value, _rsaSignature, _rsaSignVerified);
                 _rsaSignParamBC = value;
@@ -1048,7 +1042,7 @@ namespace DieFledermaus
             {
                 _ensureCanWrite();
                 if (_rsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                    throw new InvalidOperationException(TextResources.RsaSigNone);
                 if (value == null)
                     _rsaSignId = null;
                 else if (value.Length == 0 || value.Length > Max16Bit)
@@ -1177,7 +1171,7 @@ namespace DieFledermaus
             {
                 _ensureCanWrite();
                 if (_dsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                    throw new InvalidOperationException(TextResources.RsaSigNone);
                 if (value == null)
                     _dsaSignId = null;
                 else if (value.Length == 0 || value.Length > Max16Bit)
@@ -1301,7 +1295,7 @@ namespace DieFledermaus
             {
                 _ensureCanWrite();
                 if (_ecdsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
+                    throw new InvalidOperationException(TextResources.RsaSigNone);
                 if (value == null)
                     _ecdsaSignId = null;
                 else if (value.Length == 0 || value.Length > Max16Bit)
@@ -1340,78 +1334,6 @@ namespace DieFledermaus
                 else
                     ECDSASignIdBytes = _textEncoding.GetBytes(value);
             }
-        }
-        #endregion
-
-        #region RSA Key
-        private byte[] _rsaKey;
-        /// <summary>
-        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
-        /// </summary>
-        /// <remarks>
-        /// If the current stream is in read-mode, this property returns <c>true</c> if and only if the original archive entry
-        /// had an RSA-encrypted key when it was written. Otherwise, this property
-        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
-        /// </remarks>
-        public bool HasRSAEncryptedKey
-        {
-            get
-            {
-                if (_mode == CompressionMode.Decompress)
-                    return _rsaKey != null;
-                return _rsaKeyParamBC != null;
-            }
-        }
-
-        private RsaKeyParameters _rsaKeyParamBC;
-        /// <summary>
-        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>The current stream is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>The current stream is in read-mode, and does not have an RSA-encrypted key.</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <para>In a set operation, the current stream is in write-mode, and the specified value is not a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, both the specified value and <see cref="RSASignParameters"/> are not <c>null</c>, and they both
-        /// refer to the same key.</para>
-        /// </exception>
-        public RsaKeyParameters RSAKeyParameters
-        {
-            get { return _rsaKeyParamBC; }
-            set
-            {
-                _ensureCanSetKey();
-
-                if (CompareValues(value, _rsaSignParamBC))
-                    throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
-
-                CheckRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
-                _rsaKeyParamBC = value;
-            }
-        }
-
-        internal static void CheckRsaKey(RsaKeyParameters value, bool reading, byte[] _rsaKeyEncrypted)
-        {
-            if (reading)
-            {
-                if (_rsaKeyEncrypted == null)
-                    throw new NotSupportedException(TextResources.RsaKeyNone);
-                if (value != null && !value.IsPrivate)
-                    throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
-            }
-            else if (value != null && value.IsPrivate)
-                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
         }
         #endregion
 
@@ -1825,8 +1747,6 @@ namespace DieFledermaus
             _kDsaSig = "Dsa-Sig", _kDsaSigId = "Dsa-Sig-Id",
             _kECDsaSig = "ECDsa-Sig", _kECDsaSigId = "ECDsa-Sig-Id";
 
-        internal const string _kRsaKey = "Rsa-Sch";
-
         internal const string _kHash = "Hash";
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
@@ -1872,13 +1792,6 @@ namespace DieFledermaus
 
                 _hashFunc = MausHashFunction.Sha512;
                 _headSize = ReadFormat(reader, false);
-                if (_encFmt == MausEncryptionFormat.None)
-                {
-                    if (_rsaKey != null)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                }
-                else if (_rsaKey != null && _rsaKey.Length < _keySize >> 3)
-                    throw new InvalidDataException(TextResources.FormatBad);
 
                 if ((_rsaSignId != null && _rsaSignature == null) || (_dsaSignId != null && _dsaSignature == null) || (_ecdsaSignId != null && _ecdsaSignature == null))
                     throw new InvalidDataException(TextResources.FormatBad);
@@ -2019,15 +1932,6 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kRsaKey, StringComparison.Ordinal))
-                {
-                    if (fromEncrypted && _rsaKey == null)
-                        throw new InvalidDataException(TextResources.FormatBad);
-
-                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaKey);
-                    continue;
-                }
-
                 if (curForm.Equals(_kEncAes, StringComparison.Ordinal))
                 {
                     if (!fromEncrypted)
@@ -2094,7 +1998,7 @@ namespace DieFledermaus
                             _encryptedOptions.InternalAdd(MausOptionToEncrypt.Filename);
 
                         if (!IsValidFilename(filename, false, _allowDirNames, null))
-                            throw new InvalidDataException(TextResources.FormatFilename);
+                            throw new InvalidDataException(TextResources.FormatBad);
 
                         _filename = filename;
                     }
@@ -2456,12 +2360,7 @@ namespace DieFledermaus
             }
 
             if (_password == null && _encFmt != MausEncryptionFormat.None)
-            {
-                if (_rsaKey == null)
-                    throw new CryptographicException(TextResources.KeyNotSet);
-                if (_rsaKeyParamBC == null)
-                    throw new CryptographicException(TextResources.KeyNotSetRsa);
-            }
+                throw new CryptographicException(TextResources.KeyNotSet);
 
             GetBuffer();
 
@@ -2469,7 +2368,7 @@ namespace DieFledermaus
             {
                 byte[] _key;
                 OnProgress(MausProgressState.BuildingKey);
-                _key = DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
+                _key = GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
 
                 using (MausBufferStream bufferStream = Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
                 {
@@ -2577,29 +2476,6 @@ namespace DieFledermaus
                     _verifyRSASignature();
             }
             else _hashExpected = hashActual;
-        }
-
-        internal static byte[] DecryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] rsaKey, byte[] salt, int keySize,
-            int pkCount, MausHashFunction hashAlg)
-        {
-            if (_password != null)
-                return GetKey(_password, salt, pkCount, keySize, hashAlg);
-            byte[] _key;
-
-            RsaEngine rsa = new RsaEngine();
-            try
-            {
-                rsa.Init(false, rsaKeyParams);
-                _key = Pkcs7Provider.RemovePadding(rsa.ProcessBlock(rsaKey, 0, rsaKey.Length), rsa.GetOutputBlockSize());
-            }
-            catch (Exception x)
-            {
-                throw new CryptographicException(TextResources.RsaKeyInvalid, x);
-            }
-
-            if (_key.Length != keySize >> 3)
-                throw new CryptographicException(TextResources.RsaKeyInvalid);
-            return _key;
         }
 
         #region Verify RSA
@@ -3190,13 +3066,13 @@ namespace DieFledermaus
             }
             else rsaSignature = dsaSignature = ecdsaSignature = hashChecksum = null;
 
-            byte[] _key, rsaKey;
+            byte[] _key;
             if (_encFmt == MausEncryptionFormat.None)
-                _key = rsaKey = null;
+                _key = null;
             else
             {
                 OnProgress(MausProgressState.BuildingKey);
-                _key = EncryptKey(_password, _rsaKeyParamBC, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
+                _key = GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
             }
 
             long oldLength = _bufferStream.Length;
@@ -3273,12 +3149,6 @@ namespace DieFledermaus
                         formats.Add((short)_keySize);
                     }
                     else WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
-
-                    if (rsaKey != null)
-                    {
-                        formats.Add(_kRsaKey);
-                        formats.Add(rsaKey);
-                    }
 
                     formats.Write(writer);
                 }
@@ -3410,32 +3280,6 @@ namespace DieFledermaus
             }
         }
 
-        internal static byte[] EncryptKey(string _password, RsaKeyParameters rsaKeyParams, byte[] _salt, int _pkCount, int _keySize,
-            MausHashFunction hashFunc, out byte[] rsaKey)
-        {
-            byte[] _key = GetKey(_password, _salt, _pkCount, _keySize, hashFunc);
-
-            if (rsaKeyParams == null)
-            {
-                rsaKey = null;
-                return _key;
-            }
-
-            RsaEngine engine = new RsaEngine();
-            try
-            {
-                engine.Init(true, rsaKeyParams);
-            }
-            catch (Exception x)
-            {
-                throw new CryptographicException(TextResources.RsaKeyPubInvalid, x);
-            }
-            byte[] paddedKey = Pkcs7Provider.AddPadding(_key, engine.GetInputBlockSize());
-            rsaKey = engine.ProcessBlock(paddedKey, 0, paddedKey.Length);
-
-            return _key;
-        }
-
         private void FormatSetFilename(ByteOptionList formats)
         {
             if (_filename != null)
@@ -3484,7 +3328,6 @@ namespace DieFledermaus
             other._comBytes = _comBytes;
             other._hashFunc = _hashFunc;
             other.Progress = Progress;
-            other._rsaKeyParamBC = _rsaKeyParamBC;
             Dispose();
         }
         #endregion

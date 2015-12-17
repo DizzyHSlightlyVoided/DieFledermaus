@@ -199,45 +199,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
-        /// </summary>
-        /// <remarks>
-        /// If <see cref="Archive"/> is in read-mode, this property returns <c>true</c> if and only if the original archive entry
-        /// had an RSA-encrypted key when it was written. If <see cref="Archive"/> is in write-mode, this property
-        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
-        /// </remarks>
-        public bool HasRSAEncryptedKey { get { return MausStream.HasRSAEncryptedKey; } }
-
-        /// <summary>
-        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>The current instance is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>The <see cref="Archive"/> is in read-mode, and the current instance does not have an RSA-encrypted key.</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <para>In a set operation, <see cref="Archive"/> is in write-mode, and the specified value is not a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the specified value is not a valid private key.</para>
-        /// </exception>
-        public virtual RsaKeyParameters RSAKeyParameters
-        {
-            get { return MausStream.RSAKeyParameters; }
-            set
-            {
-                _ensureCanSetKey();
-                MausStream.RSAKeyParameters = value;
-            }
-        }
-
         private string _path;
         /// <summary>
         /// Gets the path of the current instance within the archive.
@@ -437,7 +398,7 @@ namespace DieFledermaus
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 throw new NotSupportedException(TextResources.NotEncrypted);
             if (_arch.Mode == MauZArchiveMode.Read && MausStream.IsDecrypted)
-                throw new InvalidOperationException(TextResources.AlreadyDecryptedArchive);
+                throw new InvalidOperationException(TextResources.AlreadyDecryptedEntry);
         }
 
         internal void EnsureCanWrite()

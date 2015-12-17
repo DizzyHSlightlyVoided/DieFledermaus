@@ -71,7 +71,6 @@ The following values are defined for the default implementation:
 * `Dsa-Sig-Id` - *One parameter.* A value which identifies the DSA public key used by `Dsa-Sig`. Usable only if `Dsa-Sig` is also present. Should be encrypted.
 * `ECDsa-Sig` - *One parameter.* Same as `Dsa-Sig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm.
 * `ECDsa-Sig-Id` - *One parameter.* A value which identifies the ECDSA public key used by `ECDsa-Sig`. Usable only if `ECDsa-Sig` is also present. Should be encrypted.
-* `Rsa-Sch` - *One parameter.* **RSA Sch**lüssel ("RSA key"). Usable only if `AES` is also present. The encryption key is encrypted using an RSA public key with PKCS#7 padding, and is used as the parameter. A decoder may then use the corresponding private key to decrypt the key. The original password may also be used. Encoders and decoders must make sure that the same key is not used for `Rsa-Sig` and `Rsa-Sch` because that would just be silly. Must be in plaintext.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 

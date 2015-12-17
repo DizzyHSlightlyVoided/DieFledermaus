@@ -102,33 +102,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>The current instance is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>The <see cref="DieFledermauZItem.Archive"/> is in read-mode, and the current instance does not have an RSA-encrypted key.</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode and the current instance has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in write-mode, and the specified value is not a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode, and the specified value is not a valid private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, both the specified value and <see cref="RSASignParameters"/> are not <c>null</c>, and both refer to the same key.</para>
-        /// </exception>
-        public override RsaKeyParameters RSAKeyParameters
-        {
-            get { return MausStream.RSAKeyParameters; }
-            set { base.RSAKeyParameters = value; }
-        }
-
         #region RSA Signature
         /// <summary>
         /// Gets and sets an RSA key used to sign the current entry.
@@ -148,9 +121,6 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
         /// and the specified value does not represent a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, both the specified value and <see cref="RSAKeyParameters"/> are not <c>null</c>,
-        /// and both refer to the same key.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {

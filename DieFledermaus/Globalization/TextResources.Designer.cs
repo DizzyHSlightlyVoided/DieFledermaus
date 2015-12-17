@@ -72,9 +72,9 @@ namespace DieFledermaus.Globalization {
         /// <summary>
         ///   Looks up a localized string similar to The current archive entry has already been decrypted..
         /// </summary>
-        internal static string AlreadyDecryptedArchive {
+        internal static string AlreadyDecryptedEntry {
             get {
-                return ResourceManager.GetString("AlreadyDecryptedArchive", resourceCulture);
+                return ResourceManager.GetString("AlreadyDecryptedEntry", resourceCulture);
             }
         }
         
@@ -457,15 +457,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus stream contains an invalid filename..
-        /// </summary>
-        internal static string FormatFilename {
-            get {
-                return ResourceManager.GetString("FormatFilename", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The DieFledermaus stream contains an unknown format..
         /// </summary>
         internal static string FormatUnknown {
@@ -525,24 +516,6 @@ namespace DieFledermaus.Globalization {
         internal static string KeyNotSet {
             get {
                 return ResourceManager.GetString("KeyNotSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The current stream is encrypted, and requires either a password or an RSA private key..
-        /// </summary>
-        internal static string KeyNotSetRsa {
-            get {
-                return ResourceManager.GetString("KeyNotSetRsa", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The current archive is encrypted, and requires either a password or an RSA private key..
-        /// </summary>
-        internal static string KeyNotSetRsaZ {
-            get {
-                return ResourceManager.GetString("KeyNotSetRsaZ", resourceCulture);
             }
         }
         
@@ -610,51 +583,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The current instance&apos;s key is not RSA-encrypted..
-        /// </summary>
-        internal static string RsaKeyIdNotSet {
-            get {
-                return ResourceManager.GetString("RsaKeyIdNotSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The RSA private key used to decrypt the stream key is invalid..
-        /// </summary>
-        internal static string RsaKeyInvalid {
-            get {
-                return ResourceManager.GetString("RsaKeyInvalid", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The current instance does not have an RSA encryption key..
-        /// </summary>
-        internal static string RsaKeyNone {
-            get {
-                return ResourceManager.GetString("RsaKeyNone", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The RSA public key used to encrypt the stream key is invalid..
-        /// </summary>
-        internal static string RsaKeyPubInvalid {
-            get {
-                return ResourceManager.GetString("RsaKeyPubInvalid", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The RSA signing key and the RSA encryption key must be different..
-        /// </summary>
-        internal static string RsaKeySigSame {
-            get {
-                return ResourceManager.GetString("RsaKeySigSame", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified value is not a valid private key..
         /// </summary>
         internal static string RsaNeedPrivate {
@@ -673,15 +601,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The current instance is not signed..
-        /// </summary>
-        internal static string RsaSigIdNotSet {
-            get {
-                return ResourceManager.GetString("RsaSigIdNotSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The RSA public key used to verify the signature is invalid..
         /// </summary>
         internal static string RsaSigInvalid {
@@ -691,7 +610,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The current instance does not have an RSA signature..
+        ///   Looks up a localized string similar to The current instance is not signed..
         /// </summary>
         internal static string RsaSigNone {
             get {

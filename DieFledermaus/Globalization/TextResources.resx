@@ -120,7 +120,7 @@
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
   </data>
-  <data name="AlreadyDecryptedArchive" xml:space="preserve">
+  <data name="AlreadyDecryptedEntry" xml:space="preserve">
     <value>The current archive entry has already been decrypted.</value>
   </data>
   <data name="ArchiveAlreadyWritten" xml:space="preserve">
@@ -212,9 +212,6 @@
   </data>
   <data name="FormatBad" xml:space="preserve">
     <value>The DieFledermaus stream contains invalid or contradictory formats.</value>
-  </data>
-  <data name="FormatFilename" xml:space="preserve">
-    <value>The DieFledermaus stream contains an invalid filename.</value>
   </data>
   <data name="FormatUnknown" xml:space="preserve">
     <value>The DieFledermaus stream contains an unknown format.</value>
@@ -312,46 +309,16 @@
   <data name="RsaSigInvalid" xml:space="preserve">
     <value>The RSA public key used to verify the signature is invalid.</value>
   </data>
-  <data name="RsaSigNone" xml:space="preserve">
-    <value>The current instance does not have an RSA signature.</value>
-  </data>
   <data name="RsaSigVerified" xml:space="preserve">
     <value>The RSA signature has already been verified.</value>
-  </data>
-  <data name="RsaNeedPrivate" xml:space="preserve">
-    <value>The specified value is not a valid private key.</value>
-  </data>
-  <data name="RsaNeedPublic" xml:space="preserve">
-    <value>The specified value is not a valid public or private key.</value>
-  </data>
-  <data name="RsaKeyInvalid" xml:space="preserve">
-    <value>The RSA private key used to decrypt the stream key is invalid.</value>
-  </data>
-  <data name="RsaKeyNone" xml:space="preserve">
-    <value>The current instance does not have an RSA encryption key.</value>
-  </data>
-  <data name="RsaKeyPubInvalid" xml:space="preserve">
-    <value>The RSA public key used to encrypt the stream key is invalid.</value>
   </data>
   <data name="RsaSigPrivInvalid" xml:space="preserve">
     <value>The RSA private key used to sign the stream is invalid.</value>
   </data>
-  <data name="KeyNotSetRsa" xml:space="preserve">
-    <value>The current stream is encrypted, and requires either a password or an RSA private key.</value>
-  </data>
-  <data name="KeyNotSetRsaZ" xml:space="preserve">
-    <value>The current archive is encrypted, and requires either a password or an RSA private key.</value>
-  </data>
-  <data name="RsaKeySigSame" xml:space="preserve">
-    <value>The RSA signing key and the RSA encryption key must be different.</value>
-  </data>
   <data name="RsaIdLength" xml:space="preserve">
     <value>The length of an RSA key-identifier must either be null or must have a length between 1 and 65536.</value>
   </data>
-  <data name="RsaKeyIdNotSet" xml:space="preserve">
-    <value>The current instance's key is not RSA-encrypted.</value>
-  </data>
-  <data name="RsaSigIdNotSet" xml:space="preserve">
+  <data name="RsaSigNone" xml:space="preserve">
     <value>The current instance is not signed.</value>
   </data>
   <data name="DsaSigInvalid" xml:space="preserve">
@@ -365,5 +332,11 @@
   </data>
   <data name="EcdsaSigPrivInvalid" xml:space="preserve">
     <value>The ECDSA private key used to sign the stream is invalid.</value>
+  </data>
+  <data name="RsaNeedPrivate" xml:space="preserve">
+    <value>The specified value is not a valid private key.</value>
+  </data>
+  <data name="RsaNeedPublic" xml:space="preserve">
+    <value>The specified value is not a valid public or private key.</value>
   </data>
 </root>

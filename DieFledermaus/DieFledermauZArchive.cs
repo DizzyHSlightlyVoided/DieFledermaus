@@ -496,15 +496,10 @@ namespace DieFledermaus
             _bufferStream.Reset();
 
             if (_password == null)
-            {
-                if (_rsaKey == null)
-                    throw new CryptographicException(TextResources.KeyNotSetZ);
-                if (_rsaKeyParamBC == null)
-                    throw new CryptographicException(TextResources.KeyNotSetRsaZ);
-            }
+                throw new CryptographicException(TextResources.KeyNotSetZ);
 
             OnProgress(MausProgressState.BuildingKey);
-            byte[] _key = DieFledermausStream.DecryptKey(_password, _rsaKeyParamBC, _rsaKey, _salt, _keySize, _pkCount, _hashFunc);
+            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _keySize, _pkCount, _hashFunc);
 
             using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
@@ -589,15 +584,6 @@ namespace DieFledermaus
                     else if (_keySize != keySize)
                         throw new InvalidDataException(TextResources.FormatBadZ);
 
-                    continue;
-                }
-
-                if (curOption.Equals(DieFledermausStream._kRsaKey, StringComparison.Ordinal))
-                {
-                    if (fromEncrypted && _rsaKey == null)
-                        throw new InvalidDataException(TextResources.FormatBadZ);
-
-                    DieFledermausStream.ReadBytes(reader, optLen, ref curOffset, ref i, ref _rsaKey);
                     continue;
                 }
 
@@ -931,56 +917,6 @@ namespace DieFledermaus
                     _hashFunc = value;
                 else
                     throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
-            }
-        }
-
-        private byte[] _rsaKey;
-        /// <summary>
-        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
-        /// </summary>
-        /// <remarks>
-        /// If the current stream is in read-mode, this property returns <c>true</c> if and only if the original archive entry
-        /// had an RSA-encrypted key when it was written. Otherwise, this property
-        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
-        /// </remarks>
-        public bool HasRSAEncryptedKey
-        {
-            get
-            {
-                if (_mode == MauZArchiveMode.Read)
-                    return _rsaKey != null;
-                return _rsaKeyParamBC != null;
-            }
-        }
-
-        private RsaKeyParameters _rsaKeyParamBC;
-        /// <summary>
-        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>The current stream is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>The current stream is in read-mode, and does not have an RSA-encrypted key.</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <para>In a set operation, the current stream is in write-mode, and the specified value is not a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
-        /// </exception>
-        public RsaKeyParameters RSAKeyParameters
-        {
-            get { return _rsaKeyParamBC; }
-            set
-            {
-                _ensureCanSetKey();
-                DieFledermausStream.CheckRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
-                _rsaKeyParamBC = value;
             }
         }
 
@@ -1570,14 +1506,14 @@ namespace DieFledermaus
 
             long length = 16;
 
-            byte[] _key, rsaKey;
+            byte[] _key;
 
             if (_encFmt == MausEncryptionFormat.None)
-                rsaKey = _key = null;
+                _key = null;
             else
             {
                 OnProgress(MausProgressState.BuildingKey);
-                _key = DieFledermausStream.EncryptKey(_password, _rsaKeyParamBC, _salt, _pkCount, _keySize, _hashFunc, out rsaKey);
+                _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
             }
 
             DieFledermauZItem[] entries = _entries.ToArray();
@@ -1609,12 +1545,6 @@ namespace DieFledermaus
 
                 options.Add(DieFledermausStream._kHash);
                 options.Add(DieFledermausStream.HashBDict[_hashFunc]);
-
-                if (rsaKey != null)
-                {
-                    options.Add(DieFledermausStream._kRsaKey);
-                    options.Add(rsaKey);
-                }
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))

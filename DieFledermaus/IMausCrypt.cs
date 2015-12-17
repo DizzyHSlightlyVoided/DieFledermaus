@@ -170,37 +170,6 @@ namespace DieFledermaus
         bool IsValidKeyByteSize(int byteCount);
 
         /// <summary>
-        /// Gets a value indicating whether the current instance has an RSA-encrypted key.
-        /// </summary>
-        /// <remarks>
-        /// If the current instance is in read-mode, this property returns <c>true</c> if and only if the original archive entry
-        /// had an RSA-encrypted key when it was written. If the current instance is in write-mode, this property
-        /// returns <c>true</c> if <see cref="RSAKeyParameters"/> is not <c>null</c>.
-        /// </remarks>
-        bool HasRSAEncryptedKey { get; }
-
-        /// <summary>
-        /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>The current instance is not encrypted.</para>
-        /// <para>-OR-</para>
-        /// <para>The current instance is in read-mode, and does not have an RSA-encrypted key.</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <para>In a set operation, the current instance is in write-mode, and the specified value is not a valid public key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current instance is in read-mode, and the specified value is not a valid private key.</para>
-        /// </exception>
-        RsaKeyParameters RSAKeyParameters { get; set; }
-
-        /// <summary>
         /// Raised when the current instance is reading or writing data, and the progress state meaningfully changes.
         /// </summary>
         event MausProgressEventHandler Progress;
