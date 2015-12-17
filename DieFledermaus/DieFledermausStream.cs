@@ -1847,7 +1847,7 @@ namespace DieFledermaus
         internal static readonly Dictionary<MausHashFunction, string> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key);
 
         private const string _kFilename = "Name", _kULen = "DeL";
-        internal static string _kComment = "Kom";
+        internal const string _kComment = "Kom";
 
         private long _headSize;
         internal long HeadLength { get { return _headSize; } }
@@ -1934,7 +1934,7 @@ namespace DieFledermaus
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
             const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
-                sizeof(long) + sizeof(long); //compressed length, uncompressed length, hashLength;
+                sizeof(long) + sizeof(long); //compressed length, uncompressed length
 
             long headSize = baseHeadSize;
 
