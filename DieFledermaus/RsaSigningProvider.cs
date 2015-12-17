@@ -62,8 +62,9 @@ namespace DieFledermaus
             {
                 return false;
             }
-            if (sig.Length == hash.Length)
-                return DieFledermausStream.CompareBytes(hash, sig);
+            if (DieFledermausStream.CompareBytes(hash, sig))
+                return true;
+
             byte[] expected = GetDerEncoded(hash, derId);
 
             if (sig.Length == expected.Length)
