@@ -153,7 +153,7 @@ namespace DieFledermaus.Tests
 
         private static string GetString(byte[] hash)
         {
-            return string.Concat(hash.Select(i => i.ToString("x2", System.Globalization.NumberFormatInfo.InvariantInfo)));
+            return string.Concat(hash.Select(i => i.ToString("x2", System.Globalization.NumberFormatInfo.InvariantInfo)).ToArray());
         }
     }
 }
