@@ -31,90 +31,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Paddings;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
-    class RsaSigningProvider : ISigner
+    internal static class RsaSigningProvider
     {
-        public RsaSigningProvider(IDigest digest, DerObjectIdentifier digestOid)
+        public static byte[] GenerateSignature(byte[] hash, RsaKeyParameters keyParam, DerObjectIdentifier derId)
         {
-            _digest = digest;
-            _id = new AlgorithmIdentifier(digestOid, DerNull.Instance);
-        }
+            RsaBlindedEngine _engine = new RsaBlindedEngine();
+            _engine.Init(true, keyParam);
 
-        private IDigest _digest;
-        private AlgorithmIdentifier _id;
-        private RsaBlindedEngine _engine = new RsaBlindedEngine();
-
-        public string AlgorithmName
-        {
-            get { return _digest.AlgorithmName + "withRSA"; }
-        }
-
-        public void Init(bool forSigning, ICipherParameters parameters)
-        {
-            AsymmetricKeyParameter key = (AsymmetricKeyParameter)parameters;
-
-            if (key.IsPrivate != forSigning)
-            {
-                if (key.IsPrivate)
-                    throw new ArgumentException("Private key needed for signing.", nameof(parameters));
-                throw new ArgumentException("Public key needed for verification.", nameof(parameters));
-            }
-            Reset();
-            _engine.Init(forSigning, parameters);
-        }
-
-        public void BlockUpdate(byte[] input, int inOff, int length)
-        {
-            _digest.BlockUpdate(input, inOff, length);
-        }
-
-        public void Update(byte input)
-        {
-            _digest.Update(input);
-        }
-
-        public void Reset()
-        {
-            _hash = null;
-            _digest.Reset();
-        }
-
-        private byte[] _hash;
-
-        public byte[] GetFinalHash()
-        {
-            if (_hash == null)
-            {
-                _hash = new byte[_digest.GetDigestSize()];
-                _digest.DoFinal(_hash, 0);
-            }
-            return _hash;
-        }
-
-        public byte[] GenerateSignature()
-        {
-
-            byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(GetFinalHash()), _engine.GetInputBlockSize());
+            byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hash, derId), _engine.GetInputBlockSize());
 
             return _engine.ProcessBlock(message, 0, message.Length);
         }
 
-        public bool VerifySignature(byte[] signature)
+        public static bool VerifyHash(byte[] hash, byte[] signature, RsaKeyParameters keyParam, DerObjectIdentifier derId)
         {
-            byte[] hash = new byte[_digest.GetDigestSize()];
+            RsaBlindedEngine _engine = new RsaBlindedEngine();
+            _engine.Init(false, keyParam);
 
-            _digest.DoFinal(hash, 0);
-
-            return VerifyHash(hash, signature);
-        }
-
-        public bool VerifyHash(byte[] hash, byte[] signature)
-        {
             byte[] sig;
             try
             {
@@ -126,7 +64,7 @@ namespace DieFledermaus
             }
             if (sig.Length == hash.Length)
                 return DieFledermausStream.CompareBytes(hash, sig);
-            byte[] expected = GetDerEncoded(hash);
+            byte[] expected = GetDerEncoded(hash, derId);
 
             if (sig.Length == expected.Length)
                 return DieFledermausStream.CompareBytes(expected, sig);
@@ -155,8 +93,9 @@ namespace DieFledermaus
             return true;
         }
 
-        private byte[] GetDerEncoded(byte[] hash)
+        private static byte[] GetDerEncoded(byte[] hash, DerObjectIdentifier derId)
         {
+            AlgorithmIdentifier _id = new AlgorithmIdentifier(derId, DerNull.Instance);
             DigestInfo dInfo = new DigestInfo(_id, hash);
 
             return dInfo.GetDerEncoded();

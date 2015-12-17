@@ -2300,11 +2300,7 @@ namespace DieFledermaus
                 return false;
 
             OnProgress(MausProgressState.VerifyingRSASignature);
-
-            RsaSigningProvider rsa = new RsaSigningProvider(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
-            rsa.Init(false, _rsaSignParamBC);
-
-            return _rsaSignVerified = rsa.VerifyHash(_hashExpected, _rsaSignature);
+            return _rsaSignVerified = RsaSigningProvider.VerifyHash(_hashExpected, _rsaSignature, _rsaSignParamBC, GetHashId(_hashFunc));
         }
 
         internal void GetBuffer()
@@ -2642,22 +2638,17 @@ namespace DieFledermaus
 
             if (_rsaSignParamBC != null)
             {
-                RsaSigningProvider signer = new RsaSigningProvider(GetDigestObject(_hashFunc), GetHashId(_hashFunc));
+                OnProgress(MausProgressState.ComputingHash);
+                hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                 try
                 {
-                    signer.Init(true, _rsaSignParamBC);
+                    rsaSignature = RsaSigningProvider.GenerateSignature(hashChecksum, _rsaSignParamBC, GetHashId(_hashFunc));
                 }
                 catch (Exception x)
                 {
                     throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
                 }
-                OnProgress(MausProgressState.ComputingHash);
-                _bufferStream.BufferCopyTo(signer.BlockUpdate);
-                hashChecksum = signer.GetFinalHash();
-                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
-
-                OnProgress(MausProgressState.SigningRSA);
-                rsaSignature = signer.GenerateSignature();
 
                 _bufferStream.Reset();
             }
