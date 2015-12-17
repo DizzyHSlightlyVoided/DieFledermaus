@@ -499,7 +499,7 @@ namespace DieFledermaus
             {
                 if (_rsaKey == null)
                     throw new CryptographicException(TextResources.KeyNotSetZ);
-                if (!_rsaKeyParams.HasValue)
+                if (_rsaKeyParamBC == null)
                     throw new CryptographicException(TextResources.KeyNotSetRsaZ);
             }
 
@@ -949,11 +949,10 @@ namespace DieFledermaus
             {
                 if (_mode == MauZArchiveMode.Read)
                     return _rsaKey != null;
-                return _rsaKeyParams.HasValue;
+                return _rsaKeyParamBC != null;
             }
         }
 
-        private RSAParameters? _rsaKeyParams;
         private RsaKeyParameters _rsaKeyParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
@@ -974,14 +973,14 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value is not a valid private key.</para>
         /// </exception>
-        public RSAParameters? RSAKeyParameters
+        public RsaKeyParameters RSAKeyParameters
         {
-            get { return _rsaKeyParams; }
+            get { return _rsaKeyParamBC; }
             set
             {
                 _ensureCanSetKey();
-                _rsaKeyParamBC = DieFledermausStream.SetRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
-                _rsaKeyParams = value;
+                DieFledermausStream.CheckRsaKey(value, _mode == MauZArchiveMode.Read, _rsaKey);
+                _rsaKeyParamBC = value;
             }
         }
 

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace DieFledermaus.Tests
 {
@@ -18,7 +20,7 @@ namespace DieFledermaus.Tests
 
             using (MemoryStream ms = new MemoryStream())
             {
-                RSAParameters publicKeySig, privateKeySig, publicKeyEnc, privateKeyEnc;
+                RsaKeyParameters publicKeySig, privateKeySig, publicKeyEnc, privateKeyEnc;
 
                 using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                 {
@@ -34,8 +36,9 @@ namespace DieFledermaus.Tests
 
                     rsa.FromXmlString(xmlSig);
 
-                    publicKeySig = rsa.ExportParameters(false);
-                    privateKeySig = rsa.ExportParameters(true);
+                    var keyPair = DotNetUtilities.GetRsaKeyPair(rsa.ExportParameters(true));
+                    publicKeySig = (RsaKeyParameters)keyPair.Public;
+                    privateKeySig = (RsaKeyParameters)keyPair.Private;
 
                     const string xmlEnc = "<RSAKeyValue><!-- Not suitable for use outside the test-app. --><Modulus>tLxR5IiTcQ93LArqHYeC4o5" +
                         "JTBavu6z1G1F9LG2/q/cqZql6bNHzK6XGVYfEVxgl2Lxes3g+4xFcUvC0qPifkyEN8F4l8gmIdtR4KAT+8aSH7xdgVIXexIWDXlk7DfAKHo3KVTy7j" +
@@ -49,8 +52,10 @@ namespace DieFledermaus.Tests
 
                     rsa.FromXmlString(xmlEnc);
 
-                    publicKeyEnc = rsa.ExportParameters(false);
-                    privateKeyEnc = rsa.ExportParameters(true);
+                    keyPair = DotNetUtilities.GetRsaKeyPair(rsa.ExportParameters(true));
+
+                    publicKeyEnc = (RsaKeyParameters)keyPair.Public;
+                    privateKeyEnc = (RsaKeyParameters)keyPair.Private;
                 }
 
                 Console.WriteLine("Creating archive ...");
@@ -100,27 +105,6 @@ namespace DieFledermaus.Tests
                             Console.WriteLine("RSA signature is verified.");
                         else
                             Console.WriteLine("RSA signature is NOT verified!");
-                        using (Stream outStream = entry.OpenRead())
-                        {
-                            int read = outStream.Read(getBuffer, 0, bigBufferLength);
-                            if (read == bigBufferLength)
-                                Console.WriteLine("Correct length.");
-                            else
-                                Console.WriteLine("Wrong length: " + read);
-
-                            bool correct = true;
-
-                            for (int i = 0; correct && i < read; i++)
-                            {
-                                if (getBuffer[i] != bigBuffer[i])
-                                {
-                                    Console.WriteLine("Wrong value!");
-                                    correct = false;
-                                }
-                            }
-                            if (correct)
-                                Console.WriteLine("All values are correct as well!");
-                        }
                     }
                 }
             }
@@ -130,7 +114,7 @@ namespace DieFledermaus.Tests
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat,
-            RSAParameters publicKeyEnc, RSAParameters privateKeySig)
+            RsaKeyParameters publicKeyEnc, RsaKeyParameters privateKeySig)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
 
@@ -160,6 +144,7 @@ namespace DieFledermaus.Tests
             if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
                 entry.EncryptedOptions.AddAll();
         }
+
         private static string GetString(byte[] hash)
         {
             return string.Concat(hash.Select(i => i.ToString("x2", System.Globalization.NumberFormatInfo.InvariantInfo)));

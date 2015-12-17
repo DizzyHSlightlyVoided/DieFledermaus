@@ -41,6 +41,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BouncyCastle\crypto\BouncyCastle.csproj">
+      <Project>{4c235092-820c-4deb-9074-d356fb797d8b}</Project>
+      <Name>BouncyCastle</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DieFledermaus\DieFledermaus.Net35.csproj">
       <Project>{e2303bba-3500-4a01-aee5-42fbe06be030}</Project>
       <Name>DieFledermaus.Net35</Name>

@@ -46,7 +46,6 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 using SevenZip;
 using SevenZip.Compression.LZMA;
 
@@ -964,12 +963,11 @@ namespace DieFledermaus
             get
             {
                 if (_mode == CompressionMode.Compress)
-                    return _rsaSignParams.HasValue;
+                    return _rsaSignParamBC != null;
                 return _rsaSignature != null;
             }
         }
 
-        private RSAParameters? _rsaSignParams;
         private RsaKeyParameters _rsaSignParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to sign the current stream.
@@ -991,20 +989,15 @@ namespace DieFledermaus
         /// <para>In a set operation, both the specified value and <see cref="RSAKeyParameters"/> are not <c>null</c>, and they both
         /// refer to the same key.</para>
         /// </exception>
-        public RSAParameters? RSASignParameters
+        public RsaKeyParameters RSASignParameters
         {
-            get
-            {
-                if (_baseStream == null)
-                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                return _rsaSignParams;
-            }
+            get { return _rsaSignParamBC; }
             set
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
 
-                if (CompareValues(value, _rsaKeyParams))
+                if (CompareValues(value, _rsaKeyParamBC))
                     throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
 
                 if (_mode == CompressionMode.Decompress)
@@ -1013,32 +1006,12 @@ namespace DieFledermaus
                         throw new NotSupportedException(TextResources.RsaSigNone);
                     if (_rsaSignVerified)
                         throw new InvalidOperationException(TextResources.RsaSigVerified);
-                    if (value.HasValue)
-                    {
-                        try
-                        {
-                            _rsaSignParamBC = DotNetUtilities.GetRsaPublicKey(value.Value);
-                        }
-                        catch (Exception x)
-                        {
-                            throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
-                        }
-                    }
-                    else _rsaSignParamBC = null;
+                    if (value != null && value.IsPrivate)
+                        throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
                 }
-                else if (value.HasValue)
-                {
-                    try
-                    {
-                        _rsaSignParamBC = (RsaPrivateCrtKeyParameters)DotNetUtilities.GetRsaKeyPair(value.Value).Private;
-                    }
-                    catch (Exception x)
-                    {
-                        throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value), x);
-                    }
-                }
-                else _rsaSignParamBC = null;
-                _rsaSignParams = value;
+                else if (value != null && !value.IsPrivate)
+                    throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
+                _rsaSignParamBC = value;
             }
         }
 
@@ -1064,7 +1037,7 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (!_rsaSignParams.HasValue)
+                if (_rsaSignParamBC == null)
                     throw new InvalidOperationException(TextResources.RsaSigIdNotSet);
                 if (value == null)
                     _rsaSignId = null;
@@ -1106,14 +1079,10 @@ namespace DieFledermaus
             }
         }
 
-        internal static bool CompareValues(RSAParameters? x, RSAParameters? y)
+        internal static bool CompareValues(RsaKeyParameters x, RsaKeyParameters y)
         {
-            if (!x.HasValue || !y.HasValue)
-                return false;
-            RSAParameters xVal = x.Value, yVal = y.Value;
-
-            return xVal.Exponent != null && yVal.Exponent != null && yVal.Modulus != null && yVal.Modulus != null &&
-                CompareBytes(xVal.Exponent, yVal.Exponent) && CompareBytes(xVal.Modulus, yVal.Modulus);
+            return x != null && y != null && x.Exponent != null && x.Exponent.Equals(y.Exponent) &&
+                x.Modulus != null && x.Modulus.Equals(y.Modulus);
         }
 
         private byte[] _rsaKey;
@@ -1131,11 +1100,10 @@ namespace DieFledermaus
             {
                 if (_mode == CompressionMode.Decompress)
                     return _rsaKey != null;
-                return _rsaKeyParams.HasValue;
+                return _rsaKeyParamBC != null;
             }
         }
 
-        private RSAParameters? _rsaKeyParams;
         private RsaKeyParameters _rsaKeyParamBC;
         /// <summary>
         /// Gets and sets an RSA key used to encrypt or decrypt the key of the current instance.
@@ -1159,54 +1127,32 @@ namespace DieFledermaus
         /// <para>In a set operation, both the specified value and <see cref="RSASignParameters"/> are not <c>null</c>, and they both
         /// refer to the same key.</para>
         /// </exception>
-        public RSAParameters? RSAKeyParameters
+        public RsaKeyParameters RSAKeyParameters
         {
-            get { return _rsaKeyParams; }
+            get { return _rsaKeyParamBC; }
             set
             {
                 _ensureCanSetKey();
 
-                if (CompareValues(value, _rsaSignParams))
+                if (CompareValues(value, _rsaSignParamBC))
                     throw new ArgumentException(TextResources.RsaKeySigSame, nameof(value));
 
-                _rsaKeyParamBC = SetRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
-                _rsaKeyParams = value;
+                CheckRsaKey(value, _mode == CompressionMode.Decompress, _rsaKey);
+                _rsaKeyParamBC = value;
             }
         }
 
-        internal static RsaKeyParameters SetRsaKey(RSAParameters? value, bool reading, byte[] _rsaKeyEncrypted)
+        internal static void CheckRsaKey(RsaKeyParameters value, bool reading, byte[] _rsaKeyEncrypted)
         {
             if (reading)
             {
                 if (_rsaKeyEncrypted == null)
                     throw new NotSupportedException(TextResources.RsaKeyNone);
-                if (value.HasValue)
-                {
-                    try
-                    {
-                        return (RsaPrivateCrtKeyParameters)DotNetUtilities.GetRsaKeyPair(value.Value).Private;
-                    }
-                    catch (Exception x)
-                    {
-                        throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value), x);
-                    }
-                }
-                return null;
+                if (value != null && !value.IsPrivate)
+                    throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
             }
-
-            if (value.HasValue)
-            {
-                try
-                {
-                    return DotNetUtilities.GetRsaPublicKey(value.Value);
-                }
-                catch (Exception x)
-                {
-                    throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
-                }
-            }
-
-            return null;
+            else if (value != null && value.IsPrivate)
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
         }
 
         /// <summary>
@@ -2178,7 +2124,7 @@ namespace DieFledermaus
             {
                 if (_rsaKey == null)
                     throw new CryptographicException(TextResources.KeyNotSet);
-                if (!_rsaKeyParams.HasValue)
+                if (_rsaKeyParamBC == null)
                     throw new CryptographicException(TextResources.KeyNotSetRsa);
             }
 
@@ -2988,7 +2934,6 @@ namespace DieFledermaus
             other._hashFunc = _hashFunc;
             other.Progress = Progress;
             other._rsaKeyParamBC = _rsaKeyParamBC;
-            other._rsaKeyParams = _rsaKeyParams;
             Dispose();
         }
         #endregion

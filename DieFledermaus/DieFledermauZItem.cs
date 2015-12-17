@@ -34,6 +34,7 @@ using System.IO;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -227,7 +228,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the specified value is not a valid private key.</para>
         /// </exception>
-        public virtual RSAParameters? RSAKeyParameters
+        public virtual RsaKeyParameters RSAKeyParameters
         {
             get { return MausStream.RSAKeyParameters; }
             set

@@ -33,6 +33,7 @@ using System.IO;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -124,7 +125,7 @@ namespace DieFledermaus
         /// <para>In a set operation, both the specified value and <see cref="RSAKeyParameters"/> are not <c>null</c>,
         /// and both refer to the same key.</para>
         /// </exception>
-        public RSAParameters? RSASignParameters
+        public RsaKeyParameters RSASignParameters
         {
             get { return MausStream.RSASignParameters; }
             set
@@ -205,7 +206,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, both the specified value and <see cref="RSASignParameters"/> are not <c>null</c>, and both refer to the same key.</para>
         /// </exception>
-        public override RSAParameters? RSAKeyParameters
+        public override RsaKeyParameters RSAKeyParameters
         {
             get { return MausStream.RSAKeyParameters; }
             set { base.RSAKeyParameters = value; }
