@@ -29,7 +29,7 @@ When encoding a file to a DieFledermaus archive, the filename of the DieFlederma
 A DieFledermaus stream contains the following fields:
 
 1. **Magic Number:** "`mAuS`" (`6d 41 75 53`)
-2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `5f 00` (hex) = integer `95` (decimal) = version 0.95.
+2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `62 00` (hex) = integer `98` (decimal) = version 0.98.
 3. **Format:** An array of length-prefixed strings describing the format.
 4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
 5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
