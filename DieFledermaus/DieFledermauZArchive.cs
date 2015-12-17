@@ -39,7 +39,6 @@ using System.Linq;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
-using Org.BouncyCastle.Crypto.Parameters;
 using SevenZip;
 
 namespace DieFledermaus
