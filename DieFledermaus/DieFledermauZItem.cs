@@ -34,7 +34,6 @@ using System.IO;
 using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
-using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -265,28 +264,6 @@ namespace DieFledermaus
             return this;
         }
 
-        /// <summary>
-        /// Determines whether the specified value is a valid length for a key, in bits.
-        /// </summary>
-        /// <param name="bitCount">The number of bits to test.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        public bool IsValidKeyBitSize(int bitCount)
-        {
-            return MausStream.IsValidKeyBitSize(bitCount);
-        }
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for a key, in bytes.
-        /// </summary>
-        /// <param name="byteCount">The number of bytes to test.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        public bool IsValidKeyByteSize(int byteCount)
-        {
-            return MausStream.IsValidKeyByteSize(byteCount);
-        }
-
         void IMausCrypt.Decrypt()
         {
             Decrypt();
@@ -359,10 +336,10 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// Gets a <see cref="KeySizeList"/> object indicating all valid key sizes
         /// for <see cref="EncryptionFormat"/>, or <c>null</c> if the current entry is not encrypted.
         /// </summary>
-        public KeySizes KeySizes { get { return MausStream.KeySizes; } }
+        public KeySizeList LegalKeySizes { get { return MausStream.LegalKeySizes; } }
 
         /// <summary>
         /// Gets and sets the password used by the current instance.

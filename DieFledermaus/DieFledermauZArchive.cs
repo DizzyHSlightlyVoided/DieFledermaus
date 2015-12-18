@@ -405,7 +405,7 @@ namespace DieFledermaus
 
             if (path == null)
             {
-                if (index < 0 || mausStream.CompressedLength > (mausStream.KeySizes.MaxSize >> 3) + (mausStream.BlockByteCount * 3) +
+                if (index < 0 || mausStream.CompressedLength > (mausStream.LegalKeySizes.MaxSize >> 3) + (mausStream.BlockByteCount * 3) +
                     DieFledermausStream.Max8Bit + DieFledermausStream.Max16Bit || DieFledermauZEmptyDirectory.HasNonDirValues(mausStream))
                 {
                     returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
@@ -578,7 +578,7 @@ namespace DieFledermaus
                     if (_keySize == 0)
                     {
                         _keySize = keySize;
-                        _keySizes = new KeySizes(keySize, keySize, 0);
+                        _keySizes = new KeySizeList(keySize);
                     }
                     else if (_keySize != keySize)
                         throw new InvalidDataException(TextResources.FormatBadZ);
@@ -757,12 +757,12 @@ namespace DieFledermaus
                 throw new InvalidOperationException(TextResources.AlreadyDecrypted);
         }
 
-        private KeySizes _keySizes;
+        private KeySizeList _keySizes;
         /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
+        /// Gets a <see cref="KeySizeList"/> indicating all valid key sizes
         /// for the current encryption, or <c>null</c> if the current archive is not encrypted.
         /// </summary>
-        public KeySizes KeySizes { get { return _keySizes; } }
+        public KeySizeList LegalKeySizes { get { return _keySizes; } }
 
         /// <summary>
         /// Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
@@ -1399,7 +1399,7 @@ namespace DieFledermaus
         {
             if (_keySizes == null) return false;
 
-            return DieFledermausStream.IsValidKeyBitSize(bitCount, _keySizes);
+            return _keySizes.Contains(bitCount);
         }
 
         /// <summary>
@@ -1412,7 +1412,7 @@ namespace DieFledermaus
         {
             if (_keySizes == null || byteCount > int.MaxValue >> 3) return false;
 
-            return DieFledermausStream.IsValidKeyBitSize(byteCount << 3, _keySizes);
+            return _keySizes.Contains(byteCount << 3);
         }
 
         /// <summary>

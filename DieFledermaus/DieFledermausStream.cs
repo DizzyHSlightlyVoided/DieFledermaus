@@ -651,7 +651,7 @@ namespace DieFledermaus
             return true;
         }
 
-        internal static KeySizes _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
+        internal static KeySizeList _getKeySizes(MausEncryptionFormat encryptionFormat, out int blockByteCount)
         {
             switch (encryptionFormat)
             {
@@ -660,7 +660,7 @@ namespace DieFledermaus
                     return null;
                 case MausEncryptionFormat.Aes:
                     blockByteCount = _blockByteCtAes;
-                    return new KeySizes(128, 256, 64);
+                    return new KeySizeList(new int[] { 128, 192, 256 });
                 default:
                     throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
             }
@@ -695,13 +695,6 @@ namespace DieFledermaus
         /// Gets the encryption format of the current instance.
         /// </summary>
         public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
-
-        private KeySizes _keySizes;
-        /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object indicating all valid key sizes
-        /// for <see cref="EncryptionFormat"/>, or <c>null</c> if the current stream is not encrypted.
-        /// </summary>
-        public KeySizes KeySizes { get { return _keySizes; } }
 
         private MausCompressionFormat _cmpFmt;
         /// <summary>
@@ -832,7 +825,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the length of the specified value is less than the maximum key length specified by <see cref="KeySizes"/>.
+        /// In a set operation, the length of the specified value is not equal to the maximum key length specified by <see cref="LegalKeySizes"/>.
         /// </exception>
         public byte[] Salt
         {
@@ -846,11 +839,20 @@ namespace DieFledermaus
                 _ensureCanWrite();
 
                 if (value == null) throw new ArgumentNullException(nameof(value));
-                if (value.Length < (_keySizes.MaxSize >> 3))
+                if (value.Length != (_keySizes.MaxSize >> 3))
                     throw new ArgumentException(TextResources.SaltLength, nameof(value));
 
                 _salt = (byte[])value.Clone();
             }
+        }
+
+        private KeySizeList _keySizes;
+        /// <summary>
+        /// Gets a list containing all valid key values for <see cref="KeySize"/>, or <c>null</c> if the current stream is not encrypted.
+        /// </summary>
+        public KeySizeList LegalKeySizes
+        {
+            get { return _keySizes; }
         }
 
         private int _keySize;
@@ -866,7 +868,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
+        /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.
         /// </exception>
         public int KeySize
         {
@@ -876,52 +878,10 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
-                if (!IsValidKeyBitSize(value))
+                if (!_keySizes.Contains(value))
                     throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
                 _keySize = value;
             }
-        }
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for a key in bytes.
-        /// </summary>
-        /// <param name="byteCount">The number of bytes to test.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        public bool IsValidKeyByteSize(int byteCount)
-        {
-            if (_keySizes == null || byteCount > int.MaxValue >> 3) return false;
-
-            return IsValidKeyBitSize(byteCount << 3, _keySizes);
-        }
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for a key in bits.
-        /// </summary>
-        /// <param name="bitCount">The number of bits to test.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        public bool IsValidKeyBitSize(int bitCount)
-        {
-            if (_keySizes == null) return false;
-
-            return IsValidKeyBitSize(bitCount, _keySizes);
-        }
-
-        internal static bool IsValidKeyBitSize(int bitCount, KeySizes _keySizes)
-        {
-            if (_keySizes == null) return false;
-
-            if (bitCount < _keySizes.MinSize || bitCount > _keySizes.MaxSize) return false;
-
-            if (bitCount == _keySizes.MaxSize) return true;
-
-            for (int i = _keySizes.MinSize; i <= bitCount; i++)
-            {
-                if (i == bitCount)
-                    return true;
-            }
-            return false;
         }
 
         private void _ensureCanSetKey()
@@ -1828,7 +1788,7 @@ namespace DieFledermaus
                 {
                     _hmacExpected = hash;
 
-                    int keySize = _keySizes.MaxSize >> 3;
+                    int keySize = _keySize >> 3;
                     _salt = ReadBytes(reader, keySize);
 
                     _iv = ReadBytes(reader, _blockByteCount);
@@ -1978,7 +1938,7 @@ namespace DieFledermaus
                     if (_keySize == 0)
                     {
                         _keySize = keyBits;
-                        _keySizes = new KeySizes(keyBits, keyBits, 0);
+                        _keySizes = new KeySizeList(keyBits);
                     }
                     else if (keyBits != _keySize)
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -2887,7 +2847,7 @@ namespace DieFledermaus
             return buffer;
         }
 
-        internal static SymmetricAlgorithm GetAlgorithm(byte[] _key, byte[] _iv)
+        internal static SymmetricAlgorithm GetAES(byte[] _key, byte[] _iv)
         {
             SymmetricAlgorithm alg = Aes.Create();
             alg.Key = _key;
@@ -2901,7 +2861,7 @@ namespace DieFledermaus
 
             MausBufferStream output = new MausBufferStream();
 
-            using (SymmetricAlgorithm alg = GetAlgorithm(_key, _iv))
+            using (SymmetricAlgorithm alg = GetAES(_key, _iv))
             using (ICryptoTransform transform = alg.CreateDecryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
@@ -2927,7 +2887,7 @@ namespace DieFledermaus
         {
             o.OnProgress(MausProgressState.Encrypting);
 
-            using (SymmetricAlgorithm alg = GetAlgorithm(_key, _iv))
+            using (SymmetricAlgorithm alg = GetAES(_key, _iv))
             using (ICryptoTransform transform = alg.CreateEncryptor())
             {
                 CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
@@ -3416,11 +3376,11 @@ namespace DieFledermaus
     public enum MausEncryptionFormat
     {
         /// <summary>
-        /// The DieFledermaus stream is not encrypted.
+        /// No encryption.
         /// </summary>
         None,
         /// <summary>
-        /// The DieFledermaus stream is encrypted using the Advanced Encryption Standard algorithm.
+        /// The Advanced Encryption Standard algorithm.
         /// </summary>
         Aes,
     }

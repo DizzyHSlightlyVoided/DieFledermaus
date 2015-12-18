@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.ComponentModel;
-using System.Security.Cryptography;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
@@ -78,7 +77,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not the length specified by <see cref="BlockSize"/>.
+        /// In a set operation, the length of the specified value is not equal to the length specified by <see cref="BlockSize"/>.
         /// </exception>
         byte[] IV { get; set; }
         /// <summary>
@@ -94,7 +93,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not the maximum length specified by <see cref="KeySizes"/>.
+        /// In a set operation, the length of the specified value is not equal to the maximum length specified by <see cref="LegalKeySizes"/>.
         /// </exception>
         byte[] Salt { get; set; }
 
@@ -123,14 +122,15 @@ namespace DieFledermaus
         bool IsDecrypted { get; }
 
         /// <summary>
-        /// Gets a <see cref="System.Security.Cryptography.KeySizes"/> object specifying the length.
-        /// </summary>
-        KeySizes KeySizes { get; }
-
-        /// <summary>
         /// Gets the HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
         /// </summary>
         byte[] HMAC { get; }
+
+        /// <summary>
+        /// Gets a collection containing the valid values for <see cref="KeySize"/>,
+        /// or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// </summary>
+        KeySizeList LegalKeySizes { get; }
 
         /// <summary>
         /// Gets and sets the number of bits in the key.
@@ -144,7 +144,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is in read-only mode.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
+        /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.
         /// </exception>
         int KeySize { get; set; }
 
@@ -152,22 +152,6 @@ namespace DieFledermaus
         /// Decrypts the current instance.
         /// </summary>
         void Decrypt();
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for the key, in bits.
-        /// </summary>
-        /// <param name="bitCount">The number of bits to test.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        bool IsValidKeyBitSize(int bitCount);
-
-        /// <summary>
-        /// Determines whether the specified value is a valid length for the key, in bytes.
-        /// </summary>
-        /// <param name="byteCount">The number of bytes to test.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid bit count according to <see cref="KeySizes"/>;
-        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
-        bool IsValidKeyByteSize(int byteCount);
 
         /// <summary>
         /// Raised when the current instance is reading or writing data, and the progress state meaningfully changes.
