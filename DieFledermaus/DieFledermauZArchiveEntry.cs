@@ -304,7 +304,7 @@ namespace DieFledermaus
                 MausStream.DSASignIdBytes = value;
             }
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether the current instance is signed using a DSA private key.
         /// </summary>
@@ -626,7 +626,7 @@ namespace DieFledermaus
             if (_arch.Mode == MauZArchiveMode.Read)
             {
                 LoadData();
-                return MausStream.Hash;
+                return MausStream.ComputeHash();
             }
 
             if (_writingStream == null || _writingStream.CanWrite)

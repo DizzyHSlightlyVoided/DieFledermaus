@@ -2462,14 +2462,12 @@ namespace DieFledermaus
 
             OnProgress(_encFmt == MausEncryptionFormat.None ? MausProgressState.VerifyingHash : MausProgressState.ComputingHash);
             byte[] hashActual = ComputeHash(_bufferStream, _hashFunc);
-            _bufferStream.Reset();
             if (_encFmt == MausEncryptionFormat.None || _rsaSignature != null)
             {
                 if (_encFmt == MausEncryptionFormat.None)
                 {
                     if (!CompareBytes(hashActual, _hashExpected))
                         throw new InvalidDataException(TextResources.BadChecksum);
-                    OnProgress(new MausProgressEventArgs(MausProgressState.VerifyingHashCompleted, hashActual));
                 }
                 _hashExpected = hashActual;
                 if (_rsaSignature != null)
@@ -2856,6 +2854,7 @@ namespace DieFledermaus
             IDigest shaHash = GetDigestObject(hashFunc);
 
             inputStream.BufferCopyTo(shaHash.BlockUpdate);
+            inputStream.Reset();
 
             byte[] output = new byte[shaHash.GetDigestSize()];
             shaHash.DoFinal(output, 0);
@@ -2867,6 +2866,7 @@ namespace DieFledermaus
             HMac hmac = new HMac(GetDigestObject(hashFunc));
             hmac.Init(new KeyParameter(key));
             inputStream.BufferCopyTo(hmac.BlockUpdate);
+            inputStream.Reset();
 
             byte[] output = new byte[hmac.GetMacSize()];
             hmac.DoFinal(output, 0);
@@ -2920,7 +2920,6 @@ namespace DieFledermaus
             if (!CompareBytes(actualHmac, _hmac))
                 throw new CryptographicException(TextResources.BadKey);
 
-            output.Reset();
             return output;
         }
 
@@ -2939,10 +2938,7 @@ namespace DieFledermaus
             output.Reset();
             _bufferStream.Reset();
             o.OnProgress(MausProgressState.ComputingHMAC);
-            byte[] hmac = ComputeHmac(_bufferStream, _key, hashFunc);
-            o.OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHMACCompleted, hmac));
-            return hmac;
-
+            return ComputeHmac(_bufferStream, _key, hashFunc);
         }
 
         #region Disposal
@@ -3012,7 +3008,6 @@ namespace DieFledermaus
             {
                 OnProgress(MausProgressState.ComputingHash);
                 hashChecksum = ComputeHash(_bufferStream, _hashFunc);
-                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                 if (_rsaSignParamBC != null)
                 {
                     OnProgress(MausProgressState.SigningRSA);
@@ -3029,7 +3024,6 @@ namespace DieFledermaus
                     {
                         throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
                     }
-                    _bufferStream.Reset();
                 }
                 else rsaSignature = null;
                 if (_dsaSignParamBC != null)
@@ -3045,7 +3039,6 @@ namespace DieFledermaus
                     {
                         throw new CryptographicException(TextResources.DsaSigPrivInvalid, x);
                     }
-                    _bufferStream.Reset();
                 }
                 else dsaSignature = null;
                 if (_ecdsaSignParamBC != null)
@@ -3060,7 +3053,6 @@ namespace DieFledermaus
                     {
                         throw new CryptographicException(TextResources.EcdsaSigPrivInvalid, x);
                     }
-                    _bufferStream.Reset();
                 }
                 else ecdsaSignature = null;
             }
@@ -3162,7 +3154,6 @@ namespace DieFledermaus
                         _bufferStream.Reset();
                         OnProgress(MausProgressState.ComputingHash);
                         hashChecksum = ComputeHash(_bufferStream, _hashFunc);
-                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                     }
                     writer.Write(hashChecksum);
 
