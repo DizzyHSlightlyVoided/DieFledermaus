@@ -339,4 +339,7 @@
   <data name="RsaNeedPublic" xml:space="preserve">
     <value>The specified value is not a valid public or private key.</value>
   </data>
+  <data name="BadIndexRange" xml:space="preserve">
+    <value>The specified index plus the number of elements in the collection is greater than the length of the specified array.</value>
+  </data>
 </root>

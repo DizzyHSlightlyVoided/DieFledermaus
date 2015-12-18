@@ -196,6 +196,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified index plus the number of elements in the collection is greater than the length of the specified array..
+        /// </summary>
+        internal static string BadIndexRange {
+            get {
+                return ResourceManager.GetString("BadIndexRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The password is invalid..
         /// </summary>
         internal static string BadKey {

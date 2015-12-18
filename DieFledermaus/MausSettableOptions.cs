@@ -369,6 +369,8 @@ namespace DieFledermaus
             if (array.Rank != 1 || array.GetLowerBound(0) != 0)
                 throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
             if (index < 0) throw new ArgumentOutOfRangeException(TextResources.OutOfRangeLessThanZero, index, nameof(index));
+            if (index + Count > array.Length)
+                throw new ArgumentException(TextResources.BadIndexRange);
 
             TValue[] mArray = array as TValue[];
 
@@ -386,7 +388,7 @@ namespace DieFledermaus
                 if (oArray == null)
                 {
                     foreach (TValue opt in _set)
-                        mArray.SetValue(opt, i++);
+                        array.SetValue(opt, i++);
                 }
                 else
                 {
