@@ -798,7 +798,7 @@ namespace DieFledermaus
             get
             {
                 if (_iv == null) return null;
-                return (byte[])_salt.Clone();
+                return (byte[])_iv.Clone();
             }
             set
             {
