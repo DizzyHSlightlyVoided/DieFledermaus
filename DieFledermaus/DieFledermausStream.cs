@@ -2938,7 +2938,9 @@ namespace DieFledermaus
             output.Reset();
             _bufferStream.Reset();
             o.OnProgress(MausProgressState.ComputingHMAC);
-            return ComputeHmac(_bufferStream, _key, hashFunc);
+            byte[] hmac = ComputeHmac(_bufferStream, _key, hashFunc);
+            o.OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHMACCompleted, hmac));
+            return hmac;
         }
 
         #region Disposal
