@@ -388,6 +388,8 @@ namespace DieFledermaus.Cli
                                         Console.Error.WriteLine(TextResources.TimeMGet, curInfo.FullName);
                                 }
                             }
+                            if (verbose.IsSet)
+                                Console.WriteLine();
                         }
 
                         if (verbose.IsSet)
@@ -609,11 +611,33 @@ namespace DieFledermaus.Cli
             }
         }
 
+        private const string SpinnyChars = "-\\/";
+        private static int SpinnyDex = 0;
+        private static bool SpinnyGot = false;
+
         private static void Entry_Progress(object sender, MausProgressEventArgs e)
         {
             DieFledermauZItem item = (DieFledermauZItem)sender;
-            Console.WriteLine(item.Path);
-            item.Progress -= Entry_Progress;
+
+            if (e.State == MausProgressState.CompletedWriting)
+            {
+                SpinnyGot = false;
+                Console.WriteLine("\b \b");
+                return;
+            }
+
+            if (SpinnyGot)
+                Console.Write("\b");
+            else
+            {
+                SpinnyGot = true;
+                Console.Write(item.Path);
+                Console.Write(' ');
+            }
+            Console.Write(SpinnyChars[SpinnyDex]);
+            SpinnyDex++;
+            SpinnyDex %= 3;
+
         }
 
         private static bool DoFailDecrypt(DieFledermauZItem entry, ClParamFlag interactive, int i, ref string ssPassword)
