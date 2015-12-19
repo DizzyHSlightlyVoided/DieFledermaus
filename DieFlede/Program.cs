@@ -115,9 +115,16 @@ namespace DieFledermaus.Cli
                     "hash", "hash-funcs", TextResources.PNameHash, TextResources.PNameHashFunc);
             }
 
-            ClParamFlag encAes = new ClParamFlag(parser, TextResources.HelpMAes, '\0', "AES");
-            encAes.MutualExclusives.Add(extract);
-            extract.OtherMessages.Add(encAes, NoEntryExtract);
+            ClParamEnum<MausEncryptionFormat> cEncFmt;
+            {
+                Dictionary<string, MausEncryptionFormat> locArgs = new Dictionary<string, MausEncryptionFormat>()
+                {
+                    { "AES", MausEncryptionFormat.Aes },
+                    { "Twofish", MausEncryptionFormat.Twofish },
+                    { "Threefish", MausEncryptionFormat.Threefish }
+                };
+                cEncFmt = new ClParamEnum<MausEncryptionFormat>(parser, TextResources.HelpMEncFmt, locArgs, null, '\0', "encryption", TextResources.PNameEncFmt);
+            }
 
             ClParamFlag hide = new ClParamFlag(parser, TextResources.HelpMHide, '\0', "hide", TextResources.PNameHide);
             extract.MutualExclusives.Add(hide);
@@ -189,13 +196,13 @@ namespace DieFledermaus.Cli
                         return Return(-1, interactive);
                     }
 
-                    if (encAes.IsSet)
+                    if (cEncFmt.IsSet)
                     {
                         if (!interactive.IsSet)
                         {
                             Console.Error.WriteLine(TextResources.EncryptionNoOpts);
                             ShowHelp(clParams, false);
-                            return Return(-1, interactive);
+                            return -1;
                         }
                     }
                     else if (hide.IsSet)
@@ -250,7 +257,7 @@ namespace DieFledermaus.Cli
                             if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
                                 return -3;
 
-                            if (CreateEncrypted(encAes, out encFormat, out ssPassword))
+                            if (CreateEncrypted(cEncFmt, out encFormat, out ssPassword))
                                 return -4;
 
                             if (archiveFile.Value == null)
@@ -343,7 +350,7 @@ namespace DieFledermaus.Cli
                             return -3;
 
                         MausEncryptionFormat encFormat = MausEncryptionFormat.None;
-                        if (CreateEncrypted(encAes, out encFormat, out ssPassword))
+                        if (CreateEncrypted(cEncFmt, out encFormat, out ssPassword))
                             return -4;
 
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
@@ -363,7 +370,7 @@ namespace DieFledermaus.Cli
                                 if (verbose.IsSet)
                                     entry.Progress += Entry_Progress;
 
-                                if (encAes.IsSet && !hide.IsSet)
+                                if (cEncFmt.IsSet && !hide.IsSet)
                                     entry.Password = ssPassword;
 
                                 using (Stream writeStream = entry.OpenWrite())
@@ -683,12 +690,12 @@ namespace DieFledermaus.Cli
             return string.Format(TextResources.ListEncryptedEntry, i + 1);
         }
 
-        private static bool CreateEncrypted(ClParamFlag encAes, out MausEncryptionFormat encFormat, out string ssPassword)
+        private static bool CreateEncrypted(ClParamEnum<MausEncryptionFormat> cEncFmt, out MausEncryptionFormat encFormat, out string ssPassword)
         {
             encFormat = MausEncryptionFormat.None;
-            if (encAes.IsSet) //Only true if Interactive is also true
+            if (cEncFmt.IsSet) //Only true if Interactive is also true
             {
-                encFormat = MausEncryptionFormat.Aes;
+                encFormat = cEncFmt.Value.Value;
 
                 if (EncryptionPrompt(null, encFormat, out ssPassword))
                     return true;

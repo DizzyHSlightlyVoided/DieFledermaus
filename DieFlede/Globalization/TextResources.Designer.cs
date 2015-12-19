@@ -268,15 +268,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Encrypt using AES encryption..
-        /// </summary>
-        internal static string HelpMAes {
-            get {
-                return ResourceManager.GetString("HelpMAes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The archive file to extract from or create..
         /// </summary>
         internal static string HelpMArchive {
@@ -291,6 +282,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpMCreate {
             get {
                 return ResourceManager.GetString("HelpMCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypt the archive with the specified format..
+        /// </summary>
+        internal static string HelpMEncFmt {
+            get {
+                return ResourceManager.GetString("HelpMEncFmt", resourceCulture);
             }
         }
         
@@ -678,6 +678,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameCreate {
             get {
                 return ResourceManager.GetString("PNameCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to encryption.
+        /// </summary>
+        internal static string PNameEncFmt {
+            get {
+                return ResourceManager.GetString("PNameEncFmt", resourceCulture);
             }
         }
         

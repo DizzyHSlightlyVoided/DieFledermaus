@@ -321,10 +321,6 @@
   <data name="EncryptedPrompt1Pwd" xml:space="preserve">
     <value>Enter password</value>
   </data>
-  <data name="HelpMAes" xml:space="preserve">
-    <value>Encrypt using AES encryption.</value>
-    <comment>Help description.</comment>
-  </data>
   <data name="EncryptedBadKey" xml:space="preserve">
     <value>The key or password is incorrect!</value>
   </data>
@@ -471,6 +467,14 @@
   </data>
   <data name="PNameHashFunc" xml:space="preserve">
     <value>hash-func</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="HelpMEncFmt" xml:space="preserve">
+    <value>Encrypt the archive with the specified format.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameEncFmt" xml:space="preserve">
+    <value>encryption</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
 </root>
