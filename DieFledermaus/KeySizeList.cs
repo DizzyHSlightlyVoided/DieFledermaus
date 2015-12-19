@@ -47,7 +47,7 @@ namespace DieFledermaus
         , IReadOnlyList<int>
 #endif
     {
-        private int[] _items;
+        private readonly int[] _items;
 
         #region Constructors
         /// <summary>
@@ -74,15 +74,6 @@ namespace DieFledermaus
 
             _min = _items[0];
             _max = _items[_items.Length - 1];
-
-            int prev = _items[1];
-            _skip = prev - _items[0];
-
-            for (int i = 2; _skip != 0 && i < _items.Length; prev = _items[i], i++)
-            {
-                if (_items[i] - prev != _skip)
-                    _skip = 0;
-            }
         }
 
         /// <summary>
@@ -128,10 +119,7 @@ namespace DieFledermaus
             if (value1 == value2)
                 _items = new int[] { value1 };
             else
-            {
-                _skip = _max - _min;
                 _items = new int[] { _min, _max };
-            }
         }
         #endregion
 
@@ -167,23 +155,17 @@ namespace DieFledermaus
             get { return _items.Length; }
         }
 
-        private int _min;
+        private readonly int _min;
         /// <summary>
         /// Gets the minimum value in the collection.
         /// </summary>
         public int MinSize { get { return _min; } }
 
-        private int _max;
+        private readonly int _max;
         /// <summary>
         /// Gets the maximum value in the collection.
         /// </summary>
         public int MaxSize { get { return _max; } }
-
-        private int _skip;
-        /// <summary>
-        /// Gets the interval between each element in the list, or 0 if the interval is not fixed.
-        /// </summary>
-        public int SkipSize { get { return _skip; } }
 
         /// <summary>
         /// Determines if the specified value exists in the list.
