@@ -538,11 +538,20 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus stream is not encrypted..
+        ///   Looks up a localized string similar to The current instance is not encrypted..
         /// </summary>
         internal static string NotEncrypted {
             get {
                 return ResourceManager.GetString("NotEncrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified index is less than 0 or is greater than or equal to the length of the list..
+        /// </summary>
+        internal static string OutOfRangeIndex {
+            get {
+                return ResourceManager.GetString("OutOfRangeIndex", resourceCulture);
             }
         }
         
@@ -570,6 +579,15 @@ namespace DieFledermaus.Globalization {
         internal static string OutOfRangeLzma {
             get {
                 return ResourceManager.GetString("OutOfRangeLzma", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value is less than {0} or is greater than {1}..
+        /// </summary>
+        internal static string OutOfRangeMinMax {
+            get {
+                return ResourceManager.GetString("OutOfRangeMinMax", resourceCulture);
             }
         }
         

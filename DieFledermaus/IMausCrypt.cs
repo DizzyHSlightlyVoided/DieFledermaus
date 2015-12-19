@@ -71,7 +71,9 @@ namespace DieFledermaus
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// <para>In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// In a set operation, the specified value is <c>null</c>.
@@ -87,7 +89,9 @@ namespace DieFledermaus
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// <para>In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// In a set operation, the specified value is <c>null</c>.
@@ -112,7 +116,7 @@ namespace DieFledermaus
         MausHashFunction HashFunction { get; set; }
 
         /// <summary>
-        /// Gets the number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// Gets the maximum number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         int BlockSize { get; }
 
@@ -125,6 +129,22 @@ namespace DieFledermaus
         /// Gets the HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
         /// </summary>
         byte[] HMAC { get; }
+
+        /// <summary>
+        /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than <see cref="int.MaxValue"/> minus 9001.
+        /// </exception>
+        int PBKDF2CycleCount { get; set; }
 
         /// <summary>
         /// Gets a collection containing the valid values for <see cref="KeySize"/>,

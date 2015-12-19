@@ -223,10 +223,8 @@ namespace DieFledermaus
     /// <param name="e">A <see cref="MausProgressEventArgs"/> object containing information about the event.</param>
     public delegate void MausProgressEventHandler(object sender, MausProgressEventArgs e);
 
-    internal interface IMausProgress : ICodeProgress
+    internal interface IMausProgress : ICodeProgress, IMausCrypt
     {
-        event MausProgressEventHandler Progress;
-
         void OnProgress(MausProgressState state);
         void OnProgress(MausProgressEventArgs e);
     }

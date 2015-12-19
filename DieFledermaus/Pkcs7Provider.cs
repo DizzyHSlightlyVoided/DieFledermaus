@@ -42,25 +42,43 @@ namespace DieFledermaus
             byte[] paddedMessage = new byte[oldLen + addCount];
             Array.Copy(unpadded, paddedMessage, oldLen);
 
-            for (int i = oldLen; i < paddedMessage.Length; i++)
-                paddedMessage[i] = (byte)addCount;
+            PadMessage(paddedMessage, oldLen, (byte)addCount);
             return paddedMessage;
         }
 
-        public static byte[] RemovePadding(byte[] padded, int blockSize)
+        private static void PadMessage(byte[] buffer, int offset, byte addCount)
         {
-            if (padded.Length < blockSize || (padded.Length % blockSize) != 0)
-                return padded;
+            for (int i = offset; i < buffer.Length; i++)
+                buffer[i] = addCount;
+        }
+
+        public static int ApplyPadding(byte[] buffer, int offset)
+        {
+            int addCount = buffer.Length - offset;
+            PadMessage(buffer, offset, (byte)addCount);
+            return addCount;
+        }
+
+        public static int CountPadding(byte[] padded, int blockSize)
+        {
+            if (padded.Length < blockSize || (padded.Length % blockSize != 0))
+                return 0;
 
             byte padCount = padded[padded.Length - 1];
             if (padCount > blockSize || padCount == 0)
-                return padded;
+                return 0;
 
             for (int i = 2; i <= padCount; i++)
             {
                 if (padded[padded.Length - i] != padCount)
-                    return padded;
+                    return 0;
             }
+            return padCount;
+        }
+
+        public static byte[] RemovePadding(byte[] padded, int blockSize)
+        {
+            int padCount = CountPadding(padded, blockSize);
 
             byte[] unpaddedMessage = new byte[padded.Length - padCount];
 

@@ -79,6 +79,18 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Creates a new instance using elements copied from the specified collection.
+        /// </summary>
+        /// <param name="source">A collection whose elements will be copied to the new instance.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="source"/> is <c>null</c>.
+        /// </exception>
+        public KeySizeList(params int[] source)
+            : this((IEnumerable<int>)source)
+        {
+        }
+
+        /// <summary>
         /// Creates a new instance containing only the specified value.
         /// </summary>
         /// <param name="value">The value to set.</param>
@@ -101,7 +113,7 @@ namespace DieFledermaus
             get
             {
                 if (index < 0 || index >= _items.Length)
-                    throw new ArgumentOutOfRangeException(nameof(index), index, new IndexOutOfRangeException().Message); //TODO: Index out of range!
+                    throw new ArgumentOutOfRangeException(nameof(index), index, TextResources.OutOfRangeIndex);
                 return _items[index];
             }
         }
@@ -157,6 +169,9 @@ namespace DieFledermaus
         /// <returns>The index in the list of <paramref name="value"/>, or -1 if <paramref name="value"/> was not found.</returns>
         public int IndexOf(int value)
         {
+            if (value == _min) return 0;
+            if (value == _max)
+                return _items.Length - 1;
             if (value < _min || value > _max)
                 return -1;
             for (int i = 0; value <= _items[i]; i++)

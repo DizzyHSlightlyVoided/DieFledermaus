@@ -50,7 +50,9 @@ The following values are defined for the default implementation:
 * `NK` - *No parameters.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
 * `DEF` - *No parameters.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
 * `LZMA` - *No parameters.* Indicates that the file is compressed using [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size must be less than or equal to 64 megabytes.
-* `AES` - *One parameter.* The file is AES-encrypted. To indicate the key length, the parameter must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256. Must be in plaintext.
+* `AES` - *One parameter.* The file is encrypted using the [AES algorithm](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 128-, 192-, or 256-bit keys. To indicate the key length, the parameter must be either the three-byte string "128" (that is, a string containing the ASCII characters "1" (`0x31`), "2" (`0x32`), and "8" (`0x38`)), "192", or "256"; or a 16-bit integer (2 bytes) in little-endian order equal to 128, 192, or 256. Must be in plaintext.
+* `Twofish` - *One parameter.* The file is encrypted using the [Twofish algorithm](https://en.wikipedia.org/wiki/Twofish), with 128-, 192-, or 256-bit keys. The parameter has the same format as `AES`.
+* `Threefish` - *One parameter.* The file is encrypted using the [Threefish algorithm](https://en.wikipedia.org/wiki/Threefish), with 256-, 512-, and 1024-bit keys. The parameter has the same format as `AES` and `Twofish`, but with a different set of options.
 * `DeL` - *One parameter.* **De**compressed **L**ength, or 
 **De**komprimierte **L**änge. The parameter is a signed 64-bit integer containing the number of bytes in the uncompressed data. If the archive is not encrypted, this value must be equal to **Decompressed Length**. This value should be included in the **Encrypted Format** array when the archive is encrypted.
 * `Ers` - *One parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
@@ -78,9 +80,9 @@ A decoder must not attempt to decode an archive if it finds any unexpected or un
 
 Encryption
 ----------
-DieFledermaus supports [AES encryption](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256, 192, and 128-bit keys. For the sake of consistency, an encoder must derive the key from a UTF-8 text-based password. A decoder which is intended more for programmers than for end-users may allow setting the key directly.
+DieFledermaus supports encryption using the [AES algorithm](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256-, 192-, and 128-bit keys; the [Twofish algorithm](http://en.wikipedia.org/wiki/Twofish), with 256-, 192-, and 128-bit keys; and the [Threefish algorithm](http://en.wikipedia.org/wiki/Threefish), with 256-, 512-, and 1024-bit keys. For the sake of consistency, an encoder must derive the key from a UTF-8 text-based password. A decoder which is intended more for programmers than for end-users may allow setting the key directly.
 
-An encoder should use 256-bit keys, as they are the most secure. A decoder must be able to decode all key sizes, of course.
+An encoder should use the maximum key size for the specified algorithm, as they are the most secure. A decoder must be able to decode all key sizes, of course.
 
 ### Changes to the format
 When a DieFledermaus archive is encrypted, the following DieFledermaus fields behave slightly differently:
@@ -97,14 +99,18 @@ The encrypted data contains:
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-In order to derive the AES key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm using an HMAC with specified hash function, with at least 9001 iterations and an output length equal to that of the key.
+In order to derive the binary key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm, using an HMAC with specified hash function, with at least 9001 iterations, and with an output length equal to that of the key.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
 Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document. That said, an encoder must require a minimum length of 1 byte; you've got to have *some* standards.
 
 ### Padding
-AES is a **block cipher**, which divides the data in to *blocks* of a certain size (128 bits in the case of AES, or 16 bytes). The plaintext must be [padded](https://en.wikipedia.org/wiki/Padding_%28cryptography%29) using the PKCS7 algorithm, and the padding must be added *after* the HMAC is computed. If the length of the compressed plaintext is not a multiple of 16, it must be padded with enough bytes to make it a multiple of 16; the value of each padding byte is equal to the total number of bytes which were added. For example, if the original length is 50 bytes, 14 bytes are added to make a total of 64, and each byte has a value of `0x0e` (14 decimal). If the original value *is* a multiple of 16, then an extra block of 16 bytes must be added to the plaintext, each with a value of `0x10` (16 decimal). In short, extra bytes of padding must always be added to the encrypted value. The number of padding bytes must not exceed the size of a single block.
+AES, Twofish, and Threefish are [block ciphers](https://en.wikipedia.org/wiki/Block_cipher), which means that they divide the data in to *blocks* of a certain size (128 bits in the case of AES and Twofish, or 16 bytes; and with a block size equal to the key size, in the case of Threefish, equal to 32, 64, and 128 bytes). The plaintext must be [padded](https://en.wikipedia.org/wiki/Padding_%28cryptography%29) using the PKCS7 algorithm, and the padding must be added *after* the HMAC is computed. If the length of the compressed plaintext is not a multiple of the block size, it must be padded with enough bytes to make it a multiple of the block size; the value of each padding byte is equal to the total number of bytes which were added.
+
+For example, in the case of AES: the original length is 50 bytes. 14 bytes are added to make a total of 64, and each byte has a value of `0x0e` (14 decimal).
+
+If the original value *is* a multiple of 16, then an extra block of 16 bytes must be added to the plaintext, each with a value of `0x10` (16 decimal). In short, extra bytes of padding must always be added to the encrypted value. The number of padding bytes must not exceed the size of a single block.
 
 If the decrypted value has invalid padding (i.e. the last two bytes in the last block are `6f 02`), this probably means that the key or password is invalid. However, there is effectively a 1 in 256 chance that an incorrect key will transform the last byte in the stream into `0x01`, which is technically valid padding; therefore, the decrypted value must still be compared against the transmitted HMAC after the padding is removed.
 

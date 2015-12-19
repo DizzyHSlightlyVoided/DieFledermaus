@@ -280,9 +280,9 @@ namespace DieFledermaus
 
                 _hmacExpected = DieFledermausStream.ReadBytes(reader, hashSize);
                 _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
-                _iv = DieFledermausStream.ReadBytes(reader, DieFledermausStream._blockByteCtAes);
+                _iv = DieFledermausStream.ReadBytes(reader, _blockByteCount);
 
-                curOffset += hashSize + _salt.Length + _addSize - 12;
+                curOffset += hashSize + _salt.Length + _blockByteCount - 4;
             }
         }
 
@@ -498,9 +498,9 @@ namespace DieFledermaus
                 throw new CryptographicException(TextResources.KeyNotSetZ);
 
             OnProgress(MausProgressState.BuildingKey);
-            byte[] _key = DieFledermausStream.GetKey(_password, _salt, _keySize, _pkCount, _hashFunc);
+            byte[] _key = DieFledermausStream.GetKey(this);
 
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _bufferStream))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
@@ -511,7 +511,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.CompletedLoading);
         }
 
-        private bool _gotEnc, _gotHash;
+        private bool _gotHash;
 
         internal void ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
@@ -521,68 +521,10 @@ namespace DieFledermaus
             {
                 string curOption = DieFledermausStream.GetString(reader, ref curOffset, false);
 
-                if (curOption.Equals(DieFledermausStream._kEncAes, StringComparison.Ordinal))
+                if (DieFledermausStream.ReadEncFormat(curOption, reader, optLen, ref i, ref curOffset, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount))
                 {
-                    if (!fromEncrypted)
+                    if (!fromEncrypted && _encryptedOptions == null)
                         _encryptedOptions = new SettableOptions(this);
-
-                    if (_gotEnc)
-                    {
-                        if (_encFmt != MausEncryptionFormat.Aes)
-                            throw new InvalidDataException(TextResources.FormatBadZ);
-                    }
-                    else
-                    {
-                        _gotEnc = true;
-                        _encFmt = MausEncryptionFormat.Aes;
-                    }
-                    _blockByteCount = DieFledermausStream._blockByteCtAes;
-                    CheckAdvance(optLen, ref i);
-                    byte[] aesBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset, false);
-                    int keySize;
-                    if (aesBytes.Length == 3)
-                    {
-                        string aesName = DieFledermausStream._textEncoding.GetString(aesBytes);
-
-                        switch (aesName)
-                        {
-                            case DieFledermausStream._keyStrAes256:
-                                keySize = DieFledermausStream._keyBitAes256;
-                                break;
-                            case DieFledermausStream._keyStrAes192:
-                                keySize = DieFledermausStream._keyBitAes192;
-                                break;
-                            case DieFledermausStream._keyStrAes128:
-                                keySize = DieFledermausStream._keyBitAes128;
-                                break;
-                            default:
-                                throw new NotSupportedException(TextResources.FormatUnknownZ);
-                        }
-                    }
-                    else if (aesBytes.Length == 2)
-                    {
-                        keySize = aesBytes[0] | aesBytes[1] << 8;
-
-                        switch (keySize)
-                        {
-                            case DieFledermausStream._keyBitAes256:
-                            case DieFledermausStream._keyBitAes192:
-                            case DieFledermausStream._keyBitAes128:
-                                break;
-                            default:
-                                throw new NotSupportedException(TextResources.FormatUnknownZ);
-                        }
-                    }
-                    else throw new NotSupportedException(TextResources.FormatUnknownZ);
-
-                    if (_keySize == 0)
-                    {
-                        _keySize = keySize;
-                        _keySizes = new KeySizeList(keySize);
-                    }
-                    else if (_keySize != keySize)
-                        throw new InvalidDataException(TextResources.FormatBadZ);
-
                     continue;
                 }
 
@@ -765,13 +707,13 @@ namespace DieFledermaus
         public KeySizeList LegalKeySizes { get { return _keySizes; } }
 
         /// <summary>
-        /// Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockSize { get { return _blockByteCount << 3; } }
 
         private int _blockByteCount;
         /// <summary>
-        /// Gets the number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
@@ -792,6 +734,33 @@ namespace DieFledermaus
         }
 
         private int _pkCount;
+        /// <summary>
+        /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than <see cref="int.MaxValue"/> minus 9001.
+        /// </exception>
+        public int PBKDF2CycleCount
+        {
+            get { return _pkCount; }
+            set
+            {
+                EnsureCanWrite();
+                if (_encFmt == MausEncryptionFormat.None)
+                    throw new NotSupportedException(TextResources.NotEncrypted);
+                if (value < 0 || value > DieFledermausStream.maxPkCount)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, DieFledermausStream.maxPkCount));
+                _pkCount = value;
+            }
+        }
 
         private byte[] _iv;
         /// <summary>
@@ -801,7 +770,7 @@ namespace DieFledermaus
         /// In a set operation, the current archive is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, the current archive is in write-mode.</para>
+        /// <para>In a set operation, the current archive is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current archive is not encrypted.</para>
         /// </exception>
@@ -835,7 +804,7 @@ namespace DieFledermaus
         /// In a set operation, the current archive is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, the current archive is in write-mode.</para>
+        /// <para>In a set operation, the current archive is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current archive is not encrypted.</para>
         /// </exception>
@@ -1012,6 +981,8 @@ namespace DieFledermaus
             switch (encryptionFormat)
             {
                 case MausEncryptionFormat.Aes:
+                case MausEncryptionFormat.Twofish:
+                case MausEncryptionFormat.Threefish:
                 case MausEncryptionFormat.None:
                     break;
                 default:
@@ -1330,6 +1301,7 @@ namespace DieFledermaus
             _entries.Add(empty);
             empty.HashFunction = _hashFunc;
             return empty;
+            //TODO: You can only specify the encryption type at creation-time (which means more overloads).
         }
 
         private void CheckSeparator(string path, bool dir)
@@ -1512,7 +1484,7 @@ namespace DieFledermaus
             else
             {
                 OnProgress(MausProgressState.BuildingKey);
-                _key = DieFledermausStream.GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
+                _key = DieFledermausStream.GetKey(this);
             }
 
             DieFledermauZItem[] entries = _entries.ToArray();
@@ -1559,7 +1531,7 @@ namespace DieFledermaus
             else
             {
                 encryptedOptions = new ByteOptionList();
-                long size = (_keySize >> 3) + _addSize;
+                long size = (_keySize >> 3) + _blockByteCount + sizeof(long);
 
                 size += DieFledermausStream.GetHashLength(_hashFunc);
 
@@ -1606,7 +1578,7 @@ namespace DieFledermaus
 
                         cryptStream.Reset();
 
-                        hmac = DieFledermausStream.Encrypt(this, dataStream, cryptStream, _key, _iv, _hashFunc);
+                        hmac = DieFledermausStream.Encrypt(this, dataStream, cryptStream, _key);
                     }
                 }
                 dataStream.Reset();
@@ -1657,9 +1629,6 @@ namespace DieFledermaus
             length += size;
             curOffset += size;
         }
-
-        private const long _addSize = DieFledermausStream._blockByteCtAes + sizeof(long);
-        //Respectively, IV and PBKDF2 values
 
         private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, BinaryWriter writer, long curOffset)
         {

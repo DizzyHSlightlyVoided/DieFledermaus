@@ -28,7 +28,9 @@ The structure of a DieFledermauZ file is as follows:
 ### Options
 The following elements are specified for the **Options** field:
 * `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
-* `AES` - *1 parameter.* Indicates that the file is AES encrypted. Same parameter format as in DieFledermaus; must be in plaintext. See below for further information.
+* `AES` - *1 parameter.* Indicates that the file is encrypted using the AES algorithm. Same parameter format as in DieFledermaus; must be in plaintext. See below for further information.
+* `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Twofish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
+* `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Threefish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
 * `Hash` - *1 parameter.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
 * `Rsa-Sch` - *1 parameter.* The key is encrypted using an RSA public key, and may be decrypted using the corresponding private key. Same as in DieFledermaus; must be in plaintext Must not be used unless the archive is encrypted.
 
@@ -72,7 +74,7 @@ Encryption
 ----------
 There are two ways to deal with encryption. One is to encrypt each entry individually, using the usual format for DieFledermaus streams.
 
-The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES` value from the DieFledermaus's **Format**. As with DieFledermaus, an encoder must use a PBKDF2-encoded password. Everything after **Options** is encrypted, and the following plaintext fields are inserted between **Options** and the encrypted values:
+The other way is to encrypt the entire archive. This is indicated by giving **Options** the `AES`, `Twofish`, or `Threefish` options from the DieFledermaus's **Format**. As with DieFledermaus, an encoder must use a PBKDF2-encoded password. Everything after **Options** is encrypted, and the following plaintext fields are inserted between **Options** and the encrypted values:
 * **PBKDF2 Value:** Same as that of a DieFledermaus stream. Uses an HMAC with the specified hash function.
 * **HMAC:** An [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code) of the plaintext content, including any encrypted values, using the specified hash function.
 * **Salt:** The [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password, with a length equal to that of the key.

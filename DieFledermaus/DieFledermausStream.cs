@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -659,8 +660,12 @@ namespace DieFledermaus
                     blockByteCount = 0;
                     return null;
                 case MausEncryptionFormat.Aes:
+                case MausEncryptionFormat.Twofish:
                     blockByteCount = _blockByteCtAes;
-                    return new KeySizeList(new int[] { 128, 192, 256 });
+                    return new KeySizeList(_keyBitAes128, _keyBitAes192, _keyBitAes256);
+                case MausEncryptionFormat.Threefish:
+                    blockByteCount = _blockByteCtThreefish;
+                    return new KeySizeList(_keyBitThreefish256, _keyBitThreefish512, _keyBitThreefish1024);
                 default:
                     throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
             }
@@ -783,7 +788,7 @@ namespace DieFledermaus
         /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, the current stream is in write-mode.</para>
+        /// <para>In a set operation, the current stream is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is not encrypted.</para>
         /// </exception>
@@ -817,7 +822,7 @@ namespace DieFledermaus
         /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, the current stream is in write-mode.</para>
+        /// <para>In a set operation, the current stream is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is not encrypted.</para>
         /// </exception>
@@ -895,13 +900,13 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets the number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bits in a single block of encrypted data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockSize { get { return _blockByteCount << 3; } }
 
         private int _blockByteCount;
         /// <summary>
-        /// Gets the number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bytes in a single block of encrypted data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
@@ -1618,15 +1623,21 @@ namespace DieFledermaus
             }
         }
 
-        internal static byte[] GetKey(string password, byte[] _salt, int _pkCount, int keySize, MausHashFunction hashFunc)
+        internal static byte[] GetKey(IMausCrypt o)
         {
+            //TODO: Get rid of PkCount, too.
+            var password = o.Password;
+            var _salt = o.Salt;
+            var keySize = o.KeySize;
             int keyLength = keySize >> 3;
+            var _pkCount = o.PBKDF2CycleCount;
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
-            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(GetDigestObject(hashFunc));
-            gen.Init(Encoding.UTF8.GetBytes(password), _salt, _pkCount + minPkCount);
-            KeyParameter kParam = (KeyParameter)gen.GenerateDerivedParameters("AES" + keySize.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), keySize);
+            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(GetDigestObject(o.HashFunction));
+            gen.Init(_textEncoding.GetBytes(password), _salt, _pkCount + minPkCount);
+
+            KeyParameter kParam = (KeyParameter)gen.GenerateDerivedMacParameters(keySize);
             return kParam.GetKey();
         }
 
@@ -1693,15 +1704,25 @@ namespace DieFledermaus
         }
         #endregion
 
-        internal const int _blockByteCtAes = 16;
+        internal const int _blockByteCtAes = 16, _blockByteCtThreefish = 128;
         internal const int _keyBitAes256 = 256;
         internal const int _keyBitAes128 = 128;
         internal const int _keyBitAes192 = 192;
+        internal const int _keyBitThreefish256 = 256;
+        internal const int _keyBitThreefish512 = 512;
+        internal const int _keyBitThreefish1024 = 1024;
 
         internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
 
         private const string _kCmpNone = "NK", _kCmpDef = "DEF", _kCmpLzma = "LZMA";
-        internal const string _kEncAes = "AES";
+        internal const string _kEncAes = "AES", _kEncTwofish = "Twofish", _kEncThreefish = "Threefish";
+
+        internal static readonly Dictionary<string, MausEncryptionFormat> _encDict = new Dictionary<string, MausEncryptionFormat>(StringComparer.Ordinal)
+        {
+            { _kEncAes, MausEncryptionFormat.Aes },
+            { _kEncTwofish, MausEncryptionFormat.Twofish },
+            { _kEncThreefish, MausEncryptionFormat.Threefish }
+        };
 
         private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id",
             _kDsaSig = "Dsa-Sig", _kDsaSigId = "Dsa-Sig-Id",
@@ -1723,7 +1744,7 @@ namespace DieFledermaus
         };
 
         internal static readonly Dictionary<string, MausHashFunction> HashDict = ((MausHashFunction[])Enum.GetValues(typeof(MausHashFunction))).
-            ToDictionary(i => i.ToString().Replace('_', '/').ToUpper());
+            ToDictionary(i => i.ToString().Replace('_', '/').ToUpper(), StringComparer.Ordinal);
         internal static readonly Dictionary<MausHashFunction, string> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key);
 
         private const string _kFilename = "Name", _kULen = "DeL";
@@ -1892,57 +1913,10 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kEncAes, StringComparison.Ordinal))
+                if (ReadEncFormat(curForm, reader, optLen, ref i, ref headSize, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount))
                 {
-                    if (!fromEncrypted)
+                    if (!fromEncrypted && _encryptedOptions == null)
                         _encryptedOptions = new SettableOptions(this);
-                    CheckAdvance(optLen, ref i);
-
-                    byte[] bytes = GetStringBytes(reader, ref headSize, false);
-                    _blockByteCount = _blockByteCtAes;
-                    int keyBits;
-                    if (bytes.Length == 3)
-                    {
-                        string strVal = _textEncoding.GetString(bytes);
-                        switch (strVal)
-                        {
-                            case _keyStrAes128:
-                                keyBits = _keyBitAes128;
-                                break;
-                            case _keyStrAes192:
-                                keyBits = _keyBitAes192;
-                                break;
-                            case _keyStrAes256:
-                                keyBits = _keyBitAes256;
-                                break;
-                            default:
-                                throw new NotSupportedException(TextResources.FormatUnknown);
-                        }
-                    }
-                    else if (bytes.Length == 2)
-                    {
-                        keyBits = bytes[0] | (bytes[1] << 8);
-
-                        switch (keyBits)
-                        {
-                            case _keyBitAes128:
-                            case _keyBitAes192:
-                            case _keyBitAes256:
-                                break;
-                            default:
-                                throw new NotSupportedException(TextResources.FormatUnknown);
-                        }
-                    }
-                    else throw new NotSupportedException(TextResources.FormatUnknown);
-
-                    if (_keySize == 0)
-                    {
-                        _keySize = keyBits;
-                        _keySizes = new KeySizeList(keyBits);
-                    }
-                    else if (keyBits != _keySize)
-                        throw new InvalidDataException(TextResources.FormatBad);
-                    _encFmt = MausEncryptionFormat.Aes;
                     continue;
                 }
 
@@ -2015,6 +1989,47 @@ namespace DieFledermaus
             }
 
             return headSize;
+        }
+
+        internal static bool ReadEncFormat(string curForm, BinaryReader reader, int optLen, ref int i, ref long headSize,
+            ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes, ref int _keySize, ref int _blockByteCount)
+        {
+            MausEncryptionFormat getEncFormat;
+            if (!_encDict.TryGetValue(curForm, out getEncFormat))
+                return false;
+
+            if (_keySizes != null && getEncFormat != _encFmt)
+                throw new InvalidDataException(TextResources.FormatBad);
+
+            CheckAdvance(optLen, ref i);
+
+            byte[] bytes = GetStringBytes(reader, ref headSize, false);
+            int blockByteCount;
+            KeySizeList list = _getKeySizes(getEncFormat, out blockByteCount);
+            int keyBits;
+            if (bytes.Length == 2)
+                keyBits = bytes[0] | (bytes[1] << 8);
+            else if (bytes.Length <= 4)
+            {
+                string s = _textEncoding.GetString(bytes);
+                if (!int.TryParse(s, NumberStyles.None, NumberFormatInfo.InvariantInfo, out keyBits))
+                    throw new NotSupportedException(TextResources.FormatUnknown);
+            }
+            else throw new NotSupportedException(TextResources.FormatUnknown);
+
+            if (!list.Contains(keyBits))
+                throw new NotSupportedException(TextResources.FormatUnknown);
+
+            if (_keySizes == null)
+            {
+                _keySize = keyBits;
+                _keySizes = new KeySizeList(keyBits);
+                _blockByteCount = blockByteCount;
+                _encFmt = getEncFormat;
+            }
+            else if (keyBits != _keySize || _blockByteCount != blockByteCount)
+                throw new InvalidDataException(TextResources.FormatBad);
+            return true;
         }
 
         private class DerIntegerPair
@@ -2237,8 +2252,36 @@ namespace DieFledermaus
         private long _compLength;
         internal long CompressedLength { get { return _compLength; } }
 
-        internal const int minPkCount = 9001;
+        internal const int minPkCount = 9001, maxPkCount = int.MaxValue - minPkCount;
         private int _pkCount;
+        /// <summary>
+        /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current stream is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-only mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than <see cref="int.MaxValue"/> minus 9001.
+        /// </exception>
+        public int PBKDF2CycleCount
+        {
+            get { return _pkCount; }
+            set
+            {
+                _ensureCanWrite();
+                if (_encFmt == MausEncryptionFormat.None)
+                    throw new NotSupportedException(TextResources.NotEncrypted);
+                if (value < 0 || value > maxPkCount)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, maxPkCount));
+                _pkCount = value;
+            }
+        }
+
         private LzmaDictionarySize _lzmaDictSize;
 
         /// <summary>
@@ -2328,9 +2371,9 @@ namespace DieFledermaus
             {
                 byte[] _key;
                 OnProgress(MausProgressState.BuildingKey);
-                _key = GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
+                _key = GetKey(this);
 
-                using (MausBufferStream bufferStream = Decrypt(this, _key, _iv, _bufferStream, _hmacExpected, _hashFunc))
+                using (MausBufferStream bufferStream = Decrypt(this, _key, _bufferStream))
                 {
                     Array.Clear(_key, 0, _key.Length);
 #if NOLEAVEOPEN
@@ -2847,60 +2890,96 @@ namespace DieFledermaus
             return buffer;
         }
 
-        internal static SymmetricAlgorithm GetAES(byte[] _key, byte[] _iv)
+        internal static IBlockCipher GetCipher(byte[] key, MausEncryptionFormat format, bool forEncryption)
         {
-            SymmetricAlgorithm alg = Aes.Create();
-            alg.Key = _key;
-            alg.IV = _iv;
-            return alg;
+            IBlockCipher cipher;
+            switch (format)
+            {
+                case MausEncryptionFormat.Aes:
+                    cipher = new AesEngine();
+                    break;
+                case MausEncryptionFormat.Twofish:
+                    cipher = new TwofishEngine();
+                    break;
+                case MausEncryptionFormat.Threefish:
+                    cipher = new ThreefishEngine(key.Length << 3);
+                    break;
+                default:
+                    return null;
+            }
+            cipher.Init(forEncryption, new KeyParameter(key));
+            return cipher;
         }
 
-        internal static MausBufferStream Decrypt(IMausProgress o, byte[] _key, byte[] _iv, MausBufferStream _bufferStream, byte[] _hmac, MausHashFunction hashFunc)
+        internal static MausBufferStream Decrypt(IMausProgress o, byte[] _key, MausBufferStream _bufferStream)
         {
             o.OnProgress(MausProgressState.Decrypting);
 
             MausBufferStream output = new MausBufferStream();
 
-            using (SymmetricAlgorithm alg = GetAES(_key, _iv))
-            using (ICryptoTransform transform = alg.CreateDecryptor())
+            IBlockCipher cipher = GetCipher(_key, o.EncryptionFormat, false);
+            int blockSize = cipher.GetBlockSize();
+            byte[] prevBuffer = o.IV, buffer = new byte[blockSize], processed = new byte[blockSize];
+
+            while (_bufferStream.Position < _bufferStream.Length)
             {
-                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
-                _bufferStream.BufferCopyTo(cs, false);
-                try
-                {
-                    cs.FlushFinalBlock();
-                }
-                catch (CryptographicException) { }
+                int read = _bufferStream.Read(buffer, 0, blockSize);
+
+                cipher.ProcessBlock(buffer, 0, processed, 0);
+                ChainBlock(processed, prevBuffer);
+                Array.Copy(buffer, prevBuffer, blockSize);
+
+                if (_bufferStream.Position == _bufferStream.Length)
+                    read -= Pkcs7Provider.CountPadding(processed, blockSize);
+                output.Write(processed, 0, read);
             }
             output.Reset();
 
             o.OnProgress(MausProgressState.VerifyingHMAC);
 
-            byte[] actualHmac = ComputeHmac(output, _key, hashFunc);
-            if (!CompareBytes(actualHmac, _hmac))
+            byte[] actualHmac = ComputeHmac(output, _key, o.HashFunction);
+            if (!CompareBytes(actualHmac, o.HMAC))
                 throw new CryptographicException(TextResources.BadKey);
 
             return output;
         }
 
-        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream _bufferStream, byte[] _key, byte[] _iv, MausHashFunction hashFunc)
+        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream _bufferStream, byte[] _key)
         {
             o.OnProgress(MausProgressState.Encrypting);
+            IBlockCipher cipher = GetCipher(_key, o.EncryptionFormat, true);
 
-            using (SymmetricAlgorithm alg = GetAES(_key, _iv))
-            using (ICryptoTransform transform = alg.CreateEncryptor())
+            int blockSize = cipher.GetBlockSize();
+            byte[] buffer = new byte[blockSize], processed = o.IV;
+
+            int read;
+
+            while ((read = _bufferStream.Read(buffer, 0, blockSize)) == blockSize)
             {
-                CryptoStream cs = new CryptoStream(output, transform, CryptoStreamMode.Write);
+                ChainBlock(buffer, processed);
 
-                _bufferStream.BufferCopyTo(cs, false);
-                cs.FlushFinalBlock();
+                cipher.ProcessBlock(buffer, 0, processed, 0);
+                output.Write(processed, 0, blockSize);
             }
+
+            Pkcs7Provider.ApplyPadding(buffer, read);
+
+            ChainBlock(buffer, processed);
+            cipher.ProcessBlock(buffer, 0, processed, 0);
+            output.Write(processed, 0, blockSize);
+
             output.Reset();
             _bufferStream.Reset();
             o.OnProgress(MausProgressState.ComputingHMAC);
-            byte[] hmac = ComputeHmac(_bufferStream, _key, hashFunc);
+            byte[] hmac = ComputeHmac(_bufferStream, _key, o.HashFunction);
             o.OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHMACCompleted, hmac));
             return hmac;
+        }
+
+        private static void ChainBlock(byte[] buffer, byte[] previous)
+        {
+            for (int i = 0; i < buffer.Length; i++)
+                buffer[i] ^= previous[i];
         }
 
         #region Disposal
@@ -3026,7 +3105,7 @@ namespace DieFledermaus
             else
             {
                 OnProgress(MausProgressState.BuildingKey);
-                _key = GetKey(_password, _salt, _pkCount, _keySize, _hashFunc);
+                _key = GetKey(this);
             }
 
             long oldLength = _bufferStream.Length;
@@ -3097,12 +3176,24 @@ namespace DieFledermaus
                     formats.Add(_kHash);
                     formats.Add(HashBDict[_hashFunc]);
 
-                    if (_encFmt == MausEncryptionFormat.Aes)
+                    if (_encFmt == MausEncryptionFormat.None)
+                        WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
+                    else
                     {
-                        formats.Add(_kEncAes);
+                        switch (_encFmt)
+                        {
+                            case MausEncryptionFormat.Aes:
+                                formats.Add(_kEncAes);
+                                break;
+                            case MausEncryptionFormat.Twofish:
+                                formats.Add(_kEncTwofish);
+                                break;
+                            case MausEncryptionFormat.Threefish:
+                                formats.Add(_kEncThreefish);
+                                break;
+                        }
                         formats.Add((short)_keySize);
                     }
-                    else WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
                     formats.Write(writer);
                 }
@@ -3177,8 +3268,8 @@ namespace DieFledermaus
                     using (MausBufferStream output = new MausBufferStream())
                     {
                         output.Write(_salt, 0, _key.Length);
-                        output.Write(_iv, 0, _iv.Length);
-                        byte[] hashHmac = Encrypt(this, output, _bufferStream, _key, _iv, _hashFunc);
+                        output.Write(_iv, 0, _encFmt == MausEncryptionFormat.Threefish ? _key.Length : _iv.Length);
+                        byte[] hashHmac = Encrypt(this, output, _bufferStream, _key);
 
                         writer.Write(output.Length);
                         writer.Write((long)_pkCount);
@@ -3383,6 +3474,14 @@ namespace DieFledermaus
         /// The Advanced Encryption Standard algorithm.
         /// </summary>
         Aes,
+        /// <summary>
+        /// The Twofish encryption algorithm.
+        /// </summary>
+        Twofish,
+        /// <summary>
+        /// The Threefish encryption algorithm.
+        /// </summary>
+        Threefish,
     }
 
     /// <summary>

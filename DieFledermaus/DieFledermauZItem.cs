@@ -91,6 +91,30 @@ namespace DieFledermaus
         /// </summary>
         public byte[] HMAC { get { return MausStream.HMAC; } }
 
+        /// <summary>
+        /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than <see cref="int.MaxValue"/> minus 9001.
+        /// </exception>
+        public int PBKDF2CycleCount
+        {
+            get { return MausStream.PBKDF2CycleCount; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.PBKDF2CycleCount = value;
+            }
+        }
+
         internal DieFledermauZArchive _arch;
         /// <summary>
         /// Gets the <see cref="DieFledermauZArchive"/> containing the current instance, or <c>null</c> if
@@ -99,12 +123,12 @@ namespace DieFledermaus
         public DieFledermauZArchive Archive { get { return _arch; } }
 
         /// <summary>
-        /// Gets the number of bits in a single block of data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bits in a single block of data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockSize { get { return MausStream.BlockSize; } }
 
         /// <summary>
-        /// Gets the number of bytes in a single block of data, or 0 if the current instance is not encrypted.
+        /// Gets the maximum number of bytes in a single block of data, or 0 if the current instance is not encrypted.
         /// </summary>
         public int BlockByteCount { get { return MausStream.BlockByteCount; } }
 
@@ -296,7 +320,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is the wrong length.
+        /// In a set operation, the length of the specified value is not equal to <see cref="BlockByteCount"/>.
         /// </exception>
         public byte[] IV
         {
