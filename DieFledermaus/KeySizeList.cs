@@ -46,6 +46,7 @@ namespace DieFledermaus
     {
         private int[] _items;
 
+        #region Constructors
         /// <summary>
         /// Creates a new instance using elements copied from the specified collection.
         /// </summary>
@@ -94,7 +95,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Creates a new instance containing only the specified value.
+        /// Creates a new instance containing a single value.
         /// </summary>
         /// <param name="value">The value to set.</param>
         public KeySizeList(int value)
@@ -102,6 +103,34 @@ namespace DieFledermaus
             _items = new int[] { value };
             _min = _max = value;
         }
+
+        /// <summary>
+        /// Creates a new instance containing two values.
+        /// </summary>
+        /// <param name="value1">A value to set.</param>
+        /// <param name="value2">A value to set.</param>
+        public KeySizeList(int value1, int value2)
+        {
+            if (value1 < value2)
+            {
+                _min = value1;
+                _max = value2;
+            }
+            else
+            {
+                _min = value2;
+                _max = value1;
+            }
+
+            if (value1 == value2)
+                _items = new int[] { value1 };
+            else
+            {
+                _skip = _max - _min;
+                _items = new int[] { _min, _max };
+            }
+        }
+        #endregion
 
         /// <summary>
         /// Gets the element at the specified index.
