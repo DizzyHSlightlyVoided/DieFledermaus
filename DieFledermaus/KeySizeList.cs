@@ -59,21 +59,24 @@ namespace DieFledermaus
             _items = new HashSet<int>(source).ToArray();
             Array.Sort(_items, 0, _items.Length);
 
-            _items = source.ToArray();
             if (_items.Length == 0)
                 return;
+
+            if (_items.Length == 1)
+            {
+                _min = _max = _items[0];
+                return;
+            }
 
             _min = _items[0];
             _max = _items[_items.Length - 1];
 
-            if (_items.Length == 0)
-                return;
+            int prev = _items[1];
+            _skip = prev - _items[0];
 
-            _skip = _items[1] - _items[0];
-
-            for (int i = 2; _skip != 0 && i < _items.Length; i++)
+            for (int i = 2; _skip != 0 && i < _items.Length; prev = _items[i], i++)
             {
-                if (_items[i] - _items[i - 1] != _skip)
+                if (_items[i] - prev != _skip)
                     _skip = 0;
             }
         }
@@ -149,8 +152,6 @@ namespace DieFledermaus
         /// Gets the interval between each element in the list, or 0 if the interval is not fixed.
         /// </summary>
         public int SkipSize { get { return _skip; } }
-
-        internal int CurrentValue { get; set; }
 
         /// <summary>
         /// Determines if the specified value exists in the list.
