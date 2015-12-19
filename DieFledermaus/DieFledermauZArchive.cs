@@ -1255,6 +1255,73 @@ namespace DieFledermaus
         /// Adds a new empty directory to the current archive.
         /// </summary>
         /// <param name="path">The path to the empty directory within the archive's file structure.</param>
+        /// <param name="encryptionFormat">The encryption format of the empty directory.</param>
+        /// <returns>A newly-created <see cref="DieFledermauZEmptyDirectory"/> object.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="path"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="path"/> is not a valid file path.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="path"/> already exists.</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <remarks>
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.
+        /// </remarks>
+        public DieFledermauZEmptyDirectory AddEmptyDirectory(string path, MausEncryptionFormat encryptionFormat)
+        {
+            EnsureCanWrite();
+
+            IsValidEmptyDirectoryPath(path, true);
+            string pathSlash;
+
+            switch (encryptionFormat)
+            {
+                case MausEncryptionFormat.Aes:
+                case MausEncryptionFormat.None:
+                case MausEncryptionFormat.Twofish:
+                case MausEncryptionFormat.Threefish:
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(encryptionFormat), (int)encryptionFormat, typeof(MausEncryptionFormat));
+            }
+
+            int end = path.Length - 1;
+            if (path[end] == '/')
+            {
+                pathSlash = path;
+                path = path.Substring(0, end);
+            }
+            else pathSlash = path + '/';
+
+            if (_entryDict.ContainsKey(path))
+                throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
+            if (_entryDict.ContainsKey(pathSlash))
+                throw new ArgumentException(TextResources.ArchiveExistsDir, nameof(path));
+
+            CheckSeparator(path, true);
+
+            DieFledermauZEmptyDirectory empty = new DieFledermauZEmptyDirectory(this, pathSlash, encryptionFormat);
+            _entryDict.Add(pathSlash, _entries.Count);
+            _entries.Add(empty);
+            empty.HashFunction = _hashFunc;
+            return empty;
+        }
+
+        /// <summary>
+        /// Adds a new empty directory to the current archive.
+        /// </summary>
+        /// <param name="path">The path to the empty directory within the archive's file structure.</param>
         /// <returns>A newly-created <see cref="DieFledermauZEmptyDirectory"/> object.</returns>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="path"/> is <c>null</c>.
@@ -1276,32 +1343,7 @@ namespace DieFledermaus
         /// </remarks>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path)
         {
-            EnsureCanWrite();
-
-            IsValidEmptyDirectoryPath(path, true);
-            string pathSlash;
-
-            int end = path.Length - 1;
-            if (path[end] == '/')
-            {
-                pathSlash = path;
-                path = path.Substring(0, end);
-            }
-            else pathSlash = path + '/';
-
-            if (_entryDict.ContainsKey(path))
-                throw new ArgumentException(TextResources.ArchiveExists, nameof(path));
-            if (_entryDict.ContainsKey(pathSlash))
-                throw new ArgumentException(TextResources.ArchiveExistsDir, nameof(path));
-
-            CheckSeparator(path, true);
-
-            DieFledermauZEmptyDirectory empty = new DieFledermauZEmptyDirectory(this, pathSlash);
-            _entryDict.Add(pathSlash, _entries.Count);
-            _entries.Add(empty);
-            empty.HashFunction = _hashFunc;
-            return empty;
-            //TODO: You can only specify the encryption type at creation-time (which means more overloads).
+            return AddEmptyDirectory(path, MausEncryptionFormat.None);
         }
 
         private void CheckSeparator(string path, bool dir)

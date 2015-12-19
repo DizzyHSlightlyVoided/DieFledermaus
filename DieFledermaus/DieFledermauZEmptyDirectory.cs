@@ -41,9 +41,11 @@ namespace DieFledermaus
     /// </summary>
     public class DieFledermauZEmptyDirectory : DieFledermauZItem
     {
-        internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path)
-            : base(archive, path, new NoneCompressionFormat(), MausEncryptionFormat.None)
+        internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, MausEncryptionFormat encryptionFormat)
+            : base(archive, path, new NoneCompressionFormat(), encryptionFormat)
         {
+            if (encryptionFormat != MausEncryptionFormat.None)
+                MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
         }
 
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset, long realOffset)
@@ -51,76 +53,28 @@ namespace DieFledermaus
         {
         }
 
-        private bool _enc;
-        /// <summary>
-        /// Gets and sets a value indicating whether the filename will be encrypted within the current instance.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
-        /// </exception>
-        /// <remarks>
-        /// <para>Setting this property to <c>true</c> will set <see cref="DieFledermauZItem.IV"/>, and
-        /// <see cref="DieFledermauZItem.Salt"/> to randomly-generated values. Subsequently setting this property to <c>false</c> will
-        /// clear the password and set these properties to <c>null</c>, and the old values will not be remembered or saved.</para>
-        /// <para>Setting this to <c>false</c> will also set <see cref="EncryptComment"/> <c>false</c>.</para>
-        /// </remarks>
-        public bool EncryptPath
-        {
-            get { return _enc; }
-            set
-            {
-                lock (_lock)
-                {
-                    EnsureCanWrite();
-                    if (value && MausStream.EncryptionFormat == MausEncryptionFormat.None)
-                    {
-                        Replace(new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.Aes));
-                        MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
-                    }
-                    else if (!value && MausStream.EncryptionFormat != MausEncryptionFormat.None)
-                        Replace(new DieFledermausStream(this, MausStream.Filename, _bufferStream, new NoneCompressionFormat(), MausEncryptionFormat.None));
-                    _enc = value;
-                }
-            }
-        }
-
-        private void Replace(DieFledermausStream newStream)
-        {
-            MausStream.Dispose(newStream);
-            MausStream = newStream;
-        }
-
         /// <summary>
         /// Gets and sets a value indicating whether <see cref="DieFledermauZItem.Comment"/> will be encrypted.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current instance is deleted.
+        /// In a set operation, the current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
-        /// <remarks>
-        /// Setting this property to <c>true</c> will also set <see cref="EncryptPath"/> <c>true</c>.
-        /// </remarks>
         public bool EncryptComment
         {
-            get { return _enc && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
+            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
             set
             {
+                if (MausStream.EncryptedOptions == null)
+                    throw new NotSupportedException(TextResources.NotEncrypted);
                 if (value)
-                {
-                    EncryptPath = true;
                     MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Comment);
-                }
                 else
-                {
-                    EnsureCanWrite();
-                    if (MausStream.EncryptedOptions != null)
-                        MausStream.EncryptedOptions.Remove(MausOptionToEncrypt.Comment);
-                }
+                    MausStream.EncryptedOptions.Remove(MausOptionToEncrypt.Comment);
             }
         }
 
@@ -169,7 +123,7 @@ namespace DieFledermaus
 
         internal override bool IsFilenameEncrypted
         {
-            get { return _enc; }
+            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Filename); }
         }
 
         internal override MausBufferStream GetWritten()

@@ -415,7 +415,7 @@ namespace DieFledermaus
         }
 
         internal readonly MausBufferStream _bufferStream;
-        internal DieFledermausStream MausStream;
+        internal readonly DieFledermausStream MausStream;
 
         internal virtual MausBufferStream GetWritten()
         {

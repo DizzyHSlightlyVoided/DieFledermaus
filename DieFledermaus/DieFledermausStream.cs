@@ -1625,7 +1625,6 @@ namespace DieFledermaus
 
         internal static byte[] GetKey(IMausCrypt o)
         {
-            //TODO: Get rid of PkCount, too.
             var password = o.Password;
             var _salt = o.Salt;
             var keySize = o.KeySize;
@@ -3365,14 +3364,6 @@ namespace DieFledermaus
 
             formats.Add(_kComment);
             formats.Add(_comBytes);
-        }
-
-        internal void Dispose(DieFledermausStream other)
-        {
-            other._comBytes = _comBytes;
-            other._hashFunc = _hashFunc;
-            other.Progress = Progress;
-            Dispose();
         }
         #endregion
 

@@ -62,8 +62,7 @@ namespace DieFledermaus.Tests
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, privateKeySig);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish, privateKeySig);
                     Console.WriteLine(" - Building empty directory: EmptyDir/");
-                    var emptyDir = archive.AddEmptyDirectory("EmptyDir/");
-                    emptyDir.EncryptPath = true;
+                    var emptyDir = archive.AddEmptyDirectory("EmptyDir/", MausEncryptionFormat.Twofish);
                     SetPasswd(emptyDir);
                     Console.WriteLine("Compressing archive ...");
                     sw = Stopwatch.StartNew();
