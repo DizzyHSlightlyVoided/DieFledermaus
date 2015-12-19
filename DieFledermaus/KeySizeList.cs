@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using DieFledermaus.Globalization;
 
@@ -39,6 +40,8 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a collection of key sizes. All values in the collection are unique, and stored in ascending order.
     /// </summary>
+    [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
+    [DebuggerTypeProxy(typeof(DebugView))]
     public sealed class KeySizeList : IList<int>
 #if IREADONLY
         , IReadOnlyList<int>
@@ -232,6 +235,15 @@ namespace DieFledermaus
             Array.Copy(items, 0, destinationArray, destinationIndex, items.Length);
         }
 
+        /// <summary>
+        /// Returns an array containing elements copied from the current instance.
+        /// </summary>
+        /// <returns>An array containing elements copied from the current instance.</returns>
+        public int[] ToArray()
+        {
+            return (int[])_items.Clone();
+        }
+
         #region Not Supported
         void ICollection<int>.Add(int item)
         {
@@ -336,6 +348,22 @@ namespace DieFledermaus
             {
                 _current = 0;
                 _index = -1;
+            }
+        }
+
+        private class DebugView
+        {
+            private KeySizeList _col;
+
+            public DebugView(KeySizeList col)
+            {
+                _col = col;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public int[] Items
+            {
+                get { return _col.ToArray(); }
             }
         }
     }
