@@ -358,10 +358,11 @@ namespace DieFledermaus.Cli
                             {
                                 var curInfo = fileInfos[i];
 
-                                if (verbose.IsSet)
-                                    Console.WriteLine(curInfo.Name);
-
                                 DieFledermauZArchiveEntry entry = archive.Create(curInfo.Name, compFormat, hide.IsSet ? MausEncryptionFormat.None : encFormat);
+
+                                if (verbose.IsSet)
+                                    entry.Progress += Entry_Progress;
+
                                 if (encAes.IsSet && !hide.IsSet)
                                     entry.Password = ssPassword;
 
@@ -606,6 +607,13 @@ namespace DieFledermaus.Cli
                         streams[i].Dispose();
                 }
             }
+        }
+
+        private static void Entry_Progress(object sender, MausProgressEventArgs e)
+        {
+            DieFledermauZItem item = (DieFledermauZItem)sender;
+            Console.WriteLine(item.Path);
+            item.Progress -= Entry_Progress;
         }
 
         private static bool DoFailDecrypt(DieFledermauZItem entry, ClParamFlag interactive, int i, ref string ssPassword)
