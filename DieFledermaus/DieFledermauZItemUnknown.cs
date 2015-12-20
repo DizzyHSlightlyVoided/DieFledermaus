@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
-using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto;
 
 namespace DieFledermaus
 {
@@ -69,7 +69,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/>
         /// again if this exception is caught.
         /// </exception>

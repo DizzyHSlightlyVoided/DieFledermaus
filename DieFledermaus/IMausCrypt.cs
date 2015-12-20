@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.ComponentModel;
+using System.IO;
+
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
@@ -171,6 +174,26 @@ namespace DieFledermaus
         /// <summary>
         /// Decrypts the current instance.
         /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The underlying stream contains invalid or contradictory data.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is in write-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>The underlying stream contains structurally valid but unsupported or unknown options or data.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="Password"/> is set to the wrong value. It is safe to call <see cref="Decrypt()"/> again if this exception is caught.
+        /// </exception>
         void Decrypt();
 
         /// <summary>

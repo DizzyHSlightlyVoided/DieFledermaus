@@ -2293,7 +2293,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
@@ -2322,7 +2322,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// The current stream is in read-mode, and
         /// either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
@@ -2362,7 +2362,7 @@ namespace DieFledermaus
             }
 
             if (_password == null && _encFmt != MausEncryptionFormat.None)
-                throw new CryptographicException(TextResources.KeyNotSet);
+                throw new CryptoException(TextResources.KeyNotSet);
 
             GetBuffer();
 
@@ -2490,7 +2490,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyRSASignature()
@@ -2559,7 +2559,7 @@ namespace DieFledermaus
             }
             catch (Exception x)
             {
-                throw new CryptographicException(TextResources.RsaSigInvalid, x);
+                throw new CryptoException(TextResources.RsaSigInvalid, x);
             }
         }
         #endregion
@@ -2576,7 +2576,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="DSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyDSASignature()
@@ -2605,7 +2605,7 @@ namespace DieFledermaus
             }
             catch (Exception x)
             {
-                throw new CryptographicException(TextResources.DsaSigInvalid, x);
+                throw new CryptoException(TextResources.DsaSigInvalid, x);
             }
         }
         #endregion
@@ -2622,7 +2622,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="ECDSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyECDSASignature()
@@ -2651,7 +2651,7 @@ namespace DieFledermaus
             }
             catch (Exception x)
             {
-                throw new CryptographicException(TextResources.EcdsaSigInvalid, x);
+                throw new CryptoException(TextResources.EcdsaSigInvalid, x);
             }
         }
         #endregion
@@ -2741,7 +2741,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
@@ -2799,7 +2799,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The current stream is in write-mode.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
@@ -2938,7 +2938,7 @@ namespace DieFledermaus
 
             byte[] actualHmac = ComputeHmac(output, _key, o.HashFunction);
             if (!CompareBytes(actualHmac, o.HMAC))
-                throw new CryptographicException(TextResources.BadKey);
+                throw new CryptoException(TextResources.BadKey);
 
             return output;
         }
@@ -3062,7 +3062,7 @@ namespace DieFledermaus
                     }
                     catch (Exception x)
                     {
-                        throw new CryptographicException(TextResources.RsaSigPrivInvalid, x);
+                        throw new CryptoException(TextResources.RsaSigPrivInvalid, x);
                     }
                 }
                 else rsaSignature = null;
@@ -3077,7 +3077,7 @@ namespace DieFledermaus
                     }
                     catch (Exception x)
                     {
-                        throw new CryptographicException(TextResources.DsaSigPrivInvalid, x);
+                        throw new CryptoException(TextResources.DsaSigPrivInvalid, x);
                     }
                 }
                 else dsaSignature = null;
@@ -3091,7 +3091,7 @@ namespace DieFledermaus
                     }
                     catch (Exception x)
                     {
-                        throw new CryptographicException(TextResources.EcdsaSigPrivInvalid, x);
+                        throw new CryptoException(TextResources.EcdsaSigPrivInvalid, x);
                     }
                 }
                 else ecdsaSignature = null;

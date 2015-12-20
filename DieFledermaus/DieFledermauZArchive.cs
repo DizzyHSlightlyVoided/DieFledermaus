@@ -36,9 +36,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto;
 using SevenZip;
 
 namespace DieFledermaus
@@ -468,7 +468,7 @@ namespace DieFledermaus
         /// <exception cref="IOException">
         /// An I/O error occurred.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/>
         /// again if this exception is caught.
         /// </exception>
@@ -495,7 +495,7 @@ namespace DieFledermaus
             _bufferStream.Reset();
 
             if (_password == null)
-                throw new CryptographicException(TextResources.KeyNotSetZ);
+                throw new CryptoException(TextResources.KeyNotSetZ);
 
             OnProgress(MausProgressState.BuildingKey);
             byte[] _key = DieFledermausStream.GetKey(this);
@@ -812,7 +812,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is <c>null</c>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the length of the specified value is less than the maximum key length specified by <see cref="KeySizes"/>.
+        /// In a set operation, the length of the specified value is less than the maximum key length specified by <see cref="LegalKeySizes"/>.
         /// </exception>
         public byte[] Salt
         {
@@ -846,7 +846,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
+        /// In a set operation, the specified value is invalid according to <see cref="LegalKeySizes"/>.
         /// </exception>
         public int KeySize
         {
@@ -1407,7 +1407,7 @@ namespace DieFledermaus
         /// Determines whether the specified value is a valid length for a key, in bits.
         /// </summary>
         /// <param name="bitCount">The number of bits to test.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="KeySizes"/>;
+        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="LegalKeySizes"/>;
         /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyBitSize(int bitCount)
         {
@@ -1420,7 +1420,7 @@ namespace DieFledermaus
         /// Determines whether the specified value is a valid length for a key, in bytes.
         /// </summary>
         /// <param name="byteCount">The number of bytes to test.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="KeySizes"/>;
+        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="LegalKeySizes"/>;
         /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyByteSize(int byteCount)
         {

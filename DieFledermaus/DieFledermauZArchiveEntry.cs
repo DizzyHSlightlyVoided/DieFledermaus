@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.IO;
-using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
@@ -212,7 +212,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyRSASignature()
@@ -335,7 +335,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="DSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyDSASignature()
@@ -458,7 +458,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="ECDSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         public bool VerifyECDSASignature()
@@ -533,7 +533,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
@@ -567,7 +567,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
@@ -607,7 +607,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and the stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and 
         /// either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.

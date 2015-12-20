@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.ComponentModel;
 using System.IO;
-using System.Security.Cryptography;
 
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Crypto;
 
 namespace DieFledermaus
 {
@@ -166,7 +166,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// In a set operation, the specified value is invalid according to <see cref="KeySizes"/>.
+        /// In a set operation, the specified value is invalid according to <see cref="LegalKeySizes"/>.
         /// </exception>
         public int KeySize
         {
@@ -260,7 +260,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidDataException">
         /// The stream contains invalid data.
         /// </exception>
-        /// <exception cref="CryptographicException">
+        /// <exception cref="CryptoException">
         /// The password is not correct. It is safe to attempt to call <see cref="Decrypt()"/>
         /// again if this exception is caught.
         /// </exception>

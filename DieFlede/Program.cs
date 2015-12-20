@@ -33,10 +33,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using DieFledermaus.Cli.Globalization;
+using Org.BouncyCastle.Crypto;
 
 namespace DieFledermaus.Cli
 {
@@ -428,7 +429,7 @@ namespace DieFledermaus.Cli
                         {
                             dz.Decrypt();
                         }
-                        catch (CryptographicException)
+                        catch (CryptoException)
                         {
                             Console.Error.WriteLine(TextResources.EncryptedBadKey);
                             return Return(-4, interactive);
@@ -670,7 +671,7 @@ namespace DieFledermaus.Cli
                 entry = entry.Decrypt();
                 return false;
             }
-            catch (CryptographicException)
+            catch (CryptoException)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
                 return EncryptionPrompt(entry, entry.EncryptionFormat, out ssPassword);
@@ -857,7 +858,7 @@ namespace DieFledermaus.Cli
                         ds.Decrypt();
                         return false;
                     }
-                    catch (CryptographicException)
+                    catch (CryptoException)
                     {
                         Console.Error.WriteLine(TextResources.EncryptedBadKey);
                         continue;
