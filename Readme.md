@@ -1,6 +1,6 @@
 ﻿DieFledermaus and DiefledermauZ (.maus file)
 ============================================
-Version 0.2.0.0
+Version 0.2.18.0
 ---------------
 The DieFledermaus file format is simply a [DEFLATE](https://en.wikipedia.org/wiki/DEFLATE)- or [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number; it has been extended with the DieFledermauZ [archive file](https://en.wikipedia.org/wiki/Archive_file) format, which can contain multiple files. The names exist solely to be a bilingual pun. The file formats are specified in [DieFledermaus Format.md](DieFledermaus Format.md) and [DieFledermauZ Format.md](DieFledermauZ Format.md).
 
@@ -13,7 +13,7 @@ Features
 * DEFLATE compression, LZMA compression, or no compression.
 * Storing the filename, creation time, and modified time of the original file.
 * Comments on individual files, or in an entire archive in DieFledermauZ.
-* AES encryption using a password. This includes encrypting any of the above.
+* Encryption using AES, Twofish, or Threefish, using a password. This includes encrypting any of the above.
 
 DieFlede
 ========
@@ -21,12 +21,12 @@ A command-line utility for creating DieFledermaus files, using the DieFledermaus
 
 Usage:
 ------
-Compress a file:
+Compress files into an archive:
 ```
 DieFled.exe -cf archive.maus file1 file2 file3
 ```
 
-Decompress a file:
+Decompress files:
 ```
 DieFled.exe -xf archive.maus -o [output directory]
 ```
