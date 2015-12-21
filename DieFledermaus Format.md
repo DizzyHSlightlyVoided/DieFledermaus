@@ -107,6 +107,8 @@ The UTF-8 encoding of a text-based password must be converted using the [PBKDF2]
 
 Ensuring that the password is [sufficiently strong](https://en.wikipedia.org/wiki/Password_strength) is beyond the scope of this document. That said, an encoder must require a minimum length of 1 byte; you've got to have *some* standards.
 
+The **Salt** field must be included even if the file does not use a text-based password, both to simplify the format and specification and to prevent any information about the key from being revealed to an attacker.
+
 ### Padding
 AES, Twofish, and Threefish are [block ciphers](https://en.wikipedia.org/wiki/Block_cipher), which means that they divide the data in to *blocks* of a certain size (128 bits in the case of AES and Twofish, or 16 bytes; and with a block size equal to the key size, in the case of Threefish, equal to 32, 64, and 128 bytes). The plaintext must be [padded](https://en.wikipedia.org/wiki/Padding_%28cryptography%29) using the PKCS7 algorithm, and the padding must be added *after* the HMAC is computed. If the length of the compressed plaintext is not a multiple of the block size, it must be padded with enough bytes to make it a multiple of the block size; the value of each padding byte is equal to the total number of bytes which were added.
 
