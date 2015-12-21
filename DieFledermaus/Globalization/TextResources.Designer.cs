@@ -547,6 +547,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified value is not the same length as the existing key..
+        /// </summary>
+        internal static string NotSameLength {
+            get {
+                return ResourceManager.GetString("NotSameLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified index is less than 0 or is greater than or equal to the length of the list..
         /// </summary>
         internal static string OutOfRangeIndex {

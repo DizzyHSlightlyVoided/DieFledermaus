@@ -164,6 +164,8 @@ namespace DieFledermaus
         /// <para>In a set operation, <see cref="Archive"/> is in read-only mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, the specified value is invalid according to <see cref="LegalKeySizes"/>.

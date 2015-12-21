@@ -871,6 +871,8 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is in read-mode.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.
@@ -883,6 +885,8 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
+                if (_key != null && value != _key.Length << 3)
+                    throw new NotSupportedException(TextResources.NotSameLength);
                 if (!_keySizes.Contains(value))
                     throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
                 _keySize = value;
