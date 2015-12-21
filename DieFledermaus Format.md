@@ -80,7 +80,7 @@ A decoder must not attempt to decode an archive if it finds any unexpected or un
 
 Encryption
 ----------
-DieFledermaus supports encryption using the [AES algorithm](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256-, 192-, and 128-bit keys; the [Twofish algorithm](http://en.wikipedia.org/wiki/Twofish), with 256-, 192-, and 128-bit keys; and the [Threefish algorithm](http://en.wikipedia.org/wiki/Threefish), with 256-, 512-, and 1024-bit keys. For the sake of consistency, an encoder must derive the key from a UTF-8 text-based password. A decoder which is intended more for programmers than for end-users may allow setting the key directly.
+DieFledermaus supports encryption using the [AES algorithm](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard), with 256-, 192-, and 128-bit keys; the [Twofish algorithm](http://en.wikipedia.org/wiki/Twofish), with 256-, 192-, and 128-bit keys; and the [Threefish algorithm](http://en.wikipedia.org/wiki/Threefish), with 256-, 512-, and 1024-bit keys. An encoder should derive the key from a UTF-8 text-based password. A decoder may allow setting the key directly.
 
 An encoder should use the maximum key size for the specified algorithm, as they are the most secure. A decoder must be able to decode all key sizes, of course.
 
@@ -91,7 +91,7 @@ When a DieFledermaus archive is encrypted, the following DieFledermaus fields be
 * **Checksum** contains an [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the specified hash function, the binary key derived from the password, and the *compressed* data, rather than a direct hash of the *uncompressed* data.
 * **Data** has the following structure:
  1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
- 2. **IV:** the initialization vector (128 bits, the same size as a single encrypted block).
+ 2. **IV:** the initialization vector (the same size as a single encrypted block).
  3. **Encrypted Data:** The encrypted data itself.
 
 The encrypted data contains:
@@ -99,7 +99,9 @@ The encrypted data contains:
 2. The **Data** field as it exists when unencrypted; the compressed data.
 
 ### Text-based passwords
-In order to derive the binary key, the UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm, using an HMAC with specified hash function, with at least 9001 iterations, and with an output length equal to that of the key.
+If a password is used instead of directly using a binary key, the canonical form of converting a password to a key is as follows.
+
+The UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm, using an HMAC with specified hash function, with at least 9001 iterations, and with an output length equal to that of the key.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 

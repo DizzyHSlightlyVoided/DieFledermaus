@@ -161,7 +161,7 @@
     <value>The computed checksum did not match the expected value.</value>
   </data>
   <data name="BadKey" xml:space="preserve">
-    <value>The password is invalid.</value>
+    <value>The key or password is invalid.</value>
   </data>
   <data name="CollectBadArray" xml:space="preserve">
     <value>The specified array is invalid.</value>
@@ -226,7 +226,7 @@
     <value>The specified value is an invalid length.</value>
   </data>
   <data name="KeyNotSet" xml:space="preserve">
-    <value>The DieFledermaus stream is encrypted, and requires a password.</value>
+    <value>The DieFledermaus stream is encrypted, and requires a key or password.</value>
   </data>
   <data name="NotEncrypted" xml:space="preserve">
     <value>The current instance is not encrypted.</value>
@@ -269,7 +269,7 @@
     <value>The DieFledermauZ archive contains invalid or contradictory formats.</value>
   </data>
   <data name="KeyNotSetZ" xml:space="preserve">
-    <value>The DieFledermauZ archive is encrypted, and requires a password.</value>
+    <value>The DieFledermauZ archive is encrypted, and requires a key or password.</value>
   </data>
   <data name="IvLength" xml:space="preserve">
     <value>The specified IV must be the same length as the block size.</value>

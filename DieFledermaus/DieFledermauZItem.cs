@@ -306,6 +306,31 @@ namespace DieFledermaus
         public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
 
         /// <summary>
+        /// Gets and sets a binary key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has an invalid length according to <see cref="LegalKeySizes"/>.
+        /// </exception>
+        public byte[] Key
+        {
+            get { return MausStream.Key; }
+            set
+            {
+                _ensureCanSetKey();
+                MausStream.Key = value;
+            }
+        }
+
+        /// <summary>
         /// Gets and sets the initialization vector used for the current instance, or <c>null</c> if the current instance is not encrypted.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
@@ -369,19 +394,16 @@ namespace DieFledermaus
         /// Gets and sets the password used by the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current stream is closed.
+        /// The current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current stream is not encrypted.
+        /// The current instance is not encrypted.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value has a length of 0.
+        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
         /// </exception>
         public string Password
         {

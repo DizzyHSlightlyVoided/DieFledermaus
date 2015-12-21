@@ -494,11 +494,14 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            if (_password == null)
+            if (_password == null && _key == null)
                 throw new CryptoException(TextResources.KeyNotSetZ);
 
-            OnProgress(MausProgressState.BuildingKey);
-            byte[] _key = DieFledermausStream.GetKey(this);
+            if (_key == null)
+            {
+                OnProgress(MausProgressState.BuildingKey);
+                _key = DieFledermausStream.GetKey(this);
+            }
 
             using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _bufferStream))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
@@ -901,11 +904,8 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value has a length of 0.
+        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
         /// </exception>
         public string Password
         {
@@ -913,11 +913,52 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                if (value.Length == 0)
+                if (value != null && value.Length == 0)
                     throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
                 _password = value;
+            }
+        }
+
+        private byte[] _key;
+        /// <summary>
+        /// Gets and sets a binary key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has an invalid length according to <see cref="LegalKeySizes"/>.
+        /// </exception>
+        public byte[] Key
+        {
+            get
+            {
+                if (_key == null) return null;
+                return (byte[])_key.Clone();
+            }
+            set
+            {
+                _ensureCanSetKey();
+                if (value == null)
+                {
+                    _key = value;
+                    return;
+                }
+                int keyBitSize = value.Length << 3;
+
+                if (value.Length > int.MaxValue >> 3 || !_keySizes.Contains(keyBitSize))
+                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
+                else
+                {
+                    _key = (byte[])value.Clone();
+                    _keySize = keyBitSize;
+                }
             }
         }
 
@@ -1519,11 +1560,8 @@ namespace DieFledermaus
 
             long length = 16;
 
-            byte[] _key;
 
-            if (_encFmt == MausEncryptionFormat.None)
-                _key = null;
-            else
+            if (_encFmt != MausEncryptionFormat.None && _key != null)
             {
                 OnProgress(MausProgressState.BuildingKey);
                 _key = DieFledermausStream.GetKey(this);

@@ -54,11 +54,8 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value has a length of 0.
+        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
         /// </exception>
         string Password { get; set; }
 
@@ -67,6 +64,22 @@ namespace DieFledermaus
         /// </summary>
         MausEncryptionFormat EncryptionFormat { get; }
 
+        /// <summary>
+        /// Gets and sets a binary key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has an invalid length according to <see cref="LegalKeySizes"/>.
+        /// </exception>
+        byte[] Key { get; set; }
         /// <summary>
         /// Gets and sets the initialization vector of the current instance, or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
@@ -165,6 +178,8 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is in read-only mode.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.

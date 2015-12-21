@@ -205,7 +205,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The password is invalid..
+        ///   Looks up a localized string similar to The key or password is invalid..
         /// </summary>
         internal static string BadKey {
             get {
@@ -520,7 +520,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a password..
+        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a key or password..
         /// </summary>
         internal static string KeyNotSet {
             get {
@@ -529,7 +529,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a password..
+        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a key or password..
         /// </summary>
         internal static string KeyNotSetZ {
             get {

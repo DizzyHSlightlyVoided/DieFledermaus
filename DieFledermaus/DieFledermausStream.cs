@@ -1603,11 +1603,8 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
-        /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value has a length of 0.
+        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
         /// </exception>
         public string Password
         {
@@ -1615,11 +1612,53 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                if (value.Length == 0)
+                if (value != null && value.Length == 0)
                     throw new ArgumentException(TextResources.PasswordZeroLength, nameof(value));
                 _password = value;
+            }
+        }
+
+        private byte[] _key;
+        /// <summary>
+        /// Gets and sets a binary key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value has an invalid length according to <see cref="LegalKeySizes"/>.
+        /// </exception>
+        public byte[] Key
+        {
+            get
+            {
+                if (_key == null) return null;
+                return (byte[])_key.Clone();
+            }
+            set
+            {
+                _ensureCanSetKey();
+                if (value == null)
+                {
+                    _key = value;
+                    return;
+                }
+
+                int keyBitSize = value.Length << 3;
+
+                if (value.Length > int.MaxValue >> 3 || !_keySizes.Contains(keyBitSize))
+                    throw new ArgumentException(TextResources.KeyLength, nameof(value));
+                else
+                {
+                    _key = (byte[])value.Clone();
+                    _keySize = keyBitSize;
+                }
             }
         }
 
@@ -2361,16 +2400,18 @@ namespace DieFledermaus
                 return;
             }
 
-            if (_password == null && _encFmt != MausEncryptionFormat.None)
+            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null)
                 throw new CryptoException(TextResources.KeyNotSet);
 
             GetBuffer();
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                byte[] _key;
-                OnProgress(MausProgressState.BuildingKey);
-                _key = GetKey(this);
+                if (_key == null)
+                {
+                    OnProgress(MausProgressState.BuildingKey);
+                    _key = GetKey(this);
+                }
 
                 using (MausBufferStream bufferStream = Decrypt(this, _key, _bufferStream))
                 {
@@ -3037,7 +3078,7 @@ namespace DieFledermaus
                 return;
             if (_bufferStream == null || _mode != CompressionMode.Compress || _bufferStream.Length == 0)
                 return;
-            if (_encFmt != MausEncryptionFormat.None && _password == null)
+            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null)
                 throw new InvalidOperationException(TextResources.KeyNotSet);
 
             _bufferStream.Reset();
@@ -3098,10 +3139,7 @@ namespace DieFledermaus
             }
             else rsaSignature = dsaSignature = ecdsaSignature = hashChecksum = null;
 
-            byte[] _key;
-            if (_encFmt == MausEncryptionFormat.None)
-                _key = null;
-            else
+            if (_encFmt != MausEncryptionFormat.None && _key == null)
             {
                 OnProgress(MausProgressState.BuildingKey);
                 _key = GetKey(this);
@@ -3401,8 +3439,7 @@ namespace DieFledermaus
             else
                 state = MausProgressState.DecompressingWithSize;
 
-            if (Progress != null)
-                Progress(this, new MausProgressEventArgs(state, inSize, outSize));
+            OnProgress(new MausProgressEventArgs(state, inSize, outSize));
         }
 
         /// <summary>
