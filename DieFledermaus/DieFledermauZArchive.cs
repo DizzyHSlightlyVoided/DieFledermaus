@@ -510,7 +510,6 @@ namespace DieFledermaus
                 long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
                 ReadDecrypted(reader, ref curOffset);
             }
-            Array.Clear(_key, 0, _key.Length);
             OnProgress(MausProgressState.CompletedLoading);
         }
 

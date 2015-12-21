@@ -2441,7 +2441,6 @@ namespace DieFledermaus
 
                 using (MausBufferStream bufferStream = Decrypt(this, _key, _bufferStream))
                 {
-                    Array.Clear(_key, 0, _key.Length);
 #if NOLEAVEOPEN
                     BinaryReader reader = new BinaryReader(bufferStream);
 #else
@@ -3340,7 +3339,6 @@ namespace DieFledermaus
 
                         output.BufferCopyTo(_baseStream, false);
                     }
-                    Array.Clear(_key, 0, _key.Length);
                 }
             }
             OnProgress(new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, _bufferStream.Length));
