@@ -28,13 +28,13 @@ When encoding a file to a DieFledermaus archive, the filename of the DieFlederma
 
 A DieFledermaus stream contains the following fields:
 
-1. **Magic Number:** "`mAuS`" (`6d 41 75 53`)
-2. **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `62 00` (hex) = integer `98` (decimal) = version 0.98.
-3. **Format:** An array of length-prefixed strings describing the format.
-4. **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
-5. **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
-6. **Checksum:** A hash of the decompressed value using the specified hash function.
-7. **Data:** The compressed data itself.
+* **Magic Number:** "`mAuS`" (`6d 41 75 53`)
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `62 00` (hex) = integer `98` (decimal) = version 0.98.
+* **Format:** An array of length-prefixed strings describing the format.
+* **Compressed Length:** A signed 64-bit integer containing the number of bytes in the compressed data.
+* **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
+* **Checksum:** A hash of the decompressed value using the specified hash function.
+* **Data:** The compressed data itself.
 
 ### Format
 **Format** is an array of 16-bit length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike the length-prefixed strings themselves, a 0-value in the **Format Length** means that there really are zero elements.
@@ -90,9 +90,9 @@ When a DieFledermaus archive is encrypted, the following DieFledermaus fields be
 * If `DeL` is not specified in **Format** as the actual decompressed length, the compressed data is simply read to the end.
 * **Checksum** contains an [HMAC](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code), using the specified hash function, the binary key derived from the password, and the *compressed* data, rather than a direct hash of the *uncompressed* data.
 * **Data** has the following structure:
- 1. **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
- 2. **IV:** the initialization vector (the same size as a single encrypted block).
- 3. **Encrypted Data:** The encrypted data itself.
+ - **Salt:** A sequence of random bits, the same length as the key, used as [salt](https://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password.
+ - **IV:** the initialization vector (the same size as a single encrypted block).
+ - **Encrypted Data:** The encrypted data itself.
 
 The encrypted data contains:
 1. **Encrypted Format:** A second **Format** field, containing data which the encoder or the user deem too sensitive to transmit in plaintext, such as the original filename. This may include values which are already present in the unencrypted **Format**, as long as this does not result in a contradiction. **Encrypted Format** must be prepended to the data after compression, but before the HMAC is calculated. (The description of the actual encryption must remain in the unencrypted **Format**, or else the decoder won't have any way of knowing that the file is encrypted.)
@@ -101,7 +101,7 @@ The encrypted data contains:
 ### Text-based passwords
 If a password is used instead of directly using a binary key, the canonical form of converting a password to a key is as follows.
 
-The UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm, using an HMAC with specified hash function, with at least 9001 iterations, and with an output length equal to that of the key.
+The UTF-8 encoding of a text-based password must be converted using the [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2) algorithm, using an HMAC with specified hash function, with at least 9001 iterations, and with an output length equal to that of the key. The **Salt** field is used as [cryptographic salt](http://en.wikipedia.org/wiki/Salt_%28cryptography%29) for the password generation.
 
 9001 is chosen because it wastes a hundred or so milliseconds on a modern machine. This number is intended to increase as computers become more powerful; therefore, a DieFledermaus encoder should set this to a higher value as time goes by. At the time of this writing, however, 9001 is good enough, and an encoder should not use anything higher.
 
@@ -117,7 +117,7 @@ If the original value *is* a multiple of 16, then an extra block of 16 bytes mus
 If the decrypted value has invalid padding (i.e. the last two bytes in the last block are `6f 02`), this probably means that the key or password is invalid. However, there is effectively a 1 in 256 chance that an incorrect key will transform the last byte in the stream into `0x01`, which is technically valid padding; therefore, the decrypted value must still be compared against the transmitted HMAC after the padding is removed.
 
 ### Formats
-The implementation of AES used by DieFledermaus is equivalent to [that of the .Net framework](https://msdn.microsoft.com/en-us/library/system.security.cryptography.aes.aspx), and operates using **cipher block chaining**. In cipher block chaining, before each block is encrypted, the plaintext version of the current block is XORed with the immediately previous encrypted block; this has the effect that each block has been mixed with the data from *all previous blocks*. The result of this is that 1. multiple identical plaintext blocks will look completely different after encrypting (even in a file which is the same 16 bytes repeated a million times), thus adding to the security; 2. *any* change in the plaintext will also result in a change to every subsequent block; and 3. to decrypt a given block, you need both the current block and the previous block.
+The DieFledermaus format using **cipher block chaining**. In cipher block chaining, before each block is encrypted, the plaintext version of the current block is XORed with the immediately previous encrypted block; this has the effect that each block has been mixed with the data from *all previous blocks*. The result of this is that 1. multiple identical plaintext blocks will look completely different after encrypting (even in a file which is the same 16 bytes repeated a million times), thus adding to the security; 2. *any* change in the plaintext will also result in a change to every subsequent block; and 3. to decrypt a given block, you need both the current block and the previous block.
 
 Because the first block doesn't have any previous blocks to XOR with, cipher block chaining also includes an [initialization vector](https://en.wikipedia.org/wiki/Initialization_vector) or IV, which is the same size as a single block. Without an IV (or with identical IVs), identical encrypted files with identical keys will have identical encrypted binary values, which may lead to a security hole if anyone knows anything about the structure of the plaintext.
 
