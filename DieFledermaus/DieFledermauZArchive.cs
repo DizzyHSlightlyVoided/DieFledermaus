@@ -1587,7 +1587,7 @@ namespace DieFledermaus
             long length = 16;
 
 
-            if (_encFmt != MausEncryptionFormat.None && _key != null)
+            if (_encFmt != MausEncryptionFormat.None && _key == null)
             {
                 OnProgress(MausProgressState.BuildingKey);
                 _key = DieFledermausStream.GetKey(this);
@@ -1615,9 +1615,20 @@ namespace DieFledermaus
             }
 
             ByteOptionList options = new ByteOptionList();
-            if (_encFmt == MausEncryptionFormat.Aes)
+            if (_encFmt != MausEncryptionFormat.None)
             {
-                options.Add(DieFledermausStream._kEncAes);
+                switch (_encFmt)
+                {
+                    case MausEncryptionFormat.Aes:
+                        options.Add(DieFledermausStream._kEncAes);
+                        break;
+                    case MausEncryptionFormat.Twofish:
+                        options.Add(DieFledermausStream._kEncTwofish);
+                        break;
+                    case MausEncryptionFormat.Threefish:
+                        options.Add(DieFledermausStream._kEncThreefish);
+                        break;
+                }
                 options.Add((short)_keySize);
 
                 options.Add(DieFledermausStream._kHash);
@@ -1637,7 +1648,12 @@ namespace DieFledermaus
             else
             {
                 encryptedOptions = new ByteOptionList();
-                long size = (_keySize >> 3) + _blockByteCount + sizeof(long);
+                long keyByteLength = _keySize >> 3;
+                long size = keyByteLength + sizeof(long);
+                if (_encFmt == MausEncryptionFormat.Threefish)
+                    size += keyByteLength;
+                else
+                    size += _blockByteCount;
 
                 size += DieFledermausStream.GetHashLength(_hashFunc);
 
