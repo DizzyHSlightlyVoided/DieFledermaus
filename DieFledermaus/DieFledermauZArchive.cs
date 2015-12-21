@@ -966,6 +966,28 @@ namespace DieFledermaus
             }
         }
 
+        /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from <see cref="Password"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>In a set operation, the current instance is in read-mode and has already been successfully decrypted.</para>
+        /// <para>-OR-</para>
+        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// </exception>
+        public void DeriveKey()
+        {
+            _ensureCanSetKey();
+            if (_password == null)
+                throw new InvalidOperationException(TextResources.PasswordNotSet);
+            _key = DieFledermausStream.GetKey(this);
+        }
+
         #region Create
         /// <summary>
         /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using the specified compression format and encryption format.

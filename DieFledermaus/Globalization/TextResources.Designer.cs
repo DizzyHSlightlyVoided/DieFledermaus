@@ -601,6 +601,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No password has been set on the current instance..
+        /// </summary>
+        internal static string PasswordNotSet {
+            get {
+                return ResourceManager.GetString("PasswordNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A password must be at least 1 character long..
         /// </summary>
         internal static string PasswordZeroLength {

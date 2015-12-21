@@ -145,6 +145,10 @@ namespace DieFledermaus.Tests
             const string passwd = "Correct Horse!Battery#Staple69105";
 
             item.Password = passwd;
+            Stopwatch sw = Stopwatch.StartNew();
+            item.DeriveKey();
+            sw.Stop();
+            Console.WriteLine("Time to derive key: {0}ms", sw.Elapsed.TotalMilliseconds);
 
             DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
             if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)

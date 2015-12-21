@@ -118,6 +118,22 @@ namespace DieFledermaus
         byte[] Salt { get; set; }
 
         /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from <see cref="Password"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>In a set operation, the current instance is in read-mode and has already been successfully decrypted.</para>
+        /// <para>-OR-</para>
+        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// </exception>
+        void DeriveKey();
+
+        /// <summary>
         /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">

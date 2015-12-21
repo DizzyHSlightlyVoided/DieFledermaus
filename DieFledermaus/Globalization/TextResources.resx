@@ -352,4 +352,7 @@
   <data name="NotSameLength" xml:space="preserve">
     <value>The specified value is not the same length as the existing key.</value>
   </data>
+  <data name="PasswordNotSet" xml:space="preserve">
+    <value>No password has been set on the current instance.</value>
+  </data>
 </root>

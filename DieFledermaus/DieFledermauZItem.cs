@@ -247,6 +247,26 @@ namespace DieFledermaus
         public bool IsDecrypted { get { return _isDecrypted; } }
 
         /// <summary>
+        /// Sets <see cref="Key"/> to a value derived from <see cref="Password"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is not encrypted.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// <para>In a set operation, <see cref="Archive"/> is in read-mode and has already been successfully decrypted.</para>
+        /// <para>-OR-</para>
+        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// </exception>
+        public void DeriveKey()
+        {
+            _ensureCanSetKey();
+            MausStream.DeriveKey();
+        }
+
+        /// <summary>
         /// Decrypts the current instance.
         /// </summary>
         /// <returns>The current instance.</returns>
@@ -311,7 +331,7 @@ namespace DieFledermaus
         /// Gets and sets a binary key used to encrypt or decrypt the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
+        /// The current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current instance is not encrypted.
@@ -396,7 +416,7 @@ namespace DieFledermaus
         /// Gets and sets the password used by the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
+        /// The current instance is deleted.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// The current instance is not encrypted.
