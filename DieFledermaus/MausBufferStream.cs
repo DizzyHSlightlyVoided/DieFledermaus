@@ -62,11 +62,11 @@ namespace DieFledermaus
 
         private MiniBuffer _firstBuffer, _currentBuffer;
         private int _currentPos;
-        private bool _reading;
+        private bool _reading, _closed;
 
         public override bool CanRead
         {
-            get { return _firstBuffer != null && _reading; }
+            get { return !_closed && _reading; }
         }
 
         public override bool CanSeek
@@ -76,7 +76,7 @@ namespace DieFledermaus
 
         public override bool CanWrite
         {
-            get { return _firstBuffer != null && !_reading; }
+            get { return !_closed && !_reading; }
         }
 
         private long _length;
@@ -84,7 +84,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 if (Disposing != null) throw new NotSupportedException();
                 return _length;
             }
@@ -94,7 +94,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 if (Disposing != null) throw new NotSupportedException();
                 if (_reading) return _position;
                 return _length;
@@ -119,15 +119,17 @@ namespace DieFledermaus
             _currentBuffer = _firstBuffer;
             _position = 0;
             _reading = true;
+            _closed = false;
         }
 
         public override void Flush()
         {
+            if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
         }
 
         public override int Read(byte[] buffer, int originalOffset, int originalCount)
         {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (!_reading) throw new NotSupportedException(TextResources.CurrentWrite);
             DieFledermausStream.CheckSegment(buffer, originalOffset, originalCount);
 
@@ -158,7 +160,7 @@ namespace DieFledermaus
 
         public override void Write(byte[] buffer, int originalOffset, int originalCount)
         {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+            if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_reading) throw new NotSupportedException(TextResources.CurrentRead);
             DieFledermausStream.CheckSegment(buffer, originalOffset, originalCount);
 
@@ -184,11 +186,10 @@ namespace DieFledermaus
 
         internal void BufferCopyTo(Stream destination, bool forceWrite)
         {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             MausBufferStream qbs = destination as MausBufferStream;
             if (qbs == null || forceWrite)
             {
-                _bufferCopyTo(destination.Write);
+                BufferCopyTo(destination.Write);
                 return;
             }
 
@@ -208,12 +209,6 @@ namespace DieFledermaus
         }
 
         internal void BufferCopyTo(WriteDelegate write)
-        {
-            if (_firstBuffer == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-            _bufferCopyTo(write);
-        }
-
-        private void _bufferCopyTo(WriteDelegate write)
         {
             if (_currentPos != 0)
             {
@@ -237,13 +232,14 @@ namespace DieFledermaus
 
         protected override void Dispose(bool disposing)
         {
-            if (_firstBuffer == null)
+            if (_closed)
                 return;
+
+            _closed = true;
 
             if (Disposing != null)
                 Disposing(this, new DisposeEventArgs(_length));
 
-            _firstBuffer = _currentBuffer = null;
             Disposing = null;
             base.Dispose(disposing);
         }
@@ -251,7 +247,7 @@ namespace DieFledermaus
         internal void Prepend(MausBufferStream other)
         {
             _length += other._length;
-            if (_firstBuffer != null && _firstBuffer.End != 0)
+            if (!_closed && _firstBuffer.End != 0)
                 other._currentBuffer.Next = _firstBuffer;
             _firstBuffer = other._firstBuffer;
             Reset();
@@ -263,6 +259,7 @@ namespace DieFledermaus
             MiniBuffer newFirst = new MiniBuffer(buffer);
             newFirst.Next = _firstBuffer;
             _firstBuffer = newFirst;
+            _closed = false;
         }
     }
 

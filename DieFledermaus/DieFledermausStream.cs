@@ -2980,19 +2980,23 @@ namespace DieFledermaus
 
             bufferedCipher.Init(forEncryption, new ParametersWithIV(new KeyParameter(key), o.IV));
 
-            CipherStream cs = new CipherStream(output, null, bufferedCipher);
-
-            bufferStream.BufferCopyTo(cs, false);
-
-            try
+            using (MausBufferStream cryptoBuffer = new MausBufferStream())
             {
-                byte[] finalData = bufferedCipher.DoFinal();
-                output.Write(finalData, 0, finalData.Length);
-                return true;
-            }
-            catch (InvalidCipherTextException)
-            {
-                return false;
+                try
+                {
+                    using (CipherStream cs = new CipherStream(cryptoBuffer, null, bufferedCipher))
+                        bufferStream.BufferCopyTo(cs, false);
+                    return true;
+                }
+                catch (InvalidCipherTextException)
+                {
+                    return false;
+                }
+                finally
+                {
+                    cryptoBuffer.Reset();
+                    cryptoBuffer.BufferCopyTo(output, false);
+                }
             }
         }
 
