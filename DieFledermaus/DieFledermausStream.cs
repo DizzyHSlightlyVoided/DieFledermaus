@@ -47,7 +47,10 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.IO;
 using Org.BouncyCastle.Crypto.Macs;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 
@@ -2955,10 +2958,10 @@ namespace DieFledermaus
             return buffer;
         }
 
-        internal static IBlockCipher GetCipher(byte[] key, MausEncryptionFormat format, bool forEncryption)
+        private static bool RunCipher(byte[] key, IMausCrypt o, MausBufferStream bufferStream, MausBufferStream output, bool forEncryption)
         {
             IBlockCipher cipher;
-            switch (format)
+            switch (o.EncryptionFormat)
             {
                 case MausEncryptionFormat.Aes:
                     cipher = new AesEngine();
@@ -2970,81 +2973,60 @@ namespace DieFledermaus
                     cipher = new ThreefishEngine(key.Length << 3);
                     break;
                 default:
-                    return null;
+                    return true;
             }
-            cipher.Init(forEncryption, new KeyParameter(key));
-            return cipher;
+
+            var bufferedCipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(cipher));
+
+            bufferedCipher.Init(forEncryption, new ParametersWithIV(new KeyParameter(key), o.IV));
+
+            CipherStream cs = new CipherStream(output, null, bufferedCipher);
+
+            bufferStream.BufferCopyTo(cs, false);
+
+            try
+            {
+                byte[] finalData = bufferedCipher.DoFinal();
+                output.Write(finalData, 0, finalData.Length);
+                return true;
+            }
+            catch (InvalidCipherTextException)
+            {
+                return false;
+            }
         }
 
-        internal static MausBufferStream Decrypt(IMausProgress o, byte[] _key, MausBufferStream _bufferStream)
+        internal static MausBufferStream Decrypt(IMausProgress o, byte[] key, MausBufferStream bufferStream)
         {
             o.OnProgress(MausProgressState.Decrypting);
 
             MausBufferStream output = new MausBufferStream();
 
-            IBlockCipher cipher = GetCipher(_key, o.EncryptionFormat, false);
-            int blockSize = cipher.GetBlockSize();
-            byte[] prevBuffer = o.IV, buffer = new byte[blockSize], processed = new byte[blockSize];
+            bool success = RunCipher(key, o, bufferStream, output, false);
 
-            while (_bufferStream.Position < _bufferStream.Length)
-            {
-                int read = _bufferStream.Read(buffer, 0, blockSize);
-
-                cipher.ProcessBlock(buffer, 0, processed, 0);
-                ChainBlock(processed, prevBuffer);
-                Array.Copy(buffer, prevBuffer, blockSize);
-
-                if (_bufferStream.Position == _bufferStream.Length)
-                    read -= Pkcs7Provider.CountPadding(processed, blockSize);
-                output.Write(processed, 0, read);
-            }
             output.Reset();
 
             o.OnProgress(MausProgressState.VerifyingHMAC);
 
-            byte[] actualHmac = ComputeHmac(output, _key, o.HashFunction);
-            if (!CompareBytes(actualHmac, o.HMAC))
+            byte[] actualHmac = ComputeHmac(output, key, o.HashFunction);
+            if (!success || !CompareBytes(actualHmac, o.HMAC))
                 throw new CryptoException(TextResources.BadKey);
 
             return output;
         }
 
-        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream _bufferStream, byte[] _key)
+        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream bufferStream, byte[] key)
         {
             o.OnProgress(MausProgressState.Encrypting);
-            IBlockCipher cipher = GetCipher(_key, o.EncryptionFormat, true);
 
-            int blockSize = cipher.GetBlockSize();
-            byte[] buffer = new byte[blockSize], processed = o.IV;
-
-            int read;
-
-            while ((read = _bufferStream.Read(buffer, 0, blockSize)) == blockSize)
-            {
-                ChainBlock(buffer, processed);
-
-                cipher.ProcessBlock(buffer, 0, processed, 0);
-                output.Write(processed, 0, blockSize);
-            }
-
-            Pkcs7Provider.ApplyPadding(buffer, read);
-
-            ChainBlock(buffer, processed);
-            cipher.ProcessBlock(buffer, 0, processed, 0);
-            output.Write(processed, 0, blockSize);
+            RunCipher(key, o, bufferStream, output, true);
 
             output.Reset();
-            _bufferStream.Reset();
+            bufferStream.Reset();
             o.OnProgress(MausProgressState.ComputingHMAC);
-            byte[] hmac = ComputeHmac(_bufferStream, _key, o.HashFunction);
+            byte[] hmac = ComputeHmac(bufferStream, key, o.HashFunction);
             o.OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHMACCompleted, hmac));
             return hmac;
-        }
-
-        private static void ChainBlock(byte[] buffer, byte[] previous)
-        {
-            for (int i = 0; i < buffer.Length; i++)
-                buffer[i] ^= previous[i];
         }
 
         #region Disposal
