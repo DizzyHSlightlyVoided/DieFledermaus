@@ -124,7 +124,8 @@ namespace DieFledermaus.Cli
                     { "Twofish", MausEncryptionFormat.Twofish },
                     { "Threefish", MausEncryptionFormat.Threefish }
                 };
-                cEncFmt = new ClParamEnum<MausEncryptionFormat>(parser, TextResources.HelpMEncFmt, locArgs, null, '\0', "encryption", TextResources.PNameEncFmt);
+                cEncFmt = new ClParamEnum<MausEncryptionFormat>(parser, TextResources.HelpMEncFmt, locArgs, 
+                    new Dictionary<string, MausEncryptionFormat>(), '\0', "encryption", TextResources.PNameEncFmt);
             }
 
             ClParamFlag hide = new ClParamFlag(parser, TextResources.HelpMHide, '\0', "hide", TextResources.PNameHide);
