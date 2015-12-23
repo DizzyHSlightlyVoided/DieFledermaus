@@ -37,7 +37,7 @@ A DieFledermaus stream contains the following fields:
 * **Data:** The compressed data itself.
 
 ### Format
-**Format** is an array of 16-bit length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike the length-prefixed strings themselves, a 0-value in the **Format Length** means that there really are zero elements.
+**Format** is an array of 16-bit length-prefixed strings, used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the array; unlike the length-prefixed strings themselves, a 0-value in the **Format Length** means that there really are zero elements. Format elements are case-sensitive.
 
 Some elements in **Format** require more information than just the current value in order to behave properly. For example, the `AES` element specifies that the archive is AES-encrypted, but does not indicate the key size. The next element or elements must be used as *parameters* for that element, which is thus known as a *parameterized element*. Format elements should have a length no greater than 256 UTF-8 bytes because I mean seriously c'mon. Parameters may be any length between 1 and 65536 UTF-8 bytes inclusive, depending on the requirements of the parameterized element.
 
@@ -67,12 +67,12 @@ The following values are defined for the default implementation:
  - `SHA3/256`
  - `SHA3/384`
  - `SHA3/512`
-* `Rsa-Sig` - *One parameter.* **RSA Sig**niert, or **RSA Sig**ned. The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with PKCS#7 padding. The signature may be verified using the corresponding RSA public key. Should be encrypted.
-* `Rsa-Sig-Id` - *One parameter.* A value (string or binary) which identifies the RSA public key an encoder should use to verify `Rsa-Sig`. Usable only if `Rsa-Sig` is also present. Should be encrypted.
-* `Dsa-Sig` - *One parameter.* Same as `Rsa-Sig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted using [DER encoding](https://en.wikipedia.org/wiki/X.690). The message value *k* is generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Should be encrypted.
-* `Dsa-Sig-Id` - *One parameter.* A value which identifies the DSA public key used by `Dsa-Sig`. Usable only if `Dsa-Sig` is also present. Should be encrypted.
-* `ECDsa-Sig` - *One parameter.* Same as `Dsa-Sig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm.
-* `ECDsa-Sig-Id` - *One parameter.* A value which identifies the ECDSA public key used by `ECDsa-Sig`. Usable only if `ECDsa-Sig` is also present. Should be encrypted.
+* `RSAsig` - *One parameter.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data with [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding). The signature may be verified using the corresponding RSA public key. Should be encrypted.
+* `RSAsig-Id` - *One parameter.* A value (string or binary) which identifies the RSA public key an encoder should use to verify `RSAsig`. Usable only if `RSAsig` is also present. Should be encrypted.
+* `DSAsig` - *One parameter.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted using [DER encoding](https://en.wikipedia.org/wiki/X.690). The message value *k* is generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Should be encrypted.
+* `DSAsig-Id` - *One parameter.* A value which identifies the DSA public key used by `DSAsig`. Usable only if `DSAsig` is also present. Should be encrypted.
+* `ECDSAsig` - *One parameter.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm.
+* `ECDSAsig-Id` - *One parameter.* A value which identifies the ECDSA public key used by `ECDSAsig`. Usable only if `ECDSAsig` is also present. Should be encrypted.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it should stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 

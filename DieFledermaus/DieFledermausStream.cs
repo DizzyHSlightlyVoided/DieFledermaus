@@ -45,6 +45,7 @@ using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Encodings;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.IO;
@@ -1791,9 +1792,9 @@ namespace DieFledermaus
             { _kEncThreefish, MausEncryptionFormat.Threefish }
         };
 
-        private const string _kRsaSig = "Rsa-Sig", _kRsaSigId = "Rsa-Sig-Id",
-            _kDsaSig = "Dsa-Sig", _kDsaSigId = "Dsa-Sig-Id",
-            _kECDsaSig = "ECDsa-Sig", _kECDsaSigId = "ECDsa-Sig-Id";
+        private const string _kRsaSig = "RSAsig", _kRsaSigId = "RSAsig-Id",
+            _kDsaSig = "DSAsig", _kDsaSigId = "DSAsig-Id",
+            _kECDsaSig = "ECDSAsig", _kECDsaSigId = "ECDSAsig-Id";
 
         internal const string _kHash = "Hash";
 
@@ -2275,30 +2276,6 @@ namespace DieFledermaus
             throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
         }
 
-        private static DerObjectIdentifier GetHashId(MausHashFunction hashFunc)
-        {
-            switch (hashFunc)
-            {
-                case MausHashFunction.Sha224:
-                    return NistObjectIdentifiers.IdSha224;
-                case MausHashFunction.Sha256:
-                    return NistObjectIdentifiers.IdSha256;
-                case MausHashFunction.Sha384:
-                    return NistObjectIdentifiers.IdSha384;
-                case MausHashFunction.Sha512:
-                    return NistObjectIdentifiers.IdSha512;
-                case MausHashFunction.Sha3_224:
-                    return NistObjectIdentifiers.IdSha3_224;
-                case MausHashFunction.Sha3_256:
-                    return NistObjectIdentifiers.IdSha3_256;
-                case MausHashFunction.Sha3_384:
-                    return NistObjectIdentifiers.IdSha3_384;
-                case MausHashFunction.Sha3_512:
-                    return NistObjectIdentifiers.IdSha3_512;
-            }
-            throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
-        }
-
         private static IDigest GetDigestObject(MausHashFunction hashFunc)
         {
             switch (hashFunc)
@@ -2583,13 +2560,13 @@ namespace DieFledermaus
             OnProgress(MausProgressState.VerifyingRSASignature);
             try
             {
-                RsaBlindedEngine _engine = new RsaBlindedEngine();
-                _engine.Init(false, _rsaSignParamBC);
+                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine());
+                engine.Init(false, _rsaSignParamBC);
 
                 byte[] sig;
                 try
                 {
-                    sig = Pkcs7Provider.RemovePadding(_engine.ProcessBlock(_rsaSignature, 0, _rsaSignature.Length), _engine.GetOutputBlockSize());
+                    sig = engine.ProcessBlock(_rsaSignature, 0, _rsaSignature.Length);
                 }
                 catch (Exception)
                 {
@@ -2598,7 +2575,7 @@ namespace DieFledermaus
                 if (CompareBytes(_hashExpected, sig))
                     return _rsaSignVerified = true;
 
-                byte[] expected = GetDerEncoded(_hashExpected, GetHashId(_hashFunc));
+                byte[] expected = GetDerEncoded(_hashExpected, _hashFunc);
 
                 if (CompareBytes(expected, sig))
                     return _rsaSignVerified = true;
@@ -3105,12 +3082,12 @@ namespace DieFledermaus
                     OnProgress(MausProgressState.SigningRSA);
                     try
                     {
-                        RsaBlindedEngine _engine = new RsaBlindedEngine();
-                        _engine.Init(true, _rsaSignParamBC);
+                        OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine());
+                        engine.Init(true, _rsaSignParamBC);
 
-                        byte[] message = Pkcs7Provider.AddPadding(GetDerEncoded(hashChecksum, GetHashId(_hashFunc)), _engine.GetInputBlockSize());
+                        byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
 
-                        rsaSignature = _engine.ProcessBlock(message, 0, message.Length);
+                        rsaSignature = engine.ProcessBlock(message, 0, message.Length);
                     }
                     catch (Exception x)
                     {
@@ -3333,8 +3310,38 @@ namespace DieFledermaus
 #endif
         }
 
-        private static byte[] GetDerEncoded(byte[] hash, DerObjectIdentifier derId)
+        private static byte[] GetDerEncoded(byte[] hash, MausHashFunction hashFunc)
         {
+            DerObjectIdentifier derId;
+            switch (hashFunc)
+            {
+                case MausHashFunction.Sha224:
+                    derId = NistObjectIdentifiers.IdSha224;
+                    break;
+                case MausHashFunction.Sha256:
+                    derId = NistObjectIdentifiers.IdSha256;
+                    break;
+                case MausHashFunction.Sha384:
+                    derId = NistObjectIdentifiers.IdSha384;
+                    break;
+                case MausHashFunction.Sha512:
+                    derId = NistObjectIdentifiers.IdSha512;
+                    break;
+                case MausHashFunction.Sha3_224:
+                    derId = NistObjectIdentifiers.IdSha3_224;
+                    break;
+                case MausHashFunction.Sha3_256:
+                    derId = NistObjectIdentifiers.IdSha3_256;
+                    break;
+                case MausHashFunction.Sha3_384:
+                    derId = NistObjectIdentifiers.IdSha3_384;
+                    break;
+                case MausHashFunction.Sha3_512:
+                    derId = NistObjectIdentifiers.IdSha3_512;
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
+            }
             AlgorithmIdentifier _id = new AlgorithmIdentifier(derId, DerNull.Instance);
             DigestInfo dInfo = new DigestInfo(_id, hash);
 
