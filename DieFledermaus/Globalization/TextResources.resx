@@ -355,4 +355,8 @@
   <data name="PasswordNotSet" xml:space="preserve">
     <value>No password has been set on the current instance.</value>
   </data>
+  <data name="RsaTooShort" xml:space="preserve">
+    <value>The RSA private key used to sign the stream is too small. Must be at least {0} bits ({1} bytes).</value>
+    <comment>{0} = bit count, {1} = byte count.</comment>
+  </data>
 </root>

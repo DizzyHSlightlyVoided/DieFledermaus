@@ -682,6 +682,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The RSA private key used to sign the stream is too small. Must be at least {0} bits ({1} bytes)..
+        /// </summary>
+        internal static string RsaTooShort {
+            get {
+                return ResourceManager.GetString("RsaTooShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified salt must be the maximum length specified for the KeySize..
         /// </summary>
         internal static string SaltLength {

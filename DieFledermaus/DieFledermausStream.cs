@@ -3080,13 +3080,27 @@ namespace DieFledermaus
                 if (_rsaSignParamBC != null)
                 {
                     OnProgress(MausProgressState.SigningRSA);
+                    byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
+                    RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
+                    OaepEncoding engine = new OaepEncoding(rsaEngine);
                     try
                     {
-                        OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine());
                         engine.Init(true, _rsaSignParamBC);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptoException(TextResources.RsaSigPrivInvalid, x);
+                    }
 
-                        byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
+                    if (message.Length > engine.GetInputBlockSize())
+                    {
+                        int diff = 1 + rsaEngine.GetInputBlockSize() - engine.GetInputBlockSize();
+                        int neededLength = message.Length + diff;
+                        throw new CryptographicException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength));
+                    }
 
+                    try
+                    {
                         rsaSignature = engine.ProcessBlock(message, 0, message.Length);
                     }
                     catch (Exception x)
