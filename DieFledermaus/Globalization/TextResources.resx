@@ -337,7 +337,7 @@
     <value>The specified value is not a valid private key.</value>
   </data>
   <data name="RsaNeedPublic" xml:space="preserve">
-    <value>The specified value is not a valid public or private key.</value>
+    <value>The specified value is not a valid public key.</value>
   </data>
   <data name="BadIndexRange" xml:space="preserve">
     <value>The specified index plus the number of elements in the collection is greater than the length of the specified array.</value>
@@ -354,9 +354,5 @@
   </data>
   <data name="PasswordNotSet" xml:space="preserve">
     <value>No password has been set on the current instance.</value>
-  </data>
-  <data name="RsaKeyTooSmall" xml:space="preserve">
-    <value>The RSA key is too small to use for signing. Must allow a {0}-bit ({1}-byte) block size at minimum.</value>
-    <comment>{0} = number of bits block size; {1} = number of bytes in block size</comment>
   </data>
 </root>

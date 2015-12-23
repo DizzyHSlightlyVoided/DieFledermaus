@@ -226,6 +226,7 @@ namespace DieFledermaus
 
         long totalSize, curOffset;
 
+        #region Loading
         private void ReadHeader()
         {
 #if NOLEAVEOPEN
@@ -279,7 +280,7 @@ namespace DieFledermaus
                 int hashSize = DieFledermausStream.GetHashLength(_hashFunc);
 
                 _hmacExpected = DieFledermausStream.ReadBytes(reader, hashSize);
-                _salt = DieFledermausStream.ReadBytes(reader, _keySizes.MaxSize >> 3);
+                _salt = DieFledermausStream.ReadBytes(reader, _keySize >> 3);
                 _iv = DieFledermausStream.ReadBytes(reader, _blockByteCount);
 
                 curOffset += hashSize + _salt.Length + _blockByteCount - 4;
@@ -449,6 +450,7 @@ namespace DieFledermaus
             curOffset += mausStream.HeadLength + mausStream.CompressedLength;
             return returner;
         }
+        #endregion
 
         private MausBufferStream _bufferStream;
         /// <summary>
@@ -1584,7 +1586,6 @@ namespace DieFledermaus
                 throw new InvalidOperationException(TextResources.KeyNotSetZ);
 
             long length = 16;
-
 
             if (_encFmt != MausEncryptionFormat.None && _key == null)
             {

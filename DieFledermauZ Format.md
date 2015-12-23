@@ -32,7 +32,6 @@ The following elements are specified for the **Options** field:
 * `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Twofish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
 * `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Threefish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
 * `Hash` - *1 parameter.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
-* `Rsa-Sch` - *1 parameter.* The key is encrypted using an RSA public key, and may be decrypted using the corresponding private key. Same as in DieFledermaus; must be in plaintext Must not be used unless the archive is encrypted.
 
 Entry List
 ----------

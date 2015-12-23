@@ -628,15 +628,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The RSA key is too small to use for signing. Must allow a {0}-bit ({1}-byte) block size at minimum..
-        /// </summary>
-        internal static string RsaKeyTooSmall {
-            get {
-                return ResourceManager.GetString("RsaKeyTooSmall", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified value is not a valid private key..
         /// </summary>
         internal static string RsaNeedPrivate {
@@ -646,7 +637,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified value is not a valid public or private key..
+        ///   Looks up a localized string similar to The specified value is not a valid public key..
         /// </summary>
         internal static string RsaNeedPublic {
             get {
