@@ -121,6 +121,8 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
         /// and the specified value does not represent a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is too short for <see cref="DieFledermauZItem.HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {

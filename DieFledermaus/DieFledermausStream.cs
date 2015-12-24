@@ -964,22 +964,67 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
             get { return _rsaSignParamBC; }
             set
             {
-                if (_baseStream == null)
-                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-
                 CheckSignParam(value, _rsaSignature, _rsaSignVerified);
+
+                CheckSignHash(value, _hashFunc, false);
+
                 _rsaSignParamBC = value;
+            }
+        }
+
+        private void CheckSignHash(RsaKeyParameters rsaKey, MausHashFunction hashFunc, bool gettingHash)
+        {
+            const string pName = "value";
+            if (rsaKey == null) return;
+
+            RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
+            OaepEncoding engine = new OaepEncoding(rsaEngine, GetDigestObject(hashFunc));
+            try
+            {
+                engine.Init(_mode == CompressionMode.Compress, rsaKey);
+            }
+            catch (Exception)
+            {
+                throw new ArgumentException(_mode == CompressionMode.Compress ?
+                    TextResources.RsaNeedPrivate :
+                    TextResources.RsaNeedPublic, pName);
+            }
+
+            int hashLen = GetHashLength(hashFunc);
+            int messageLen = GetDerEncoded(new byte[hashLen], hashFunc).Length;
+
+            int inputBlockSize = engine.GetInputBlockSize();
+
+            if (inputBlockSize < 0 || messageLen > inputBlockSize)
+            {
+                if (gettingHash)
+                {
+                    int byteSize = (rsaKey.Exponent.BitLength + 7) >> 3;
+
+                    int maxMessageLen = (byteSize - (messageLen - hashLen)) / 3;
+
+                    throw new ArgumentException(string.Format(TextResources.RsaHashTooBig, maxMessageLen << 3, maxMessageLen));
+                }
+
+                int neededLength = messageLen + 1 + 2 * hashLen;
+
+                throw new ArgumentException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength), pName);
             }
         }
 
         private void CheckSignParam(AsymmetricKeyParameter value, object signature, bool signVerified)
         {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+
             if (_mode == CompressionMode.Decompress)
             {
                 if (signature == null)
@@ -1115,9 +1160,19 @@ namespace DieFledermaus
             get { return _dsaSignParamBC; }
             set
             {
-                if (_baseStream == null)
-                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _dsaSignature, _dsaSignVerified);
+                if (value != null)
+                {
+                    DsaSigner signer = new DsaSigner(GetDsaCalc());
+                    try
+                    {
+                        signer.Init(_mode == CompressionMode.Compress, value);
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 _dsaSignParamBC = value;
             }
         }
@@ -1239,8 +1294,6 @@ namespace DieFledermaus
             get { return _ecdsaSignParamBC; }
             set
             {
-                if (_baseStream == null)
-                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified);
                 _ecdsaSignParamBC = value;
             }
@@ -1606,7 +1659,11 @@ namespace DieFledermaus
         /// In a set operation, the current stream is in read-mode.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
-        /// The specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, <see cref="RSASignParameters"/> is not <c>null</c>, and the specified value would produce a larger
+        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
         /// </exception>
         public MausHashFunction HashFunction
         {
@@ -1614,10 +1671,11 @@ namespace DieFledermaus
             set
             {
                 _ensureCanWrite();
-                if (HashBDict.ContainsKey(value))
-                    _hashFunc = value;
-                else
+                if (!HashBDict.ContainsKey(value))
                     throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
+
+                CheckSignHash(_rsaSignParamBC, value, true);
+                _hashFunc = value;
             }
         }
 
@@ -3071,26 +3129,10 @@ namespace DieFledermaus
                 {
                     OnProgress(MausProgressState.SigningRSA);
                     byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
-                    RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
-                    OaepEncoding engine = new OaepEncoding(rsaEngine, GetDigestObject(_hashFunc));
+                    OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetDigestObject(_hashFunc));
                     try
                     {
                         engine.Init(true, _rsaSignParamBC);
-                    }
-                    catch (Exception x)
-                    {
-                        throw new CryptoException(TextResources.RsaSigPrivInvalid, x);
-                    }
-
-                    if (message.Length > engine.GetInputBlockSize())
-                    {
-                        int diff = 1 + rsaEngine.GetInputBlockSize() - engine.GetInputBlockSize();
-                        int neededLength = message.Length + diff;
-                        throw new CryptoException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength));
-                    }
-
-                    try
-                    {
                         rsaSignature = engine.ProcessBlock(message, 0, message.Length);
                     }
                     catch (Exception x)
@@ -3352,7 +3394,7 @@ namespace DieFledermaus
             return dInfo.GetDerEncoded();
         }
 
-        private static byte[] GenerateDsaSignature(byte[] hash, IDsa signer, ICipherParameters key)
+        private static byte[] GenerateDsaSignature(byte[] hash, IDsa signer, AsymmetricKeyParameter key)
         {
             signer.Init(true, key);
 

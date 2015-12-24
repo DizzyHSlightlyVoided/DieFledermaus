@@ -619,6 +619,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified hash function produces an output which is too big. The key used to sign the current instance does not support hashes greater than approximately {0} bits ({1} bytes)..
+        /// </summary>
+        internal static string RsaHashTooBig {
+            get {
+                return ResourceManager.GetString("RsaHashTooBig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The length of an RSA key-identifier must either be null or must have a length between 1 and 65536..
         /// </summary>
         internal static string RsaIdLength {
@@ -682,7 +691,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The RSA private key used to sign the stream is too small. Must be at least {0} bits ({1} bytes)..
+        ///   Looks up a localized string similar to The specified RSA key is too small for the current hash function. Must be at least {0} bits ({1} bytes)..
         /// </summary>
         internal static string RsaTooShort {
             get {
