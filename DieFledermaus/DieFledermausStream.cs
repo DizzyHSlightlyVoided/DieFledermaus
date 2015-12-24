@@ -2550,7 +2550,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.VerifyingRSASignature);
             try
             {
-                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine());
+                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetDigestObject(_hashFunc));
                 engine.Init(false, _rsaSignParamBC);
 
                 byte[] sig;
@@ -3072,7 +3072,7 @@ namespace DieFledermaus
                     OnProgress(MausProgressState.SigningRSA);
                     byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
                     RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
-                    OaepEncoding engine = new OaepEncoding(rsaEngine);
+                    OaepEncoding engine = new OaepEncoding(rsaEngine, GetDigestObject(_hashFunc));
                     try
                     {
                         engine.Init(true, _rsaSignParamBC);
