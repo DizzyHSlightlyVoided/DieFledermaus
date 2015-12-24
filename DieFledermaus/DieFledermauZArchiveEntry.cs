@@ -534,7 +534,7 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// Either <see cref="DieFledermauZItem.Key"/> or <see cref="DieFledermauZItem.Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
         public override DieFledermauZItem Decrypt()
@@ -568,7 +568,7 @@ namespace DieFledermaus
         /// The stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// Either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// Either <see cref="DieFledermauZItem.Key"/> or <see cref="DieFledermauZItem.Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
         public Stream OpenRead()
@@ -608,8 +608,7 @@ namespace DieFledermaus
         /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and the stream contains invalid data.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// <see cref="DieFledermauZItem.Archive"/> is in read-mode and 
-        /// either the password is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// <see cref="DieFledermauZItem.Archive"/> is in read-mode, and either <see cref="DieFledermauZItem.Key"/> or <see cref="DieFledermauZItem.Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="Decrypt()"/> or <see cref="OpenRead()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="InvalidOperationException">

@@ -35,7 +35,6 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 
 using DieFledermaus.Globalization;
@@ -60,6 +59,8 @@ using SevenZip.Compression.LZMA;
 
 namespace DieFledermaus
 {
+    using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
+
     /// <summary>
     /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format,
     /// which is just the DEFLATE algorithm prefixed with magic number "<c>mAuS</c>" and metadata.
@@ -2339,7 +2340,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// Either <see cref="Key"/> or <see cref="Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
@@ -2368,8 +2369,7 @@ namespace DieFledermaus
         /// The current stream is closed.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// The current stream is in read-mode, and
-        /// either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// The current stream is in read-mode, and either <see cref="Key"/> or <see cref="Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
@@ -2401,10 +2401,7 @@ namespace DieFledermaus
         private void _readData()
         {
             if (_headerGotten)
-            {
-                _verifyRSASignature();
                 return;
-            }
 
             if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null)
                 throw new CryptoException(TextResources.KeyNotSet);
@@ -2518,8 +2515,6 @@ namespace DieFledermaus
                         throw new InvalidDataException(TextResources.BadChecksum);
                 }
                 _hashExpected = hashActual;
-                if (_rsaSignature != null)
-                    _verifyRSASignature();
             }
             else _hashExpected = hashActual;
         }
@@ -2546,11 +2541,6 @@ namespace DieFledermaus
             {
                 _readData();
             }
-            return _verifyRSASignature();
-        }
-
-        private bool _verifyRSASignature()
-        {
             if (_rsaSignVerified)
                 return true;
 
@@ -2788,7 +2778,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// Either <see cref="Key"/> or <see cref="Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
@@ -2846,7 +2836,7 @@ namespace DieFledermaus
         /// The current stream is in write-mode.
         /// </exception>
         /// <exception cref="CryptoException">
-        /// Either <see cref="Password"/> is not correct, or <see cref="RSASignParameters"/> is not <c>null</c> and is not set to the correct value.
+        /// Either <see cref="Key"/> or <see cref="Password"/> is incorrect.
         /// It is safe to attempt to call <see cref="LoadData()"/>, <see cref="Read(byte[], int, int)"/>, <see cref="ReadByte()"/>, or 
         /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
@@ -3096,7 +3086,7 @@ namespace DieFledermaus
                     {
                         int diff = 1 + rsaEngine.GetInputBlockSize() - engine.GetInputBlockSize();
                         int neededLength = message.Length + diff;
-                        throw new CryptographicException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength));
+                        throw new CryptoException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength));
                     }
 
                     try
