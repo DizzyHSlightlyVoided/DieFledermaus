@@ -1900,7 +1900,6 @@ namespace DieFledermaus
                 if (version < _minVersionShort)
                     throw new NotSupportedException(TextResources.VersionTooLow);
 
-                _hashFunc = MausHashFunction.Sha512;
                 _headSize = ReadFormat(reader, false);
 
                 if ((_rsaSignId != null && _rsaSignature == null) || (_dsaSignId != null && _dsaSignature == null) || (_ecdsaSignId != null && _ecdsaSignature == null))

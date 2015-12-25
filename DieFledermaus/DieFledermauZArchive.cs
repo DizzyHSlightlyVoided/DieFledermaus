@@ -258,7 +258,6 @@ namespace DieFledermaus
                 if (totalSize < BaseOffset)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 curOffset = BaseOffset;
-                _hashFunc = MausHashFunction.Sha512;
                 ReadOptions(reader, false);
 
                 if (_encFmt == MausEncryptionFormat.None)

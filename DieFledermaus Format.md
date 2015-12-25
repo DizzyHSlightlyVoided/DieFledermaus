@@ -61,9 +61,9 @@ The following values are defined for the default implementation:
 * `Kom` - *version 1, one parameter.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder; it can either be treated as a raw binary value, or as UTF-8 string of text (or indeed any other text encoding).
 * `Hash` - *1 parameter.* Indicates the specified hash function. Valid values of the parameter are:
  - `SHA224`
- - `SHA256`
+ - `SHA256` (the default if nothing is specified)
  - `SHA384`
- - `SHA512` (the default if nothing is specified)
+ - `SHA512`
  - `SHA3/224`
  - `SHA3/256`
  - `SHA3/384`
