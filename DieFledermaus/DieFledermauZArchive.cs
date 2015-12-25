@@ -58,7 +58,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const ushort _versionShort = 40, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 99, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;
@@ -312,7 +312,7 @@ namespace DieFledermaus
                 if (entries[index] != null)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                string path = DieFledermausStream.GetString(reader, ref curOffset, true);
+                string path = GetString(reader, ref curOffset);
 
                 curOffset += (sizeof(int) + sizeof(long));
 
@@ -343,7 +343,7 @@ namespace DieFledermaus
 
                 string basePath = entries[index].Path;
 
-                string curPath = DieFledermausStream.GetString(reader, ref curOffset, true);
+                string curPath = GetString(reader, ref curOffset);
                 if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
                     curPath = null;
 
@@ -354,10 +354,21 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
             }
 
-            if (reader.ReadInt64() != metaOffset)
+            long val = reader.ReadInt64();
+            if (val != metaOffset)
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
             _entries.AddRange(entries);
+        }
+
+        private static string GetString(BinaryReader reader, ref long curOffset)
+        {
+            int len = reader.ReadByte();
+            if (len == 0) len = DieFledermausStream.Max8Bit;
+
+            byte[] bytes = DieFledermausStream.ReadBytes(reader, len);
+            curOffset += bytes.Length + 1L;
+            return DieFledermausStream._textEncoding.GetString(bytes);
         }
 
         internal DieFledermauZItem LoadMausStream(Stream _baseStream, string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
@@ -519,25 +530,33 @@ namespace DieFledermaus
 
         internal void ReadOptions(BinaryReader reader, bool fromEncrypted)
         {
-            ushort optLen = reader.ReadUInt16();
-
-            for (int i = 0; i < optLen; i++)
+            ByteOptionList optionList;
+            try
             {
-                string curOption = DieFledermausStream.GetString(reader, ref curOffset, false);
+                optionList = new ByteOptionList(reader);
+            }
+            catch (InvalidDataException)
+            {
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+            }
+            curOffset += optionList.GetSize();
 
-                if (DieFledermausStream.ReadEncFormat(curOption, reader, optLen, ref i, ref curOffset, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount))
+            foreach (FormatValue curValue in optionList)
+            {
+                string curOption = curValue.Key;
+
+                if (DieFledermausStream.ReadEncFormat(curValue, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount, true))
                 {
-                    if (!fromEncrypted && _encryptedOptions == null)
+                    if (_encryptedOptions == null)
                         _encryptedOptions = new SettableOptions(this);
                     continue;
                 }
 
                 if (curOption.Equals(DieFledermausStream._kHash, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
-                    string newVal = DieFledermausStream.GetString(reader, ref curOffset, false);
                     MausHashFunction hashFunc;
-                    if (!DieFledermausStream.HashDict.TryGetValue(newVal, out hashFunc))
+                    if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash ||
+                        !DieFledermausStream.HashDict.TryGetValue(curValue.GetValueString(0), out hashFunc))
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
                     if (_gotHash || fromEncrypted)
@@ -556,9 +575,10 @@ namespace DieFledermaus
 
                 if (curOption.Equals(DieFledermausStream._kComment, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
+                    if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vComment)
+                        throw new NotSupportedException(TextResources.FormatUnknownZ);
 
-                    byte[] comBytes = DieFledermausStream.GetStringBytes(reader, ref curOffset, false);
+                    byte[] comBytes = curValue.GetValue(0);
 
                     if (_comBytes == null)
                     {
@@ -575,12 +595,6 @@ namespace DieFledermaus
 
                 throw new NotSupportedException(TextResources.FormatUnknownZ);
             }
-        }
-
-        private static void CheckAdvance(int optLen, ref int i)
-        {
-            if (++i >= optLen)
-                throw new InvalidDataException(TextResources.FormatBadZ);
         }
 
         internal void Delete(DieFledermauZItem item)
@@ -1617,22 +1631,24 @@ namespace DieFledermaus
             ByteOptionList options = new ByteOptionList();
             if (_encFmt != MausEncryptionFormat.None)
             {
+                FormatValue fEnc = new FormatValue(DieFledermausStream._kEnc, DieFledermausStream._vEnc);
+
                 switch (_encFmt)
                 {
                     case MausEncryptionFormat.Aes:
-                        options.Add(DieFledermausStream._kEncAes);
+                        fEnc.Add(DieFledermausStream._kEncAes);
                         break;
                     case MausEncryptionFormat.Twofish:
-                        options.Add(DieFledermausStream._kEncTwofish);
+                        fEnc.Add(DieFledermausStream._kEncTwofish);
                         break;
                     case MausEncryptionFormat.Threefish:
-                        options.Add(DieFledermausStream._kEncThreefish);
+                        fEnc.Add(DieFledermausStream._kEncThreefish);
                         break;
                 }
-                options.Add((short)_keySize);
+                fEnc.Add((ushort)_keySize);
+                options.Add(fEnc);
 
-                options.Add(DieFledermausStream._kHash);
-                options.Add(DieFledermausStream.HashBDict[_hashFunc]);
+                options.Add(DieFledermausStream._kHash, DieFledermausStream._vHash, DieFledermausStream.HashBDict[_hashFunc]);
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
@@ -1738,11 +1754,8 @@ namespace DieFledermaus
 
         private void AddComment(ByteOptionList options)
         {
-            if (!string.IsNullOrEmpty(_comment))
-            {
-                options.Add(DieFledermausStream._kComment);
-                options.Add(_comBytes);
-            }
+            if (_comBytes != null && _comBytes.Length != 0)
+                options.Add(DieFledermausStream._kComment, DieFledermausStream._vComment, _comBytes);
         }
 
         private static void AddSize(ByteOptionList options, ref long length, ref long curOffset)

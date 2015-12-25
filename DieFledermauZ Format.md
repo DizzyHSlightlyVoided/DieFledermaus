@@ -1,7 +1,7 @@
 ﻿DieFledermauZ (DieFledermaus Zip) format (.mauz file)
 =====================================================
-Version 0.4
------------
+Version 0.99
+------------
 * Extension: ".mauz" or ".maus"
 * Byte order: little-endian
 * Signing form: two's complement
@@ -17,9 +17,9 @@ Structure
 The structure of a DieFledermauZ file is as follows:
 
 * **Magic Number:** `mAuZ` (`6d 41 75 5a`)
-* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `00 28` (hex) = integer `40` (decimal) = version 0.4.
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `00 63` (hex) = integer `99` (decimal) = version 0.99.
 * **Total Size:** A signed 64-bit integer, indicating the total size of the current file in bytes, starting from the `m` in `mAuZ`.
-* **Options:** An array of 16-bit length-prefixed strings, with the same form and structure as the **Format** field in a DieFledermaus file.
+* **Options:** A collection of values signifying options for the archive, with the same form and structure as the **Format** field in a DieFledermaus file.
 * **Entry Count:** A signed 64-bit integer, indicating the number of entries in the archive.
 * **Entry List:** Contains every entry in the archive.
 * **Offset List:** A list of the locations of each element in **Entry List** within the file.

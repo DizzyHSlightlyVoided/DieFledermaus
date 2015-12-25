@@ -73,7 +73,7 @@ namespace DieFledermaus
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 98, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 99, _minVersionShort = _versionShort;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
@@ -1839,10 +1839,9 @@ namespace DieFledermaus
         internal const int _keyBitThreefish512 = 512;
         internal const int _keyBitThreefish1024 = 1024;
 
-        internal const string _keyStrAes256 = "256", _keyStrAes128 = "128", _keyStrAes192 = "192";
-
         private const string _kCmpNone = "NK", _kCmpDef = "DEF", _kCmpLzma = "LZMA";
-        internal const string _kEncAes = "AES", _kEncTwofish = "Twofish", _kEncThreefish = "Threefish";
+        internal const string _kEnc = "Ver", _kEncAes = "AES", _kEncTwofish = "Twofish", _kEncThreefish = "Threefish";
+        internal const ushort _vEnc = 1;
 
         internal static readonly Dictionary<string, MausEncryptionFormat> _encDict = new Dictionary<string, MausEncryptionFormat>(StringComparer.Ordinal)
         {
@@ -1851,13 +1850,14 @@ namespace DieFledermaus
             { _kEncThreefish, MausEncryptionFormat.Threefish }
         };
 
-        private const string _kRsaSig = "RSAsig", _kRsaSigId = "RSAsig-Id",
-            _kDsaSig = "DSAsig", _kDsaSigId = "DSAsig-Id",
-            _kECDsaSig = "ECDSAsig", _kECDsaSigId = "ECDSAsig-Id";
+        private const string _kRsaSig = "RSAsig", _kDsaSig = "DSAsig", _kECDsaSig = "ECDSAsig";
+        private const ushort _vRsaSig = 1, _vDsaSig = 1, _vECDsaSig = 1;
 
         internal const string _kHash = "Hash";
+        internal const ushort _vHash = 1;
 
         private const string _kTimeC = "Ers", _kTimeM = "Mod";
+        private const ushort _vTime = 1;
 
         private bool _headerGotten;
 
@@ -1875,7 +1875,9 @@ namespace DieFledermaus
         internal static readonly Dictionary<MausHashFunction, string> HashBDict = HashDict.ToDictionary(i => i.Value, i => i.Key);
 
         private const string _kFilename = "Name", _kULen = "DeL";
+        private const ushort _vFilename = 1;
         internal const string _kComment = "Kom";
+        internal const ushort _vComment = 1;
 
         private long _headSize;
         internal long HeadLength { get { return _headSize; } }
@@ -1959,15 +1961,27 @@ namespace DieFledermaus
 
             long headSize = baseHeadSize;
 
-            int optLen = reader.ReadUInt16();
-
-            for (int i = 0; i < optLen; i++)
+            ByteOptionList optionList;
+            try
             {
-                string curForm = GetString(reader, ref headSize, false);
+                optionList = new ByteOptionList(reader);
+            }
+            catch (InvalidDataException)
+            {
+                throw new InvalidDataException(TextResources.InvalidDataMaus);
+            }
+            headSize += optionList.GetSize();
+
+            foreach (FormatValue curValue in optionList)
+            {
+                string curForm = curValue.Key;
 
                 MausCompressionFormat cmpFmt;
                 if (_formDict.TryGetValue(curForm, out cmpFmt))
                 {
+                    if (curValue.Version != 1)
+                        throw new NotSupportedException(TextResources.FormatUnknownZ);
+
                     if (gotFormat)
                     {
                         if (_cmpFmt != cmpFmt)
@@ -1984,10 +1998,11 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kHash, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
-                    string hashName = GetString(reader, ref headSize, false);
+                    if (curValue.Count != 1 || curValue.Version != _vHash)
+                        throw new NotSupportedException(TextResources.FormatUnknown);
+
                     MausHashFunction hashFunc;
-                    if (!HashDict.TryGetValue(hashName, out hashFunc))
+                    if (!HashDict.TryGetValue(curValue.GetValueString(0), out hashFunc))
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
                     if (_gotHash || fromEncrypted)
@@ -2006,52 +2021,54 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kRsaSig, StringComparison.Ordinal))
                 {
-                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignature);
-                    continue;
-                }
+                    if ((curValue.Count != 1 && curValue.Count != 2) || curValue.Version != _vRsaSig)
+                        throw new NotSupportedException(TextResources.FormatUnknown);
 
-                if (curForm.Equals(_kRsaSigId, StringComparison.Ordinal))
-                {
-                    ReadBytes(reader, optLen, ref headSize, ref i, ref _rsaSignId);
+                    byte[] rsaSig = curValue.GetValue(0);
+
+                    if (_rsaSignature == null)
+                        _rsaSignature = rsaSig;
+                    else if (!CompareBytes(rsaSig, _rsaSignature))
+                        throw new InvalidDataException(TextResources.FormatBadZ);
+
+                    if (curValue.Count == 1)
+                        continue;
+
+                    byte[] rsaId = curValue.GetValue(1);
+
+                    if (_rsaSignId == null)
+                        _rsaSignId = rsaId;
+                    else if (!CompareBytes(rsaId, _rsaSignId))
+                        throw new InvalidDataException(TextResources.FormatBadZ);
+
                     continue;
                 }
 
                 if (curForm.Equals(_kDsaSig, StringComparison.Ordinal))
                 {
-                    GetDsaValue(reader, optLen, ref i, ref headSize, fromEncrypted, ref _dsaSignature);
-                    continue;
-                }
-
-                if (curForm.Equals(_kDsaSigId, StringComparison.Ordinal))
-                {
-                    ReadBytes(reader, optLen, ref headSize, ref i, ref _dsaSignId);
+                    GetDsaValue(curValue, _vDsaSig, ref _dsaSignature, ref _dsaSignId);
                     continue;
                 }
 
                 if (curForm.Equals(_kECDsaSig, StringComparison.Ordinal))
                 {
-                    GetDsaValue(reader, optLen, ref i, ref headSize, fromEncrypted, ref _ecdsaSignature);
+                    GetDsaValue(curValue, _vECDsaSig, ref _ecdsaSignature, ref _ecdsaSignId);
                     continue;
                 }
 
-                if (curForm.Equals(_kECDsaSigId, StringComparison.Ordinal))
+                if (ReadEncFormat(curValue, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount, false))
                 {
-                    ReadBytes(reader, optLen, ref headSize, ref i, ref _ecdsaSignId);
-                    continue;
-                }
-
-                if (ReadEncFormat(curForm, reader, optLen, ref i, ref headSize, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount))
-                {
-                    if (!fromEncrypted && _encryptedOptions == null)
+                    if (_encryptedOptions == null)
                         _encryptedOptions = new SettableOptions(this);
                     continue;
                 }
 
                 if (curForm.Equals(_kFilename, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
+                    if (curValue.Count != 1 || curValue.Version != _vFilename)
+                        throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    string filename = GetString(reader, ref headSize, false);
+                    string filename = curValue.GetValueString(0);
 
                     if (_filename == null)
                     {
@@ -2070,9 +2087,10 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kULen, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
+                    if (curValue.Count != 1 || curValue.Version != 1)
+                        throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    long uLen = GetValueInt64(reader, ref headSize);
+                    long uLen = curValue.GetValueInt64(0);
 
                     if (uLen <= 0 || (gotULen && uLen != _uncompressedLength))
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -2084,20 +2102,22 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeC, ref headSize, optLen, ref i, fromEncrypted, MausOptionToEncrypt.CreatedTime);
+                    GetDate(curValue, ref _timeC, fromEncrypted, MausOptionToEncrypt.CreatedTime);
                     continue;
                 }
 
                 if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
                 {
-                    GetDate(reader, ref _timeM, ref headSize, optLen, ref i, fromEncrypted, MausOptionToEncrypt.ModTime);
+                    GetDate(curValue, ref _timeM, fromEncrypted, MausOptionToEncrypt.ModTime);
                     continue;
                 }
 
                 if (curForm.Equals(_kComment, StringComparison.Ordinal))
                 {
-                    CheckAdvance(optLen, ref i);
-                    byte[] comBytes = GetStringBytes(reader, ref headSize, false);
+                    if (curValue.Count != 1 || curValue.Version != _vComment)
+                        throw new NotSupportedException(TextResources.FormatUnknown);
+
+                    byte[] comBytes = curValue.GetValue(0);
 
                     if (_comBytes == null)
                     {
@@ -2118,30 +2138,24 @@ namespace DieFledermaus
             return headSize;
         }
 
-        internal static bool ReadEncFormat(string curForm, BinaryReader reader, int optLen, ref int i, ref long headSize,
-            ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes, ref int _keySize, ref int _blockByteCount)
+        internal static bool ReadEncFormat(FormatValue curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes, ref int _keySize, ref int _blockByteCount, bool mauZ)
         {
-            MausEncryptionFormat getEncFormat;
-            if (!_encDict.TryGetValue(curForm, out getEncFormat))
+            if (!curValue.Key.Equals(_kEnc, StringComparison.Ordinal))
                 return false;
+            MausEncryptionFormat getEncFormat;
+
+            if (curValue.Count != 2 || !_encDict.TryGetValue(curValue.GetValueString(0), out getEncFormat))
+                throw new NotSupportedException(mauZ ? TextResources.FormatUnknownZ : TextResources.FormatUnknown);
 
             if (_keySizes != null && getEncFormat != _encFmt)
-                throw new InvalidDataException(TextResources.FormatBad);
+                throw new InvalidDataException(mauZ ? TextResources.FormatBadZ : TextResources.FormatBad);
 
-            CheckAdvance(optLen, ref i);
-
-            byte[] bytes = GetStringBytes(reader, ref headSize, false);
+            byte[] bytes = curValue.GetValue(1);
             int blockByteCount;
             KeySizeList list = _getKeySizes(getEncFormat, out blockByteCount);
             int keyBits;
             if (bytes.Length == 2)
                 keyBits = bytes[0] | (bytes[1] << 8);
-            else if (bytes.Length <= 4)
-            {
-                string s = _textEncoding.GetString(bytes);
-                if (!int.TryParse(s, NumberStyles.None, NumberFormatInfo.InvariantInfo, out keyBits))
-                    throw new NotSupportedException(TextResources.FormatUnknown);
-            }
             else throw new NotSupportedException(TextResources.FormatUnknown);
 
             if (!list.Contains(keyBits))
@@ -2171,11 +2185,12 @@ namespace DieFledermaus
             public readonly DerInteger S;
         }
 
-        private static void GetDsaValue(BinaryReader reader, int optLen, ref int i, ref long curSize, bool fromEncrypted, ref DerIntegerPair existing)
+        private static void GetDsaValue(FormatValue formatValue, ushort vDsa, ref DerIntegerPair existing, ref byte[] keyId)
         {
-            CheckAdvance(optLen, ref i);
+            if ((formatValue.Count != 1 && formatValue.Count != 2) || formatValue.Version != vDsa)
+                throw new NotSupportedException(TextResources.FormatUnknown);
 
-            byte[] message = GetStringBytes(reader, ref curSize, false);
+            byte[] message = formatValue.GetValue(0);
 
             Asn1Sequence seq;
             try
@@ -2204,12 +2219,23 @@ namespace DieFledermaus
                 existing = newVal;
             else if (!existing.R.Equals(newVal.R) || !existing.S.Equals(newVal.S))
                 throw new InvalidDataException(TextResources.FormatBad);
+
+            if (formatValue.Count == 2)
+            {
+                byte[] newId = formatValue.GetValue(1);
+                if (keyId == null)
+                    keyId = newId;
+                else if (!CompareBytes(keyId, newId))
+                    throw new InvalidDataException(TextResources.FormatBad);
+            }
         }
 
-        internal static void ReadBytes(BinaryReader reader, int optLen, ref long headSize, ref int i, ref byte[] oldValue)
+        internal static void ReadBytes(FormatValue curValue, ushort version, ref byte[] oldValue)
         {
-            CheckAdvance(optLen, ref i);
-            byte[] bytes = GetStringBytes(reader, ref headSize, false);
+            if (curValue.Count != 1 || curValue.Version != version)
+                throw new NotSupportedException(TextResources.FormatUnknown);
+
+            byte[] bytes = curValue.GetValue(0);
 
             if (oldValue == null)
                 oldValue = bytes;
@@ -2227,11 +2253,12 @@ namespace DieFledermaus
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
-        private void GetDate(BinaryReader reader, ref DateTime? curTime, ref long curOffset, int optLen, ref int i, bool fromEncrypted, MausOptionToEncrypt option)
+        private void GetDate(FormatValue curValue, ref DateTime? curTime, bool fromEncrypted, MausOptionToEncrypt option)
         {
-            CheckAdvance(optLen, ref i);
+            if (curValue.Count != 1 || curValue.Version != _vTime)
+                throw new NotSupportedException(TextResources.FormatUnknown);
 
-            long value = GetValueInt64(reader, ref curOffset);
+            long value = curValue.GetValueInt64(0);
 
             if (value < 0 || value > maxTicks)
                 throw new InvalidDataException(TextResources.FormatBad);
@@ -2249,49 +2276,6 @@ namespace DieFledermaus
                     _encryptedOptions.Add(option);
                 curTime = newVal;
             }
-        }
-
-        private static long GetValueInt64(BinaryReader reader, ref long curOffset)
-        {
-            if (reader.ReadUInt16() != sizeof(long))
-                throw new InvalidDataException(TextResources.FormatBad);
-
-            curOffset += (sizeof(long) + sizeof(ushort));
-
-            return reader.ReadInt64();
-        }
-
-        private static void CheckAdvance(int optLen, ref int i)
-        {
-            if (++i >= optLen)
-                throw new InvalidDataException(TextResources.FormatBad);
-        }
-
-        internal static string GetString(BinaryReader reader, ref long curSize, bool is8bit)
-        {
-            byte[] strBytes = GetStringBytes(reader, ref curSize, is8bit);
-
-            return _textEncoding.GetString(strBytes);
-        }
-
-        internal static byte[] GetStringBytes(BinaryReader reader, ref long curSize, bool is8bit)
-        {
-            int strLen;
-            if (is8bit)
-            {
-                strLen = reader.ReadByte();
-                if (strLen == 0) strLen = Max8Bit;
-                curSize += 1;
-            }
-            else
-            {
-                strLen = reader.ReadUInt16();
-                if (strLen == 0) strLen = Max16Bit;
-                curSize += 2;
-            }
-            byte[] strBytes = ReadBytes(reader, strLen);
-            curSize += strBytes.Length;
-            return strBytes;
         }
         #endregion
 
@@ -3244,26 +3228,29 @@ namespace DieFledermaus
                     if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
                         FormatSetComment(formats);
 
-                    formats.Add(_kHash);
-                    formats.Add(HashBDict[_hashFunc]);
+                    formats.Add(_kHash, _vHash, HashBDict[_hashFunc]);
 
                     if (_encFmt == MausEncryptionFormat.None)
                         WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
                     else
                     {
+                        FormatValue encValue = new FormatValue(_kEnc, _vEnc);
+
                         switch (_encFmt)
                         {
                             case MausEncryptionFormat.Aes:
-                                formats.Add(_kEncAes);
+                                encValue.Add(_kEncAes);
                                 break;
                             case MausEncryptionFormat.Twofish:
-                                formats.Add(_kEncTwofish);
+                                encValue.Add(_kEncTwofish);
                                 break;
                             case MausEncryptionFormat.Threefish:
-                                formats.Add(_kEncThreefish);
+                                encValue.Add(_kEncThreefish);
                                 break;
                         }
-                        formats.Add((short)_keySize);
+                        encValue.Add((ushort)_keySize);
+
+                        formats.Add(encValue);
                     }
 
                     formats.Write(writer);
@@ -3320,8 +3307,7 @@ namespace DieFledermaus
 
                         WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
-                        formats.Add(_kULen);
-                        formats.Add(_bufferStream.Length);
+                        formats.Add(_kULen, 1, _bufferStream.Length);
 
                         if (compressedStream != _bufferStream)
                         {
@@ -3329,9 +3315,9 @@ namespace DieFledermaus
                             _bufferStream = compressedStream;
                         }
 
-                        using (BinaryWriter formatWriter = new BinaryWriter(opts))
+                        using (BinaryWriter encWriter = new BinaryWriter(opts))
                         {
-                            formats.Write(formatWriter);
+                            formats.Write(encWriter);
                             _bufferStream.Prepend(opts);
                         }
                     }
@@ -3405,32 +3391,28 @@ namespace DieFledermaus
 
         private void WriteRsaSig(byte[] rsaSignature, byte[] dsaSignature, byte[] ecdsaSignature, ByteOptionList formats)
         {
-            WriteRsaSig(rsaSignature, _rsaSignId, _kRsaSig, formats);
-            WriteRsaSig(dsaSignature, _dsaSignId, _kDsaSig, formats);
-            WriteRsaSig(ecdsaSignature, _ecdsaSignId, _kECDsaSig, formats);
+            WriteRsaSig(rsaSignature, _rsaSignId, _kRsaSig, _vRsaSig, formats);
+            WriteRsaSig(dsaSignature, _dsaSignId, _kDsaSig, _vDsaSig, formats);
+            WriteRsaSig(ecdsaSignature, _ecdsaSignId, _kECDsaSig, _vECDsaSig, formats);
         }
 
-        private static void WriteRsaSig(byte[] rsaSignature, byte[] _rsaSignId, string _kRsaSig, ByteOptionList formats)
+        private static void WriteRsaSig(byte[] rsaSignature, byte[] rsaSignId, string kRsaSig, ushort vRsaSig, ByteOptionList formats)
         {
             if (rsaSignature == null)
                 return;
-            formats.Add(_kRsaSig);
-            formats.Add(rsaSignature);
 
-            if (_rsaSignId != null)
-            {
-                formats.Add(_kRsaSigId);
-                formats.Add(_rsaSignId);
-            }
+            FormatValue formatValue = new FormatValue(kRsaSig, vRsaSig, rsaSignature);
+
+            if (rsaSignId != null)
+                formatValue.Add(rsaSignId);
+
+            formats.Add(formatValue);
         }
 
         private void FormatSetFilename(ByteOptionList formats)
         {
             if (_filename != null)
-            {
-                formats.Add(_kFilename);
-                formats.Add(_textEncoding.GetBytes(_filename));
-            }
+                formats.Add(_kFilename, _vFilename, _textEncoding.GetBytes(_filename));
         }
 
         private void FormatSetCompression(ByteOptionList formats)
@@ -3438,13 +3420,13 @@ namespace DieFledermaus
             switch (_cmpFmt)
             {
                 case MausCompressionFormat.None:
-                    formats.Add(_kCmpNone);
+                    formats.Add(_kCmpNone, 1);
                     break;
                 case MausCompressionFormat.Lzma:
-                    formats.Add(_kCmpLzma);
+                    formats.Add(_kCmpLzma, 1);
                     break;
                 default:
-                    formats.Add(_kCmpDef);
+                    formats.Add(_kCmpDef, 1);
                     break;
             }
         }
@@ -3454,8 +3436,7 @@ namespace DieFledermaus
             if (!dateTime.HasValue)
                 return;
 
-            formats.Add(kTime);
-            formats.Add(dateTime.Value.ToUniversalTime().Ticks);
+            formats.Add(kTime, _vTime, dateTime.Value.ToUniversalTime().Ticks);
         }
 
         private void FormatSetComment(ByteOptionList formats)
@@ -3463,8 +3444,7 @@ namespace DieFledermaus
             if (_comBytes == null || _comBytes.Length == 0)
                 return;
 
-            formats.Add(_kComment);
-            formats.Add(_comBytes);
+            formats.Add(_kComment, _vComment, _comBytes);
         }
         #endregion
 
