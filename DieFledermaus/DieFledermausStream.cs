@@ -2090,12 +2090,12 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != 1)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    long uLen = curValue.GetValueInt64(0);
+                    long? uLen = curValue.GetValueInt64(0);
 
-                    if (uLen <= 0 || (gotULen && uLen != _uncompressedLength))
+                    if (!uLen.HasValue || uLen <= 0 || (gotULen && uLen != _uncompressedLength))
                         throw new InvalidDataException(TextResources.FormatBad);
 
-                    _uncompressedLength = uLen;
+                    _uncompressedLength = uLen.Value;
                     gotULen = true;
                     continue;
                 }
@@ -2138,7 +2138,8 @@ namespace DieFledermaus
             return headSize;
         }
 
-        internal static bool ReadEncFormat(FormatValue curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes, ref int _keySize, ref int _blockByteCount, bool mauZ)
+        internal static bool ReadEncFormat(FormatValue curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes,
+            ref int _keySize, ref int _blockByteCount, bool mauZ)
         {
             if (!curValue.Key.Equals(_kEnc, StringComparison.Ordinal))
                 return false;
@@ -2150,22 +2151,23 @@ namespace DieFledermaus
             if (_keySizes != null && getEncFormat != _encFmt)
                 throw new InvalidDataException(mauZ ? TextResources.FormatBadZ : TextResources.FormatBad);
 
-            byte[] bytes = curValue.GetValue(1);
+            ushort? keyBits = curValue.GetValueUInt16(1);
             int blockByteCount;
             KeySizeList list = _getKeySizes(getEncFormat, out blockByteCount);
-            int keyBits;
-            if (bytes.Length == 2)
-                keyBits = bytes[0] | (bytes[1] << 8);
-            else throw new NotSupportedException(TextResources.FormatUnknown);
+            if (!keyBits.HasValue)
+                throw new InvalidDataException(mauZ ? TextResources.FormatBadZ : TextResources.FormatBad);
 
-            if (!list.Contains(keyBits))
-                throw new NotSupportedException(TextResources.FormatUnknown);
+            if (!list.Contains(keyBits.Value))
+                throw new NotSupportedException(mauZ ? TextResources.FormatUnknownZ : TextResources.FormatUnknown);
 
             if (_keySizes == null)
             {
-                _keySize = keyBits;
-                _keySizes = new KeySizeList(keyBits);
-                _blockByteCount = blockByteCount;
+                _keySize = keyBits.Value;
+                _keySizes = new KeySizeList(keyBits.Value);
+                if (getEncFormat == MausEncryptionFormat.Threefish)
+                    _blockByteCount = _keySize >> 3;
+                else
+                    _blockByteCount = blockByteCount;
                 _encFmt = getEncFormat;
             }
             else if (keyBits != _keySize || _blockByteCount != blockByteCount)
@@ -2258,12 +2260,12 @@ namespace DieFledermaus
             if (curValue.Count != 1 || curValue.Version != _vTime)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            long value = curValue.GetValueInt64(0);
+            long? value = curValue.GetValueInt64(0);
 
-            if (value < 0 || value > maxTicks)
+            if (!value.HasValue || value < 0 || value > maxTicks)
                 throw new InvalidDataException(TextResources.FormatBad);
 
-            DateTime newVal = new DateTime(value, DateTimeKind.Utc);
+            DateTime newVal = new DateTime(value.Value, DateTimeKind.Utc);
 
             if (curTime.HasValue)
             {

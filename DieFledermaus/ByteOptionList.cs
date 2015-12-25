@@ -33,6 +33,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace DieFledermaus
 {
@@ -186,10 +187,12 @@ namespace DieFledermaus
 
     internal struct FormatValue : IEquatable<FormatValue>, ICloneable
     {
+        private static UTF8Encoding _textEncoding = new UTF8Encoding(false, true);
+
         public FormatValue(string key, ushort version, params byte[][] values)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (key.Length > DieFledermausStream.Max16Bit)
+            if (_textEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
                 throw new ArgumentOutOfRangeException(nameof(key));
             if (version == 0)
                 throw new ArgumentOutOfRangeException(nameof(version));
@@ -275,6 +278,8 @@ namespace DieFledermaus
 
         public void Add(byte[] value)
         {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
             if (Count >= DieFledermausStream.Max16Bit)
                 throw new NotSupportedException();
 
@@ -296,14 +301,21 @@ namespace DieFledermaus
             return _values[index];
         }
 
-        public void Add(string value)
+        public void Add(string s)
         {
-            Add(DieFledermausStream._textEncoding.GetBytes(value));
+            Add(_textEncoding.GetBytes(s));
         }
 
         public string GetValueString(int index)
         {
-            return DieFledermausStream._textEncoding.GetString(GetValue(index));
+            try
+            {
+                return _textEncoding.GetString(GetValue(index));
+            }
+            catch (DecoderFallbackException)
+            {
+                return null;
+            }
         }
 
         public void Add(ushort value)
@@ -311,12 +323,12 @@ namespace DieFledermaus
             Add(new byte[] { (byte)value, (byte)(value >> 8) });
         }
 
-        public ushort GetValueUInt16(int index)
+        public ushort? GetValueUInt16(int index)
         {
             byte[] value = GetValue(index);
 
-            if (value == null || value.Length != sizeof(ushort))
-                throw new ArgumentException();
+            if (value.Length != sizeof(ushort))
+                return null;
 
             return (ushort)(value[0] | (value[1] >> 8));
         }
@@ -327,12 +339,12 @@ namespace DieFledermaus
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) });
         }
 
-        public long GetValueInt64(int index)
+        public long? GetValueInt64(int index)
         {
             byte[] value = GetValue(index);
 
             if (value == null || value.Length != sizeof(long))
-                throw new ArgumentException();
+                return null;
 
             return value[0] | ((long)value[1] << 8) | ((long)value[2] << 16) | ((long)value[3] << 24) |
                 ((long)value[4] << 32) | ((long)value[5] << 40) | ((long)value[6] << 48) | ((long)value[7] << 56);
