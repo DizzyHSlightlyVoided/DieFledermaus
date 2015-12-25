@@ -14,6 +14,7 @@ Features
 * Storing the filename, creation time, and modified time of the original file.
 * Comments on individual files, or in an entire archive in DieFledermauZ.
 * Encryption using AES, Twofish, or Threefish, using a password. This includes encrypting any of the above.
+* Error checking and encryption verification using [SHA-2](https://en.wikipedia.org/wiki/SHA-2), [SHA-3](https://en.wikipedia.org/wiki/SHA-3), or [Whirlpool](https://en.wikipedia.org/wiki/Whirlpool_%28cryptography%29).
 
 DieFlede
 ========

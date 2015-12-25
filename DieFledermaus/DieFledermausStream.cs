@@ -2292,6 +2292,7 @@ namespace DieFledermaus
                     return 384 / 8;
                 case MausHashFunction.Sha512:
                 case MausHashFunction.Sha3_512:
+                case MausHashFunction.Whirlpool:
                     return 512 / 8;
                 case MausHashFunction.Sha256:
                 case MausHashFunction.Sha3_256:
@@ -2315,6 +2316,7 @@ namespace DieFledermaus
                     return 256;
                 case MausHashFunction.Sha512:
                 case MausHashFunction.Sha3_512:
+                case MausHashFunction.Whirlpool:
                     return 512;
             }
             throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
@@ -2337,6 +2339,8 @@ namespace DieFledermaus
                 case MausHashFunction.Sha3_384:
                 case MausHashFunction.Sha3_512:
                     return new Sha3Digest(GetHashBitSize(hashFunc));
+                case MausHashFunction.Whirlpool:
+                    return new WhirlpoolDigest();
                 default:
                     throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
             }
@@ -3377,6 +3381,11 @@ namespace DieFledermaus
                 case MausHashFunction.Sha3_512:
                     derId = NistObjectIdentifiers.IdSha3_512;
                     break;
+                case MausHashFunction.Whirlpool:
+                    //Taken from http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/asn1/structures/AlgorithmID.html
+                    //(and verified in other places)
+                    derId = new DerObjectIdentifier("1.0.10118.3.0.55");
+                    break;
                 default:
                     throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
             }
@@ -3644,6 +3653,10 @@ namespace DieFledermaus
         /// The SHA-3/384 hash function.
         /// </summary>
         Sha3_384,
+        /// <summary>
+        /// The Whirlpool hash function.
+        /// </summary>
+        Whirlpool,
     }
 
     /// <summary>

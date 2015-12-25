@@ -68,6 +68,7 @@ The following values are defined for the default implementation:
  - `SHA3/256`
  - `SHA3/384`
  - `SHA3/512`
+ - `Whirlpool`
 * `RSAsig` - *version 1, one or two parameters.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the result of the specified hash function on the uncompressed data. The signature may be verified using the corresponding RSA public key. The object ID of the specified hash function is included using [DER encoding](https://en.wikipedia.org/wiki/X.690), and [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding) is then also used. The first parameter contains the encrypted value; the optional second parameter contains a value (string or binary) which identifies the RSA public key an encoder should use to verify `RSAsig`. Should be encrypted.
 * `DSAsig` - *version 1, one or two parameters.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted using [DER encoding](https://en.wikipedia.org/wiki/X.690). The message value *k* is generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Should be encrypted.
 * `ECDSAsig` - *version 1, one or two parameters.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm.
