@@ -1163,16 +1163,17 @@ namespace DieFledermaus
                 CheckSignParam(value, _dsaSignature, _dsaSignVerified);
                 if (value != null)
                 {
-                    DsaSigner signer = new DsaSigner(GetDsaCalc());
                     try
                     {
-                        signer.Init(_mode == CompressionMode.Compress, value);
+                        new DsaSigner(GetDsaCalc()).Init(_mode == CompressionMode.Compress, value);
                     }
                     catch
                     {
+                        throw new ArgumentException(_mode == CompressionMode.Compress ?
+                            TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
+                            nameof(value));
                     }
                 }
-
                 _dsaSignParamBC = value;
             }
         }
@@ -1295,6 +1296,16 @@ namespace DieFledermaus
             set
             {
                 CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified);
+                try
+                {
+                    new ECDsaSigner(GetDsaCalc()).Init(_mode == CompressionMode.Compress, value);
+                }
+                catch
+                {
+                    throw new ArgumentException(_mode == CompressionMode.Compress ?
+                        TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
+                        nameof(value));
+                }
                 _ecdsaSignParamBC = value;
             }
         }
