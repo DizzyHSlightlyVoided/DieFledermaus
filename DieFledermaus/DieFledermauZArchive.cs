@@ -111,14 +111,14 @@ namespace DieFledermaus
                 throw new ArgumentNullException(nameof(stream));
             if (mode == MauZArchiveMode.Create)
             {
-                DieFledermausStream.CheckWrite(stream);
+                DieFledermausStream.CheckStreamWrite(stream);
                 _baseStream = stream;
                 _mode = mode;
                 _entriesRO = new EntryList(this);
             }
             else if (mode == MauZArchiveMode.Read)
             {
-                DieFledermausStream.CheckRead(stream);
+                DieFledermausStream.CheckStreamRead(stream);
                 _baseStream = stream;
                 if (stream.CanSeek)
                 {

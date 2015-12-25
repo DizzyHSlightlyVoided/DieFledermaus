@@ -83,7 +83,7 @@ namespace DieFledermaus
         private bool _leaveOpen;
         private long _uncompressedLength;
 
-        internal static void CheckRead(Stream stream)
+        internal static void CheckStreamRead(Stream stream)
         {
             if (stream.CanRead) return;
 
@@ -91,7 +91,7 @@ namespace DieFledermaus
             throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
-        internal static void CheckWrite(Stream stream)
+        internal static void CheckStreamWrite(Stream stream)
         {
             if (stream.CanWrite) return;
 
@@ -132,13 +132,13 @@ namespace DieFledermaus
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (compressionMode == CompressionMode.Compress)
             {
-                CheckWrite(stream);
+                CheckStreamWrite(stream);
                 _bufferStream = new MausBufferStream();
                 _baseStream = stream;
             }
             else if (compressionMode == CompressionMode.Decompress)
             {
-                CheckRead(stream);
+                CheckStreamRead(stream);
                 _baseStream = stream;
                 if (stream.CanSeek && stream.Length == stream.Position)
                     stream.Seek(0, SeekOrigin.Begin);
@@ -250,7 +250,7 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            CheckWrite(stream);
+            CheckStreamWrite(stream);
 
             _bufferStream = new MausBufferStream();
             switch (compressionFormat)
@@ -468,7 +468,7 @@ namespace DieFledermaus
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            CheckWrite(stream);
+            CheckStreamWrite(stream);
             _setCompLvl(compressionLevel);
             _bufferStream = new MausBufferStream();
             _baseStream = stream;
@@ -986,7 +986,7 @@ namespace DieFledermaus
             if (rsaKey == null) return;
 
             RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
-            OaepEncoding engine = new OaepEncoding(rsaEngine, GetDigestObject(hashFunc));
+            OaepEncoding engine = new OaepEncoding(rsaEngine, GetHashObject(hashFunc));
             try
             {
                 engine.Init(_mode == CompressionMode.Compress, rsaKey);
@@ -1761,7 +1761,7 @@ namespace DieFledermaus
             if (_salt.Length > keyLength)
                 Array.Resize(ref _salt, keyLength);
 
-            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(GetDigestObject(o.HashFunction));
+            Pkcs5S2ParametersGenerator gen = new Pkcs5S2ParametersGenerator(GetHashObject(o.HashFunction));
             gen.Init(_textEncoding.GetBytes(password), _salt, _pkCount + minPkCount);
 
             KeyParameter kParam = (KeyParameter)gen.GenerateDerivedMacParameters(keySize);
@@ -2335,7 +2335,7 @@ namespace DieFledermaus
             throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
         }
 
-        private static IDigest GetDigestObject(MausHashFunction hashFunc)
+        private static IDigest GetHashObject(MausHashFunction hashFunc)
         {
             switch (hashFunc)
             {
@@ -2608,7 +2608,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.VerifyingRSASignature);
             try
             {
-                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetDigestObject(_hashFunc));
+                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
                 engine.Init(false, _rsaSignParamBC);
 
                 byte[] sig;
@@ -2752,7 +2752,7 @@ namespace DieFledermaus
 
         private HMacDsaKCalculator GetDsaCalc()
         {
-            return new HMacDsaKCalculator(GetDigestObject(_hashFunc));
+            return new HMacDsaKCalculator(GetHashObject(_hashFunc));
         }
 
         private static bool VerifyDsaSignature(byte[] hash, DerIntegerPair pair, IDsa signer, ICipherParameters key)
@@ -2947,7 +2947,7 @@ namespace DieFledermaus
 
         internal static byte[] ComputeHash(MausBufferStream inputStream, MausHashFunction hashFunc)
         {
-            IDigest shaHash = GetDigestObject(hashFunc);
+            IDigest shaHash = GetHashObject(hashFunc);
 
             inputStream.BufferCopyTo(shaHash.BlockUpdate);
             inputStream.Reset();
@@ -2959,7 +2959,7 @@ namespace DieFledermaus
 
         internal static byte[] ComputeHmac(MausBufferStream inputStream, byte[] key, MausHashFunction hashFunc)
         {
-            HMac hmac = new HMac(GetDigestObject(hashFunc));
+            HMac hmac = new HMac(GetHashObject(hashFunc));
             hmac.Init(new KeyParameter(key));
             inputStream.BufferCopyTo(hmac.BlockUpdate);
             inputStream.Reset();
@@ -3129,7 +3129,7 @@ namespace DieFledermaus
                 {
                     OnProgress(MausProgressState.SigningRSA);
                     byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
-                    OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetDigestObject(_hashFunc));
+                    OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
                     try
                     {
                         engine.Init(true, _rsaSignParamBC);
