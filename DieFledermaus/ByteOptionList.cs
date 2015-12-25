@@ -330,7 +330,7 @@ namespace DieFledermaus
             if (value.Length != sizeof(ushort))
                 return null;
 
-            return (ushort)(value[0] | (value[1] >> 8));
+            return (ushort)(value[0] | (value[1] << 8));
         }
 
         public void Add(long value)
