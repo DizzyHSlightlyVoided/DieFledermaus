@@ -2332,8 +2332,13 @@ namespace DieFledermaus
                     return new Sha384Digest();
                 case MausHashFunction.Sha512:
                     return new Sha512Digest();
-                default:
+                case MausHashFunction.Sha3_224:
+                case MausHashFunction.Sha3_256:
+                case MausHashFunction.Sha3_384:
+                case MausHashFunction.Sha3_512:
                     return new Sha3Digest(GetHashBitSize(hashFunc));
+                default:
+                    throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
             }
         }
 
