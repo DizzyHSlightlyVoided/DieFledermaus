@@ -2078,7 +2078,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vFilename)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    string filename = curValue.GetValueString(0);
+                    string filename = _textEncoding.GetString(curValue.GetValue(0));
 
                     if (_filename == null)
                     {

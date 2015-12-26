@@ -85,9 +85,14 @@ namespace DieFledermaus
             _items.Add(value);
         }
 
-        public void Add(string key, ushort version, params byte[][] values)
+        public void Add(string key, ushort version)
         {
-            _add(new FormatValue(key, version, values));
+            _add(new FormatValue(key, version));
+        }
+
+        public void Add(string key, ushort version, byte[] value)
+        {
+            _add(new FormatValue(key, version, value));
         }
 
         public void Add(string key, ushort version, string value)
@@ -109,13 +114,6 @@ namespace DieFledermaus
             FormatValue formatValue = new FormatValue(key, version);
             formatValue.Add(value);
             _add(formatValue);
-        }
-
-        public void Add(BinaryReader reader)
-        {
-            if (IsReadOnly)
-                throw new NotSupportedException();
-            _items.Add(new FormatValue(reader));
         }
 
         public void Clear()
@@ -189,7 +187,7 @@ namespace DieFledermaus
     {
         private static UTF8Encoding _textEncoding = new UTF8Encoding(false, true);
 
-        public FormatValue(string key, ushort version, params byte[][] values)
+        public FormatValue(string key, ushort version)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (key.Length == 0 || _textEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
@@ -199,7 +197,13 @@ namespace DieFledermaus
 
             _key = key;
             _version = version;
-            _values = Copy(values);
+            _values = new byte[0][];
+        }
+
+        public FormatValue(string key, ushort version, byte[] value)
+            : this(key, version)
+        {
+            Add(value);
         }
 
         public FormatValue(BinaryReader reader)
@@ -259,11 +263,7 @@ namespace DieFledermaus
         {
             if (existing == null) return new byte[0][];
 
-            if (existing.Length > DieFledermausStream.Max16Bit)
-                throw new ArgumentException();
-
             byte[][] copy = new byte[existing.Length][];
-
 
             for (int i = 0; i < existing.Length; i++)
                 copy[i] = (byte[])existing[i].Clone();
