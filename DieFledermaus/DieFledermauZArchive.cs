@@ -555,7 +555,7 @@ namespace DieFledermaus
                 {
                     MausHashFunction hashFunc;
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash ||
-                        !DieFledermausStream.HashDict.TryGetValue(curValue.GetValueString(0), out hashFunc))
+                        !DieFledermausStream.HashDict.TryGetValue(curValue[0].ValueString, out hashFunc))
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
                     if (_gotHash || fromEncrypted)
@@ -577,7 +577,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vComment)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
-                    byte[] comBytes = curValue.GetValue(0);
+                    byte[] comBytes = curValue[0].Value;
 
                     if (_comBytes == null)
                     {

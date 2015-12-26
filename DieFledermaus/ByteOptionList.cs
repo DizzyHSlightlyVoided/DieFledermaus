@@ -32,7 +32,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace DieFledermaus
@@ -183,7 +185,8 @@ namespace DieFledermaus
         }
     }
 
-    internal struct FormatValue : IEquatable<FormatValue>, ICloneable
+    [DebuggerTypeProxy(typeof(DebugView))]
+    internal struct FormatValue : IEquatable<FormatValue>
     {
         private static UTF8Encoding _textEncoding = new UTF8Encoding(false, true);
 
@@ -197,7 +200,7 @@ namespace DieFledermaus
 
             _key = key;
             _version = version;
-            _values = new byte[0][];
+            _values = new ByteValue[0];
         }
 
         public FormatValue(string key, ushort version, byte[] value)
@@ -216,25 +219,25 @@ namespace DieFledermaus
                 throw new InvalidDataException();
             int itemCount = reader.ReadUInt16();
 
-            _values = new byte[itemCount][];
+            _values = new ByteValue[itemCount];
 
             for (int i = 0; i < itemCount; i++)
             {
                 int curCount = reader.ReadUInt16();
                 if (curCount == 0) curCount = DieFledermausStream.Max16Bit;
 
-                _values[i] = DieFledermausStream.ReadBytes(reader, curCount);
+                _values[i] = new ByteValue(DieFledermausStream.ReadBytes(reader, curCount));
             }
         }
 
-        public object Clone()
+        public ByteValue this[int index]
         {
-            return new FormatValue()
+            get
             {
-                _key = _key,
-                _version = _version,
-                _values = Copy(_values)
-            };
+                if (index < 0 || index >= Count)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                return _values[index];
+            }
         }
 
         private string _key;
@@ -243,7 +246,7 @@ namespace DieFledermaus
         private ushort _version;
         public ushort Version { get { return _version; } }
 
-        private byte[][] _values;
+        private ByteValue[] _values;
 
         public int Count
         {
@@ -271,83 +274,51 @@ namespace DieFledermaus
             return copy;
         }
 
-        public byte[][] ToArray()
+        public ByteValue[] ToArray()
         {
-            return Copy(_values);
+            if (_values == null) return new ByteValue[0];
+            return (ByteValue[])_values.Clone();
         }
 
-        public void Add(byte[] value)
+        public void Add(ByteValue value)
         {
-            if (value == null)
+            if (value.Value == null)
                 throw new ArgumentNullException(nameof(value));
             if (Count >= DieFledermausStream.Max16Bit)
+                throw new NotSupportedException(); if (Count >= DieFledermausStream.Max16Bit)
                 throw new NotSupportedException();
 
             int oldDex = Count;
 
             if (_values == null)
-                _values = new byte[1][];
+                _values = new ByteValue[1];
             else
                 Array.Resize(ref _values, oldDex + 1);
 
             _values[oldDex] = value;
         }
 
-        public byte[] GetValue(int index)
+        public void Add(byte[] value)
         {
-            if (index < 0 || index >= Count)
-                throw new ArgumentOutOfRangeException(nameof(index));
-
-            return _values[index];
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            Add(new ByteValue(value));
         }
 
         public void Add(string s)
         {
-            Add(_textEncoding.GetBytes(s));
-        }
-
-        public string GetValueString(int index)
-        {
-            try
-            {
-                return _textEncoding.GetString(GetValue(index));
-            }
-            catch (DecoderFallbackException)
-            {
-                return null;
-            }
+            Add(new ByteValue(_textEncoding.GetBytes(s)));
         }
 
         public void Add(ushort value)
         {
-            Add(new byte[] { (byte)value, (byte)(value >> 8) });
-        }
-
-        public ushort? GetValueUInt16(int index)
-        {
-            byte[] value = GetValue(index);
-
-            if (value.Length != sizeof(ushort))
-                return null;
-
-            return (ushort)(value[0] | (value[1] << 8));
+            Add(new ByteValue(new byte[] { (byte)value, (byte)(value >> 8) }));
         }
 
         public void Add(long value)
         {
             Add(new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) });
-        }
-
-        public long? GetValueInt64(int index)
-        {
-            byte[] value = GetValue(index);
-
-            if (value == null || value.Length != sizeof(long))
-                return null;
-
-            return value[0] | ((long)value[1] << 8) | ((long)value[2] << 16) | ((long)value[3] << 24) |
-                ((long)value[4] << 32) | ((long)value[5] << 40) | ((long)value[6] << 48) | ((long)value[7] << 56);
         }
 
         public long GetSize()
@@ -357,10 +328,10 @@ namespace DieFledermaus
 
             int count = Count;
 
-            byte[][] values = _values;
+            ByteValue[] values = _values;
 
             for (int i = 0; i < count; i++)
-                total += 2L + values[i].Length;
+                total += 2L + values[i].Value.Length;
 
             return total;
         }
@@ -376,14 +347,15 @@ namespace DieFledermaus
             var values = _values;
             for (int i = 0; i < count; i++)
             {
-                writer.Write((ushort)values[i].Length);
-                writer.Write(values[i]);
+                var curBytes = values[i].Value;
+                writer.Write((ushort)curBytes.Length);
+                writer.Write(curBytes);
             }
         }
 
         public override string ToString()
         {
-            return string.Format("{0}, version {1}, byte[{2}][]", _key, _version, Count);
+            return string.Format("Key = {0}, Version = {1}, Count = {2}", _key, _version, Count);
         }
 
         #region Equality
@@ -395,24 +367,14 @@ namespace DieFledermaus
             if (count != other.Count)
                 return false;
 
-            byte[][] val1 = _values, val2 = other._values;
+            ByteValue[] val1 = _values, val2 = other._values;
 
             if (val1 == val2) return true;
 
             for (int i = 0; i < count; i++)
             {
-                if (val1[i] == val2[i])
+                if (val1[i] != val2[i])
                     continue;
-                int curCount = val1[i] == null ? 0 : val1[i].Length;
-
-                if (curCount != (val2[i] == null ? 0 : val2[i].Length))
-                    return false;
-
-                for (int j = 0; j < curCount; j++)
-                {
-                    if (val1[i][j] != val2[i][j])
-                        return false;
-                }
             }
 
             return true;
@@ -433,16 +395,136 @@ namespace DieFledermaus
             var values = _values;
 
             for (int i = 0; i < count; i++)
-            {
-                var curVal = values[i];
-                if (curVal == null) continue;
-
-                for (int j = 0; j < curVal.Length; j++)
-                    total += curVal[j];
-            }
+                total += _values[i].GetHashCode();
 
             return total;
         }
         #endregion
+
+        internal struct ByteValue : IEquatable<ByteValue>
+        {
+            public ByteValue(byte[] value)
+            {
+                _value = value;
+            }
+
+            private byte[] _value;
+            public byte[] Value { get { return _value; } }
+
+            public string ValueString
+            {
+                get
+                {
+                    if (_value == null) return null;
+                    try
+                    {
+                        return _textEncoding.GetString(_value);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+            }
+
+            public ushort? ValueUInt16
+            {
+                get
+                {
+                    if (_value == null || _value.Length != sizeof(ushort))
+                        return null;
+                    return (ushort)(_value[0] | (_value[1] << 8));
+                }
+            }
+
+            public long? ValueInt64
+            {
+                get
+                {
+                    if (_value == null || _value.Length != sizeof(long)) return null;
+
+                    return _value[0] | ((long)_value[1] << 8) | ((long)_value[2] << 16) | ((long)_value[3] << 24) |
+                        ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56);
+                }
+            }
+
+            public override string ToString()
+            {
+                if (_value == null)
+                    return base.ToString();
+
+                string s = ValueString;
+                if (s != null && ((_value.Length != sizeof(ushort) && _value.Length != sizeof(long)) || !s.Any(c => char.IsControl(c) && !char.IsWhiteSpace(c))))
+                    return s;
+
+                ushort? ui16 = ValueUInt16;
+                if (ui16.HasValue)
+                    return ui16.Value.ToString(NumberFormatInfo.InvariantInfo);
+
+                long? i64 = ValueInt64;
+                if (i64.HasValue)
+                    return i64.Value.ToString(NumberFormatInfo.InvariantInfo);
+
+                return string.Concat(_value.Select(i => i.ToString("x2", NumberFormatInfo.InvariantInfo)).ToArray());
+            }
+
+            #region Equality
+            public bool Equals(ByteValue other)
+            {
+                if (_value == other._value) return true;
+                int length = (_value == null) ? 0 : _value.Length;
+
+                if ((length != 0 && other._value == null) || length != other._value.Length)
+                    return false;
+
+                for (int i = 0; i < length; i++)
+                {
+                    if (_value[i] != other._value[i])
+                        return false;
+                }
+                return true;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is ByteValue && Equals((ByteValue)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                if (_value == null) return 0;
+                int total = 0;
+                for (int i = 0; i < _value.Length; i++)
+                    total += _value[i];
+                return total;
+            }
+
+            public static bool operator ==(ByteValue b1, ByteValue b2)
+            {
+                return b1.Equals(b2);
+            }
+
+            public static bool operator !=(ByteValue b1, ByteValue b2)
+            {
+                return !b1.Equals(b2);
+            }
+            #endregion
+        }
+
+        private class DebugView
+        {
+            private FormatValue _optionList;
+
+            public DebugView(FormatValue optionList)
+            {
+                _optionList = optionList;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public ByteValue[] Items
+            {
+                get { return _optionList.ToArray(); }
+            }
+        }
     }
 }

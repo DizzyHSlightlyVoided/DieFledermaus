@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -2012,7 +2011,7 @@ namespace DieFledermaus
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
                     MausHashFunction hashFunc;
-                    if (!HashDict.TryGetValue(curValue.GetValueString(0), out hashFunc))
+                    if (!HashDict.TryGetValue(curValue[0].ValueString, out hashFunc))
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
                     if (_gotHash || fromEncrypted)
@@ -2034,7 +2033,7 @@ namespace DieFledermaus
                     if ((curValue.Count != 1 && curValue.Count != 2) || curValue.Version != _vRsaSig)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    byte[] rsaSig = curValue.GetValue(0);
+                    byte[] rsaSig = curValue[0].Value;
 
                     if (_rsaSignature == null)
                         _rsaSignature = rsaSig;
@@ -2044,7 +2043,7 @@ namespace DieFledermaus
                     if (curValue.Count == 1)
                         continue;
 
-                    byte[] rsaId = curValue.GetValue(1);
+                    byte[] rsaId = curValue[1].Value;
 
                     if (_rsaSignId == null)
                         _rsaSignId = rsaId;
@@ -2078,7 +2077,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vFilename)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    string filename = _textEncoding.GetString(curValue.GetValue(0));
+                    string filename = _textEncoding.GetString(curValue[0].Value);
 
                     if (_filename == null)
                     {
@@ -2100,7 +2099,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != 1)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    long? uLen = curValue.GetValueInt64(0);
+                    long? uLen = curValue[0].ValueInt64;
 
                     if (!uLen.HasValue || uLen <= 0 || (gotULen && uLen != _uncompressedLength))
                         throw new InvalidDataException(TextResources.FormatBad);
@@ -2127,7 +2126,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vComment)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    byte[] comBytes = curValue.GetValue(0);
+                    byte[] comBytes = curValue[0].Value;
 
                     if (_comBytes == null)
                     {
@@ -2155,13 +2154,13 @@ namespace DieFledermaus
                 return false;
             MausEncryptionFormat getEncFormat;
 
-            if (curValue.Count != 2 || !_encDict.TryGetValue(curValue.GetValueString(0), out getEncFormat))
+            if (curValue.Count != 2 || !_encDict.TryGetValue(curValue[0].ValueString, out getEncFormat))
                 throw new NotSupportedException(mauZ ? TextResources.FormatUnknownZ : TextResources.FormatUnknown);
 
             if (_keySizes != null && getEncFormat != _encFmt)
                 throw new InvalidDataException(mauZ ? TextResources.FormatBadZ : TextResources.FormatBad);
 
-            ushort? keyBits = curValue.GetValueUInt16(1);
+            ushort? keyBits = curValue[1].ValueUInt16;
             int blockByteCount;
             KeySizeList list = _getKeySizes(getEncFormat, out blockByteCount);
             if (!keyBits.HasValue)
@@ -2202,7 +2201,7 @@ namespace DieFledermaus
             if ((formatValue.Count != 1 && formatValue.Count != 2) || formatValue.Version != vDsa)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            byte[] message = formatValue.GetValue(0);
+            byte[] message = formatValue[0].Value;
 
             Asn1Sequence seq;
             try
@@ -2234,7 +2233,7 @@ namespace DieFledermaus
 
             if (formatValue.Count == 2)
             {
-                byte[] newId = formatValue.GetValue(1);
+                byte[] newId = formatValue[1].Value;
                 if (keyId == null)
                     keyId = newId;
                 else if (!CompareBytes(keyId, newId))
@@ -2247,7 +2246,7 @@ namespace DieFledermaus
             if (curValue.Count != 1 || curValue.Version != version)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            byte[] bytes = curValue.GetValue(0);
+            byte[] bytes = curValue[0].Value;
 
             if (oldValue == null)
                 oldValue = bytes;
@@ -2270,7 +2269,7 @@ namespace DieFledermaus
             if (curValue.Count != 1 || curValue.Version != _vTime)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            long? value = curValue.GetValueInt64(0);
+            long? value = curValue[0].ValueInt64;
 
             if (!value.HasValue || value < 0 || value > maxTicks)
                 throw new InvalidDataException(TextResources.FormatBad);
