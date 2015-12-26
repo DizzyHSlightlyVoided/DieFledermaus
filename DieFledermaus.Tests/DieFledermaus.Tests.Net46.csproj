@@ -40,6 +40,11 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Keys.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Keys.resx</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -52,6 +57,14 @@
       <Project>{e2303bba-4600-4a01-aee5-42fbe06be030}</Project>
       <Name>DieFledermaus.Net46</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Keys.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Keys.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Resources\Encryption.xml" />
+    <None Include="Resources\Signature.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
