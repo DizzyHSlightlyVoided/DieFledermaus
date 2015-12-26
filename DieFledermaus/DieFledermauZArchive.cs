@@ -584,7 +584,6 @@ namespace DieFledermaus
                         if (fromEncrypted)
                             _encryptedOptions.InternalAdd(MauZOptionToEncrypt.Comment);
                         _comBytes = comBytes;
-                        _comment = DieFledermausStream._textEncoding.GetString(comBytes);
                     }
                     else if (!DieFledermausStream.CompareBytes(comBytes, _comBytes))
                         throw new InvalidDataException(TextResources.FormatBadZ);
@@ -638,7 +637,6 @@ namespace DieFledermaus
         /// </summary>
         public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
 
-        private string _comment;
         /// <summary>
         /// Gets and sets the comment on the current instance.
         /// </summary>
@@ -653,12 +651,15 @@ namespace DieFledermaus
         /// </exception>
         public string Comment
         {
-            get { return _comment; }
+            get
+            {
+                if (_comBytes == null) return null;
+                return DieFledermausStream._textEncoding.GetString(_comBytes);
+            }
             set
             {
                 EnsureCanWrite();
                 _comBytes = DieFledermausStream.CheckComment(value);
-                _comment = value;
             }
         }
 
@@ -687,15 +688,9 @@ namespace DieFledermaus
                 EnsureCanWrite();
                 DieFledermausStream.CheckComment(value);
                 if (value == null)
-                {
-                    _comment = null;
                     _comBytes = null;
-                }
                 else
-                {
                     _comBytes = (byte[])value.Clone();
-                    _comment = DieFledermausStream._textEncoding.GetString(value);
-                }
             }
         }
 
