@@ -192,7 +192,7 @@ namespace DieFledermaus
         public FormatValue(string key, ushort version, params byte[][] values)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (_textEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
+            if (key.Length == 0 || _textEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
                 throw new ArgumentOutOfRangeException(nameof(key));
             if (version == 0)
                 throw new ArgumentOutOfRangeException(nameof(version));
@@ -206,7 +206,7 @@ namespace DieFledermaus
         {
             int strLen = reader.ReadUInt16();
             if (strLen == 0) strLen = DieFledermausStream.Max16Bit;
-            _key = DieFledermausStream._textEncoding.GetString(DieFledermausStream.ReadBytes(reader, strLen));
+            _key = _textEncoding.GetString(DieFledermausStream.ReadBytes(reader, strLen));
             _version = reader.ReadUInt16();
             if (_version == 0)
                 throw new InvalidDataException();
@@ -353,7 +353,7 @@ namespace DieFledermaus
         public long GetSize()
         {
             long total = 6L //String prefix + version + count
-                + DieFledermausStream._textEncoding.GetByteCount(_key);
+                + _textEncoding.GetByteCount(_key);
 
             int count = Count;
 
@@ -367,7 +367,7 @@ namespace DieFledermaus
 
         public void Write(BinaryWriter writer)
         {
-            byte[] keyBytes = DieFledermausStream._textEncoding.GetBytes(_key);
+            byte[] keyBytes = _textEncoding.GetBytes(_key);
             writer.Write((ushort)keyBytes.Length);
             writer.Write(keyBytes);
             writer.Write(_version);
