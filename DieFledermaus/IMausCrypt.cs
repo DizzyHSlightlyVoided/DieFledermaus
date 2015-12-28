@@ -233,25 +233,13 @@ namespace DieFledermaus
         event MausProgressEventHandler Progress;
     }
 
-    internal interface IMausStream
+    internal interface IMausSign
     {
-        MausCompressionFormat CompressionFormat { get; }
-
-        DateTime? CreatedTime { get; }
-
-        DateTime? ModifiedTime { get; }
-
         RsaKeyParameters RSASignParameters { get; set; }
 
         string RSASignId { get; }
 
         byte[] RSASignIdBytes { get; }
-
-        bool IsRSASigned { get; }
-
-        bool IsRSASignVerified { get; }
-
-        bool VerifyRSASignature();
 
         DsaKeyParameters DSASignParameters { get; set; }
 
@@ -259,17 +247,32 @@ namespace DieFledermaus
 
         byte[] DSASignIdBytes { get; }
 
-        bool IsDSASigned { get; }
-
-        bool IsDSASignVerified { get; }
-
-        bool VerifyDSASignature();
-
         ECKeyParameters ECDSASignParameters { get; set; }
 
         string ECDSASignId { get; }
 
         byte[] ECDSASignIdBytes { get; }
+    }
+
+    internal interface IMausStream : IMausSign
+    {
+        MausCompressionFormat CompressionFormat { get; }
+
+        DateTime? CreatedTime { get; }
+
+        DateTime? ModifiedTime { get; }
+
+        bool IsRSASigned { get; }
+
+        bool IsRSASignVerified { get; }
+
+        bool VerifyRSASignature();
+
+        bool IsDSASigned { get; }
+
+        bool IsDSASignVerified { get; }
+
+        bool VerifyDSASignature();
 
         bool IsECDSASigned { get; }
 

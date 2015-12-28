@@ -68,7 +68,7 @@ namespace DieFledermaus
     /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
     /// to <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/>.
     /// </remarks>
-    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausStream
+    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausSign
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
@@ -675,6 +675,16 @@ namespace DieFledermaus
             }
         }
 
+        internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
+        {
+            _rsaSignParamBC = rsaKey;
+            _rsaSignId = rsaKeyId;
+            _dsaSignParamBC = dsaKey;
+            _dsaSignId = dsaKeyId;
+            _ecdsaSignParamBC = ecdsaKey;
+            _ecdsaSignId = ecdsaKeyId;
+        }
+
         /// <summary>
         /// Gets a value indicating whether the current stream supports reading.
         /// </summary>
@@ -971,15 +981,17 @@ namespace DieFledermaus
             get { return _rsaSignParamBC; }
             set
             {
-                CheckSignParam(value, _rsaSignature, _rsaSignVerified);
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                CheckSignParam(value, _rsaSignature, _rsaSignVerified, _mode == CompressionMode.Decompress);
 
-                CheckSignHash(value, _hashFunc, false);
+                CheckSignHash(value, _hashFunc, false, _mode == CompressionMode.Compress);
 
                 _rsaSignParamBC = value;
             }
         }
 
-        private void CheckSignHash(RsaKeyParameters rsaKey, MausHashFunction hashFunc, bool gettingHash)
+        internal static void CheckSignHash(RsaKeyParameters rsaKey, MausHashFunction hashFunc, bool gettingHash, bool writing)
         {
             const string pName = "value";
             if (rsaKey == null) return;
@@ -988,11 +1000,11 @@ namespace DieFledermaus
             OaepEncoding engine = new OaepEncoding(rsaEngine, GetHashObject(hashFunc));
             try
             {
-                engine.Init(_mode == CompressionMode.Compress, rsaKey);
+                engine.Init(writing, rsaKey);
             }
             catch (Exception)
             {
-                throw new ArgumentException(_mode == CompressionMode.Compress ?
+                throw new ArgumentException(writing ?
                     TextResources.RsaNeedPrivate :
                     TextResources.RsaNeedPublic, pName);
             }
@@ -1019,12 +1031,9 @@ namespace DieFledermaus
             }
         }
 
-        private void CheckSignParam(AsymmetricKeyParameter value, object signature, bool signVerified)
+        internal static void CheckSignParam(AsymmetricKeyParameter value, object signature, bool signVerified, bool reading)
         {
-            if (_baseStream == null)
-                throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-
-            if (_mode == CompressionMode.Decompress)
+            if (reading)
             {
                 if (signature == null)
                     throw new NotSupportedException(TextResources.RsaSigNone);
@@ -1061,12 +1070,9 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (_rsaSignParamBC == null)
                     throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value == null)
-                    _rsaSignId = null;
-                else if (value.Length == 0 || value.Length > Max16Bit)
+                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
                     throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                else
-                    _rsaSignId = value;
+                _rsaSignId = value;
             }
         }
 
@@ -1138,7 +1144,7 @@ namespace DieFledermaus
 
         private DsaKeyParameters _dsaSignParamBC;
         /// <summary>
-        /// Gets and sets an RSA key used to sign the current stream.
+        /// Gets and sets a DSA key used to sign the current stream.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
@@ -1159,21 +1165,25 @@ namespace DieFledermaus
             get { return _dsaSignParamBC; }
             set
             {
-                CheckSignParam(value, _dsaSignature, _dsaSignVerified);
-                if (value != null)
-                {
-                    try
-                    {
-                        new DsaSigner(GetDsaCalc()).Init(_mode == CompressionMode.Compress, value);
-                    }
-                    catch
-                    {
-                        throw new ArgumentException(_mode == CompressionMode.Compress ?
-                            TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
-                            nameof(value));
-                    }
-                }
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                CheckSignParam(value, _dsaSignature, _dsaSignVerified, _mode == CompressionMode.Decompress);
+                CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
                 _dsaSignParamBC = value;
+            }
+        }
+
+        internal static void CheckSignParam(DsaKeyParameters value, bool writing, MausHashFunction _hashFunc)
+        {
+            try
+            {
+                new DsaSigner(GetDsaCalc(_hashFunc)).Init(writing, value);
+            }
+            catch
+            {
+                throw new ArgumentException(writing ?
+                    TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
+                    nameof(value));
             }
         }
 
@@ -1201,12 +1211,9 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (_dsaSignParamBC == null)
                     throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value == null)
-                    _dsaSignId = null;
-                else if (value.Length == 0 || value.Length > Max16Bit)
+                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
                     throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                else
-                    _dsaSignId = value;
+                _rsaSignId = value;
             }
         }
 
@@ -1273,7 +1280,7 @@ namespace DieFledermaus
         private ECKeyParameters _ecdsaSignParamBC;
 
         /// <summary>
-        /// Gets and sets an RSA key used to sign the current stream.
+        /// Gets and sets an ECDSA key used to sign the current stream.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
@@ -1294,18 +1301,28 @@ namespace DieFledermaus
             get { return _ecdsaSignParamBC; }
             set
             {
-                CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified);
-                try
-                {
-                    new ECDsaSigner(GetDsaCalc()).Init(_mode == CompressionMode.Compress, value);
-                }
-                catch
-                {
-                    throw new ArgumentException(_mode == CompressionMode.Compress ?
-                        TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
-                        nameof(value));
-                }
+                if (_baseStream == null)
+                    throw new ObjectDisposedException(null, TextResources.CurrentClosed);
+                CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified, _mode == CompressionMode.Decompress);
+                CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
                 _ecdsaSignParamBC = value;
+            }
+        }
+
+        internal static void CheckSignParam(ECKeyParameters value, bool writing, MausHashFunction _hashFunc)
+        {
+            if (value == null)
+                return;
+
+            try
+            {
+                new ECDsaSigner(GetDsaCalc(_hashFunc)).Init(writing, value);
+            }
+            catch
+            {
+                throw new ArgumentException(writing ?
+                    TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
+                    nameof(value));
             }
         }
 
@@ -1333,12 +1350,9 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (_ecdsaSignParamBC == null)
                     throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value == null)
-                    _ecdsaSignId = null;
-                else if (value.Length == 0 || value.Length > Max16Bit)
+                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
                     throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                else
-                    _ecdsaSignId = value;
+                _rsaSignId = value;
             }
         }
 
@@ -1684,7 +1698,7 @@ namespace DieFledermaus
                 if (!HashBDict.ContainsKey(value))
                     throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
 
-                CheckSignHash(_rsaSignParamBC, value, true);
+                CheckSignHash(_rsaSignParamBC, value, true, _mode == CompressionMode.Compress);
                 _hashFunc = value;
             }
         }
@@ -2697,7 +2711,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.VerifyingDSASignature);
             try
             {
-                DsaSigner signer = new DsaSigner(GetDsaCalc());
+                DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
 
                 return _dsaSignVerified = VerifyDsaSignature(_hashExpected, _dsaSignature, signer, _dsaSignParamBC);
             }
@@ -2743,7 +2757,7 @@ namespace DieFledermaus
             OnProgress(MausProgressState.VerifyingECDSASignature);
             try
             {
-                ECDsaSigner signer = new ECDsaSigner(GetDsaCalc());
+                ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
 
                 return _ecdsaSignVerified = VerifyDsaSignature(_hashExpected, _ecdsaSignature, signer, _ecdsaSignParamBC);
             }
@@ -2754,7 +2768,7 @@ namespace DieFledermaus
         }
         #endregion
 
-        private HMacDsaKCalculator GetDsaCalc()
+        private static HMacDsaKCalculator GetDsaCalc(MausHashFunction _hashFunc)
         {
             return new HMacDsaKCalculator(GetHashObject(_hashFunc));
         }
@@ -3150,7 +3164,7 @@ namespace DieFledermaus
                     OnProgress(MausProgressState.SigningDSA);
                     try
                     {
-                        DsaSigner signer = new DsaSigner(GetDsaCalc());
+                        DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
 
                         dsaSignature = GenerateDsaSignature(hashChecksum, signer, _dsaSignParamBC);
                     }
@@ -3165,7 +3179,7 @@ namespace DieFledermaus
                     OnProgress(MausProgressState.SigningECDSA);
                     try
                     {
-                        ECDsaSigner signer = new ECDsaSigner(GetDsaCalc());
+                        ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
                         ecdsaSignature = GenerateDsaSignature(hashChecksum, signer, _ecdsaSignParamBC);
                     }
                     catch (Exception x)

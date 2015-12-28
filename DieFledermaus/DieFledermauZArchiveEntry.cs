@@ -40,7 +40,7 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a single file entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
-    public class DieFledermauZArchiveEntry : DieFledermauZItem, IMausStream
+    public class DieFledermauZArchiveEntry : DieFledermauZItem, IMausSign
     {
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
             : base(archive, path, compFormat, encFormat)
@@ -472,6 +472,11 @@ namespace DieFledermaus
             }
         }
         #endregion
+
+        internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
+        {
+            MausStream.SetSignatures(rsaKey, rsaKeyId, dsaKey, dsaKeyId, ecdsaKey, ecdsaKeyId);
+        }
 
         private MausBufferStream _writingStream;
 
