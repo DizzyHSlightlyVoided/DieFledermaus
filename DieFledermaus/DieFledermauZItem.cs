@@ -60,6 +60,8 @@ namespace DieFledermaus
             if (path != null)
                 _path = path;
             MausStream.Progress += MausStream_Progress;
+            if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
+                _isDecrypted = true;
         }
 
         /// <summary>
@@ -243,6 +245,7 @@ namespace DieFledermaus
         internal bool _isDecrypted;
         /// <summary>
         /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
+        /// Also returns <c>true</c> if the current instance is not encrypted.
         /// </summary>
         public bool IsDecrypted { get { return _isDecrypted; } }
 
