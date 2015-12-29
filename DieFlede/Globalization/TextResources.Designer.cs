@@ -70,11 +70,38 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There is currently no support for ECDSA in OpenSSL public keyrings..
+        /// </summary>
+        internal static string AuthorizedKeysEcdsa {
+            get {
+                return ResourceManager.GetString("AuthorizedKeysEcdsa", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The value &quot;{0}&quot; is invalid for the &quot;{1}&quot; parameter..
         /// </summary>
         internal static string BadEnumValue {
             get {
                 return ResourceManager.GetString("BadEnumValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bad parameter {0}: Invalid integer value {1}.
+        /// </summary>
+        internal static string BadInteger {
+            get {
+                return ResourceManager.GetString("BadInteger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect password..
+        /// </summary>
+        internal static string BadPassword {
+            get {
+                return ResourceManager.GetString("BadPassword", resourceCulture);
             }
         }
         
@@ -250,6 +277,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to index.
+        /// </summary>
+        internal static string HelpIndex {
+            get {
+                return ResourceManager.GetString("HelpIndex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to input.
         /// </summary>
         internal static string HelpInput {
@@ -394,6 +430,24 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The zero-based index of the signing key within the signature file..
+        /// </summary>
+        internal static string HelpMSigDex {
+            get {
+                return ResourceManager.GetString("HelpMSigDex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path to an RSA, DSA, or ECDSA file..
+        /// </summary>
+        internal static string HelpMSigKey {
+            get {
+                return ResourceManager.GetString("HelpMSigKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Compress to a DieFledermaus stream instead of a DieFledermauZ archive..
         /// </summary>
         internal static string HelpMSingle {
@@ -426,6 +480,24 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpOutput {
             get {
                 return ResourceManager.GetString("HelpOutput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to path.
+        /// </summary>
+        internal static string HelpPath {
+            get {
+                return ResourceManager.GetString("HelpPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified index {0} is greater than or equal to the number of elements in the file..
+        /// </summary>
+        internal static string IndexPem {
+            get {
+                return ResourceManager.GetString("IndexPem", resourceCulture);
             }
         }
         
@@ -489,6 +561,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string NoOutputCreate {
             get {
                 return ResourceManager.GetString("NoOutputCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The keyfile requires a password..
+        /// </summary>
+        internal static string NoPassword {
+            get {
+                return ResourceManager.GetString("NoPassword", resourceCulture);
             }
         }
         
@@ -799,6 +880,24 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to signature-index.
+        /// </summary>
+        internal static string PNameSigDex {
+            get {
+                return ResourceManager.GetString("PNameSigDex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to signature-key.
+        /// </summary>
+        internal static string PNameSigKey {
+            get {
+                return ResourceManager.GetString("PNameSigKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to single.
         /// </summary>
         internal static string PNameSingle {
@@ -849,6 +948,105 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string RequireAtLeastOne {
             get {
                 return ResourceManager.GetString("RequireAtLeastOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature index .
+        /// </summary>
+        internal static string SigDexNeedsKey {
+            get {
+                return ResourceManager.GetString("SigDexNeedsKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path does not contain a valid private key..
+        /// </summary>
+        internal static string SignBadPrivate {
+            get {
+                return ResourceManager.GetString("SignBadPrivate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified path does not contain a valid public key..
+        /// </summary>
+        internal static string SignBadPublic {
+            get {
+                return ResourceManager.GetString("SignBadPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DSA signature was not successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignDSAUnverified {
+            get {
+                return ResourceManager.GetString("SignDSAUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DSA signature was successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignDSAVerified {
+            get {
+                return ResourceManager.GetString("SignDSAVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ECDSA signature was not successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignECDSAUnverified {
+            get {
+                return ResourceManager.GetString("SignECDSAUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ECDSA signature was successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignECDSAVerified {
+            get {
+                return ResourceManager.GetString("SignECDSAVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename contains a public key. A private key is needed..
+        /// </summary>
+        internal static string SignNeedPrivate {
+            get {
+                return ResourceManager.GetString("SignNeedPrivate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified filename contains a private key. A public key is needed..
+        /// </summary>
+        internal static string SignNeedPublic {
+            get {
+                return ResourceManager.GetString("SignNeedPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA signature was not successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignRSAUnverified {
+            get {
+                return ResourceManager.GetString("SignRSAUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA signature was successfully verified for entry {0}.
+        /// </summary>
+        internal static string SignRSAVerified {
+            get {
+                return ResourceManager.GetString("SignRSAVerified", resourceCulture);
             }
         }
         
@@ -921,6 +1119,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string Title {
             get {
                 return ResourceManager.GetString("Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified file contains an unknown or unspported key type. Only RSA, DSA, and ECDSA keys are supported..
+        /// </summary>
+        internal static string UnknownKeyType {
+            get {
+                return ResourceManager.GetString("UnknownKeyType", resourceCulture);
             }
         }
         

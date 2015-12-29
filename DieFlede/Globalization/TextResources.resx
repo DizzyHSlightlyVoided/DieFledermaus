@@ -477,4 +477,85 @@
     <value>encryption</value>
     <comment>Localized parameter name, keep this unique</comment>
   </data>
+  <data name="SignBadPrivate" xml:space="preserve">
+    <value>The specified path does not contain a valid private key.</value>
+  </data>
+  <data name="HelpMSigKey" xml:space="preserve">
+    <value>Path to an RSA, DSA, or ECDSA file.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpPath" xml:space="preserve">
+    <value>path</value>
+  </data>
+  <data name="PNameSigKey" xml:space="preserve">
+    <value>signature-key</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="BadInteger" xml:space="preserve">
+    <value>Bad parameter {0}: Invalid integer value {1}</value>
+    <comment>{0} = key, {1} = integer.</comment>
+  </data>
+  <data name="BadPassword" xml:space="preserve">
+    <value>Incorrect password.</value>
+  </data>
+  <data name="SignBadPublic" xml:space="preserve">
+    <value>The specified path does not contain a valid public key.</value>
+  </data>
+  <data name="HelpIndex" xml:space="preserve">
+    <value>index</value>
+  </data>
+  <data name="HelpMSigDex" xml:space="preserve">
+    <value>The zero-based index of the signing key within the signature file.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="IndexPem" xml:space="preserve">
+    <value>The specified index {0} is greater than or equal to the number of elements in the file.</value>
+    <comment>{0} = index</comment>
+  </data>
+  <data name="NoPassword" xml:space="preserve">
+    <value>The keyfile requires a password.</value>
+  </data>
+  <data name="PNameSigDex" xml:space="preserve">
+    <value>signature-index</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="SigDexNeedsKey" xml:space="preserve">
+    <value>Signature index </value>
+  </data>
+  <data name="UnknownKeyType" xml:space="preserve">
+    <value>The specified file contains an unknown or unspported key type. Only RSA, DSA, and ECDSA keys are supported.</value>
+  </data>
+  <data name="SignDSAUnverified" xml:space="preserve">
+    <value>DSA signature was not successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="SignDSAVerified" xml:space="preserve">
+    <value>DSA signature was successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="SignECDSAUnverified" xml:space="preserve">
+    <value>ECDSA signature was not successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="SignECDSAVerified" xml:space="preserve">
+    <value>ECDSA signature was successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="SignNeedPrivate" xml:space="preserve">
+    <value>The specified filename contains a public key. A private key is needed.</value>
+  </data>
+  <data name="SignNeedPublic" xml:space="preserve">
+    <value>The specified filename contains a private key. A public key is needed.</value>
+  </data>
+  <data name="SignRSAUnverified" xml:space="preserve">
+    <value>RSA signature was not successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="SignRSAVerified" xml:space="preserve">
+    <value>RSA signature was successfully verified for entry {0}</value>
+    <comment>{0} = filename</comment>
+  </data>
+  <data name="AuthorizedKeysEcdsa" xml:space="preserve">
+    <value>There is currently no support for ECDSA in OpenSSL public keyrings.</value>
+  </data>
 </root>

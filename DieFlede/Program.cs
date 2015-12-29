@@ -37,7 +37,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using DieFledermaus.Cli.Globalization;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.OpenSsl;
 
 namespace DieFledermaus.Cli
 {
@@ -124,13 +128,16 @@ namespace DieFledermaus.Cli
                     { "Twofish", MausEncryptionFormat.Twofish },
                     { "Threefish", MausEncryptionFormat.Threefish }
                 };
-                cEncFmt = new ClParamEnum<MausEncryptionFormat>(parser, TextResources.HelpMEncFmt, locArgs, 
+                cEncFmt = new ClParamEnum<MausEncryptionFormat>(parser, TextResources.HelpMEncFmt, locArgs,
                     new Dictionary<string, MausEncryptionFormat>(), '\0', "encryption", TextResources.PNameEncFmt);
             }
 
             ClParamFlag hide = new ClParamFlag(parser, TextResources.HelpMHide, '\0', "hide", TextResources.PNameHide);
             extract.MutualExclusives.Add(hide);
             extract.OtherMessages.Add(hide, NoEntryExtract);
+
+            ClParamValue sigKey = new ClParamValue(parser, TextResources.HelpMSigKey, TextResources.HelpPath, '\0', TextResources.PNameSigKey);
+            ClParamValue sigDex = new ClParamValue(parser, TextResources.HelpMSigDex, TextResources.HelpIndex, '\0', TextResources.PNameSigDex);
 
             ClParam[] clParams = parser.Params.ToArray();
 
@@ -238,6 +245,41 @@ namespace DieFledermaus.Cli
                     return Return(0, interactive);
             }
 
+            ICipherParameters keyObj;
+
+            if (sigKey.IsSet)
+            {
+                string path = sigKey.Value;
+                BigInteger index;
+
+                if (sigDex.IsSet)
+                {
+                    try
+                    {
+                        index = new BigInteger(sigDex.Value);
+                        if (index.CompareTo(BigInteger.Zero) < 0)
+                            throw new InvalidDataException();
+                    }
+                    catch
+                    {
+                        Console.Error.WriteLine(TextResources.BadInteger, sigDex.Key, sigDex.Value);
+                        return Return(-7, interactive);
+                    }
+                }
+                else index = null;
+
+                keyObj = LoadPublicKey(path, index, create.IsSet, interactive);
+
+                if (keyObj == null)
+                    return Return(-7, interactive);
+            }
+            else if (sigDex.IsSet)
+            {
+                Console.Error.WriteLine(TextResources.SigDexNeedsKey);
+                return Return(-7, interactive);
+            }
+            else keyObj = null;
+
             string ssPassword = null;
             List<FileStream> streams = null;
             const string mausExt = ".maus";
@@ -274,6 +316,10 @@ namespace DieFledermaus.Cli
                             using (Stream arStream = File.Create(archiveFile.Value))
                             using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
                             {
+                                ds.RSASignParameters = keyObj as RsaKeyParameters;
+                                ds.DSASignParameters = keyObj as DsaKeyParameters;
+                                ds.ECDSASignParameters = keyObj as ECKeyParameters;
+
                                 if (hash.Value.HasValue)
                                     ds.HashFunction = hash.Value.Value;
 
@@ -358,6 +404,10 @@ namespace DieFledermaus.Cli
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
                         {
+                            archive.RSASignParameters = keyObj as RsaKeyParameters;
+                            archive.DSASignParameters = keyObj as DsaKeyParameters;
+                            archive.ECDSASignParameters = keyObj as ECKeyParameters;
+
                             if (hash.Value.HasValue)
                                 archive.HashFunction = hash.Value.Value;
                             if (hide.IsSet)
@@ -451,9 +501,13 @@ namespace DieFledermaus.Cli
                         {
                             var curEntry = dz.Entries[i];
                             if (DoFailDecrypt(curEntry, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
+                            {
+                                Console.WriteLine(GetName(i, curEntry));
                                 continue;
+                            }
+                            Console.WriteLine(curEntry.Path);
 
-                            Console.WriteLine(GetName(i, curEntry));
+                            VerifySigns(keyObj, curEntry as DieFledermauZArchiveEntry);
 
                             if (verbose.IsSet)
                             {
@@ -503,6 +557,8 @@ namespace DieFledermaus.Cli
                             var entry = dz.Entries[i];
                             if (DoFailDecrypt(entry, interactive, i, ref ssPassword))
                                 continue;
+
+                            VerifySigns(keyObj, entry as DieFledermauZArchiveEntry);
 
                             string path = entry.Path;
 
@@ -617,6 +673,56 @@ namespace DieFledermaus.Cli
                     for (int i = 0; i < streams.Count; i++)
                         streams[i].Dispose();
                 }
+            }
+        }
+
+        private static void VerifySigns(ICipherParameters keyObj, DieFledermauZArchiveEntry curEntry)
+        {
+            if (keyObj == null || curEntry == null)
+                return;
+
+            try
+            {
+                RsaKeyParameters rsaParam = keyObj as RsaKeyParameters;
+                if (rsaParam != null)
+                {
+                    if (!curEntry.IsRSASigned)
+                        return;
+
+                    curEntry.RSASignParameters = rsaParam;
+                    if (curEntry.VerifyRSASignature())
+                        Console.WriteLine(TextResources.SignRSAVerified, curEntry.Path);
+                    else
+                        Console.Error.WriteLine(TextResources.SignRSAUnverified, curEntry.Path);
+                    return;
+                }
+
+                DsaKeyParameters dsaParam = keyObj as DsaKeyParameters;
+                if (dsaParam != null)
+                {
+                    if (!curEntry.IsDSASigned)
+                        return;
+
+                    curEntry.DSASignParameters = dsaParam;
+                    if (curEntry.VerifyDSASignature())
+                        Console.WriteLine(TextResources.SignDSAVerified, curEntry.Path);
+                    else
+                        Console.Error.WriteLine(TextResources.SignDSAUnverified, curEntry.Path);
+                }
+
+                ECKeyParameters ecdsaParam = keyObj as ECKeyParameters;
+                if (ecdsaParam == null || !curEntry.IsECDSASigned) //The first one probably shouldn't happen, but ...
+                    return;
+
+                curEntry.ECDSASignParameters = ecdsaParam;
+                if (curEntry.VerifyECDSASignature())
+                    Console.WriteLine(TextResources.SignECDSAVerified, curEntry.Path);
+                else
+                    Console.Error.WriteLine(TextResources.SignECDSAUnverified, curEntry.Path);
+            }
+            catch (Exception x)
+            {
+                Console.Error.WriteLine(x.Message);
             }
         }
 
@@ -771,8 +877,12 @@ namespace DieFledermaus.Cli
 #if DEBUG
         private static void GoThrow(Exception e)
         {
+            Console.Error.WriteLine(e.GetType().ToString() + ":");
+            Console.Error.WriteLine(e.ToString());
             Console.Error.WriteLine("Throw? Y/N> ");
-            if (Console.ReadKey().Key == ConsoleKey.Y)
+            var key = Console.ReadKey().Key;
+            Console.WriteLine();
+            if (key == ConsoleKey.Y)
                 throw new Exception(e.Message, e);
         }
 #endif
@@ -975,6 +1085,426 @@ namespace DieFledermaus.Cli
             }
             while (notFound);
             return false;
+        }
+
+        private static ICipherParameters LoadPublicKey(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
+        {
+            if (!File.Exists(path))
+            {
+                Console.Error.WriteLine(TextResources.FileNotFound, path);
+                return null;
+            }
+
+            try
+            {
+                const int bufferSize = 8192;
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (FileStream fs = File.OpenRead(path))
+                        fs.CopyTo(ms);
+
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    object keyObj;
+                    using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
+                    {
+                        PemReader reader = new PemReader(sr, new ClPassword(interactive));
+                        try
+                        {
+                            keyObj = reader.ReadObject();
+
+                            if (keyObj != null && index != null && index.CompareTo(BigInteger.Zero) != 0)
+                            {
+                                Console.Error.WriteLine(TextResources.IndexPem, index);
+                                return null;
+                            }
+                        }
+                        catch (InvalidCipherTextException)
+                        {
+                            Console.Error.WriteLine(TextResources.BadPassword);
+                            return null;
+                        }
+                        catch (IOException x)
+                        {
+                            if (x.Message == "base64 data appears to be truncated")
+                                keyObj = null;
+                            else
+                            {
+                                Console.Error.WriteLine(x.Message);
+#if DEBUG
+                                GoThrow(x);
+#endif
+                                return null;
+                            }
+                        }
+                    }
+
+                    if (keyObj == null)
+                    {
+                        ms.Seek(0, SeekOrigin.Begin);
+                        if (index == null) index = BigInteger.Zero;
+
+                        try
+                        {
+                            var decoderStream = PgpUtilities.GetDecoderStream(ms);
+                            PgpSecretKeyRing bundle = new PgpSecretKeyRing(decoderStream);
+
+                            BigInteger counter = BigInteger.ValueOf(-1);
+
+                            foreach (PgpSecretKey pKey in bundle.GetSecretKeys())
+                            {
+                                counter = counter.Add(BigInteger.One);
+
+                                if (counter.CompareTo(index) < 0)
+                                    continue;
+
+                                if (!getPrivate)
+                                {
+                                    keyObj = pKey.PublicKey.GetKey();
+                                    break;
+                                }
+
+                                char[] password = new ClPassword(interactive).GetPassword();
+
+                                PgpPrivateKey privKey;
+                                try
+                                {
+                                    privKey = pKey.ExtractPrivateKeyUtf8(password);
+                                }
+                                catch (PgpException)
+                                {
+                                    Console.Error.WriteLine(TextResources.BadPassword);
+                                    return null;
+                                }
+
+                                keyObj = privKey.Key;
+                                break;
+                            }
+
+                            if (keyObj != null)
+                            {
+                                Console.Error.WriteLine(TextResources.IndexPem, index);
+                                return null;
+                            }
+                        }
+                        catch (IOException x)
+                        {
+                            if (!x.Message.StartsWith("secret key ring doesn't start with", StringComparison.OrdinalIgnoreCase))
+#if DEBUG
+                                GoThrow(x);
+#else
+                                throw;
+#endif
+                        }
+                    }
+
+                    if (keyObj == null)
+                    {
+                        ms.Seek(0, SeekOrigin.Begin);
+                        try
+                        {
+                            var decoderStream = PgpUtilities.GetDecoderStream(ms);
+                            PgpPublicKeyRing bundle = new PgpPublicKeyRing(decoderStream);
+
+                            BigInteger counter = BigInteger.ValueOf(-1);
+
+                            foreach (PgpPublicKey pKey in bundle.GetPublicKeys())
+                            {
+                                counter = counter.Add(BigInteger.One);
+
+                                if (counter.CompareTo(index) < 0)
+                                    continue;
+
+                                if (getPrivate)
+                                {
+                                    Console.Error.WriteLine(TextResources.SignNeedPrivate);
+                                    return null;
+                                }
+
+                                keyObj = pKey.GetKey();
+                                break;
+                            }
+
+                            if (keyObj != null)
+                            {
+                                Console.Error.WriteLine(TextResources.IndexPem, index);
+                                return null;
+                            }
+                        }
+                        catch (IOException x)
+                        {
+                            if (!x.Message.StartsWith("public key ring doesn't start with", StringComparison.OrdinalIgnoreCase))
+#if DEBUG
+                                GoThrow(x);
+#else
+                                throw;
+#endif
+                        }
+                    }
+
+                    if (keyObj == null)
+                    {
+                        ms.Seek(0, SeekOrigin.Begin);
+                        if (index == null) index = BigInteger.Zero;
+
+                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
+                        {
+                            BigInteger counter = BigInteger.ValueOf(-1);
+                            foreach (Tuple<string, AsymmetricKeyParameter, string> curVal in AuthorizedKeysParser(sr))
+                            {
+                                counter = counter.Add(BigInteger.One);
+
+                                if (counter.CompareTo(index) < 0)
+                                    continue;
+
+                                if (getPrivate)
+                                {
+                                    Console.Error.WriteLine(TextResources.SignNeedPrivate);
+                                    return null;
+                                }
+
+                                if (curVal.Item2 == null)
+                                {
+                                    string type = curVal.Item1;
+                                    if (type.Equals("ssh-ecdsa", StringComparison.Ordinal) || type.StartsWith("ecdsa-", StringComparison.Ordinal))
+                                        Console.Error.WriteLine(TextResources.AuthorizedKeysEcdsa); //TODO: Support for ECDSA?
+                                    else
+                                        Console.Error.WriteLine(TextResources.UnknownKeyType);
+                                    return null;
+                                }
+
+                                return curVal.Item2;
+                            }
+                        }
+                    }
+
+                    AsymmetricCipherKeyPair pair = keyObj as AsymmetricCipherKeyPair;
+                    if (pair != null)
+                    {
+                        if (getPrivate)
+                        {
+                            if (pair.Private is RsaKeyParameters || pair.Private is DsaKeyParameters || pair.Private is ECKeyParameters)
+                                return pair.Private;
+
+                            Console.Error.WriteLine(TextResources.UnknownKeyType);
+                            return null;
+                        }
+
+                        if (pair.Public is RsaKeyParameters || pair.Public is DsaKeyParameters || pair.Public is ECKeyParameters)
+                            return pair.Public;
+
+                        Console.Error.WriteLine(TextResources.UnknownKeyType);
+                        return null;
+                    }
+
+                    if (!(keyObj is AsymmetricKeyParameter))
+                    {
+                        Console.Error.WriteLine(TextResources.UnknownKeyType);
+                        return null;
+                    }
+
+                    RsaKeyParameters singleRsa = keyObj as RsaKeyParameters;
+                    if (singleRsa != null)
+                    {
+                        if (getPrivate)
+                        {
+                            if (singleRsa is RsaPrivateCrtKeyParameters)
+                                return singleRsa;
+
+                            Console.Error.WriteLine(singleRsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
+                            return null;
+                        }
+
+                        if (singleRsa.IsPrivate)
+                            return new RsaKeyParameters(false, singleRsa.Modulus, singleRsa.Exponent);
+
+                        return singleRsa;
+                    }
+
+                    DsaKeyParameters singleDsa = keyObj as DsaKeyParameters;
+                    if (singleDsa != null)
+                    {
+                        if (getPrivate)
+                        {
+                            if (singleDsa is DsaPrivateKeyParameters)
+                                return singleDsa;
+
+                            Console.Error.WriteLine(singleDsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
+                            return null;
+                        }
+
+                        if (singleDsa is DsaPublicKeyParameters)
+                            return singleDsa;
+                        Console.Error.WriteLine(singleDsa.IsPrivate ? TextResources.SignNeedPublic : TextResources.SignBadPublic);
+                        return null;
+                    }
+
+                    ECKeyParameters singleEcdsa = keyObj as ECKeyParameters;
+                    if (singleEcdsa == null)
+                    {
+                        Console.Error.WriteLine(TextResources.UnknownKeyType);
+                        return null;
+                    }
+
+                    if (getPrivate)
+                    {
+                        if (singleEcdsa is ECPrivateKeyParameters)
+                            return singleEcdsa;
+
+                        Console.Error.WriteLine(singleEcdsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
+                        return null;
+                    }
+
+                    if (singleEcdsa is ECPublicKeyParameters)
+                        return singleEcdsa;
+
+                    Console.Error.WriteLine(singleEcdsa.IsPrivate ? TextResources.SignNeedPublic : TextResources.SignBadPublic);
+                    return null;
+                }
+            }
+            catch (Exception x)
+            {
+                Console.Error.WriteLine(x.Message);
+#if DEBUG
+                GoThrow(x);
+#endif
+                return null;
+            }
+        }
+
+        private static IEnumerable<Tuple<string, AsymmetricKeyParameter, string>> AuthorizedKeysParser(TextReader reader)
+        {
+            string line;
+
+            while ((line = reader.ReadLine()) != null)
+            {
+                line = line.Trim();
+
+                if (line.Length == 0 || line[0] == '#')
+                    continue;
+
+                string[] words = line.Split((char[])null, 3, StringSplitOptions.RemoveEmptyEntries);
+
+                if (words.Length < 2) throw new InvalidDataException(TextResources.SignBadPublic);
+                byte[] buffer;
+                try
+                {
+                    buffer = Convert.FromBase64String(words[1]);
+                }
+                catch (FormatException)
+                {
+                    throw new InvalidDataException(TextResources.SignBadPublic);
+                }
+
+                int curPos = 0;
+                string type = words[0], comment = words.Length == 2 ? string.Empty : words[2];
+
+                if (type != ReadString(buffer, ref curPos))
+                    throw new InvalidDataException(TextResources.SignBadPublic);
+
+                if (type.Equals("ssh-rsa", StringComparison.Ordinal))
+                {
+                    BigInteger exp = ReadBigInteger(buffer, ref curPos);
+                    BigInteger mod = ReadBigInteger(buffer, ref curPos);
+                    if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
+
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, new RsaKeyParameters(false, mod, exp), comment);
+                    continue;
+                }
+                if (type.Equals("ssh-dss", StringComparison.Ordinal))
+                {
+                    BigInteger p = ReadBigInteger(buffer, ref curPos);
+                    BigInteger q = ReadBigInteger(buffer, ref curPos);
+                    BigInteger g = ReadBigInteger(buffer, ref curPos);
+                    BigInteger y = ReadBigInteger(buffer, ref curPos);
+                    if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
+
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, new DsaPublicKeyParameters(y, new DsaParameters(p, q, g)), comment);
+                    continue;
+                }
+                //TODO: Support for ECDSA?
+
+                yield return new Tuple<string, AsymmetricKeyParameter, string>(type, null, comment);
+            }
+        }
+
+        private static int ReadInt(byte[] buffer, ref int curPos)
+        {
+            if (curPos + sizeof(int) > buffer.Length)
+                throw new InvalidDataException(TextResources.SignBadPublic);
+            return (buffer[curPos++] << 24) | (buffer[curPos++] << 16) | (buffer[curPos++] << 8) | buffer[curPos++];
+        }
+
+        private static string ReadString(byte[] buffer, ref int curPos)
+        {
+            int len = ReadInt(buffer, ref curPos);
+            if (len <= 0 || curPos + len > buffer.Length)
+                throw new InvalidDataException(TextResources.SignBadPublic);
+            string returner = Encoding.UTF8.GetString(buffer, curPos, len);
+            curPos += len;
+            return returner;
+        }
+
+        private static BigInteger ReadBigInteger(byte[] buffer, ref int curPos)
+        {
+            int len = ReadInt(buffer, ref curPos);
+            if (len <= 0 || curPos + len > buffer.Length)
+                throw new InvalidDataException(TextResources.SignBadPublic);
+            BigInteger returner = new BigInteger(buffer, curPos, len);
+            curPos += len;
+            return returner;
+        }
+
+        private static byte[] ReadBuffer(byte[] buffer, ref int curPos)
+        {
+            int len = ReadInt(buffer, ref curPos);
+            if (len <= 0 || curPos + len > buffer.Length)
+                throw new InvalidDataException(TextResources.SignBadPublic);
+
+            byte[] returner = new byte[len];
+            Array.Copy(buffer, curPos, returner, 0, len);
+            curPos += len;
+            return returner;
+        }
+    }
+
+    internal class ClPassword : IPasswordFinder
+    {
+        private ClParam _interactive;
+
+        public ClPassword(ClParam interactive)
+        {
+            _interactive = interactive;
+        }
+
+        public char[] GetPassword()
+        {
+            if (!_interactive.IsSet)
+                throw new InvalidDataException(TextResources.NoPassword);
+
+            List<char> charList = new List<char>();
+            Console.WriteLine(TextResources.NoPassword);
+            Console.Write("> ");
+
+            ConsoleKeyInfo c;
+
+            while ((c = Console.ReadKey()).Key != ConsoleKey.Enter)
+            {
+                if (c.Key == ConsoleKey.Backspace)
+                {
+                    charList.RemoveAt(charList.Count - 1);
+                    Console.Write(" ");
+                }
+                else
+                {
+                    Console.Write("\b \b");
+                    charList.Add(c.KeyChar);
+                }
+            }
+            Console.WriteLine(">");
+
+            return charList.ToArray();
         }
     }
 }
