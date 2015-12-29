@@ -1175,6 +1175,9 @@ namespace DieFledermaus
 
         internal static void CheckSignParam(DsaKeyParameters value, bool writing, MausHashFunction _hashFunc)
         {
+            if (value == null)
+                return;
+
             try
             {
                 new DsaSigner(GetDsaCalc(_hashFunc)).Init(writing, value);
