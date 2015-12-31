@@ -120,7 +120,7 @@ namespace DieFledermaus
         /// and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
-        /// and the specified value does not represent a valid public key.</para>
+        /// and the specified value does not represent a valid public or private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the specified value is too short for <see cref="DieFledermauZItem.HashFunction"/>.</para>
         /// </exception>
@@ -245,7 +245,7 @@ namespace DieFledermaus
         /// and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
-        /// and the specified value does not represent a valid public key.</para>
+        /// and the specified value does not represent a valid public or private key.</para>
         /// </exception>
         public DsaKeyParameters DSASignParameters
         {
@@ -368,7 +368,7 @@ namespace DieFledermaus
         /// and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
-        /// and the specified value does not represent a valid public key.</para>
+        /// and the specified value does not represent a valid public or private key.</para>
         /// </exception>
         public ECKeyParameters ECDSASignParameters
         {

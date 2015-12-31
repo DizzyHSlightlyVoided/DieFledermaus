@@ -52,6 +52,8 @@ using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC.Multiplier;
 
 using SevenZip;
 using SevenZip.Compression.LZMA;
@@ -972,7 +974,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public or private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
@@ -984,7 +986,6 @@ namespace DieFledermaus
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _rsaSignature, _rsaSignVerified, _mode == CompressionMode.Decompress);
-
                 CheckSignHash(value, _hashFunc, false, _mode == CompressionMode.Compress);
 
                 _rsaSignParamBC = value;
@@ -998,6 +999,8 @@ namespace DieFledermaus
 
             RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
             OaepEncoding engine = new OaepEncoding(rsaEngine, GetHashObject(hashFunc));
+            if (!writing)
+                rsaKey = PublicFromPrivate(rsaKey);
             try
             {
                 engine.Init(writing, rsaKey);
@@ -1031,6 +1034,18 @@ namespace DieFledermaus
             }
         }
 
+        internal static RsaKeyParameters PublicFromPrivate(RsaKeyParameters rsaKey)
+        {
+            if (!rsaKey.IsPrivate)
+                return rsaKey;
+
+            RsaPrivateCrtKeyParameters rsaPrivateKey = rsaKey as RsaPrivateCrtKeyParameters;
+            if (rsaPrivateKey != null)
+                return new RsaKeyParameters(false, rsaPrivateKey.Modulus, rsaPrivateKey.PublicExponent);
+
+            return new RsaKeyParameters(false, rsaKey.Modulus, rsaKey.Exponent);
+        }
+
         internal static void CheckSignParam(AsymmetricKeyParameter value, object signature, bool signVerified, bool reading)
         {
             if (reading)
@@ -1039,8 +1054,6 @@ namespace DieFledermaus
                     throw new NotSupportedException(TextResources.RsaSigNone);
                 if (signVerified)
                     throw new InvalidOperationException(TextResources.RsaSigVerified);
-                if (value != null && value.IsPrivate)
-                    throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
             }
             else if (value != null && !value.IsPrivate)
                 throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
@@ -1143,6 +1156,7 @@ namespace DieFledermaus
         }
 
         private DsaKeyParameters _dsaSignParamBC;
+        private DsaPublicKeyParameters _dsaSignPub;
         /// <summary>
         /// Gets and sets a DSA key used to sign the current stream.
         /// </summary>
@@ -1158,7 +1172,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public or private key.</para>
         /// </exception>
         public DsaKeyParameters DSASignParameters
         {
@@ -1168,16 +1182,18 @@ namespace DieFledermaus
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _dsaSignature, _dsaSignVerified, _mode == CompressionMode.Decompress);
-                CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
+                _dsaSignPub = CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
                 _dsaSignParamBC = value;
             }
         }
 
-        internal static void CheckSignParam(DsaKeyParameters value, bool writing, MausHashFunction _hashFunc)
+        internal static DsaPublicKeyParameters CheckSignParam(DsaKeyParameters value, bool writing, MausHashFunction _hashFunc)
         {
             if (value == null)
-                return;
+                return null;
 
+            if (!writing)
+                value = PublicFromPrivate(value);
             try
             {
                 new DsaSigner(GetDsaCalc(_hashFunc)).Init(writing, value);
@@ -1187,6 +1203,30 @@ namespace DieFledermaus
                 throw new ArgumentException(writing ?
                     TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
                     nameof(value));
+            }
+            return value as DsaPublicKeyParameters;
+        }
+
+        internal static DsaPublicKeyParameters PublicFromPrivate(DsaKeyParameters value)
+        {
+            {
+                DsaPublicKeyParameters dsaKeyPub = value as DsaPublicKeyParameters;
+                if (dsaKeyPub != null)
+                    return dsaKeyPub;
+            }
+
+            DsaPrivateKeyParameters dsaKeyPriv = value as DsaPrivateKeyParameters;
+            if (dsaKeyPriv == null)
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
+
+            try
+            {
+                BigInteger y = dsaKeyPriv.Parameters.G.ModPow(dsaKeyPriv.X, dsaKeyPriv.Parameters.P);
+                return new DsaPublicKeyParameters(y, dsaKeyPriv.Parameters);
+            }
+            catch (Exception x)
+            {
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
             }
         }
 
@@ -1281,7 +1321,7 @@ namespace DieFledermaus
         }
 
         private ECKeyParameters _ecdsaSignParamBC;
-
+        private ECPublicKeyParameters _ecdsaSignPub;
         /// <summary>
         /// Gets and sets an ECDSA key used to sign the current stream.
         /// </summary>
@@ -1297,7 +1337,7 @@ namespace DieFledermaus
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public key.</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public or private key.</para>
         /// </exception>
         public ECKeyParameters ECDSASignParameters
         {
@@ -1307,16 +1347,18 @@ namespace DieFledermaus
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified, _mode == CompressionMode.Decompress);
-                CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
+                _ecdsaSignPub = CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
                 _ecdsaSignParamBC = value;
             }
         }
 
-        internal static void CheckSignParam(ECKeyParameters value, bool writing, MausHashFunction _hashFunc)
+        internal static ECPublicKeyParameters CheckSignParam(ECKeyParameters value, bool writing, MausHashFunction _hashFunc)
         {
             if (value == null)
-                return;
+                return null;
 
+            if (!writing)
+                value = PublicFromPrivate(value);
             try
             {
                 new ECDsaSigner(GetDsaCalc(_hashFunc)).Init(writing, value);
@@ -1326,6 +1368,34 @@ namespace DieFledermaus
                 throw new ArgumentException(writing ?
                     TextResources.RsaNeedPrivate : TextResources.RsaNeedPublic,
                     nameof(value));
+            }
+            return value as ECPublicKeyParameters;
+        }
+
+        internal static ECPublicKeyParameters PublicFromPrivate(ECKeyParameters value)
+        {
+            {
+                ECPublicKeyParameters ecdsaPublic = value as ECPublicKeyParameters;
+                if (ecdsaPublic != null)
+                    return ecdsaPublic;
+            }
+
+            ECPrivateKeyParameters ecdsaPrivate = value as ECPrivateKeyParameters;
+            if (ecdsaPrivate == null)
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
+
+            try
+            {
+                var ec = ecdsaPrivate.Parameters;
+
+                var q = new FixedPointCombMultiplier().Multiply(ec.G, ecdsaPrivate.D);
+                if (ecdsaPrivate.PublicKeyParamSet == null)
+                    return new ECPublicKeyParameters(ecdsaPrivate.AlgorithmName, q, ec);
+                return new ECPublicKeyParameters(ecdsaPrivate.AlgorithmName, q, ecdsaPrivate.PublicKeyParamSet);
+            }
+            catch (Exception x)
+            {
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
             }
         }
 
@@ -2630,7 +2700,7 @@ namespace DieFledermaus
             try
             {
                 OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
-                engine.Init(false, _rsaSignParamBC);
+                engine.Init(false, PublicFromPrivate(_rsaSignParamBC));
 
                 byte[] sig;
                 try
@@ -2701,11 +2771,7 @@ namespace DieFledermaus
             {
                 _readData();
             }
-            return _verifyDSASignature();
-        }
 
-        private bool _verifyDSASignature()
-        {
             if (_dsaSignVerified)
                 return true;
 
@@ -2716,7 +2782,7 @@ namespace DieFledermaus
             {
                 DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
 
-                return _dsaSignVerified = VerifyDsaSignature(_hashExpected, _dsaSignature, signer, _dsaSignParamBC);
+                return _dsaSignVerified = VerifyDsaSignature(_hashExpected, _dsaSignature, signer, _dsaSignPub);
             }
             catch (Exception x)
             {
@@ -2747,11 +2813,7 @@ namespace DieFledermaus
             {
                 _readData();
             }
-            return _verifyECDSASignature();
-        }
 
-        private bool _verifyECDSASignature()
-        {
             if (_ecdsaSignVerified)
                 return true;
 
@@ -2762,7 +2824,7 @@ namespace DieFledermaus
             {
                 ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
 
-                return _ecdsaSignVerified = VerifyDsaSignature(_hashExpected, _ecdsaSignature, signer, _ecdsaSignParamBC);
+                return _ecdsaSignVerified = VerifyDsaSignature(_hashExpected, _ecdsaSignature, signer, _ecdsaSignPub);
             }
             catch (Exception x)
             {
@@ -2776,7 +2838,7 @@ namespace DieFledermaus
             return new HMacDsaKCalculator(GetHashObject(_hashFunc));
         }
 
-        private static bool VerifyDsaSignature(byte[] hash, DerIntegerPair pair, IDsa signer, ICipherParameters key)
+        private static bool VerifyDsaSignature(byte[] hash, DerIntegerPair pair, IDsa signer, AsymmetricKeyParameter key)
         {
             signer.Init(false, key);
 

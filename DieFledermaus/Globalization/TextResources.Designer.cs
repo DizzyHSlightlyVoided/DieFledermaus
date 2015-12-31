@@ -646,7 +646,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified value is not a valid public key..
+        ///   Looks up a localized string similar to The specified value is not a valid key..
         /// </summary>
         internal static string RsaNeedPublic {
             get {

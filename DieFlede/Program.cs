@@ -1307,17 +1307,20 @@ namespace DieFledermaus.Cli
                     RsaKeyParameters singleRsa = keyObj as RsaKeyParameters;
                     if (singleRsa != null)
                     {
+                        if (singleRsa is RsaPrivateCrtKeyParameters)
+                            return singleRsa;
+
                         if (getPrivate)
                         {
-                            if (singleRsa is RsaPrivateCrtKeyParameters)
-                                return singleRsa;
-
                             Console.Error.WriteLine(singleRsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
                             return null;
                         }
 
                         if (singleRsa.IsPrivate)
-                            return new RsaKeyParameters(false, singleRsa.Modulus, singleRsa.Exponent);
+                        {
+                            Console.Error.WriteLine(TextResources.SignNeedPublic);
+                            return null;
+                        }
 
                         return singleRsa;
                     }
@@ -1325,11 +1328,11 @@ namespace DieFledermaus.Cli
                     DsaKeyParameters singleDsa = keyObj as DsaKeyParameters;
                     if (singleDsa != null)
                     {
+                        if (singleDsa is DsaPrivateKeyParameters)
+                            return singleDsa;
+
                         if (getPrivate)
                         {
-                            if (singleDsa is DsaPrivateKeyParameters)
-                                return singleDsa;
-
                             Console.Error.WriteLine(singleDsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
                             return null;
                         }
@@ -1347,11 +1350,11 @@ namespace DieFledermaus.Cli
                         return null;
                     }
 
+                    if (singleEcdsa is ECPrivateKeyParameters)
+                        return singleEcdsa;
+
                     if (getPrivate)
                     {
-                        if (singleEcdsa is ECPrivateKeyParameters)
-                            return singleEcdsa;
-
                         Console.Error.WriteLine(singleEcdsa.IsPrivate ? TextResources.SignBadPrivate : TextResources.SignNeedPrivate);
                         return null;
                     }
