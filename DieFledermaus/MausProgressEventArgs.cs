@@ -92,7 +92,7 @@ namespace DieFledermaus
 
         private byte[] _hash;
         /// <summary>
-        /// Gets a computed hash or HMAC value, or <c>null</c> if none is specified.
+        /// Gets a computed hash or HMAC value, or <see langword="null"/> if none is specified.
         /// </summary>
         public byte[] Hash
         {

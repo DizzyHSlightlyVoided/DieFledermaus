@@ -55,7 +55,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="source">A collection whose elements will be copied to the new instance.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="source"/> is <c>null</c>.
+        /// <paramref name="source"/> is <see langword="null"/>.
         /// </exception>
         public KeySizeList(IEnumerable<int> source)
         {
@@ -81,7 +81,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="source">A collection whose elements will be copied to the new instance.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="source"/> is <c>null</c>.
+        /// <paramref name="source"/> is <see langword="null"/>.
         /// </exception>
         public KeySizeList(params int[] source)
             : this((IEnumerable<int>)source)
@@ -171,7 +171,7 @@ namespace DieFledermaus
         /// Determines if the specified value exists in the list.
         /// </summary>
         /// <param name="value">The value to search for in the list.</param>
-        /// <returns><c>true</c> if <paramref name="value"/> was found; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if <paramref name="value"/> was found; <see langword="false"/> otherwise.</returns>
         public bool Contains(int value)
         {
             return IndexOf(value) >= 0;
@@ -206,7 +206,7 @@ namespace DieFledermaus
         /// <param name="destinationArray">The array to which the current instance will be copied.</param>
         /// <param name="destinationIndex">The index in <paramref name="destinationArray"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="destinationArray"/> is <c>null</c>.
+        /// <paramref name="destinationArray"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="destinationIndex"/> plus <see cref="Count"/> is greater than the number of elements in <paramref name="destinationArray"/>.
@@ -310,7 +310,7 @@ namespace DieFledermaus
             /// <summary>
             /// Advances the enumerator to the next position in the list.
             /// </summary>
-            /// <returns><c>true</c> if the enumerator was successfully advanced; <c>false</c> if the
+            /// <returns><see langword="true"/> if the enumerator was successfully advanced; <see langword="false"/> if the
             /// enumerator has passed the end of the collection.</returns>
             public bool MoveNext()
             {

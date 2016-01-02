@@ -52,8 +52,8 @@ namespace DieFledermaus
     /// </summary>
     /// <remarks>
     /// If this class attempts to load a stream containing a valid <see cref="DieFledermausStream"/>, it will interpret the stream as an archive containing 
-    /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <c>null</c> path if the DieFledermaus stream does not have
-    /// a filename set.
+    /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <see langword="null"/> path if the DieFledermaus stream
+    /// does not have a filename set.
     /// </remarks>
     public class DieFledermauZArchive : IDisposable, IMausCrypt, IMausProgress, IMausSign
     {
@@ -83,10 +83,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
         /// <param name="mode">Indicates options for accessing the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para><paramref name="mode"/> is <see cref="MauZArchiveMode.Create"/>, and <paramref name="stream"/> does not support writing.</para>
@@ -140,7 +140,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
         /// <param name="mode">Indicates options for accessing the stream.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para><paramref name="mode"/> is <see cref="MauZArchiveMode.Create"/>, and <paramref name="stream"/> does not support writing.</para>
@@ -170,10 +170,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
         /// <param name="encryptionFormat">Indicates options for how to encrypt the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -196,7 +196,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream containing the DieFledermauZ archive.</param>
         /// <param name="encryptionFormat">Indicates options for how to encrypt the stream.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -501,10 +501,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string RSASignId
         {
@@ -533,10 +533,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] RSASignIdBytes
         {
@@ -589,10 +589,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string DSASignId
         {
@@ -621,10 +621,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] DSASignIdBytes
         {
@@ -677,10 +677,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string ECDSASignId
         {
@@ -709,10 +709,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] ECDSASignIdBytes
         {
@@ -872,7 +872,7 @@ namespace DieFledermaus
 
         private byte[] _hmacExpected;
         /// <summary>
-        /// Gets the loaded HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// Gets the loaded HMAC of the current instance, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
         /// </summary>
         public byte[] HMAC
         {
@@ -886,7 +886,8 @@ namespace DieFledermaus
 
         private EntryList _entriesRO;
         /// <summary>
-        /// Gets a collection containing all entries in the current archive, or <c>null</c> if the current instance is encrypted and has not yet been decrypted.
+        /// Gets a collection containing all entries in the current archive, or <see langword="null"/>
+        /// if the current instance is encrypted and has not yet been decrypted.
         /// </summary>
         public EntryList Entries { get { return _entriesRO; } }
 
@@ -912,7 +913,8 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/>,
+        /// and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
         /// </exception>
         public string Comment
         {
@@ -939,7 +941,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
         /// </exception>
         public byte[] CommentBytes
         {
@@ -962,7 +964,7 @@ namespace DieFledermaus
 
         private SettableOptions _encryptedOptions;
         /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current instance is not encrypted.
+        /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current instance is not encrypted.
         /// </summary>
         public SettableOptions EncryptedOptions { get { return _encryptedOptions; } }
 
@@ -979,7 +981,7 @@ namespace DieFledermaus
         private KeySizeList _keySizes;
         /// <summary>
         /// Gets a <see cref="KeySizeList"/> indicating all valid key sizes
-        /// for the current encryption, or <c>null</c> if the current archive is not encrypted.
+        /// for the current encryption, or <see langword="null"/> if the current archive is not encrypted.
         /// </summary>
         public KeySizeList LegalKeySizes { get { return _keySizes; } }
 
@@ -1052,7 +1054,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current archive is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to <see cref="BlockByteCount"/>.
@@ -1086,7 +1088,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current archive is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is less than the maximum key length specified by <see cref="LegalKeySizes"/>.
@@ -1122,7 +1124,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <see langword="null"/> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, the specified value is invalid according to <see cref="LegalKeySizes"/>.
@@ -1183,7 +1185,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length of 0.
         /// </exception>
         public string Password
         {
@@ -1252,7 +1254,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// <para>In a set operation, the current instance is in read-mode and has already been successfully decrypted.</para>
         /// <para>-OR-</para>
-        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// <para><see cref="Password"/> is <see langword="null"/>.</para>
         /// </exception>
         public void DeriveKey()
         {
@@ -1277,7 +1279,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.</para>
@@ -1356,7 +1358,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
@@ -1388,7 +1390,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
@@ -1419,7 +1421,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para><paramref name="path"/> is not a valid file path.</para>
@@ -1451,7 +1453,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
@@ -1490,7 +1492,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
@@ -1501,8 +1503,8 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directory.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
+        /// this method will remove the existing (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel)
         {
@@ -1525,7 +1527,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -1540,8 +1542,8 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directory.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
+        /// this method will remove the existing (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, LzmaDictionarySize dictionarySize, MausEncryptionFormat encryptionFormat)
         {
@@ -1572,7 +1574,7 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -1600,7 +1602,7 @@ namespace DieFledermaus
         /// <param name="encryptionFormat">The encryption format of the empty directory.</param>
         /// <returns>A newly-created <see cref="DieFledermauZEmptyDirectory"/> object.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
@@ -1617,8 +1619,8 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directory.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
+        /// this method will remove the existing (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path, MausEncryptionFormat encryptionFormat)
         {
@@ -1666,7 +1668,7 @@ namespace DieFledermaus
         /// <param name="path">The path to the empty directory within the archive's file structure.</param>
         /// <returns>A newly-created <see cref="DieFledermauZEmptyDirectory"/> object.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para><paramref name="path"/> is not a valid file path.</para>
@@ -1680,8 +1682,8 @@ namespace DieFledermaus
         /// The current instance is in read-only mode.
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directory.
+        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
+        /// this method will remove the existing (no-longer-)empty directory.
         /// </remarks>
         public DieFledermauZEmptyDirectory AddEmptyDirectory(string path)
         {
@@ -1749,8 +1751,8 @@ namespace DieFledermaus
         /// Determines whether the specified value is a valid length for a key, in bits.
         /// </summary>
         /// <param name="bitCount">The number of bits to test.</param>
-        /// <returns><c>true</c> if <paramref name="bitCount"/> is a valid bit count according to <see cref="LegalKeySizes"/>;
-        /// <c>false</c> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        /// <returns><see langword="true"/> if <paramref name="bitCount"/> is a valid bit count according to <see cref="LegalKeySizes"/>;
+        /// <see langword="false"/> if <paramref name="bitCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyBitSize(int bitCount)
         {
             if (_keySizes == null) return false;
@@ -1762,8 +1764,8 @@ namespace DieFledermaus
         /// Determines whether the specified value is a valid length for a key, in bytes.
         /// </summary>
         /// <param name="byteCount">The number of bytes to test.</param>
-        /// <returns><c>true</c> if <paramref name="byteCount"/> is a valid byte count according to <see cref="LegalKeySizes"/>;
-        /// <c>false</c> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
+        /// <returns><see langword="true"/> if <paramref name="byteCount"/> is a valid byte count according to <see cref="LegalKeySizes"/>;
+        /// <see langword="false"/> if <paramref name="byteCount"/> is invalid, or if the current instance is not encrypted.</returns>
         public bool IsValidKeyByteSize(int byteCount)
         {
             if (_keySizes == null || byteCount > int.MaxValue >> 3) return false;
@@ -1775,12 +1777,13 @@ namespace DieFledermaus
         /// Determines if the specified value is a valid value for a file path.
         /// </summary>
         /// <param name="path">The value to test.</param>
-        /// <returns><c>true</c> if <paramref name="path"/> is a valid path; <c>false</c> if an element in <paramref name="path"/> has a length of 0, has a length
-        /// greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
-        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace,
-        /// or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// <returns><see langword="true"/> if <paramref name="path"/> is a valid path; <see langword="false"/> if an element in <paramref name="path"/>
+        /// has a length of 0, has a length greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control
+        /// characters (non-whitespace characters between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c>
+        /// inclusive), contains only whitespace, is "." or ".." (the "current directory" and "parent directory" identifiers), or
+        /// <paramref name="path"/> ends with a trailing forward-slash <c>/</c>.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         public static bool IsValidFilePath(string path)
         {
@@ -1791,12 +1794,12 @@ namespace DieFledermaus
         /// Determines if the specified value is a valid value for an empty directory path.
         /// </summary>
         /// <param name="path">The value to test.</param>
-        /// <returns><c>true</c> if <paramref name="path"/> is a valid path; <c>false</c> if an element in <paramref name="path"/> has a length of 0, has a length
-        /// greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
-        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace,
-        /// or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// <returns><see langword="true"/> if <paramref name="path"/> is a valid path; <see langword="false"/> if an element in <paramref name="path"/>
+        /// has a length of 0, has a length greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control
+        /// characters (non-whitespace characters between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c>
+        /// inclusive), contains only whitespace, or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="path"/> is <c>null</c>.
+        /// <paramref name="path"/> is <see langword="null"/>.
         /// </exception>
         public static bool IsValidEmptyDirectoryPath(string path)
         {
@@ -2180,12 +2183,12 @@ namespace DieFledermaus
             /// Gets the entry associated with the specified path.
             /// </summary>
             /// <param name="path">The path to search for in the archive.</param>
-            /// <param name="value">When this method returns, contains the value associated with <paramref name="path"/>, or <c>null</c>
-            /// if <paramref name="path"/> was not found. This parameter is passed uninitialized.
+            /// <param name="value">When this method returns, contains the value associated with <paramref name="path"/>, or
+            /// <see langword="null"/> if <paramref name="path"/> was not found. This parameter is passed uninitialized.
             /// </param>
-            /// <returns><c>true</c> if <paramref name="path"/> was found; <c>false</c> otherwise.</returns>
+            /// <returns><see langword="true"/> if <paramref name="path"/> was found; <see langword="false"/> otherwise.</returns>
             /// <exception cref="ArgumentNullException">
-            /// <paramref name="path"/> is <c>null</c>.
+            /// <paramref name="path"/> is <see langword="null"/>.
             /// </exception>
             public bool TryGetEntry(string path, out DieFledermauZItem value)
             {
@@ -2228,7 +2231,7 @@ namespace DieFledermaus
             /// Returns the index of the specified element.
             /// </summary>
             /// <param name="item">The element to search for in the list.</param>
-            /// <returns>The index of <paramref name="item"/>, if found; otherwise, <c>null</c>.</returns>
+            /// <returns>The index of <paramref name="item"/>, if found; otherwise, <see langword="null"/>.</returns>
             public int IndexOf(DieFledermauZItem item)
             {
                 if (item == null || item.Archive != _archive) return -1;
@@ -2249,7 +2252,7 @@ namespace DieFledermaus
             /// Determines whether the specified element exists in the list.
             /// </summary>
             /// <param name="item">The element to search for in the list.</param>
-            /// <returns><c>true</c> if <paramref name="item"/> was found; <c>false</c> otherwise.</returns>
+            /// <returns><see langword="true"/> if <paramref name="item"/> was found; <see langword="false"/> otherwise.</returns>
             public bool Contains(DieFledermauZItem item)
             {
                 return item != null && _archive._entries.Contains(item);
@@ -2266,7 +2269,7 @@ namespace DieFledermaus
             /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
             /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
             /// <exception cref="ArgumentNullException">
-            /// <paramref name="array"/> is <c>null</c>.
+            /// <paramref name="array"/> is <see langword="null"/>.
             /// </exception>
             /// <exception cref="ArgumentOutOfRangeException">
             /// <paramref name="index"/> is less than 0.
@@ -2393,8 +2396,8 @@ namespace DieFledermaus
                 /// <summary>
                 /// Advances the enumerator to the next position in the collection.
                 /// </summary>
-                /// <returns><c>true</c> if the enumerator was successfully advanced; 
-                /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                /// <returns><see langword="true"/> if the enumerator was successfully advanced; 
+                /// <see langword="false"/> if the enumerator has passed the end of the collection.</returns>
                 public bool MoveNext()
                 {
                     if (_enum == null)
@@ -2526,7 +2529,7 @@ namespace DieFledermaus
                 /// Gets a value indicating whether the specified path exists in the list.
                 /// </summary>
                 /// <param name="path">The path to search for in the list.</param>
-                /// <returns><c>true</c> if <paramref name="path"/> was found; <c>false</c> otherwise.</returns>
+                /// <returns><see langword="true"/> if <paramref name="path"/> was found; <see langword="false"/> otherwise.</returns>
                 public bool Contains(string path)
                 {
                     return IndexOf(path) >= 0;
@@ -2543,7 +2546,7 @@ namespace DieFledermaus
                 /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
                 /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
                 /// <exception cref="ArgumentNullException">
-                /// <paramref name="array"/> is <c>null</c>.
+                /// <paramref name="array"/> is <see langword="null"/>.
                 /// </exception>
                 /// <exception cref="ArgumentOutOfRangeException">
                 /// <paramref name="index"/> is less than 0.
@@ -2670,8 +2673,8 @@ namespace DieFledermaus
                     /// <summary>
                     /// Advances the enumerator to the next position in the collection.
                     /// </summary>
-                    /// <returns><c>true</c> if the enumerator was successfully advanced; 
-                    /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+                    /// <returns><see langword="true"/> if the enumerator was successfully advanced; 
+                    /// <see langword="false"/> if the enumerator has passed the end of the collection.</returns>
                     public bool MoveNext()
                     {
                         if (_enum == null)
@@ -2721,10 +2724,10 @@ namespace DieFledermaus
 
             /// <summary>
             /// Gets a value indicating whether the current instance is read-only.
-            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode; <c>false</c> otherwise.
+            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode; <see langword="false"/> otherwise.
             /// </summary>
             /// <remarks>
-            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
+            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <see langword="false"/>,
             /// however, it may still be changed by the base stream.
             /// </remarks>
             public override bool IsReadOnly
@@ -2734,8 +2737,8 @@ namespace DieFledermaus
 
             /// <summary>
             /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
-            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
-            /// <c>false</c> otherwise.
+            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
+            /// <see langword="false"/> otherwise.
             /// </summary>
             public override bool IsFrozen
             {

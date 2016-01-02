@@ -38,7 +38,7 @@ using DieFledermaus.Globalization;
 namespace DieFledermaus
 {
     /// <summary>
-    /// Base class for collections of settable <c>enum</c> values.
+    /// Base class for collections of settable <see langword="enum"/> values.
     /// </summary>
     /// <typeparam name="TValue">The type of the values in the collection.</typeparam>
     [DebuggerTypeProxy(typeof(MausSettableOptions<>.DebugView))]
@@ -70,7 +70,7 @@ namespace DieFledermaus
         /// When overridden in a derived class, gets a value indicating whether the current instance is read-only.
         /// </summary>
         /// <remarks>
-        /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
+        /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <see langword="false"/>,
         /// however, it may still be changed by the internal system.
         /// </remarks>
         public abstract bool IsReadOnly { get; }
@@ -85,10 +85,10 @@ namespace DieFledermaus
         /// Adds the specified value to the collection.
         /// </summary>
         /// <param name="option">The option to add.</param>
-        /// <returns><c>true</c> if <paramref name="option"/> was successfully added; <c>false</c> if <paramref name="option"/>
+        /// <returns><see langword="true"/> if <paramref name="option"/> was successfully added; <see langword="false"/> if <paramref name="option"/>
         /// already exists in the collection, or is not a valid value for type <typeparamref name="TValue"/>.</returns>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public bool Add(TValue option)
         {
@@ -110,7 +110,7 @@ namespace DieFledermaus
         /// Adds all valid values to the collection.
         /// </summary>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void AddAll()
         {
@@ -121,9 +121,9 @@ namespace DieFledermaus
         /// Removes the specified value from the collection.
         /// </summary>
         /// <param name="option">The option to remove.</param>
-        /// <returns><c>true</c> if <paramref name="option"/> was found and successfully removed; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if <paramref name="option"/> was found and successfully removed; <see langword="false"/> otherwise.</returns>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public bool Remove(TValue option)
         {
@@ -137,10 +137,10 @@ namespace DieFledermaus
         /// <param name="other">A collection containing other values to add.</param>
         /// <remarks>The number of values which were added.</remarks>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null</c>.
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public void UnionWith(IEnumerable<TValue> other)
         {
@@ -155,10 +155,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null</c>.
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public void IntersectWith(IEnumerable<TValue> other)
         {
@@ -171,10 +171,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null</c>.
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public void ExceptWith(IEnumerable<TValue> other)
         {
@@ -188,10 +188,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <c>true</c>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null</c>.
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public void SymmetricExceptWith(IEnumerable<TValue> other)
         {
@@ -204,7 +204,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="match">A predicate defining the elements to remove.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="match"/> is <c>null</c>.
+        /// <paramref name="match"/> is <see langword="null"/>.
         /// </exception>
         public void RemoveWhere(Predicate<TValue> match)
         {
@@ -224,7 +224,7 @@ namespace DieFledermaus
         /// Determines if the specified value exists in the collection.
         /// </summary>
         /// <param name="option">The option to search for in the collection.</param>
-        /// <returns><c>true</c> if <paramref name="option"/> was found; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if <paramref name="option"/> was found; <see langword="false"/> otherwise.</returns>
         public bool Contains(TValue option)
         {
             return _set.Contains(option);
@@ -234,9 +234,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the specified collection overlaps with the current instance.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if <paramref name="other"/> has any elements in commmon with the current instance; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if <paramref name="other"/> has any elements in commmon with the current instance;
+        /// <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool Overlaps(IEnumerable<TValue> other)
         {
@@ -247,10 +248,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the specified collection has all the same elements as the current instance.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/> and vice versa;
-        /// <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if every element in the current instance is also contained in <paramref name="other"/> and vice versa;
+        /// <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool SetEquals(IEnumerable<TValue> other)
         {
@@ -261,10 +262,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is a superset of the specified other collection.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/>;
-        /// <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if every element in the current instance is also contained in <paramref name="other"/>;
+        /// <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool IsSubsetOf(IEnumerable<TValue> other)
         {
@@ -275,10 +276,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is a subset of the specified other collection.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if every element in <paramref name="other"/> is also contained in the current instance;
-        /// <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if every element in <paramref name="other"/> is also contained in the current instance;
+        /// <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool IsSupersetOf(IEnumerable<TValue> other)
         {
@@ -289,10 +290,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is a proper superset of the specified other collection.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if every element in the current instance is also contained in <paramref name="other"/> AND <paramref name="other"/>
-        /// contains at least one element which the current instance does not have; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if every element in the current instance is also contained in <paramref name="other"/> AND
+        /// <paramref name="other"/> contains at least one element which the current instance does not have; <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool IsProperSubsetOf(IEnumerable<TValue> other)
         {
@@ -303,10 +304,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is a proper subset of the specified other collection.
         /// </summary>
         /// <param name="other">The other collection to compare.</param>
-        /// <returns><c>true</c> if every element in <paramref name="other"/> is also contained in the current instance AND the current instance
-        /// contains at least one element which <paramref name="other"/> does not have; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if every element in <paramref name="other"/> is also contained in the current instance AND the current instance
+        /// contains at least one element which <paramref name="other"/> does not have; <see langword="false"/> otherwise.</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="other"/> is <c>null.</c>
+        /// <paramref name="other"/> is <see langword="null"/>.
         /// </exception>
         public bool IsProperSupersetOf(IEnumerable<TValue> other)
         {
@@ -319,7 +320,7 @@ namespace DieFledermaus
         /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
         /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="array"/> is <c>null</c>.
+        /// <paramref name="array"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="arrayIndex"/> is less than 0.
@@ -442,8 +443,8 @@ namespace DieFledermaus
             /// <summary>
             /// Advances the enumerator to the next position in the collection.
             /// </summary>
-            /// <returns><c>true</c> if the enumerator was successfully advanced; 
-            /// <c>false</c> if the enumerator has passed the end of the collection.</returns>
+            /// <returns><see langword="true"/> if the enumerator was successfully advanced; 
+            /// <see langword="false"/> if the enumerator has passed the end of the collection.</returns>
             public bool MoveNext()
             {
                 if (_enum == null) return false;

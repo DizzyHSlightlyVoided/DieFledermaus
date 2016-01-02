@@ -82,13 +82,13 @@ namespace DieFledermaus
         internal readonly object _lock = new object();
 
         /// <summary>
-        /// Gets the hash of the uncompressed data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
+        /// Gets the hash of the uncompressed data, or <see langword="null"/> if <see cref="Archive"/> is in write-mode or
         /// the current instance has not yet been decrypted.
         /// </summary>
         public byte[] Hash { get { return MausStream.Hash; } }
 
         /// <summary>
-        /// Gets the loaded HMAC of the encrypted data, or <c>null</c> if <see cref="Archive"/> is in write-mode or
+        /// Gets the loaded HMAC of the encrypted data, or <see langword="null"/> if <see cref="Archive"/> is in write-mode or
         /// the current instance is not encrypted.
         /// </summary>
         public byte[] HMAC { get { return MausStream.HMAC; } }
@@ -119,7 +119,7 @@ namespace DieFledermaus
 
         internal DieFledermauZArchive _arch;
         /// <summary>
-        /// Gets the <see cref="DieFledermauZArchive"/> containing the current instance, or <c>null</c> if
+        /// Gets the <see cref="DieFledermauZArchive"/> containing the current instance, or <see langword="null"/> if
         /// the current instance has been deleted.
         /// </summary>
         public DieFledermauZArchive Archive { get { return _arch; } }
@@ -167,7 +167,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <see langword="null"/> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, the specified value is invalid according to <see cref="LegalKeySizes"/>.
@@ -192,7 +192,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
         /// </exception>
         public string Comment
         {
@@ -214,7 +214,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
         /// </exception>
         public byte[] CommentBytes
         {
@@ -245,7 +245,7 @@ namespace DieFledermaus
         internal bool _isDecrypted;
         /// <summary>
         /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
-        /// Also returns <c>true</c> if the current instance is not encrypted.
+        /// Also returns <see langword="true"/> if the current instance is not encrypted.
         /// </summary>
         public bool IsDecrypted { get { return _isDecrypted; } }
 
@@ -261,7 +261,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// <para>In a set operation, <see cref="Archive"/> is in read-mode and has already been successfully decrypted.</para>
         /// <para>-OR-</para>
-        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// <para><see cref="Password"/> is <see langword="null"/>.</para>
         /// </exception>
         public void DeriveKey()
         {
@@ -356,7 +356,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and sets the initialization vector used for the current instance, or <c>null</c> if the current instance is not encrypted.
+        /// Gets and sets the initialization vector used for the current instance, or <see langword="null"/> if the current instance is not encrypted.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
@@ -367,7 +367,7 @@ namespace DieFledermaus
         /// <para>The current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to <see cref="BlockByteCount"/>.
@@ -383,7 +383,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and sets the salt used for the current instance, or <c>null</c> if the current instance is not encrypted.
+        /// Gets and sets the salt used for the current instance, or <see langword="null"/> if the current instance is not encrypted.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
@@ -394,7 +394,7 @@ namespace DieFledermaus
         /// <para>The current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value is the wrong length.
@@ -411,7 +411,7 @@ namespace DieFledermaus
 
         /// <summary>
         /// Gets a <see cref="KeySizeList"/> object indicating all valid key sizes
-        /// for <see cref="EncryptionFormat"/>, or <c>null</c> if the current entry is not encrypted.
+        /// for <see cref="EncryptionFormat"/>, or <see langword="null"/> if the current entry is not encrypted.
         /// </summary>
         public KeySizeList LegalKeySizes { get { return MausStream.LegalKeySizes; } }
 
@@ -428,7 +428,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="Archive"/> is in read-mode and the current instance has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length of 0.
         /// </exception>
         public string Password
         {

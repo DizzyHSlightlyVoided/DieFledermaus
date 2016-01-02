@@ -63,8 +63,7 @@ namespace DieFledermaus
     using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 
     /// <summary>
-    /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format,
-    /// which is just the DEFLATE algorithm prefixed with magic number "<c>mAuS</c>" and metadata.
+    /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format.
     /// </summary>
     /// <remarks>
     /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
@@ -106,10 +105,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to read to or write from.</param>
         /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionMode"/> is not a valid <see cref="CompressionMode"/> value.
@@ -157,7 +156,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to read to or write from.</param>
         /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionMode"/> is not a valid <see cref="CompressionMode"/> value.
@@ -181,10 +180,10 @@ namespace DieFledermaus
         /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.</para>
@@ -210,7 +209,7 @@ namespace DieFledermaus
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.</para>
@@ -234,10 +233,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
@@ -276,7 +275,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to write to.</param>
         /// <param name="compressionFormat">Indicates the format of the stream.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionFormat"/> is not a valid <see cref="MausCompressionFormat"/> value.
@@ -297,10 +296,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to write to.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
@@ -323,7 +322,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to write to.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.
@@ -345,10 +344,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -376,7 +375,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -399,10 +398,10 @@ namespace DieFledermaus
         /// <param name="stream">The stream to write to.</param>
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -427,7 +426,7 @@ namespace DieFledermaus
         /// <param name="dictionarySize">Indicates the size of the dictionary, in bytes.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="dictionarySize"/> is not <see cref="LzmaDictionarySize.Default"/>, and is an integer value less than
@@ -451,10 +450,10 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
@@ -483,7 +482,7 @@ namespace DieFledermaus
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
@@ -506,10 +505,10 @@ namespace DieFledermaus
         /// <param name="stream">The stream to which compressed data will be written.</param>
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
-        /// <param name="leaveOpen"><c>true</c> to leave <paramref name="stream"/> open when the current instance is disposed;
-        /// <c>false</c> to close <paramref name="stream"/>.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
@@ -536,7 +535,7 @@ namespace DieFledermaus
         /// <param name="compressionLevel">Indicates the compression level of the stream.</param>
         /// <param name="encryptionFormat">Indicates the encryption format.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="stream"/> is <c>null</c>.
+        /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
@@ -696,7 +695,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets a value indicating whether the current stream supports seeking. Always returns <c>false</c>.
+        /// Gets a value indicating whether the current stream supports seeking. Always returns <see langword="false"/>.
         /// </summary>
         public override bool CanSeek
         {
@@ -731,7 +730,7 @@ namespace DieFledermaus
 
         private DateTime? _timeC;
         /// <summary>
-        /// Gets and sets the time at which the underlying file was created, or <c>null</c> to specify no creation time.
+        /// Gets and sets the time at which the underlying file was created, or <see langword="null"/> to specify no creation time.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
@@ -752,7 +751,7 @@ namespace DieFledermaus
         private DateTime? _timeM;
         /// <summary>
         /// Gets and sets the time at which the underlying file was last modified prior to being archived,
-        /// or <c>null</c> to specify no modification time.
+        /// or <see langword="null"/> to specify no modification time.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current stream is closed.
@@ -772,7 +771,7 @@ namespace DieFledermaus
 
         private byte[] _hashExpected;
         /// <summary>
-        /// Gets the hash of the uncompressed data, or <c>null</c> if the current instance is in write-mode or has not yet been decrypted.
+        /// Gets the hash of the uncompressed data, or <see langword="null"/> if the current instance is in write-mode or has not yet been decrypted.
         /// </summary>
         public byte[] Hash
         {
@@ -785,7 +784,7 @@ namespace DieFledermaus
 
         private byte[] _hmacExpected;
         /// <summary>
-        /// Gets the loaded HMAC of the encrypted data, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// Gets the loaded HMAC of the encrypted data, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
         /// </summary>
         public byte[] HMAC
         {
@@ -809,7 +808,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to <see cref="BlockByteCount"/>.
@@ -843,7 +842,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is not encrypted.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to the maximum key length specified by <see cref="LegalKeySizes"/>.
@@ -869,7 +868,7 @@ namespace DieFledermaus
 
         private KeySizeList _keySizes;
         /// <summary>
-        /// Gets a list containing all valid key values for <see cref="KeySize"/>, or <c>null</c> if the current stream is not encrypted.
+        /// Gets a list containing all valid key values for <see cref="KeySize"/>, or <see langword="null"/> if the current stream is not encrypted.
         /// </summary>
         public KeySizeList LegalKeySizes
         {
@@ -888,7 +887,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is not encrypted.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <see langword="null"/> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.
@@ -943,10 +942,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using an RSA private key.
         /// </summary>
         /// <remarks>
-        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// If the current stream is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
         /// was signed when it was written.
-        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSASignParameters"/>
+        /// is not <see langword="null"/>.
         /// </remarks>
         public bool IsRSASigned
         {
@@ -1070,10 +1069,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] RSASignIdBytes
         {
@@ -1099,10 +1098,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string RSASignId
         {
@@ -1140,10 +1139,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using a DSA private key.
         /// </summary>
         /// <remarks>
-        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// If the current stream is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
         /// was signed when it was written.
-        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSASignParameters"/>
+        /// is not <see langword="null"/>.
         /// </remarks>
         public bool IsDSASigned
         {
@@ -1241,10 +1240,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] DSASignIdBytes
         {
@@ -1270,10 +1269,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string DSASignId
         {
@@ -1305,10 +1304,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using an ECDSA private key.
         /// </summary>
         /// <remarks>
-        /// If the current stream is in read-mode, this property will return <c>true</c> if and only if the underlying stream
+        /// If the current stream is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
         /// was signed when it was written.
-        /// If the current stream is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSASignParameters"/>
+        /// is not <see langword="null"/>.
         /// </remarks>
         public bool IsECDSASigned
         {
@@ -1410,10 +1409,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] ECDSASignIdBytes
         {
@@ -1439,10 +1438,10 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string ECDSASignId
         {
@@ -1471,7 +1470,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
         /// </exception>
         public string Comment
         {
@@ -1498,7 +1497,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c>, and has a length which is equal to 0 or which is greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
         /// </exception>
         public byte[] CommentBytes
         {
@@ -1527,7 +1526,7 @@ namespace DieFledermaus
 
         private SettableOptions _encryptedOptions;
         /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current instance is not encrypted.
+        /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current instance is not encrypted.
         /// </summary>
         public SettableOptions EncryptedOptions { get { return _encryptedOptions; } }
 
@@ -1542,7 +1541,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and is invalid.
+        /// In a set operation, the specified value is not <see langword="null"/> and is invalid.
         /// </exception>
         /// <seealso cref="IsValidFilename(string)"/>
         public string Filename
@@ -1568,7 +1567,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// <para>In a set operation, the stream instance is in read-mode and has already been successfully decrypted.</para>
         /// <para>-OR-</para>
-        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// <para><see cref="Password"/> is <see langword="null"/>.</para>
         /// </exception>
         public void DeriveKey()
         {
@@ -1733,12 +1732,12 @@ namespace DieFledermaus
         /// Determines if the specified value is a valid value for the <see cref="Filename"/> property.
         /// </summary>
         /// <param name="value">The value to set.</param>
-        /// <returns><c>true</c> if <paramref name="value"/> is a valid filename; <c>false</c> if <paramref name="value"/> has a length of 0, has a length
-        /// greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control characters (non-whitespace characters
-        /// between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c> inclusive), contains only whitespace,
-        /// or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
+        /// <returns><see langword="true"/> if <paramref name="value"/> is a valid filename; <see langword="false"/> if <paramref name="value"/>
+        /// has a length of 0, has a length greater than 256 UTF-8 bytes, contains unpaired surrogate characters, contains non-whitespace control
+        /// characters (non-whitespace characters between <c>\u0000</c> and <c>\u001f</c> inclusive, or between <c>\u007f</c> and <c>\u009f</c>
+        /// inclusive), contains only whitespace, or is "." or ".." (the "current directory" and "parent directory" identifiers).</returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
+        /// <paramref name="value"/> is <see langword="null"/>.
         /// </exception>
         public static bool IsValidFilename(string value)
         {
@@ -1759,7 +1758,7 @@ namespace DieFledermaus
         /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, <see cref="RSASignParameters"/> is not <c>null</c>, and the specified value would produce a larger
+        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
         /// encrypted value than that supported by <see cref="RSASignParameters"/>.
         /// </exception>
         public MausHashFunction HashFunction
@@ -1790,7 +1789,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length of 0.
         /// </exception>
         public string Password
         {
@@ -2672,8 +2671,8 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="RSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
-        /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <returns><see langword="true"/> if <see cref="RSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
@@ -2753,8 +2752,8 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="DSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="DSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
-        /// signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
+        /// <returns><see langword="true"/> if <see cref="DSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
@@ -2795,8 +2794,8 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="ECDSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="ECDSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
-        /// signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
+        /// <returns><see langword="true"/> if <see cref="ECDSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current stream is closed.
         /// </exception>
@@ -2924,7 +2923,7 @@ namespace DieFledermaus
         /// <see cref="ComputeHash()"/> again if this exception is caught.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="buffer"/> is <c>null</c>.
+        /// <paramref name="buffer"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="offset"/> or <paramref name="count"/> is less than 0.
@@ -3005,7 +3004,7 @@ namespace DieFledermaus
         /// The current stream is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="buffer"/> is <c>null</c>.
+        /// <paramref name="buffer"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="offset"/> or <paramref name="count"/> is less than 0.
@@ -3145,8 +3144,8 @@ namespace DieFledermaus
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources;
-        /// <c>false</c> to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources;
+        /// <see langword="false"/> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
             if (_baseStream == null)
@@ -3611,10 +3610,11 @@ namespace DieFledermaus
 
             /// <summary>
             /// Gets a value indicating whether the current instance is read-only.
-            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode; <c>false</c> otherwise.
+            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode;
+            /// <see langword="false"/> otherwise.
             /// </summary>
             /// <remarks>
-            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <c>false</c>,
+            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <see langword="false"/>,
             /// however, it may still be changed by the base stream.
             /// </remarks>
             public override bool IsReadOnly
@@ -3624,8 +3624,8 @@ namespace DieFledermaus
 
             /// <summary>
             /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
-            /// Returns <c>true</c> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
-            /// <c>false</c> otherwise.
+            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
+            /// <see langword="false"/> otherwise.
             /// </summary>
             public override bool IsFrozen
             {

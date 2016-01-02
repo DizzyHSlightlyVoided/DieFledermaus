@@ -55,7 +55,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length of 0.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length of 0.
         /// </exception>
         string Password { get; set; }
 
@@ -81,7 +81,8 @@ namespace DieFledermaus
         /// </exception>
         byte[] Key { get; set; }
         /// <summary>
-        /// Gets and sets the initialization vector of the current instance, or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// Gets and sets the initialization vector of the current instance, or <see langword="null"/> if <see cref="EncryptionFormat"/>
+        /// is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -92,14 +93,15 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to the length specified by <see cref="BlockSize"/>.
         /// </exception>
         byte[] IV { get; set; }
         /// <summary>
-        /// Gets and sets the key associated with the current instance, or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// Gets and sets the key associated with the current instance, or <see langword="null"/> if <see cref="EncryptionFormat"/>
+        /// is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -110,7 +112,7 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is in read-mode.</para>
         /// </exception>
         /// <exception cref="ArgumentNullException">
-        /// In a set operation, the specified value is <c>null</c>.
+        /// In a set operation, the specified value is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the length of the specified value is not equal to the maximum length specified by <see cref="LegalKeySizes"/>.
@@ -129,7 +131,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidOperationException">
         /// <para>In a set operation, the current instance is in read-mode and has already been successfully decrypted.</para>
         /// <para>-OR-</para>
-        /// <para><see cref="Password"/> is <c>null</c>.</para>
+        /// <para><see cref="Password"/> is <see langword="null"/>.</para>
         /// </exception>
         void DeriveKey();
 
@@ -148,7 +150,8 @@ namespace DieFledermaus
         MausHashFunction HashFunction { get; set; }
 
         /// <summary>
-        /// Gets the maximum number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// Gets the maximum number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is 
+        /// <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         int BlockSize { get; }
 
@@ -158,7 +161,7 @@ namespace DieFledermaus
         bool IsDecrypted { get; }
 
         /// <summary>
-        /// Gets the HMAC of the current instance, or <c>null</c> if the current instance is in write-mode or is not encrypted.
+        /// Gets the HMAC of the current instance, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
         /// </summary>
         byte[] HMAC { get; }
 
@@ -180,7 +183,7 @@ namespace DieFledermaus
 
         /// <summary>
         /// Gets a collection containing the valid values for <see cref="KeySize"/>,
-        /// or <c>null</c> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
+        /// or <see langword="null"/> if <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.
         /// </summary>
         KeySizeList LegalKeySizes { get; }
 
@@ -195,7 +198,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is in read-only mode.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, <see cref="Key"/> is not <c>null</c> and the specified value is not the proper length.</para>
+        /// <para>In a set operation, <see cref="Key"/> is not <see langword="null"/> and the specified value is not the proper length.</para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// In a set operation, <see cref="LegalKeySizes"/> does not contain the specified value.

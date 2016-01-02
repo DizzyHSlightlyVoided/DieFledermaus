@@ -63,12 +63,12 @@ namespace DieFledermaus
         public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
 
         /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <c>null</c> if the current entry is not encrypted.
+        /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current entry is not encrypted.
         /// </summary>
         public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
 
         /// <summary>
-        /// Gets and sets the time at which the underlying file was created, or <c>null</c> to specify no creation time.
+        /// Gets and sets the time at which the underlying file was created, or <see langword="null"/> to specify no creation time.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance has been deleted.
@@ -87,7 +87,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and sets the time at which the underlying file was last modified, or <c>null</c> to specify no modification time.
+        /// Gets and sets the time at which the underlying file was last modified, or <see langword="null"/> to specify no modification time.
         /// </summary>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-only mode.
@@ -144,10 +144,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string RSASignId
         {
@@ -169,10 +169,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] RSASignIdBytes
         {
@@ -188,10 +188,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using an RSA private key.
         /// </summary>
         /// <remarks>
-        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <c>true</c> if and only if the current entry was 
-        /// signed when it was written.
-        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <c>true</c> if <see cref="RSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <see langword="true"/>
+        /// if and only if the current entry was signed when it was written.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <see langword="true"/>
+        /// if <see cref="RSASignParameters"/> is not <see langword="null"/>.
         /// </remarks>
         public bool IsRSASigned { get { return MausStream.IsRSASigned; } }
 
@@ -203,8 +203,8 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="RSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="RSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
-        /// signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <returns><see langword="true"/> if <see cref="RSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not  signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance is deleted.
         /// </exception>
@@ -267,10 +267,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string DSASignId
         {
@@ -292,10 +292,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] DSASignIdBytes
         {
@@ -311,10 +311,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using a DSA private key.
         /// </summary>
         /// <remarks>
-        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <c>true</c> if and only if the current entry was 
-        /// signed when it was written.
-        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <c>true</c> if <see cref="DSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <see langword="true"/>
+        /// if and only if the current entry was signed when it was written.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <see langword="true"/>
+        /// if <see cref="DSASignParameters"/> is not <see langword="null"/>.
         /// </remarks>
         public bool IsDSASigned { get { return MausStream.IsDSASigned; } }
 
@@ -326,8 +326,8 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="DSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="DSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
-        /// signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
+        /// <returns><see langword="true"/> if <see cref="DSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance is deleted.
         /// </exception>
@@ -390,10 +390,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         public string ECDSASignId
         {
@@ -415,10 +415,10 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <c>null</c>.
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <c>null</c> and has a length equal to 0 or greater than 65536.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
         public byte[] ECDSASignIdBytes
         {
@@ -434,10 +434,10 @@ namespace DieFledermaus
         /// Gets a value indicating whether the current instance is signed using a ECDSA private key.
         /// </summary>
         /// <remarks>
-        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <c>true</c> if and only if the current entry was 
-        /// signed when it was written.
-        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <c>true</c> if <see cref="ECDSASignParameters"/>
-        /// is not <c>null</c>.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in read-mode, this property will return <see langword="true"/>
+        /// if and only if the current entry was signed when it was written.
+        /// If <see cref="DieFledermauZItem.Archive"/> is in write-mode, this property will return <see langword="true"/>
+        /// if <see cref="ECDSASignParameters"/> is not <see langword="null"/>.
         /// </remarks>
         public bool IsECDSASigned { get { return MausStream.IsECDSASigned; } }
 
@@ -449,7 +449,7 @@ namespace DieFledermaus
         /// <summary>
         /// Tests whether <see cref="ECDSASignParameters"/> is valid.
         /// </summary>
-        /// <returns><c>true</c> if <see cref="ECDSASignParameters"/> is set to the correct public key; <c>false</c> if the current instance is not 
+        /// <returns><see langword="true"/> if <see cref="ECDSASignParameters"/> is set to the correct public key; <see langword="false"/> if the current instance is not 
         /// signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
         /// <exception cref="ObjectDisposedException">
         /// The current instance is deleted.
