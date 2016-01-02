@@ -2655,6 +2655,8 @@ namespace DieFledermaus
 
             OnProgress(_encFmt == MausEncryptionFormat.None ? MausProgressState.VerifyingHash : MausProgressState.ComputingHash);
             byte[] hashActual = ComputeHash(_bufferStream, _hashFunc);
+            if (_encFmt != MausEncryptionFormat.None)
+                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashActual));
             if (_encFmt == MausEncryptionFormat.None || _rsaSignature != null)
             {
                 if (_encFmt == MausEncryptionFormat.None)
@@ -3207,6 +3209,7 @@ namespace DieFledermaus
             {
                 OnProgress(MausProgressState.ComputingHash);
                 hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                 if (_rsaSignParamBC != null)
                 {
                     OnProgress(MausProgressState.SigningRSA);
@@ -3363,6 +3366,7 @@ namespace DieFledermaus
                         _bufferStream.Reset();
                         OnProgress(MausProgressState.ComputingHash);
                         hashChecksum = ComputeHash(_bufferStream, _hashFunc);
+                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
                     }
                     writer.Write(hashChecksum);
 
