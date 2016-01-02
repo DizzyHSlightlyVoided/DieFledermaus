@@ -51,9 +51,10 @@ namespace DieFledermaus
     /// Represents a DieFledermauZ archive file.
     /// </summary>
     /// <remarks>
-    /// If this class attempts to load a stream containing a valid <see cref="DieFledermausStream"/>, it will interpret the stream as an archive containing 
+    /// <para>If this class attempts to load a stream containing a valid <see cref="DieFledermausStream"/>, it will interpret the stream as an archive containing 
     /// a single entry with the path set to the <see cref="DieFledermausStream.Filename"/>, or a <see langword="null"/> path if the DieFledermaus stream
-    /// does not have a filename set.
+    /// does not have a filename set.</para>
+    /// <para>When writing, if <see cref="Entries"/> contains zero elements, nothing will be written to the underlying stream.</para>
     /// </remarks>
     public class DieFledermauZArchive : IDisposable, IMausCrypt, IMausProgress, IMausSign
     {
@@ -1854,11 +1855,9 @@ namespace DieFledermaus
 
         private void WriteFile()
         {
-            if (_mode == MauZArchiveMode.Read)
+            if (_mode == MauZArchiveMode.Read || _entries.Count == 0)
                 return;
 
-            if (_entries.Count == 0)
-                throw new InvalidOperationException(TextResources.ArchiveEmpty);
             if (_encFmt != MausEncryptionFormat.None && _password == null)
                 throw new InvalidOperationException(TextResources.KeyNotSetZ);
 

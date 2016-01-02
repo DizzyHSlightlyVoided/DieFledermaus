@@ -66,8 +66,10 @@ namespace DieFledermaus
     /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format.
     /// </summary>
     /// <remarks>
-    /// Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
-    /// to <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/>.
+    /// <para>Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
+    /// to <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/>.</para>
+    /// <para>When writing, if nothing has been written to the current stream when the current instance is disposed, nothing will be written to the
+    /// underlying stream.</para>
     /// </remarks>
     public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausSign
     {
