@@ -268,7 +268,7 @@ namespace DieFledermaus.Cli
                 }
                 else index = null;
 
-                keyObj = LoadPublicKey(path, index, create.IsSet, interactive);
+                keyObj = LoadKeyFile(path, index, create.IsSet, interactive);
 
                 if (keyObj == null)
                     return Return(-7, interactive);
@@ -1087,7 +1087,7 @@ namespace DieFledermaus.Cli
             return false;
         }
 
-        private static ICipherParameters LoadPublicKey(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
+        private static ICipherParameters LoadKeyFile(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
         {
             if (!File.Exists(path))
             {
@@ -1104,41 +1104,48 @@ namespace DieFledermaus.Cli
                     using (FileStream fs = File.OpenRead(path))
                         fs.CopyTo(ms);
 
-                    ms.Seek(0, SeekOrigin.Begin);
-
-                    object keyObj;
-                    using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
+                    object keyObj = null;
+                    do
                     {
-                        PemReader reader = new PemReader(sr, new ClPassword(interactive));
-                        try
+                        ms.Seek(0, SeekOrigin.Begin);
+                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
                         {
-                            keyObj = reader.ReadObject();
+                            PemReader reader = new PemReader(sr, new ClPassword(interactive));
+                            try
+                            {
+                                keyObj = reader.ReadObject();
 
-                            if (keyObj != null && index != null && index.CompareTo(BigInteger.Zero) != 0)
-                            {
-                                Console.Error.WriteLine(TextResources.IndexPem, index);
-                                return null;
+                                if (keyObj == null) break;
+                                else if (index != null && index.CompareTo(BigInteger.Zero) != 0)
+                                {
+                                    Console.Error.WriteLine(TextResources.IndexPem, index);
+                                    return null;
+                                }
                             }
-                        }
-                        catch (InvalidCipherTextException)
-                        {
-                            Console.Error.WriteLine(TextResources.BadPassword);
-                            return null;
-                        }
-                        catch (IOException x)
-                        {
-                            if (x.Message == "base64 data appears to be truncated")
-                                keyObj = null;
-                            else
+                            catch (InvalidCipherTextException)
                             {
-                                Console.Error.WriteLine(x.Message);
+                                Console.Error.WriteLine(TextResources.BadPassword);
+                                continue;
+                            }
+                            catch (IOException x)
+                            {
+                                if (x.Message == "base64 data appears to be truncated")
+                                {
+                                    keyObj = null;
+                                    break;
+                                }
+                                else
+                                {
+                                    Console.Error.WriteLine(x.Message);
 #if DEBUG
-                                GoThrow(x);
+                                    GoThrow(x);
 #endif
-                                return null;
+                                    return null;
+                                }
                             }
                         }
                     }
+                    while (keyObj == null);
 
                     if (keyObj == null)
                     {
@@ -1165,24 +1172,34 @@ namespace DieFledermaus.Cli
                                     break;
                                 }
 
-                                char[] password = new ClPassword(interactive).GetPassword();
-
-                                PgpPrivateKey privKey;
-                                try
+                                if (pKey.KeyEncryptionAlgorithm == 0)
                                 {
-                                    privKey = pKey.ExtractPrivateKeyUtf8(password);
-                                }
-                                catch (PgpException)
-                                {
-                                    Console.Error.WriteLine(TextResources.BadPassword);
-                                    return null;
+                                    PgpPrivateKey privKey = pKey.ExtractPrivateKeyUtf8(null);
+                                    keyObj = privKey.Key;
                                 }
 
-                                keyObj = privKey.Key;
-                                break;
+                                char[] password = null;
+
+                                do
+                                {
+                                    try
+                                    {
+                                        password = new ClPassword(interactive).GetPassword();
+                                        PgpPrivateKey privKey = pKey.ExtractPrivateKeyUtf8(password);
+
+                                        keyObj = privKey.Key;
+                                    }
+                                    catch (PgpException)
+                                    {
+                                        if (password != null && password.Length == 0)
+                                            return null;
+                                        Console.Error.WriteLine(TextResources.BadPassword);
+                                    }
+                                }
+                                while (keyObj == null); break;
                             }
 
-                            if (keyObj != null)
+                            if (keyObj == null)
                             {
                                 Console.Error.WriteLine(TextResources.IndexPem, index);
                                 return null;
@@ -1226,7 +1243,7 @@ namespace DieFledermaus.Cli
                                 break;
                             }
 
-                            if (keyObj != null)
+                            if (keyObj == null)
                             {
                                 Console.Error.WriteLine(TextResources.IndexPem, index);
                                 return null;
