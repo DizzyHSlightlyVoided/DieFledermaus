@@ -2553,20 +2553,21 @@ namespace DieFledermaus
             if (_headerGotten)
                 return;
 
-            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null)
+            byte[] key = _key;
+            if (_encFmt != MausEncryptionFormat.None && _password == null && key == null)
                 throw new CryptoException(TextResources.KeyNotSet);
 
             GetBuffer();
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                if (_key == null)
+                if (key == null)
                 {
                     OnProgress(MausProgressState.BuildingKey);
-                    _key = GetKey(this);
+                    key = GetKey(this);
                 }
 
-                using (MausBufferStream bufferStream = Decrypt(this, _key, _bufferStream))
+                using (MausBufferStream bufferStream = Decrypt(this, key, _bufferStream))
                 {
 #if NOLEAVEOPEN
                     BinaryReader reader = new BinaryReader(bufferStream);
@@ -2582,6 +2583,7 @@ namespace DieFledermaus
                     bufferStream.BufferCopyTo(_bufferStream, true);
 
                     _bufferStream.Reset();
+                    _key = key;
                 }
             }
             long oldLength = _bufferStream.Length;
@@ -2857,11 +2859,12 @@ namespace DieFledermaus
 
         internal void GetBuffer()
         {
-            if (_bufferStream != null)
-                return;
-            OnProgress(MausProgressState.LoadingData);
-            long length = _compLength;
-            _bufferStream = GetBuffer(length, _baseStream);
+            if (_bufferStream == null)
+            {
+                OnProgress(MausProgressState.LoadingData);
+                long length = _compLength;
+                _bufferStream = GetBuffer(length, _baseStream);
+            }
             _bufferStream.Reset();
         }
 

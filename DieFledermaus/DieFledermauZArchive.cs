@@ -772,21 +772,23 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            if (_password == null && _key == null)
+            byte[] key = _key;
+            if (_password == null && key == null)
                 throw new CryptoException(TextResources.KeyNotSetZ);
 
-            if (_key == null)
+            if (key == null)
             {
                 OnProgress(MausProgressState.BuildingKey);
-                _key = DieFledermausStream.GetKey(this);
+                key = DieFledermausStream.GetKey(this);
             }
 
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _key, _bufferStream))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, key, _bufferStream))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
                 long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
                 ReadDecrypted(reader, ref curOffset);
+                _key = key;
             }
             OnProgress(MausProgressState.CompletedLoading);
         }
