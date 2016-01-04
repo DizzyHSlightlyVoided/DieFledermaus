@@ -136,8 +136,8 @@ namespace DieFledermaus.Cli
             extract.MutualExclusives.Add(hide);
             extract.OtherMessages.Add(hide, NoEntryExtract);
 
-            ClParamValue sigKey = new ClParamValue(parser, TextResources.HelpMSigKey, TextResources.HelpPath, '\0', TextResources.PNameSigKey);
-            ClParamValue sigDex = new ClParamValue(parser, TextResources.HelpMSigDex, TextResources.HelpIndex, '\0', TextResources.PNameSigDex);
+            ClParamValue sigKey = new ClParamValue(parser, TextResources.HelpMSigKey, TextResources.HelpPath, '\0', "signature-key", TextResources.PNameSigKey);
+            ClParamValue sigDex = new ClParamValue(parser, TextResources.HelpMSigDex, TextResources.HelpIndex, '\0', "signature-index", TextResources.PNameSigDex);
 
             ClParam[] clParams = parser.Params.ToArray();
 
