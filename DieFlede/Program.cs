@@ -37,8 +37,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using DieFledermaus.Cli.Globalization;
+
+using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.EC;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
@@ -1283,11 +1286,7 @@ namespace DieFledermaus.Cli
 
                                 if (curVal.Item2 == null)
                                 {
-                                    string type = curVal.Item1;
-                                    if (type.Equals("ssh-ecdsa", StringComparison.Ordinal) || type.StartsWith("ecdsa-", StringComparison.Ordinal))
-                                        Console.Error.WriteLine(TextResources.AuthorizedKeysEcdsa); //TODO: Support for ECDSA?
-                                    else
-                                        Console.Error.WriteLine(TextResources.UnknownKeyType);
+                                    Console.Error.WriteLine(TextResources.UnknownKeyType, curVal.Item1);
                                     return null;
                                 }
 
@@ -1443,7 +1442,34 @@ namespace DieFledermaus.Cli
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, new DsaPublicKeyParameters(y, new DsaParameters(p, q, g)), comment);
                     continue;
                 }
-                //TODO: Support for ECDSA?
+                if (type.StartsWith("ecdsa-sha2-", StringComparison.OrdinalIgnoreCase))
+                {
+                    string s = ReadString(buffer, ref curPos);
+                    byte[] qBytes = ReadBuffer(buffer, ref curPos);
+
+                    const int typePrefixLen = 11;
+                    if (curPos != buffer.Length || !type.Substring(typePrefixLen).Equals(s, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException(TextResources.SignBadPublic);
+
+                    if (s.StartsWith("nist", StringComparison.OrdinalIgnoreCase))
+                        s = s.Substring(4, 1) + "-" + s.Substring(5);
+
+                    var ecSpec = ECNamedCurveTable.GetByName(s);
+
+                    if (ecSpec == null)
+                    {
+                        CustomNamedCurves.GetByName(s);
+
+                        if (ecSpec == null)
+                            throw new InvalidDataException(TextResources.UnknownCurve);
+                    }
+
+                    ECPublicKeyParameters pubEC = new ECPublicKeyParameters(new X9ECPoint(ecSpec.Curve, qBytes).Point,
+                        new ECDomainParameters(ecSpec.Curve, ecSpec.G, ecSpec.N, ecSpec.H, ecSpec.GetSeed()));
+
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, pubEC, comment);
+                    continue;
+                }
 
                 yield return new Tuple<string, AsymmetricKeyParameter, string>(type, null, comment);
             }

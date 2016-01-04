@@ -70,15 +70,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is currently no support for ECDSA in OpenSSL public keyrings..
-        /// </summary>
-        internal static string AuthorizedKeysEcdsa {
-            get {
-                return ResourceManager.GetString("AuthorizedKeysEcdsa", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The value &quot;{0}&quot; is invalid for the &quot;{1}&quot; parameter..
         /// </summary>
         internal static string BadEnumValue {
@@ -1123,7 +1114,16 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified file contains an unknown or unspported key type. Only RSA, DSA, and ECDSA keys are supported..
+        ///   Looks up a localized string similar to The private key contained an unknown ECDSA curve..
+        /// </summary>
+        internal static string UnknownCurve {
+            get {
+                return ResourceManager.GetString("UnknownCurve", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified file contains an unknown or unspported key type &quot;{0}&quot;. Only RSA, DSA, and ECDSA keys are supported..
         /// </summary>
         internal static string UnknownKeyType {
             get {

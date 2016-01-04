@@ -523,7 +523,8 @@
     <value>Signature index </value>
   </data>
   <data name="UnknownKeyType" xml:space="preserve">
-    <value>The specified file contains an unknown or unspported key type. Only RSA, DSA, and ECDSA keys are supported.</value>
+    <value>The specified file contains an unknown or unspported key type "{0}". Only RSA, DSA, and ECDSA keys are supported.</value>
+    <comment>{0} = key type ID</comment>
   </data>
   <data name="SignDSAUnverified" xml:space="preserve">
     <value>DSA signature was not successfully verified for entry {0}</value>
@@ -555,7 +556,7 @@
     <value>RSA signature was successfully verified for entry {0}</value>
     <comment>{0} = filename</comment>
   </data>
-  <data name="AuthorizedKeysEcdsa" xml:space="preserve">
-    <value>There is currently no support for ECDSA in OpenSSL public keyrings.</value>
+  <data name="UnknownCurve" xml:space="preserve">
+    <value>The private key contained an unknown ECDSA curve.</value>
   </data>
 </root>
