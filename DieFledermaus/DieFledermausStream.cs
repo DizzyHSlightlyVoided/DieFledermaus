@@ -592,9 +592,13 @@ namespace DieFledermaus
                 _allowDirNames = AllowDirNames.Unknown;
             else if (path[path.Length - 1] == '/')
                 _allowDirNames = AllowDirNames.EmptyDir;
+            else if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+                _allowDirNames = AllowDirNames.Manifest;
             else
                 _allowDirNames = AllowDirNames.Yes;
             _getHeader(readMagNum);
+            if (_allowDirNames == AllowDirNames.Manifest && _filename == null)
+                throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
         #endregion
 
@@ -779,7 +783,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_hashExpected == null || !_headerGotten) return null;
+                if (_hashExpected == null) return null;
                 return (byte[])_hashExpected.Clone();
             }
         }
@@ -1584,13 +1588,17 @@ namespace DieFledermaus
             No,
             Yes,
             EmptyDir,
-            Unknown
+            Manifest,
+            Unknown,
         }
 
         private AllowDirNames _allowDirNames;
 
         internal static bool IsValidFilename(string value, bool throwOnInvalid, AllowDirNames dirFormat, string paramName)
         {
+            if (dirFormat == AllowDirNames.Manifest)
+                return value.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal);
+
             if (value == null) throw new ArgumentNullException(paramName);
 
             if (value.Length == 0)
@@ -3208,17 +3216,17 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            byte[] rsaSignature, dsaSignature, ecdsaSignature, hashChecksum;
+            byte[] rsaSignature, dsaSignature, ecdsaSignature;
 
             if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
             {
                 OnProgress(MausProgressState.ComputingHash);
-                hashChecksum = ComputeHash(_bufferStream, _hashFunc);
-                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
+                _hashExpected = ComputeHash(_bufferStream, _hashFunc);
+                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, _hashExpected));
                 if (_rsaSignParamBC != null)
                 {
                     OnProgress(MausProgressState.SigningRSA);
-                    byte[] message = GetDerEncoded(hashChecksum, _hashFunc);
+                    byte[] message = GetDerEncoded(_hashExpected, _hashFunc);
                     OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
                     try
                     {
@@ -3238,7 +3246,7 @@ namespace DieFledermaus
                     {
                         DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
 
-                        dsaSignature = GenerateDsaSignature(hashChecksum, signer, _dsaSignParamBC);
+                        dsaSignature = GenerateDsaSignature(_hashExpected, signer, _dsaSignParamBC);
                     }
                     catch (Exception x)
                     {
@@ -3252,7 +3260,7 @@ namespace DieFledermaus
                     try
                     {
                         ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
-                        ecdsaSignature = GenerateDsaSignature(hashChecksum, signer, _ecdsaSignParamBC);
+                        ecdsaSignature = GenerateDsaSignature(_hashExpected, signer, _ecdsaSignParamBC);
                     }
                     catch (Exception x)
                     {
@@ -3261,7 +3269,7 @@ namespace DieFledermaus
                 }
                 else ecdsaSignature = null;
             }
-            else rsaSignature = dsaSignature = ecdsaSignature = hashChecksum = null;
+            else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
 
             if (_encFmt != MausEncryptionFormat.None && _key == null)
             {
@@ -3366,14 +3374,14 @@ namespace DieFledermaus
                 {
                     writer.Write(compressedStream.Length);
                     writer.Write(_bufferStream.Length);
-                    if (hashChecksum == null)
+                    if (_hashExpected == null)
                     {
                         _bufferStream.Reset();
                         OnProgress(MausProgressState.ComputingHash);
-                        hashChecksum = ComputeHash(_bufferStream, _hashFunc);
-                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashChecksum));
+                        _hashExpected = ComputeHash(_bufferStream, _hashFunc);
+                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, _hashExpected));
                     }
-                    writer.Write(hashChecksum);
+                    writer.Write(_hashExpected);
 
                     if (_bufferStream != compressedStream)
                     {
@@ -3433,11 +3441,11 @@ namespace DieFledermaus
                     {
                         output.Write(_salt, 0, _key.Length);
                         output.Write(_iv, 0, _encFmt == MausEncryptionFormat.Threefish ? _key.Length : _iv.Length);
-                        byte[] hashHmac = Encrypt(this, output, _bufferStream, _key);
+                        _hmacExpected = Encrypt(this, output, _bufferStream, _key);
 
                         writer.Write(output.Length);
                         writer.Write((long)_pkCount);
-                        writer.Write(hashHmac);
+                        writer.Write(_hmacExpected);
 
                         output.BufferCopyTo(_baseStream, false);
                     }

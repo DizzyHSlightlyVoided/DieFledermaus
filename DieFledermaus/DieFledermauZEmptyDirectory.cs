@@ -49,7 +49,7 @@ namespace DieFledermaus
         }
 
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset, long realOffset)
-            : base(archive, path, stream, offset, realOffset)
+            : base(archive, path, path, stream, offset, realOffset)
         {
         }
 

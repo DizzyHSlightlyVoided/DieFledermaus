@@ -240,21 +240,39 @@ namespace DieFledermaus
     {
         RsaKeyParameters RSASignParameters { get; set; }
 
-        string RSASignId { get; }
+        string RSASignId { get; set; }
 
-        byte[] RSASignIdBytes { get; }
+        byte[] RSASignIdBytes { get; set; }
+
+        bool IsRSASigned { get; }
+
+        bool IsRSASignVerified { get; }
+
+        bool VerifyRSASignature();
 
         DsaKeyParameters DSASignParameters { get; set; }
 
-        string DSASignId { get; }
+        string DSASignId { get; set; }
 
-        byte[] DSASignIdBytes { get; }
+        byte[] DSASignIdBytes { get; set; }
+
+        bool IsDSASigned { get; }
+
+        bool IsDSASignVerified { get; }
+
+        bool VerifyDSASignature();
 
         ECKeyParameters ECDSASignParameters { get; set; }
 
-        string ECDSASignId { get; }
+        string ECDSASignId { get; set; }
 
-        byte[] ECDSASignIdBytes { get; }
+        byte[] ECDSASignIdBytes { get; set; }
+
+        bool IsECDSASigned { get; }
+
+        bool IsECDSASignVerified { get; }
+
+        bool VerifyECDSASignature();
     }
 
     internal interface IMausStream : IMausSign
@@ -264,24 +282,6 @@ namespace DieFledermaus
         DateTime? CreatedTime { get; }
 
         DateTime? ModifiedTime { get; }
-
-        bool IsRSASigned { get; }
-
-        bool IsRSASignVerified { get; }
-
-        bool VerifyRSASignature();
-
-        bool IsDSASigned { get; }
-
-        bool IsDSASignVerified { get; }
-
-        bool VerifyDSASignature();
-
-        bool IsECDSASigned { get; }
-
-        bool IsECDSASignVerified { get; }
-
-        bool VerifyECDSASignature();
 
         DieFledermausStream.SettableOptions EncryptedOptions { get; }
 

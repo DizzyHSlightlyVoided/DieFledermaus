@@ -979,7 +979,25 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DSA signature was not successfully verified for entry {0}.
+        ///   Looks up a localized string similar to DSA signature was NOT successfully verified for the archive..
+        /// </summary>
+        internal static string SignDSAArchiveUnverified {
+            get {
+                return ResourceManager.GetString("SignDSAArchiveUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DSA signature was successfully verified for the archive..
+        /// </summary>
+        internal static string SignDSAArchiveVerified {
+            get {
+                return ResourceManager.GetString("SignDSAArchiveVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DSA signature was NOT successfully verified for entry {0}.
         /// </summary>
         internal static string SignDSAUnverified {
             get {
@@ -997,7 +1015,25 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ECDSA signature was not successfully verified for entry {0}.
+        ///   Looks up a localized string similar to ECDSA signature was NOT successfully verified for the archive..
+        /// </summary>
+        internal static string SignECDSAArchiveUnverified {
+            get {
+                return ResourceManager.GetString("SignECDSAArchiveUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ECDSA signature was successfully verified for the archive..
+        /// </summary>
+        internal static string SignECDSAArchiveVerified {
+            get {
+                return ResourceManager.GetString("SignECDSAArchiveVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ECDSA signature was NOT successfully verified for entry {0}.
         /// </summary>
         internal static string SignECDSAUnverified {
             get {
@@ -1033,7 +1069,25 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RSA signature was not successfully verified for entry {0}.
+        ///   Looks up a localized string similar to RSA signature was NOT successfully verified for the archive..
+        /// </summary>
+        internal static string SignRSAArchiveUnverified {
+            get {
+                return ResourceManager.GetString("SignRSAArchiveUnverified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA signature was successfully verified for the archive..
+        /// </summary>
+        internal static string SignRSAArchiveVerified {
+            get {
+                return ResourceManager.GetString("SignRSAArchiveVerified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA signature was NOT successfully verified for entry {0}.
         /// </summary>
         internal static string SignRSAUnverified {
             get {

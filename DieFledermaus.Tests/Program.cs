@@ -38,7 +38,7 @@ namespace DieFledermaus.Tests
                 Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
-                    archive.RSASignParameters = privateKeySig;
+                    archive.RSASignParameters = archive.DefaultRSASignParameters = privateKeySig;
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish);
@@ -56,6 +56,12 @@ namespace DieFledermaus.Tests
 
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Read, true))
                 {
+                    archive.RSASignParameters = publicKeySig;
+                    if (archive.VerifyRSASignature())
+                        Console.WriteLine("RSA signature verified for the archive.");
+                    else
+                        Console.WriteLine("RSA signature NOT verified for the archive!");
+
                     foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
                         Console.WriteLine(" - Decrypting file ...");

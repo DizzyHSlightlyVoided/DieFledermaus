@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
@@ -359,5 +359,8 @@
   <data name="RsaHashTooBig" xml:space="preserve">
     <value>The specified hash function produces an output which is too big. The key used to sign the current instance does not support hashes greater than approximately {0} bits ({1} bytes).</value>
     <comment>{0} = bit count, {1} = byte count.</comment>
+  </data>
+  <data name="InvalidManifest" xml:space="preserve">
+    <value>The signature manifest of the current archive is invalid.</value>
   </data>
 </root>

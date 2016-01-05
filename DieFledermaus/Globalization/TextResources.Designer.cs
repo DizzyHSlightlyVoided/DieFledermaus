@@ -493,6 +493,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The signature manifest of the current archive is invalid..
+        /// </summary>
+        internal static string InvalidManifest {
+            get {
+                return ResourceManager.GetString("InvalidManifest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified IV must be the same length as the block size..
         /// </summary>
         internal static string IvLength {

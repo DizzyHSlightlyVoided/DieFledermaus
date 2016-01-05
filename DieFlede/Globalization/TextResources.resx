@@ -527,7 +527,7 @@
     <comment>{0} = key type ID</comment>
   </data>
   <data name="SignDSAUnverified" xml:space="preserve">
-    <value>DSA signature was not successfully verified for entry {0}</value>
+    <value>DSA signature was NOT successfully verified for entry {0}</value>
     <comment>{0} = filename</comment>
   </data>
   <data name="SignDSAVerified" xml:space="preserve">
@@ -535,7 +535,7 @@
     <comment>{0} = filename</comment>
   </data>
   <data name="SignECDSAUnverified" xml:space="preserve">
-    <value>ECDSA signature was not successfully verified for entry {0}</value>
+    <value>ECDSA signature was NOT successfully verified for entry {0}</value>
     <comment>{0} = filename</comment>
   </data>
   <data name="SignECDSAVerified" xml:space="preserve">
@@ -549,7 +549,7 @@
     <value>The specified filename contains a private key. A public key is needed.</value>
   </data>
   <data name="SignRSAUnverified" xml:space="preserve">
-    <value>RSA signature was not successfully verified for entry {0}</value>
+    <value>RSA signature was NOT successfully verified for entry {0}</value>
     <comment>{0} = filename</comment>
   </data>
   <data name="SignRSAVerified" xml:space="preserve">
@@ -561,5 +561,23 @@
   </data>
   <data name="ParamRaw" xml:space="preserve">
     <value>This parameter may be passed without the {0} prefix.</value>
+  </data>
+  <data name="SignDSAArchiveUnverified" xml:space="preserve">
+    <value>DSA signature was NOT successfully verified for the archive.</value>
+  </data>
+  <data name="SignDSAArchiveVerified" xml:space="preserve">
+    <value>DSA signature was successfully verified for the archive.</value>
+  </data>
+  <data name="SignECDSAArchiveUnverified" xml:space="preserve">
+    <value>ECDSA signature was NOT successfully verified for the archive.</value>
+  </data>
+  <data name="SignECDSAArchiveVerified" xml:space="preserve">
+    <value>ECDSA signature was successfully verified for the archive.</value>
+  </data>
+  <data name="SignRSAArchiveUnverified" xml:space="preserve">
+    <value>RSA signature was NOT successfully verified for the archive.</value>
+  </data>
+  <data name="SignRSAArchiveVerified" xml:space="preserve">
+    <value>RSA signature was successfully verified for the archive.</value>
   </data>
 </root>

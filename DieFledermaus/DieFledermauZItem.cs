@@ -46,19 +46,20 @@ namespace DieFledermaus
         {
             _bufferStream = new MausBufferStream();
             _arch = archive;
+            _path = path;
             MausStream = new DieFledermausStream(this, path, _bufferStream, compFormat ?? new DeflateCompressionFormat(), encFormat);
             MausStream.Progress += MausStream_Progress;
         }
 
-        internal DieFledermauZItem(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)
+        internal DieFledermauZItem(DieFledermauZArchive archive, string path, string originalPath, DieFledermausStream stream, long curOffset, long realOffset)
         {
             _arch = archive;
             MausStream = stream;
             Offset = curOffset;
             RealOffset = realOffset;
             MausStream._entry = this;
-            if (path != null)
-                _path = path;
+            _path = path;
+            OriginalPath = originalPath;
             MausStream.Progress += MausStream_Progress;
             if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                 _isDecrypted = true;
@@ -74,6 +75,8 @@ namespace DieFledermaus
             if (Progress != null)
                 Progress(this, e);
         }
+
+        internal readonly string OriginalPath;
 
         internal readonly long Offset, RealOffset;
 
@@ -146,7 +149,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidEnumArgumentException">
         /// The specified value is not a valid <see cref="MausHashFunction"/> value.
         /// </exception>
-        public MausHashFunction HashFunction
+        public virtual MausHashFunction HashFunction
         {
             get { return MausStream.HashFunction; }
             set
@@ -505,7 +508,9 @@ namespace DieFledermaus
         /// <returns>A string representation of the current instance.</returns>
         public override string ToString()
         {
-            return Path;
+            string path = Path;
+            if (path == null) return base.ToString();
+            return path;
         }
     }
 

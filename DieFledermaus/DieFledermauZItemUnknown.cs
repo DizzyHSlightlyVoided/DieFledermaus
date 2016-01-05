@@ -42,8 +42,8 @@ namespace DieFledermaus
     /// </summary>
     public class DieFledermauZItemUnknown : DieFledermauZItem
     {
-        internal DieFledermauZItemUnknown(DieFledermauZArchive archive, DieFledermausStream stream, long curOffset, long realOffset)
-            : base(archive, null, stream, curOffset, realOffset)
+        internal DieFledermauZItemUnknown(DieFledermauZArchive archive, string originalPath, DieFledermausStream stream, long curOffset, long realOffset)
+            : base(archive, null, originalPath, stream, curOffset, realOffset)
         {
         }
 
@@ -85,7 +85,7 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
                 returner = new DieFledermauZEmptyDirectory(Archive, null, MausStream, Offset, RealOffset);
             }
-            else returner = new DieFledermauZArchiveEntry(Archive, null, MausStream, Offset, RealOffset);
+            else returner = new DieFledermauZArchiveEntry(Archive, null, OriginalPath, MausStream, Offset, RealOffset);
 
             Archive.Entries.ReplaceElement(Archive.Entries.IndexOf(this), returner);
             _isDecrypted = true;

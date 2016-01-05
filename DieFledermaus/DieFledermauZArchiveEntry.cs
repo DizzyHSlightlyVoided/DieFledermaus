@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.IO;
 
 using DieFledermaus.Globalization;
@@ -47,8 +48,8 @@ namespace DieFledermaus
         {
         }
 
-        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, DieFledermausStream stream, long curOffset, long realOffset)
-            : base(archive, path, stream, curOffset, realOffset)
+        internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, string originalPath, DieFledermausStream stream, long curOffset, long realOffset)
+            : base(archive, path, originalPath, stream, curOffset, realOffset)
         {
         }
 
@@ -122,7 +123,7 @@ namespace DieFledermaus
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
         /// and the specified value does not represent a valid public or private key.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="DieFledermauZItem.HashFunction"/>.</para>
+        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
@@ -472,6 +473,28 @@ namespace DieFledermaus
             }
         }
         #endregion
+
+        /// <summary>
+        /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
+        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
+        /// </exception>
+        public override MausHashFunction HashFunction
+        {
+            get { return base.HashFunction; }
+            set { base.HashFunction = value; }
+        }
 
         internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
         {

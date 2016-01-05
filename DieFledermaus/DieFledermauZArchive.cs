@@ -117,6 +117,7 @@ namespace DieFledermaus
                 _baseStream = stream;
                 _mode = mode;
                 _entriesRO = new EntryList(this);
+                _manifest = new DieFledermauZManifest(this);
             }
             else if (mode == MauZArchiveMode.Read)
             {
@@ -362,7 +363,7 @@ namespace DieFledermaus
             _entries.AddRange(entries);
         }
 
-        private static string GetString(BinaryReader reader, ref long curOffset)
+        internal static string GetString(BinaryReader reader, ref long curOffset)
         {
             int len = reader.ReadByte();
             if (len == 0) len = DieFledermausStream.Max8Bit;
@@ -374,7 +375,15 @@ namespace DieFledermaus
 
         internal DieFledermauZItem LoadMausStream(Stream _baseStream, string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
         {
-            if (path == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
+            string originalPath = path;
+            if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+            {
+                if (_manifest != null)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                path = DieFledermauZManifest.Filename;
+            }
+            else if (path.Equals("//V" + index.ToString(NumberFormatInfo.InvariantInfo), StringComparison.Ordinal))
                 path = null;
             else if (index >= 0 && !DieFledermausStream.IsValidFilename(path, false, DieFledermausStream.AllowDirNames.Unknown, nameof(path)))
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
@@ -421,15 +430,19 @@ namespace DieFledermaus
                 if (index < 0 || mausStream.CompressedLength > (mausStream.LegalKeySizes.MaxSize >> 3) + (mausStream.BlockByteCount * 3) +
                     DieFledermausStream.Max8Bit + DieFledermausStream.Max16Bit || DieFledermauZEmptyDirectory.HasNonDirValues(mausStream))
                 {
-                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
+                    returner = new DieFledermauZArchiveEntry(this, path, originalPath, mausStream, baseOffset, curOffset);
                 }
-                else returner = new DieFledermauZItemUnknown(this, mausStream, baseOffset, curOffset);
+                else returner = new DieFledermauZItemUnknown(this, originalPath, mausStream, baseOffset, curOffset);
             }
             else
             {
                 string regPath;
-                int end = path.Length - 1;
-                if (path[end] == '/')
+                int end = path.Length - 1; if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+                {
+                    returner = _manifest = new DieFledermauZManifest(this, mausStream, baseOffset, curOffset);
+                    regPath = originalPath;
+                }
+                else if (path[end] == '/')
                 {
                     returner = new DieFledermauZEmptyDirectory(this, path, mausStream, baseOffset, curOffset);
                     if (mausStream.EncryptionFormat == MausEncryptionFormat.None)
@@ -439,7 +452,7 @@ namespace DieFledermaus
                 }
                 else
                 {
-                    returner = new DieFledermauZArchiveEntry(this, path, mausStream, baseOffset, curOffset);
+                    returner = new DieFledermauZArchiveEntry(this, path, originalPath, mausStream, baseOffset, curOffset);
                     regPath = path;
                 }
 
@@ -464,7 +477,7 @@ namespace DieFledermaus
         }
         #endregion
 
-        #region RSA Signature
+        #region RSA Signature Default
         private RsaKeyParameters _rsaKeyParamDef;
         /// <summary>
         /// Gets and sets a default RSA key used to sign the entries in the current instance.
@@ -480,7 +493,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
-        public RsaKeyParameters RSASignParameters
+        public RsaKeyParameters DefaultRSASignParameters
         {
             get { return _rsaKeyParamDef; }
             set
@@ -493,7 +506,7 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and sets a string which is used to identify the value of <see cref="RSASignParameters"/> by default.
+        /// Gets and sets a string which is used to identify the value of <see cref="DefaultRSASignParameters"/> by default.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -502,12 +515,12 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// In a set operation, <see cref="DefaultRSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
-        public string RSASignId
+        public string DefaultRSASignId
         {
             get
             {
@@ -517,15 +530,15 @@ namespace DieFledermaus
             set
             {
                 if (value == null)
-                    RSASignIdBytes = null;
+                    DefaultRSASignIdBytes = null;
                 else
-                    RSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
+                    DefaultRSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
             }
         }
 
         private byte[] _rsaSignId;
         /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="RSASignParameters"/> by default.
+        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultRSASignParameters"/> by default.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
@@ -534,12 +547,12 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// In a set operation, <see cref="DefaultRSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
         /// </exception>
-        public byte[] RSASignIdBytes
+        public byte[] DefaultRSASignIdBytes
         {
             get { return _rsaSignId; }
             set
@@ -552,7 +565,7 @@ namespace DieFledermaus
         }
         #endregion
 
-        #region DSA Signature
+        #region DSA Signature Default
         private DsaKeyParameters _dsaKeyParamDef;
         /// <summary>
         /// Gets and sets a default DSA key used to sign the entries in the current instance.
@@ -565,10 +578,8 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
-        public DsaKeyParameters DSASignParameters
+        public DsaKeyParameters DefaultDSASignParameters
         {
             get { return _dsaKeyParamDef; }
             set
@@ -581,10 +592,356 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and sets a string which is used to identify the value of <see cref="DSASignParameters"/> by default.
+        /// Gets and sets a string which is used to identify the value of <see cref="DefaultDSASignParameters"/> by default.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DefaultDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string DefaultDSASignId
+        {
+            get
+            {
+                if (_dsaSignId == null) return null;
+                return DieFledermausStream._textEncoding.GetString(_dsaSignId);
+            }
+            set
+            {
+                if (value == null)
+                    DefaultDSASignIdBytes = null;
+                else
+                    DefaultDSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
+            }
+        }
+
+        private byte[] _dsaSignId;
+        /// <summary>
+        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultDSASignParameters"/> by default.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DefaultDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] DefaultDSASignIdBytes
+        {
+            get { return _dsaSignId; }
+            set
+            {
+                EnsureCanWrite();
+                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
+                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                _dsaSignId = value;
+            }
+        }
+        #endregion
+
+        #region ECDSA Signature Default
+        private ECKeyParameters _ecdsaKeyParamDef;
+        /// <summary>
+        /// Gets and sets a default ECDSA key used to sign the entries in the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// </exception>
+        public ECKeyParameters DefaultECDSASignParameters
+        {
+            get { return _ecdsaKeyParamDef; }
+            set
+            {
+                EnsureCanWrite();
+                DieFledermausStream.CheckSignParam(value, null, false, false);
+                DieFledermausStream.CheckSignParam(value, true, _hashFunc);
+                _ecdsaKeyParamDef = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="DefaultECDSASignParameters"/> by default.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DefaultECDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public string DefaultECDSASignId
+        {
+            get
+            {
+                if (_ecdsaSignId == null) return null;
+                return DieFledermausStream._textEncoding.GetString(_ecdsaSignId);
+            }
+            set
+            {
+                if (value == null)
+                    DefaultECDSASignIdBytes = null;
+                else
+                    DefaultECDSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
+            }
+        }
+
+        private byte[] _ecdsaSignId;
+        /// <summary>
+        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultECDSASignParameters"/> by default.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DefaultECDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public byte[] DefaultECDSASignIdBytes
+        {
+            get { return _ecdsaSignId; }
+            set
+            {
+                EnsureCanWrite();
+                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
+                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                _ecdsaSignId = value;
+            }
+        }
+        #endregion
+
+        #region RSA Signature
+        /// <summary>
+        /// Gets a value indicating whether the manifest of the current instance has been successfully verified using <see cref="RSASignParameters"/>.
+        /// </summary>
+        public bool IsRSASignVerified { get { return _manifest != null && _manifest.IsRSASignVerified; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an RSA-signed manifest.
+        /// </summary>
+        public bool IsRSASigned
+        {
+            get
+            {
+                if (_mode == MauZArchiveMode.Create)
+                    return _manifest.RSASignParameters != null;
+                return _manifest != null && _manifest.IsRSASigned;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
+        /// </exception>
+        public RsaKeyParameters RSASignParameters
+        {
+            get { return _manifest.RSASignParameters; }
+            set
+            {
+                EnsureCanSetRSASig();
+                _manifest.RSASignParameters = value;
+            }
+        }
+
+        private void EnsureCanSetRSASig()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(TextResources.ArchiveClosed);
+            if (_mode == MauZArchiveMode.Read)
+            {
+                if (_manifest == null || !_manifest.IsRSASigned)
+                    throw new NotSupportedException(TextResources.RsaSigNone);
+            }
+        }
+
+        /// <summary>
+        /// Gets and set a string which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
+        /// </exception>
+        public string RSASignId
+        {
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.RSASignId;
+            }
+            set
+            {
+                EnsureCanWrite();
+                _manifest.RSASignId = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
+        public byte[] RSASignIdBytes
+        {
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.RSASignIdBytes;
+            }
+            set
+            {
+                EnsureCanWrite();
+                _manifest.RSASignIdBytes = value;
+            }
+        }
+
+        /// <summary>
+        /// Tests whether <see cref="RSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="RSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The entire structure of the signature manifest is invalid. <see cref="IsRSASigned"/> will be set <c>false</c>.
+        /// </exception>
+        public bool VerifyRSASignature()
+        {
+            EnsureCanSetRSASig();
+            if (_mode == MauZArchiveMode.Create)
+                throw new NotSupportedException(TextResources.ArchiveWriteMode);
+            return _manifest.VerifyRSASignature();
+        }
+        #endregion
+
+        #region DSA Signature
+        /// <summary>
+        /// Gets a value indicating whether the manifest of the current instance has been successfully verified using <see cref="DSASignParameters"/>.
+        /// </summary>
+        public bool IsDSASignVerified { get { return _manifest != null && _manifest.IsDSASignVerified; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an DSA-signed manifest.
+        /// </summary>
+        public bool IsDSASigned
+        {
+            get
+            {
+                if (_mode == MauZArchiveMode.Create)
+                    return _manifest.DSASignParameters != null;
+                return _manifest != null && _manifest.IsDSASigned;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets an DSA key used to sign the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
+        /// </exception>
+        public DsaKeyParameters DSASignParameters
+        {
+            get { return _manifest.DSASignParameters; }
+            set
+            {
+                EnsureCanSetDSASig();
+                _manifest.DSASignParameters = value;
+            }
+        }
+
+        private void EnsureCanSetDSASig()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(TextResources.ArchiveClosed);
+            if (_mode == MauZArchiveMode.Read)
+            {
+                if (_manifest == null || !_manifest.IsDSASigned)
+                    throw new NotSupportedException(TextResources.RsaSigNone);
+            }
+        }
+
+        /// <summary>
+        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
@@ -599,24 +956,21 @@ namespace DieFledermaus
         {
             get
             {
-                if (_dsaSignId == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_dsaSignId);
+                if (_manifest == null) return null;
+                return _manifest.DSASignId;
             }
             set
             {
-                if (value == null)
-                    DSASignIdBytes = null;
-                else
-                    DSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
+                EnsureCanWrite();
+                _manifest.DSASignId = value;
             }
         }
 
-        private byte[] _dsaSignId;
         /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="DSASignParameters"/> by default.
+        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
+        /// In a set operation, the current instance is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
@@ -629,50 +983,106 @@ namespace DieFledermaus
         /// </exception>
         public byte[] DSASignIdBytes
         {
-            get { return _dsaSignId; }
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.DSASignIdBytes;
+            }
             set
             {
                 EnsureCanWrite();
-                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                _dsaSignId = value;
+                _manifest.DSASignIdBytes = value;
             }
+        }
+
+        /// <summary>
+        /// Tests whether <see cref="DSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="DSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="DSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The entire structure of the signature manifest is invalid. <see cref="IsDSASigned"/> will be set <c>false</c>.
+        /// </exception>
+        public bool VerifyDSASignature()
+        {
+            EnsureCanSetDSASig();
+            if (_mode == MauZArchiveMode.Create)
+                throw new NotSupportedException(TextResources.ArchiveWriteMode);
+            return _manifest.VerifyDSASignature();
         }
         #endregion
 
         #region ECDSA Signature
-        private ECKeyParameters _ecdsaKeyParamDef;
         /// <summary>
-        /// Gets and sets a default ECDSA key used to sign the entries in the current instance.
+        /// Gets a value indicating whether the manifest of the current instance has been successfully verified using <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        public bool IsECDSASignVerified { get { return _manifest != null && _manifest.IsECDSASigned; } }
+
+        /// <summary>
+        /// Gets a value indicating whether the current instance has an ECDSA-signed manifest.
+        /// </summary>
+        public bool IsECDSASigned
+        {
+            get
+            {
+                if (_mode == MauZArchiveMode.Create)
+                    return _manifest.ECDSASignParameters != null;
+                return _manifest != null && _manifest.IsECDSASigned;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets an ECDSA key used to sign the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
         /// </exception>
         public ECKeyParameters ECDSASignParameters
         {
-            get { return _ecdsaKeyParamDef; }
+            get { return _manifest.ECDSASignParameters; }
             set
             {
-                EnsureCanWrite();
-                DieFledermausStream.CheckSignParam(value, null, false, false);
-                DieFledermausStream.CheckSignParam(value, true, _hashFunc);
-                _ecdsaKeyParamDef = value;
+                EnsureCanSetECDSASig();
+                _manifest.ECDSASignParameters = value;
+            }
+        }
+
+        private void EnsureCanSetECDSASig()
+        {
+            if (_baseStream == null)
+                throw new ObjectDisposedException(TextResources.ArchiveClosed);
+            if (_mode == MauZArchiveMode.Read)
+            {
+                if (_manifest == null || !_manifest.IsECDSASigned)
+                    throw new NotSupportedException(TextResources.RsaSigNone);
             }
         }
 
         /// <summary>
-        /// Gets and sets a string which is used to identify the value of <see cref="ECDSASignParameters"/> by default.
+        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
+        /// In a set operation, the current instance is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
@@ -687,24 +1097,21 @@ namespace DieFledermaus
         {
             get
             {
-                if (_ecdsaSignId == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_ecdsaSignId);
+                if (_manifest == null) return null;
+                return _manifest.ECDSASignId;
             }
             set
             {
-                if (value == null)
-                    ECDSASignIdBytes = null;
-                else
-                    ECDSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
+                EnsureCanWrite();
+                _manifest.ECDSASignId = value;
             }
         }
 
-        private byte[] _ecdsaSignId;
         /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="ECDSASignParameters"/> by default.
+        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
+        /// In a set operation, the current instance is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current instance is in read-mode.
@@ -717,16 +1124,45 @@ namespace DieFledermaus
         /// </exception>
         public byte[] ECDSASignIdBytes
         {
-            get { return _ecdsaSignId; }
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.ECDSASignIdBytes;
+            }
             set
             {
                 EnsureCanWrite();
-                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                _ecdsaSignId = value;
+                _manifest.ECDSASignIdBytes = value;
             }
         }
+
+        /// <summary>
+        /// Tests whether <see cref="ECDSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="ECDSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="ECDSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The entire structure of the signature manifest is invalid. <see cref="IsECDSASigned"/> will be set <c>false</c>.
+        /// </exception>
+        public bool VerifyECDSASignature()
+        {
+            EnsureCanSetECDSASig();
+            if (_mode == MauZArchiveMode.Create)
+                throw new NotSupportedException(TextResources.ArchiveWriteMode);
+            return _manifest.VerifyECDSASignature();
+        }
         #endregion
+
+        private DieFledermauZManifest _manifest;
 
         private MausBufferStream _bufferStream;
         /// <summary>
@@ -865,6 +1301,12 @@ namespace DieFledermaus
 
         internal void Delete(DieFledermauZItem item)
         {
+            if (item == _manifest)
+            {
+                _manifest = null;
+                return;
+            }
+
             int index = _entries.IndexOf(item);
             _entries.RemoveAt(index);
             if (item.Path != null)
@@ -1161,6 +1603,10 @@ namespace DieFledermaus
         /// <exception cref="InvalidEnumArgumentException">
         /// The specified value is not a valid <see cref="MausHashFunction"/> value.
         /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
+        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
+        /// </exception>
         public MausHashFunction HashFunction
         {
             get { return _hashFunc; }
@@ -1168,7 +1614,7 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 if (DieFledermausStream.HashBDict.ContainsKey(value))
-                    _hashFunc = value;
+                    _manifest.HashFunction = _hashFunc = value;
                 else
                     throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
             }
@@ -1890,6 +2336,18 @@ namespace DieFledermaus
                     path = curEntry.Path;
                 byte[] curPath = DieFledermausStream._textEncoding.GetBytes(path);
                 paths[i] = curPath;
+            }
+
+            if (_manifest.RSASignParameters != null || _manifest.DSASignParameters != null || _manifest.ECDSASignParameters != null)
+            {
+                int oldLen = entries.Length;
+                Array.Resize(ref entryStreams, checked(oldLen + 1));
+                entryStreams[oldLen] = _manifest.BuildSelf(entries, paths);
+
+                Array.Resize(ref entries, entryStreams.Length);
+                Array.Resize(ref paths, entryStreams.Length);
+                entries[oldLen] = _manifest;
+                paths[oldLen] = DieFledermauZManifest.FilenameBytes;
             }
 
             ByteOptionList options = new ByteOptionList();

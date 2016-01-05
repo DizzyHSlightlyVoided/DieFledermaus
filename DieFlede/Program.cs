@@ -407,9 +407,9 @@ namespace DieFledermaus.Cli
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
                         {
-                            archive.RSASignParameters = keyObj as RsaKeyParameters;
-                            archive.DSASignParameters = keyObj as DsaKeyParameters;
-                            archive.ECDSASignParameters = keyObj as ECKeyParameters;
+                            archive.RSASignParameters = archive.DefaultRSASignParameters = keyObj as RsaKeyParameters;
+                            archive.DSASignParameters = archive.DefaultDSASignParameters = keyObj as DsaKeyParameters;
+                            archive.ECDSASignParameters = archive.DefaultECDSASignParameters = keyObj as ECKeyParameters;
 
                             if (hash.Value.HasValue)
                                 archive.HashFunction = hash.Value.Value;
@@ -490,6 +490,65 @@ namespace DieFledermaus.Cli
                         }
                     }
 
+                    #region Archive Signature
+                    if (dz.IsRSASigned)
+                    {
+                        dz.RSASignParameters = keyObj as RsaKeyParameters;
+                        if (dz.RSASignParameters != null)
+                        {
+                            try
+                            {
+                                if (dz.VerifyRSASignature())
+                                    Console.WriteLine(TextResources.SignRSAArchiveVerified);
+                                else
+                                    Console.WriteLine(TextResources.SignRSAArchiveUnverified);
+                            }
+                            catch (InvalidDataException x)
+                            {
+                                Console.Error.WriteLine(x.Message);
+                            }
+                        }
+                    }
+
+                    if (dz.IsDSASigned)
+                    {
+                        dz.DSASignParameters = keyObj as DsaKeyParameters;
+                        if (dz.DSASignParameters != null)
+                        {
+                            try
+                            {
+                                if (dz.VerifyDSASignature())
+                                    Console.WriteLine(TextResources.SignDSAArchiveVerified);
+                                else
+                                    Console.WriteLine(TextResources.SignDSAArchiveUnverified);
+                            }
+                            catch (InvalidDataException x)
+                            {
+                                Console.Error.WriteLine(x.Message);
+                            }
+                        }
+                    }
+
+                    if (dz.IsECDSASigned)
+                    {
+                        dz.ECDSASignParameters = keyObj as ECKeyParameters;
+                        if (dz.ECDSASignParameters != null)
+                        {
+                            try
+                            {
+                                if (dz.VerifyECDSASignature())
+                                    Console.WriteLine(TextResources.SignECDSAArchiveVerified);
+                                else
+                                    Console.WriteLine(TextResources.SignECDSAArchiveUnverified);
+                            }
+                            catch (InvalidDataException x)
+                            {
+                                Console.Error.WriteLine(x.Message);
+                            }
+                        }
+                    }
+                    #endregion
+
                     Regex[] matches;
 
                     if (entryFile.IsSet)
@@ -503,11 +562,15 @@ namespace DieFledermaus.Cli
                         for (int i = 0; i < dz.Entries.Count; i++)
                         {
                             var curEntry = dz.Entries[i];
+                            if (curEntry.Path == "/Manifest.dat")
+                                continue;
+
                             if (DoFailDecrypt(curEntry, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
                             {
                                 Console.WriteLine(GetName(i, curEntry));
                                 continue;
                             }
+
                             Console.WriteLine(curEntry.Path);
 
                             VerifySigns(keyObj, curEntry as DieFledermauZArchiveEntry);
