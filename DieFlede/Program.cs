@@ -873,8 +873,19 @@ namespace DieFledermaus.Cli
                     }
 
                     Console.WriteLine(string.Join(", ", paramList));
-                    Console.Write("  ");
-                    Console.WriteLine(curParam.HelpMessage);
+
+                    const string indent = "   ";
+                    string[] helpMessages = curParam.HelpMessage.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    for (int j = 0; j < helpMessages.Length; j++)
+                    {
+                        Console.Write(indent);
+                        Console.WriteLine(helpMessages[j]);
+                    }
+                    if (curParam == curParam.Parser.RawParam)
+                    {
+                        Console.Write(indent);
+                        Console.WriteLine(TextResources.ParamRaw, curParam.ShortName == '\0' ? "--" + curParam.LongNames[0] : "-" + curParam.ShortName);
+                    }
                     Console.WriteLine();
                 }
             }

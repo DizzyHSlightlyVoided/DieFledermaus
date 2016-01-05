@@ -40,8 +40,8 @@ namespace DieFledermaus.Cli
         private List<ClParam> _params = new List<ClParam>();
         public List<ClParam> Params { get { return _params; } }
 
-        private ClParam _rawParam;
-        public ClParam RawParam
+        private ClParamValueBase _rawParam;
+        public ClParamValueBase RawParam
         {
             get { return _rawParam; }
             set
@@ -317,12 +317,16 @@ namespace DieFledermaus.Cli
     {
         protected ClParam(ClParser parser, string helpMessage, char shortName, params string[] longNames)
         {
+            Parser = parser;
+
             parser.Params.Add(this);
 
             ShortName = shortName;
             LongNames = longNames == null ? new string[0] : longNames.Select(i => i.Trim('-', ' ').Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             HelpMessage = helpMessage;
         }
+
+        public readonly ClParser Parser;
 
         public readonly string HelpMessage;
 

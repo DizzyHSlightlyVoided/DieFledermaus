@@ -458,7 +458,7 @@
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="HelpMHash" xml:space="preserve">
-    <value>Indicates the hash function used by the current instance.</value>
+    <value>Indicates the hash function which the file will use.</value>
     <comment>Help description.</comment>
   </data>
   <data name="PNameHash" xml:space="preserve">
@@ -558,5 +558,8 @@
   </data>
   <data name="UnknownCurve" xml:space="preserve">
     <value>The private key contained an unknown ECDSA curve.</value>
+  </data>
+  <data name="ParamRaw" xml:space="preserve">
+    <value>This parameter may be passed without the {0} prefix.</value>
   </data>
 </root>

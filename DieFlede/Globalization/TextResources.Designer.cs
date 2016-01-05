@@ -358,7 +358,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Indicates the hash function used by the current instance..
+        ///   Looks up a localized string similar to Indicates the hash function which the file will use..
         /// </summary>
         internal static string HelpMHash {
             get {
@@ -696,6 +696,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string ParamNoArg {
             get {
                 return ResourceManager.GetString("ParamNoArg", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This parameter may be passed without the {0} prefix..
+        /// </summary>
+        internal static string ParamRaw {
+            get {
+                return ResourceManager.GetString("ParamRaw", resourceCulture);
             }
         }
         
