@@ -478,74 +478,34 @@ namespace DieFledermaus.Cli
 
                         if (EncryptionPrompt(dz, dz.EncryptionFormat, out ssPassword))
                             return -4;
-
-                        try
-                        {
-                            dz.Decrypt();
-                        }
-                        catch (CryptoException)
-                        {
-                            Console.Error.WriteLine(TextResources.EncryptedBadKey);
-                            return Return(-4, interactive);
-                        }
                     }
 
                     #region Archive Signature
-                    if (dz.IsRSASigned)
+                    if (dz.IsRSASigned && keyObj is RsaKeyParameters)
                     {
-                        dz.RSASignParameters = keyObj as RsaKeyParameters;
-                        if (dz.RSASignParameters != null)
-                        {
-                            try
-                            {
-                                if (dz.VerifyRSASignature())
-                                    Console.WriteLine(TextResources.SignRSAArchiveVerified);
-                                else
-                                    Console.WriteLine(TextResources.SignRSAArchiveUnverified);
-                            }
-                            catch (InvalidDataException x)
-                            {
-                                Console.Error.WriteLine(x.Message);
-                            }
-                        }
+                        dz.RSASignParameters = (RsaKeyParameters)keyObj;
+                        if (dz.VerifyRSASignature())
+                            Console.WriteLine(TextResources.SignRSAArchiveVerified);
+                        else
+                            Console.WriteLine(TextResources.SignRSAArchiveUnverified);
                     }
 
-                    if (dz.IsDSASigned)
+                    if (dz.IsDSASigned && keyObj is DsaKeyParameters)
                     {
-                        dz.DSASignParameters = keyObj as DsaKeyParameters;
-                        if (dz.DSASignParameters != null)
-                        {
-                            try
-                            {
-                                if (dz.VerifyDSASignature())
-                                    Console.WriteLine(TextResources.SignDSAArchiveVerified);
-                                else
-                                    Console.WriteLine(TextResources.SignDSAArchiveUnverified);
-                            }
-                            catch (InvalidDataException x)
-                            {
-                                Console.Error.WriteLine(x.Message);
-                            }
-                        }
+                        dz.DSASignParameters = (DsaKeyParameters)keyObj;
+                        if (dz.VerifyDSASignature())
+                            Console.WriteLine(TextResources.SignDSAArchiveVerified);
+                        else
+                            Console.WriteLine(TextResources.SignDSAArchiveUnverified);
                     }
 
-                    if (dz.IsECDSASigned)
+                    if (dz.IsECDSASigned && keyObj is ECKeyParameters)
                     {
                         dz.ECDSASignParameters = keyObj as ECKeyParameters;
-                        if (dz.ECDSASignParameters != null)
-                        {
-                            try
-                            {
-                                if (dz.VerifyECDSASignature())
-                                    Console.WriteLine(TextResources.SignECDSAArchiveVerified);
-                                else
-                                    Console.WriteLine(TextResources.SignECDSAArchiveUnverified);
-                            }
-                            catch (InvalidDataException x)
-                            {
-                                Console.Error.WriteLine(x.Message);
-                            }
-                        }
+                        if (dz.VerifyECDSASignature())
+                            Console.WriteLine(TextResources.SignECDSAArchiveVerified);
+                        else
+                            Console.WriteLine(TextResources.SignECDSAArchiveUnverified);
                     }
                     #endregion
 
