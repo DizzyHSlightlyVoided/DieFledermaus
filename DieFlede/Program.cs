@@ -1102,11 +1102,8 @@ namespace DieFledermaus.Cli
             {
                 const int bufferSize = 8192;
 
-                using (MemoryStream ms = new MemoryStream())
+                using (FileStream ms = File.OpenRead(path))
                 {
-                    using (FileStream fs = File.OpenRead(path))
-                        fs.CopyTo(ms);
-
                     object keyObj = null;
                     do
                     {
