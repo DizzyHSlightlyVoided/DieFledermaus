@@ -35,8 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.XML" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Keys.Designer.cs">
@@ -62,8 +60,8 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Keys.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="Resources\Encryption.xml" />
-    <None Include="Resources\Signature.xml" />
+    <None Include="Resources\Encryption.pem" />
+    <None Include="Resources\Signature.pem" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

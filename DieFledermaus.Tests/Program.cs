@@ -2,10 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
+using Org.BouncyCastle.OpenSsl;
 
 namespace DieFledermaus.Tests
 {
@@ -22,14 +22,13 @@ namespace DieFledermaus.Tests
             using (MemoryStream ms = new MemoryStream())
             {
                 RsaKeyParameters publicKeySig, privateKeySig, publicKeyEnc, privateKeyEnc;
-
                 {
                     var keyPair = GetKeyPair(Keys.Signature);
                     publicKeySig = (RsaKeyParameters)keyPair.Public;
                     privateKeySig = (RsaKeyParameters)keyPair.Private;
-
-                    keyPair = GetKeyPair(Keys.Encryption);
-
+                }
+                {
+                    var keyPair = GetKeyPair(Keys.Encryption);
                     publicKeyEnc = (RsaKeyParameters)keyPair.Public;
                     privateKeyEnc = (RsaKeyParameters)keyPair.Private;
                 }
@@ -91,20 +90,13 @@ namespace DieFledermaus.Tests
             Console.ReadKey();
         }
 
-        private static AsymmetricCipherKeyPair GetKeyPair(string xml)
+        private static AsymmetricCipherKeyPair GetKeyPair(string pem)
         {
-            XElement root = XDocument.Parse(xml).Root;
-
-            RsaKeyParameters publicKey = new RsaKeyParameters(false, root.GetBigInt("Modulus"), root.GetBigInt("Exponent"));
-            RsaKeyParameters privateKey = new RsaPrivateCrtKeyParameters(publicKey.Modulus, publicKey.Exponent, root.GetBigInt("D"),
-                  root.GetBigInt("P"), root.GetBigInt("Q"), root.GetBigInt("DP"), root.GetBigInt("DQ"), root.GetBigInt("InverseQ"));
-
-            return new AsymmetricCipherKeyPair(publicKey, privateKey);
-        }
-
-        public static BigInteger GetBigInt(this XElement node, XName name)
-        {
-            return new BigInteger(1, Convert.FromBase64String(node.Element(name).Value));
+            using (StringReader sr = new StringReader(pem))
+            {
+                PemReader reader = new PemReader(sr);
+                return (AsymmetricCipherKeyPair)reader.ReadObject();
+            }
         }
 
         private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat)

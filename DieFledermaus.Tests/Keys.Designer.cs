@@ -61,7 +61,15 @@ namespace DieFledermaus.Tests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;RSAKeyValue&gt;&lt;!-- Not suitable for use outside the test-app. --&gt;&lt;Modulus&gt;ur33eRUWZSZeKpYBQmTPmJjBISffR+4v7D8qZJo25yDNq2vsaDZn9RC3YOGTvXlVcXzoYXYRgEPUYK8A5br7z8lFBKAewXxCL7cbNwCCX15Xa3M4Og8WdduM4EFHqCILELRZsP8MdvAZb7wbTrDVQKpYAoa+qvT9EC5tDeBxoo7eyolaA0Prak4QNPizxGl4aiL2rXRYjd14ylJyhMg5uuhQB/qw20CekBX+6kckD0r9i47NJ5Kh1lcYZVgBSU17hO4MjTHwVynINzAoP71XEitvif6wNhFOzS9/obocXYvxXShHO9kbDfsr79ITATXkN3uV8rxSYHHwsxmYugR8NQ==&lt;/Modulus&gt;&lt;Exponent&gt;AQAB&lt;/Exponent&gt;&lt;P&gt;8QXhT43iIedCvdpQ6jkqXW4DYiHOh0uKkz7CrrqFdXvuLbuepUTVnY8uQ [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to -----BEGIN RSA PRIVATE KEY-----
+        ///MIIEogIBAAKCAQEAur33eRUWZSZeKpYBQmTPmJjBISffR+4v7D8qZJo25yDNq2vs
+        ///aDZn9RC3YOGTvXlVcXzoYXYRgEPUYK8A5br7z8lFBKAewXxCL7cbNwCCX15Xa3M4
+        ///Og8WdduM4EFHqCILELRZsP8MdvAZb7wbTrDVQKpYAoa+qvT9EC5tDeBxoo7eyola
+        ///A0Prak4QNPizxGl4aiL2rXRYjd14ylJyhMg5uuhQB/qw20CekBX+6kckD0r9i47N
+        ///J5Kh1lcYZVgBSU17hO4MjTHwVynINzAoP71XEitvif6wNhFOzS9/obocXYvxXShH
+        ///O9kbDfsr79ITATXkN3uV8rxSYHHwsxmYugR8NQIDAQABAoIBAFGdRcOvAi8p8hzV
+        ///m25LhelQ1ZNqjCyxPlOXla0LMzSXgxvI2rT/FjcmW6blX77/AOdNKnix89slifPJ
+        ///eHBu5K/+7IGlg1uXt [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Encryption {
             get {
@@ -70,7 +78,15 @@ namespace DieFledermaus.Tests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;RSAKeyValue&gt;&lt;!-- Not suitable for use outside the test-app. --&gt;&lt;Modulus&gt;qjYO3OOZEV4bdBWtiXvYBC4yzSAYIX4NR4h2/StXL5m5JiEg+JhY0E5ZcfhwU8gSthVlwI0H+azEK52sciSDPwOy65ZZeopEbGrdlGODa87sQVFnma3OrpIrgbUpIAqHWrY3mWGLv5zwrzOHxfxK3IZzWaKzgDB//ktE9/lr6Vol5AAbUN86EuvXQKc6NGYc9pcOI/LHFFx3I2kR9WVYLeEQUo1fL0YPOhmuX6AD14H/rRWh5YW1DZyGqgQc/0W/dnOqeDsou8bwlyOEzIDKPsQ2hKv6pAJcwMmvWTZsPwlhsMQyxLYt4eYnYqTnJx03HmCg55kzy68PGpBwUD4McQ==&lt;/Modulus&gt;&lt;Exponent&gt;AQAB&lt;/Exponent&gt;&lt;P&gt;6/CRbdH+gGtCkj1B788ZYpj7B3h+AVf+J9KWaWYF7g41b0YmosZGNN8Bh [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to -----BEGIN RSA PRIVATE KEY-----
+        ///MIIEpQIBAAKCAQEAqjYO3OOZEV4bdBWtiXvYBC4yzSAYIX4NR4h2/StXL5m5JiEg
+        ///+JhY0E5ZcfhwU8gSthVlwI0H+azEK52sciSDPwOy65ZZeopEbGrdlGODa87sQVFn
+        ///ma3OrpIrgbUpIAqHWrY3mWGLv5zwrzOHxfxK3IZzWaKzgDB//ktE9/lr6Vol5AAb
+        ///UN86EuvXQKc6NGYc9pcOI/LHFFx3I2kR9WVYLeEQUo1fL0YPOhmuX6AD14H/rRWh
+        ///5YW1DZyGqgQc/0W/dnOqeDsou8bwlyOEzIDKPsQ2hKv6pAJcwMmvWTZsPwlhsMQy
+        ///xLYt4eYnYqTnJx03HmCg55kzy68PGpBwUD4McQIDAQABAoIBAAJKDldrUNZ4z84D
+        ///2AaFzb3tDVfD1mQMh2sYIbn3ehyrImA2wo3QmYpmfcT7sxUPypKieIpUGBCdwbJK
+        ///R8GHdLClbdb5BqfDh [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Signature {
             get {
