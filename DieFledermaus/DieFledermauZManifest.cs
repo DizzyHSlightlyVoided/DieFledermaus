@@ -52,6 +52,9 @@ namespace DieFledermaus
         internal DieFledermauZManifest(DieFledermauZArchive archive, DieFledermausStream stream, long curOffset, long realOffset)
             : base(archive, Filename, Filename, stream, curOffset, realOffset)
         {
+            if (stream.EncryptionFormat != MausEncryptionFormat.None || stream.CompressionFormat != MausCompressionFormat.None ||
+                stream.Comment != null || stream.CreatedTime.HasValue || stream.ModifiedTime.HasValue)
+                throw new InvalidDataException(TextResources.InvalidDataMauZ);
         }
 
         private MausBufferStream _readStream;
@@ -60,10 +63,6 @@ namespace DieFledermaus
         {
             if (_readStream == null)
             {
-                if (MausStream.EncryptionFormat != MausEncryptionFormat.None || MausStream.CompressionFormat != MausCompressionFormat.None ||
-                    MausStream.Comment != null || MausStream.CreatedTime.HasValue || MausStream.ModifiedTime.HasValue)
-                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
-
                 SeekToFile();
                 _readStream = new MausBufferStream();
                 MausStream.BufferCopyTo(_readStream);
