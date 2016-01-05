@@ -1121,7 +1121,7 @@ namespace DieFledermaus.Cli
                                 if (keyObj == null) break;
                                 else if (index != null && index.CompareTo(BigInteger.Zero) != 0)
                                 {
-                                    Console.Error.WriteLine(TextResources.IndexPem, index);
+                                    Console.Error.WriteLine(TextResources.IndexFile, index);
                                     return null;
                                 }
                             }
@@ -1181,10 +1181,9 @@ namespace DieFledermaus.Cli
                                     keyObj = privKey.Key;
                                 }
 
-                                char[] password = null;
-
                                 do
                                 {
+                                    char[] password = null;
                                     try
                                     {
                                         password = new ClPassword(interactive).GetPassword();
@@ -1202,9 +1201,9 @@ namespace DieFledermaus.Cli
                                 while (keyObj == null); break;
                             }
 
-                            if (keyObj == null)
+                            if (keyObj == null && counter.CompareTo(index) < 0)
                             {
-                                Console.Error.WriteLine(TextResources.IndexPem, index);
+                                Console.Error.WriteLine(TextResources.IndexFile, index);
                                 return null;
                             }
                         }
@@ -1246,9 +1245,9 @@ namespace DieFledermaus.Cli
                                 break;
                             }
 
-                            if (keyObj == null)
+                            if (keyObj == null && counter.CompareTo(index) < 0)
                             {
-                                Console.Error.WriteLine(TextResources.IndexPem, index);
+                                Console.Error.WriteLine(TextResources.IndexFile, index);
                                 return null;
                             }
                         }
@@ -1291,6 +1290,11 @@ namespace DieFledermaus.Cli
                                 }
 
                                 return curVal.Item2;
+                            }
+                            if (counter.CompareTo(index) < 0)
+                            {
+                                Console.Error.WriteLine(TextResources.IndexFile, index);
+                                return null;
                             }
                         }
                     }

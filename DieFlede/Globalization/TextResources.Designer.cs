@@ -484,11 +484,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified index {0} is greater than or equal to the number of elements in the file..
+        ///   Looks up a localized string similar to The specified index {0} is greater than or equal to the number of keys in the file..
         /// </summary>
-        internal static string IndexPem {
+        internal static string IndexFile {
             get {
-                return ResourceManager.GetString("IndexPem", resourceCulture);
+                return ResourceManager.GetString("IndexFile", resourceCulture);
             }
         }
         

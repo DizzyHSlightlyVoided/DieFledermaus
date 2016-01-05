@@ -508,8 +508,8 @@
     <value>The zero-based index of the signing key within the signature file.</value>
     <comment>Help description.</comment>
   </data>
-  <data name="IndexPem" xml:space="preserve">
-    <value>The specified index {0} is greater than or equal to the number of elements in the file.</value>
+  <data name="IndexFile" xml:space="preserve">
+    <value>The specified index {0} is greater than or equal to the number of keys in the file.</value>
     <comment>{0} = index</comment>
   </data>
   <data name="NoPassword" xml:space="preserve">
