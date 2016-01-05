@@ -91,3 +91,21 @@ If multiple entries are individually encrypted, an encoder should make every eff
 
 ### Encrypted Filenames
 If the filename is encrypted on an individual basis, the **Entry Filename** in both **Entry List** and **Offset List** must be stated as the string "//V" (`2f 2f 56`) followed by a textual representation of **Entry ID** using ASCII digits and no commas, leading zeroes, or separators (i.e. "//V69105", `2f 2f 56 36 39 31 30 35`). When listing files, a decoder should display something more sensible than this, i.e. "(Encrypted Entry at index 69105)".
+
+Signature Manitest
+------------------
+For further security, an end user may specify that an archive will include a **file manifest**, a file named "/Manifest.dat" (`2f 4d 61 6e 69 66 65 73 74 2e 64 61 74`), which bypasses the usual filename validation and which must be signed, but which is otherwise just like any other file entry. The purpose of this is to protect the validity of the archive itself; without a signature for the entire archive, an attacker might transmit previously-signed valid entries and try to pass them off collectively as a valid archive.
+
+The structure of the signature manifest is as follows:
+
+* **Header:** The magic number "`\x03`SIG" (`03 53 49 47`).
+* **Signature Count:** A signed 64-bit integer indicating the number of files in the manifest.
+* **Signature List:** A list of **manifest entries** with the following format:
+ * **Signature Header:** The string "`\x03`sig" (`03 73 69 67`).
+ * The **Entry ID** as it occurs in **Entry List** and **Offset List**.
+ * The **Entry Filename** as it occurs in **Entry List** and **Offset List**.
+ * A 16-bit length-prefixed string containing the contents of the file's **Checksum** field: the hash of the file's uncompressed data, or its HMAC if the file is encrypted.
+
+The manifest must include every file listed in the archive *except* the manifest itself. It must not be compressed, encrypted (apart from encrypting the entire archive), or contain any other entries in its **Format** except the file path.
+
+A decoder which detects an invalid manifest file must treat the archive itself as invalid, for consistency with the way the decoder should behave towards any other invalid format values, even though the manifest is "a file within the archive" in the strictest technical sense.
