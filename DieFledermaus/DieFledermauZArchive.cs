@@ -321,6 +321,9 @@ namespace DieFledermaus
                 entries[index] = LoadMausStream(reader.BaseStream, path, true, index, curBaseOffset, ref curOffset);
             }
 
+            if (_manifest != null)
+                _manifest.LoadData(entries);
+
             long metaOffset = curOffset;
             //All Offsets
             if (reader.ReadInt32() != _allOffsets)
@@ -343,11 +346,9 @@ namespace DieFledermaus
                 if (index < 0 || index >= entryCount || !indices.Add(index))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                string basePath = entries[index].Path;
+                string basePath = entries[index].OriginalPath;
 
                 string curPath = GetString(reader, ref curOffset);
-                if (curPath == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
-                    curPath = null;
 
                 if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);

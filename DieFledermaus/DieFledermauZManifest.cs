@@ -56,73 +56,54 @@ namespace DieFledermaus
 
         private MausBufferStream _readStream;
 
-        private Exception LoadFailed(Exception innerException)
+        internal void LoadData(DieFledermauZItem[] entries)
         {
-            _arch.Delete(this);
-            DoDelete(true);
-            return new InvalidDataException(TextResources.InvalidManifest, innerException);
-        }
-
-        private Exception LoadFailed()
-        {
-            return LoadFailed(null);
-        }
-
-        internal void LoadData()
-        {
-            EnsureCanRead();
             if (_readStream == null)
             {
                 if (MausStream.EncryptionFormat != MausEncryptionFormat.None || MausStream.CompressionFormat != MausCompressionFormat.None ||
                     MausStream.Comment != null || MausStream.CreatedTime.HasValue || MausStream.ModifiedTime.HasValue)
-                    throw LoadFailed();
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 SeekToFile();
                 _readStream = new MausBufferStream();
                 MausStream.BufferCopyTo(_readStream);
             }
             if (!_readStream.CanRead)
-                throw LoadFailed();
+                return;
 
             _readStream.Reset();
-            try
+
+            using (BinaryReader reader = new BinaryReader(_readStream))
             {
-                using (BinaryReader reader = new BinaryReader(_readStream))
+                bool[] results = new bool[entries.Length];
+
+                if (reader.ReadInt32() != _sigAll) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                long itemCount = reader.ReadInt64();
+                if (itemCount != results.Length - 1) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
+                long curOffset = 0;
+
+                for (long i = 0; i < itemCount; i++)
                 {
-                    bool[] results = new bool[_arch.Entries.Count];
+                    if (reader.ReadInt32() != _sigCur) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    long index = reader.ReadInt64();
+                    if (results[index]) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    results[index] = true;
+                    var entry = entries[index];
 
-                    if (reader.ReadInt32() != _sigAll) throw LoadFailed();
-                    long itemCount = reader.ReadInt64();
-                    if (itemCount != results.Length - 1) throw LoadFailed();
+                    if (entry == this || !DieFledermauZArchive.GetString(reader, ref curOffset).Equals(entry.OriginalPath, StringComparison.Ordinal))
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                    long curOffset = 0;
+                    byte[] hash;
+                    if (entry.EncryptionFormat == MausEncryptionFormat.None)
+                        hash = entry.Hash;
+                    else
+                        hash = entry.HMAC;
+                    byte[] buffer = DieFledermausStream.ReadBytes(reader, hash.Length);
 
-                    for (long i = 0; i < itemCount; i++)
-                    {
-                        if (reader.ReadInt32() != _sigCur) throw LoadFailed();
-                        long index = reader.ReadInt64();
-                        if (results[index]) throw LoadFailed();
-                        results[index] = true;
-                        var entry = _arch.Entries[(int)index];
-
-                        if (entry == this || !DieFledermauZArchive.GetString(reader, ref curOffset).Equals(entry.OriginalPath, StringComparison.Ordinal))
-                            throw LoadFailed();
-
-                        byte[] hash;
-                        if (entry.EncryptionFormat == MausEncryptionFormat.None)
-                            hash = entry.Hash;
-                        else
-                            hash = entry.HMAC;
-                        byte[] buffer = DieFledermausStream.ReadBytes(reader, hash.Length);
-
-                        if (!DieFledermausStream.CompareBytes(hash, buffer))
-                            throw LoadFailed();
-                    }
+                    if (!DieFledermausStream.CompareBytes(hash, buffer))
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
                 }
-            }
-            catch (IOException x)
-            {
-                throw LoadFailed(x);
             }
         }
 
@@ -156,7 +137,6 @@ namespace DieFledermaus
 
         public bool VerifyRSASignature()
         {
-            LoadData();
             return MausStream.VerifyRSASignature();
         }
         #endregion
@@ -186,7 +166,6 @@ namespace DieFledermaus
 
         public bool VerifyDSASignature()
         {
-            LoadData();
             return MausStream.VerifyDSASignature();
         }
         #endregion
@@ -216,7 +195,6 @@ namespace DieFledermaus
 
         public bool VerifyECDSASignature()
         {
-            LoadData();
             return MausStream.VerifyECDSASignature();
         }
         #endregion
