@@ -851,7 +851,10 @@ namespace DieFledermaus.Cli
                     IEnumerable<string> paramList;
 
                     ClParamValueBase cParamValue = curParam as ClParamValueBase;
-                    if (cParamValue != null)
+
+                    if (curParam.LongNames.Length == 0)
+                        paramList = new string[0];
+                    else if (cParamValue != null)
                     {
                         paramList = new string[] { string.Concat(curParam.LongNames[0], "=<", cParamValue.ArgName, ">") }.
                             Concat(new ArraySegment<string>(curParam.LongNames, 1, curParam.LongNames.Length - 1));
