@@ -38,6 +38,8 @@ using System.Text.RegularExpressions;
 
 using DieFledermaus.Cli.Globalization;
 
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 using Org.BouncyCastle.Crypto;
@@ -488,6 +490,7 @@ namespace DieFledermaus.Cli
                             Console.WriteLine(TextResources.SignRSAArchiveVerified);
                         else
                             Console.WriteLine(TextResources.SignRSAArchiveUnverified);
+                        Console.WriteLine();
                     }
 
                     if (dz.IsDSASigned && keyObj is DsaKeyParameters)
@@ -497,6 +500,7 @@ namespace DieFledermaus.Cli
                             Console.WriteLine(TextResources.SignDSAArchiveVerified);
                         else
                             Console.WriteLine(TextResources.SignDSAArchiveUnverified);
+                        Console.WriteLine();
                     }
 
                     if (dz.IsECDSASigned && keyObj is ECKeyParameters)
@@ -506,6 +510,7 @@ namespace DieFledermaus.Cli
                             Console.WriteLine(TextResources.SignECDSAArchiveVerified);
                         else
                             Console.WriteLine(TextResources.SignECDSAArchiveUnverified);
+                        Console.WriteLine();
                     }
                     #endregion
 
@@ -1457,7 +1462,7 @@ namespace DieFledermaus.Cli
                 int curPos = 0;
                 string type = words[0], comment = words.Length == 2 ? string.Empty : words[2];
 
-                if (type != ReadString(buffer, ref curPos))
+                if (type.Length > 64 || type != ReadString(buffer, ref curPos))
                     throw new InvalidDataException(TextResources.SignBadPublic);
 
                 if (type.Equals("ssh-rsa", StringComparison.Ordinal))
@@ -1489,22 +1494,47 @@ namespace DieFledermaus.Cli
                     if (curPos != buffer.Length || !type.Substring(typePrefixLen).Equals(s, StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException(TextResources.SignBadPublic);
 
-                    if (s.StartsWith("nist", StringComparison.OrdinalIgnoreCase))
-                        s = s.Substring(4, 1) + "-" + s.Substring(5);
+                    X9ECParameters ecSpec;
+                    DerObjectIdentifier dId;
 
-                    var ecSpec = ECNamedCurveTable.GetByName(s);
-
-                    if (ecSpec == null)
+                    if (s.StartsWith("nistp", StringComparison.OrdinalIgnoreCase))
                     {
-                        CustomNamedCurves.GetByName(s);
+                        dId = NistNamedCurves.GetOid("P-" + s.Substring(5));
+                        ecSpec = NistNamedCurves.GetByOid(dId);
+                        if (ecSpec == null)
+                            throw new InvalidDataException(TextResources.SignBadPublic);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            dId = new DerObjectIdentifier(s);
+                        }
+                        catch
+                        {
+                            throw new InvalidDataException(TextResources.SignBadPublic);
+                        }
+
+                        ecSpec = ECNamedCurveTable.GetByOid(dId);
 
                         if (ecSpec == null)
-                            throw new InvalidDataException(TextResources.UnknownCurve);
+                        {
+                            ecSpec = CustomNamedCurves.GetByOid(dId);
+
+                            if (ecSpec == null)
+                                throw new InvalidDataException(TextResources.UnknownCurve);
+                        }
                     }
 
-                    ECPublicKeyParameters pubEC = new ECPublicKeyParameters(new X9ECPoint(ecSpec.Curve, qBytes).Point,
-                        new ECDomainParameters(ecSpec.Curve, ecSpec.G, ecSpec.N, ecSpec.H, ecSpec.GetSeed()));
-
+                    ECPublicKeyParameters pubEC;
+                    try
+                    {
+                        pubEC = new ECPublicKeyParameters("ECDSA", new X9ECPoint(ecSpec.Curve, qBytes).Point, dId);
+                    }
+                    catch
+                    {
+                        throw new InvalidDataException(TextResources.SignBadPublic);
+                    }
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, pubEC, comment);
                     continue;
                 }
