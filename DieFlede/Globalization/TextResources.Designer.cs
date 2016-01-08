@@ -970,7 +970,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified path does not contain a valid public key..
+        ///   Looks up a localized string similar to The specified path does not contain a valid public or private key..
         /// </summary>
         internal static string SignBadPublic {
             get {
@@ -1056,15 +1056,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string SignNeedPrivate {
             get {
                 return ResourceManager.GetString("SignNeedPrivate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified filename contains a private key. A public key is needed..
-        /// </summary>
-        internal static string SignNeedPublic {
-            get {
-                return ResourceManager.GetString("SignNeedPublic", resourceCulture);
             }
         }
         

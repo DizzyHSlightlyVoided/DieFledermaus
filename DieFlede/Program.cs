@@ -250,7 +250,7 @@ namespace DieFledermaus.Cli
                     return Return(0, interactive);
             }
 
-            ICipherParameters keyObj;
+            AsymmetricKeyParameter keyObj;
 
             if (sigKey.IsSet)
             {
@@ -1132,7 +1132,9 @@ namespace DieFledermaus.Cli
             return false;
         }
 
-        private static ICipherParameters LoadKeyFile(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
+        internal const int BufferSize = 8192;
+
+        private static AsymmetricKeyParameter LoadKeyFile(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
         {
             if (!File.Exists(path))
             {
@@ -1142,15 +1144,15 @@ namespace DieFledermaus.Cli
 
             try
             {
-                const int bufferSize = 8192;
 
                 using (FileStream ms = File.OpenRead(path))
                 {
                     object keyObj = null;
+                    #region PEM
                     do
                     {
                         ms.Seek(0, SeekOrigin.Begin);
-                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
+                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, BufferSize, true))
                         {
                             PemReader reader = new PemReader(sr, new ClPassword(interactive));
                             try
@@ -1188,7 +1190,9 @@ namespace DieFledermaus.Cli
                         }
                     }
                     while (keyObj == null);
+                    #endregion
 
+                    #region PGP - Private Key
                     if (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
@@ -1256,7 +1260,9 @@ namespace DieFledermaus.Cli
 #endif
                         }
                     }
+                    #endregion
 
+                    #region PGP - Public Key
                     if (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
@@ -1300,13 +1306,15 @@ namespace DieFledermaus.Cli
 #endif
                         }
                     }
+                    #endregion
 
+                    #region OpenSSL .pub/authorized_keys
                     if (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
                         if (index == null) index = BigInteger.Zero;
 
-                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, bufferSize, true))
+                        using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, BufferSize, true))
                         {
                             BigInteger counter = BigInteger.ValueOf(-1);
                             foreach (Tuple<string, AsymmetricKeyParameter, string> curVal in AuthorizedKeysParser(sr))
@@ -1337,6 +1345,7 @@ namespace DieFledermaus.Cli
                             }
                         }
                     }
+                    #endregion
 
                     AsymmetricCipherKeyPair pair = keyObj as AsymmetricCipherKeyPair;
                     if (pair != null)
@@ -1377,7 +1386,7 @@ namespace DieFledermaus.Cli
 
                         if (singleRsa.IsPrivate)
                         {
-                            Console.Error.WriteLine(TextResources.SignNeedPublic);
+                            Console.Error.WriteLine(TextResources.SignBadPublic);
                             return null;
                         }
 
@@ -1398,7 +1407,7 @@ namespace DieFledermaus.Cli
 
                         if (singleDsa is DsaPublicKeyParameters)
                             return singleDsa;
-                        Console.Error.WriteLine(singleDsa.IsPrivate ? TextResources.SignNeedPublic : TextResources.SignBadPublic);
+                        Console.Error.WriteLine(TextResources.SignBadPublic);
                         return null;
                     }
 
@@ -1421,7 +1430,7 @@ namespace DieFledermaus.Cli
                     if (singleEcdsa is ECPublicKeyParameters)
                         return singleEcdsa;
 
-                    Console.Error.WriteLine(singleEcdsa.IsPrivate ? TextResources.SignNeedPublic : TextResources.SignBadPublic);
+                    Console.Error.WriteLine(TextResources.SignBadPublic);
                     return null;
                 }
             }
@@ -1543,14 +1552,14 @@ namespace DieFledermaus.Cli
             }
         }
 
-        private static int ReadInt(byte[] buffer, ref int curPos)
+        internal static int ReadInt(byte[] buffer, ref int curPos)
         {
             if (curPos + sizeof(int) > buffer.Length)
                 throw new InvalidDataException(TextResources.SignBadPublic);
             return (buffer[curPos++] << 24) | (buffer[curPos++] << 16) | (buffer[curPos++] << 8) | buffer[curPos++];
         }
 
-        private static string ReadString(byte[] buffer, ref int curPos)
+        internal static string ReadString(byte[] buffer, ref int curPos)
         {
             int len = ReadInt(buffer, ref curPos);
             if (len <= 0 || curPos + len > buffer.Length)
@@ -1560,7 +1569,7 @@ namespace DieFledermaus.Cli
             return returner;
         }
 
-        private static BigInteger ReadBigInteger(byte[] buffer, ref int curPos)
+        internal static BigInteger ReadBigInteger(byte[] buffer, ref int curPos)
         {
             int len = ReadInt(buffer, ref curPos);
             if (len <= 0 || curPos + len > buffer.Length)
@@ -1570,7 +1579,7 @@ namespace DieFledermaus.Cli
             return returner;
         }
 
-        private static byte[] ReadBuffer(byte[] buffer, ref int curPos)
+        internal static byte[] ReadBuffer(byte[] buffer, ref int curPos)
         {
             int len = ReadInt(buffer, ref curPos);
             if (len <= 0 || curPos + len > buffer.Length)

@@ -499,7 +499,7 @@
     <value>Incorrect password.</value>
   </data>
   <data name="SignBadPublic" xml:space="preserve">
-    <value>The specified path does not contain a valid public key.</value>
+    <value>The specified path does not contain a valid public or private key.</value>
   </data>
   <data name="HelpIndex" xml:space="preserve">
     <value>index</value>
@@ -544,9 +544,6 @@
   </data>
   <data name="SignNeedPrivate" xml:space="preserve">
     <value>The specified filename contains a public key. A private key is needed.</value>
-  </data>
-  <data name="SignNeedPublic" xml:space="preserve">
-    <value>The specified filename contains a private key. A public key is needed.</value>
   </data>
   <data name="SignRSAUnverified" xml:space="preserve">
     <value>RSA signature was NOT successfully verified for entry {0}</value>
