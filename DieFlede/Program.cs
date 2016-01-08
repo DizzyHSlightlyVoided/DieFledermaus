@@ -1144,10 +1144,53 @@ namespace DieFledermaus.Cli
 
             try
             {
-
                 using (FileStream ms = File.OpenRead(path))
                 {
                     object keyObj = null;
+                    #region PuTTY .ppk
+                    if (keyObj == null)
+                    {
+                        ms.Seek(0, SeekOrigin.Begin);
+                        PuttyPpkReader reader = new PuttyPpkReader(ms, new ClPassword(interactive));
+
+                        try
+                        {
+                            if (reader.Init())
+                            {
+                                if (getPrivate)
+                                {
+                                    if (!reader.EncType.Equals("none", StringComparison.Ordinal))
+                                        Console.WriteLine(reader.Comment);
+
+                                    do
+                                    {
+                                        try
+                                        {
+                                            keyObj = reader.ReadKeyPair().Private;
+                                        }
+                                        catch (InvalidCipherTextException)
+                                        {
+                                            Console.WriteLine(TextResources.BadPassword);
+                                        }
+                                    }
+                                    while (keyObj == null);
+                                }
+                                else keyObj = reader.ReadPublicKey();
+
+                                if (index != null && index.CompareTo(BigInteger.Zero) != 0)
+                                {
+                                    Console.Error.WriteLine(TextResources.IndexFile, index);
+                                    return null;
+                                }
+                            }
+                        }
+                        catch (InvalidDataException)
+                        {
+                            Console.Error.WriteLine(getPrivate ? TextResources.SignBadPrivate : TextResources.SignBadPublic);
+                        }
+                    }
+                    #endregion
+
                     #region PEM
                     do
                     {
@@ -1476,79 +1519,90 @@ namespace DieFledermaus.Cli
 
                 if (type.Equals("ssh-rsa", StringComparison.Ordinal))
                 {
-                    BigInteger exp = ReadBigInteger(buffer, ref curPos);
-                    BigInteger mod = ReadBigInteger(buffer, ref curPos);
-                    if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
-
-                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, new RsaKeyParameters(false, mod, exp), comment);
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadRSAParams(buffer, ref curPos), comment);
                     continue;
                 }
                 if (type.Equals("ssh-dss", StringComparison.Ordinal))
                 {
-                    BigInteger p = ReadBigInteger(buffer, ref curPos);
-                    BigInteger q = ReadBigInteger(buffer, ref curPos);
-                    BigInteger g = ReadBigInteger(buffer, ref curPos);
-                    BigInteger y = ReadBigInteger(buffer, ref curPos);
-                    if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
-
-                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, new DsaPublicKeyParameters(y, new DsaParameters(p, q, g)), comment);
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadDSAParams(buffer, ref curPos), comment);
                     continue;
                 }
                 if (type.StartsWith("ecdsa-sha2-", StringComparison.OrdinalIgnoreCase))
                 {
-                    string s = ReadString(buffer, ref curPos);
-                    byte[] qBytes = ReadBuffer(buffer, ref curPos);
-
-                    const int typePrefixLen = 11;
-                    if (curPos != buffer.Length || !type.Substring(typePrefixLen).Equals(s, StringComparison.OrdinalIgnoreCase))
-                        throw new InvalidDataException(TextResources.SignBadPublic);
-
-                    X9ECParameters ecSpec;
-                    DerObjectIdentifier dId;
-
-                    if (s.StartsWith("nistp", StringComparison.OrdinalIgnoreCase))
-                    {
-                        dId = NistNamedCurves.GetOid("P-" + s.Substring(5));
-                        ecSpec = NistNamedCurves.GetByOid(dId);
-                        if (ecSpec == null)
-                            throw new InvalidDataException(TextResources.SignBadPublic);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            dId = new DerObjectIdentifier(s);
-                        }
-                        catch
-                        {
-                            throw new InvalidDataException(TextResources.SignBadPublic);
-                        }
-
-                        ecSpec = ECNamedCurveTable.GetByOid(dId);
-
-                        if (ecSpec == null)
-                        {
-                            ecSpec = CustomNamedCurves.GetByOid(dId);
-
-                            if (ecSpec == null)
-                                throw new InvalidDataException(TextResources.UnknownCurve);
-                        }
-                    }
-
-                    ECPublicKeyParameters pubEC;
-                    try
-                    {
-                        pubEC = new ECPublicKeyParameters("ECDSA", new X9ECPoint(ecSpec.Curve, qBytes).Point, dId);
-                    }
-                    catch
-                    {
-                        throw new InvalidDataException(TextResources.SignBadPublic);
-                    }
-                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, pubEC, comment);
+                    yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadECParams(type, buffer, ref curPos), comment);
                     continue;
                 }
 
                 yield return new Tuple<string, AsymmetricKeyParameter, string>(type, null, comment);
+            }
+        }
+
+        internal static RsaKeyParameters ReadRSAParams(byte[] buffer, ref int curPos)
+        {
+            BigInteger exp = ReadBigInteger(buffer, ref curPos);
+            BigInteger mod = ReadBigInteger(buffer, ref curPos);
+            if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
+            return new RsaKeyParameters(false, mod, exp);
+        }
+
+        internal static DsaPublicKeyParameters ReadDSAParams(byte[] buffer, ref int curPos)
+        {
+            BigInteger p = ReadBigInteger(buffer, ref curPos);
+            BigInteger q = ReadBigInteger(buffer, ref curPos);
+            BigInteger g = ReadBigInteger(buffer, ref curPos);
+            BigInteger y = ReadBigInteger(buffer, ref curPos);
+            if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
+            return new DsaPublicKeyParameters(y, new DsaParameters(p, g, g));
+        }
+
+        internal static ECPublicKeyParameters ReadECParams(string type, byte[] buffer, ref int curPos)
+        {
+            string s = ReadString(buffer, ref curPos);
+            byte[] qBytes = ReadBuffer(buffer, ref curPos);
+
+            const int typePrefixLen = 11;
+            if (curPos != buffer.Length || !type.Substring(typePrefixLen).Equals(s, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException(TextResources.SignBadPublic);
+
+            X9ECParameters ecSpec;
+            DerObjectIdentifier dId;
+
+            if (s.StartsWith("nistp", StringComparison.OrdinalIgnoreCase))
+            {
+                dId = NistNamedCurves.GetOid("P-" + s.Substring(5));
+                ecSpec = NistNamedCurves.GetByOid(dId);
+                if (ecSpec == null)
+                    throw new InvalidDataException(TextResources.SignBadPublic);
+            }
+            else
+            {
+                try
+                {
+                    dId = new DerObjectIdentifier(s);
+                }
+                catch
+                {
+                    throw new InvalidDataException(TextResources.SignBadPublic);
+                }
+
+                ecSpec = ECNamedCurveTable.GetByOid(dId);
+
+                if (ecSpec == null)
+                {
+                    ecSpec = CustomNamedCurves.GetByOid(dId);
+
+                    if (ecSpec == null)
+                        throw new InvalidDataException(TextResources.UnknownCurve);
+                }
+            }
+
+            try
+            {
+                return new ECPublicKeyParameters("ECDSA", new X9ECPoint(ecSpec.Curve, qBytes).Point, dId);
+            }
+            catch
+            {
+                throw new InvalidDataException(TextResources.SignBadPublic);
             }
         }
 
