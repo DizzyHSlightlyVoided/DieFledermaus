@@ -52,6 +52,10 @@ namespace DieFledermaus.Cli
 {
     internal static class Program
     {
+        internal const string KeyFmtRSA = "ssh-rsa";
+        internal const string KeyFmtDSA = "ssh-dss";
+        internal const string KeyFmtECDSA = "ecdsa-sha2-";
+
         [STAThread]
         private static int Main(string[] args)
         {
@@ -1516,17 +1520,17 @@ namespace DieFledermaus.Cli
                 if (type.Length > 64 || type != ReadString(buffer, ref curPos))
                     throw new InvalidDataException(TextResources.SignBadPublic);
 
-                if (type.Equals("ssh-rsa", StringComparison.Ordinal))
+                if (type.Equals(KeyFmtRSA, StringComparison.Ordinal))
                 {
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadRSAParams(buffer, ref curPos), comment);
                     continue;
                 }
-                if (type.Equals("ssh-dss", StringComparison.Ordinal))
+                if (type.Equals(KeyFmtDSA, StringComparison.Ordinal))
                 {
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadDSAParams(buffer, ref curPos), comment);
                     continue;
                 }
-                if (type.StartsWith("ecdsa-sha2-", StringComparison.OrdinalIgnoreCase))
+                if (type.StartsWith(KeyFmtECDSA, StringComparison.OrdinalIgnoreCase))
                 {
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadECParams(type, buffer, ref curPos), comment);
                     continue;

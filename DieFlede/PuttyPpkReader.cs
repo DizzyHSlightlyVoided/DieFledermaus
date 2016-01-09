@@ -69,8 +69,6 @@ namespace DieFledermaus.Cli
         internal const string PrivMacHead = "Private-MAC: ";
         internal const string EncFmtNone = "none";
         internal const string EncFmtAes = "aes256-cbc";
-        internal const string KeyFmtRSA = "ssh-rsa";
-        internal const string KeyFmtDSA = "ssh-dss";
         internal const int LineLen = 64;
 
         internal const string PpkFileHeader1 = "SSH PRIVATE KEY FILE FORMAT 1.1";
@@ -98,7 +96,8 @@ namespace DieFledermaus.Cli
                 else
                 {
                     string keyType = line.Substring(PpkFileHeader2.Length);
-                    if (keyType.Equals(KeyFmtRSA, StringComparison.Ordinal) || keyType.Equals(KeyFmtDSA, StringComparison.Ordinal))
+                    if (keyType.Equals(Program.KeyFmtRSA, StringComparison.Ordinal) || keyType.Equals(Program.KeyFmtDSA, StringComparison.Ordinal) ||
+                        keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
                         _keyType = keyType;
                     else
                         throw new InvalidDataException();
@@ -165,8 +164,10 @@ namespace DieFledermaus.Cli
             if (!type.Equals(_keyType, StringComparison.Ordinal))
                 throw new InvalidDataException();
 
-            if (_keyType.Equals(KeyFmtRSA, StringComparison.Ordinal))
+            if (_keyType.Equals(Program.KeyFmtRSA, StringComparison.Ordinal))
                 return Program.ReadRSAParams(_pubBytes, ref offset);
+            if (_keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
+                return Program.ReadECParams(_keyType, _pubBytes, ref offset);
 
             return Program.ReadDSAParams(_pubBytes, ref offset);
         }
@@ -213,7 +214,7 @@ namespace DieFledermaus.Cli
             AsymmetricKeyParameter pubKey = ReadPublicKey();
             if (pubKey == null) throw new InvalidDataException();
 
-            if (_keyType.Equals(KeyFmtRSA, StringComparison.Ordinal))
+            if (_keyType.Equals(Program.KeyFmtRSA, StringComparison.Ordinal))
             {
                 RsaKeyParameters pubRsa = (RsaKeyParameters)pubKey;
                 RsaPrivateCrtKeyParameters privRsa;
@@ -241,6 +242,15 @@ namespace DieFledermaus.Cli
                 privRsa = new RsaPrivateCrtKeyParameters(pubRsa.Modulus, pubRsa.Exponent, privEx, p, q, dP, dQ, qInv);
 
                 return new AsymmetricCipherKeyPair(pubRsa, privRsa);
+            }
+            else if (_keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
+            {
+                ECPublicKeyParameters pubEC = (ECPublicKeyParameters)pubKey;
+                int offset = 0;
+                BigInteger d = Program.ReadBigInteger(_privBytes, ref offset);
+                ECPrivateKeyParameters privEC = new ECPrivateKeyParameters(d, pubEC.Parameters);
+
+                return new AsymmetricCipherKeyPair(pubEC, privEC);
             }
             else
             {
