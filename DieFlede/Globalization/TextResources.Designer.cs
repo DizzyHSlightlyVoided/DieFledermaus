@@ -97,6 +97,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to PuTTY .ppk version 1.1 is unsupported. Please use a PuTTY.ppk version 2 key file..
+        /// </summary>
+        internal static string BadPpkVersion {
+            get {
+                return ResourceManager.GetString("BadPpkVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         internal static string Cancel {

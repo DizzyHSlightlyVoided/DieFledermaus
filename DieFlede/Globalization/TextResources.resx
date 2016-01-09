@@ -577,4 +577,7 @@
   <data name="SignRSAArchiveVerified" xml:space="preserve">
     <value>RSA signature was successfully verified for the archive.</value>
   </data>
+  <data name="BadPpkVersion" xml:space="preserve">
+    <value>PuTTY .ppk version 1.1 is unsupported. Please use a PuTTY.ppk version 2 key file.</value>
+  </data>
 </root>

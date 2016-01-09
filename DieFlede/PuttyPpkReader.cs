@@ -73,6 +73,8 @@ namespace DieFledermaus.Cli
         internal const string KeyFmtDSA = "ssh-dss";
         internal const int LineLen = 64;
 
+        internal const string PpkFileHeader1 = "SSH PRIVATE KEY FILE FORMAT 1.1";
+
         private string _comment;
         public string Comment { get { return _comment; } }
         private string _encType;
@@ -89,7 +91,9 @@ namespace DieFledermaus.Cli
             {
                 string line = reader.ReadLine();
 
-                if (!line.StartsWith(PpkFileHeader2, StringComparison.Ordinal))
+                if (line.Equals(PpkFileHeader1, StringComparison.OrdinalIgnoreCase))
+                    throw new NotSupportedException(TextResources.BadPpkVersion);
+                else if (!line.StartsWith(PpkFileHeader2, StringComparison.Ordinal))
                     return false;
                 else
                 {

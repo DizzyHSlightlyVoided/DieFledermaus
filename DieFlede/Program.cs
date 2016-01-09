@@ -1192,7 +1192,7 @@ namespace DieFledermaus.Cli
                     #endregion
 
                     #region PEM
-                    do
+                    while (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
                         using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, BufferSize, true))
@@ -1232,7 +1232,6 @@ namespace DieFledermaus.Cli
                             }
                         }
                     }
-                    while (keyObj == null);
                     #endregion
 
                     #region PGP - Private Key
