@@ -1555,7 +1555,7 @@ namespace DieFledermaus.Cli
             BigInteger g = ReadBigInteger(buffer, ref curPos);
             BigInteger y = ReadBigInteger(buffer, ref curPos);
             if (curPos != buffer.Length) throw new InvalidDataException(TextResources.SignBadPublic);
-            return new DsaPublicKeyParameters(y, new DsaParameters(p, g, g));
+            return new DsaPublicKeyParameters(y, new DsaParameters(p, q, g));
         }
 
         internal static ECPublicKeyParameters ReadECParams(string type, byte[] buffer, ref int curPos)
@@ -1570,7 +1570,8 @@ namespace DieFledermaus.Cli
             X9ECParameters ecSpec;
             DerObjectIdentifier dId;
 
-            if (s.StartsWith("nistp", StringComparison.OrdinalIgnoreCase))
+            if (s.Equals("nistp256", StringComparison.Ordinal) || s.Equals("nitsp384", StringComparison.Ordinal) ||
+                s.Equals("nistp521", StringComparison.Ordinal))
             {
                 dId = NistNamedCurves.GetOid("P-" + s.Substring(5));
                 ecSpec = NistNamedCurves.GetByOid(dId);

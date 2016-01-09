@@ -159,6 +159,14 @@ namespace DieFledermaus.Cli
 
         public AsymmetricKeyParameter ReadPublicKey()
         {
+            if (_encType.Equals(EncFmtNone, StringComparison.Ordinal))
+                return ReadKeyPair().Public;
+
+            return _readPublicKey();
+        }
+
+        private AsymmetricKeyParameter _readPublicKey()
+        {
             int offset = 0;
             string type = Program.ReadString(_pubBytes, ref offset);
             if (!type.Equals(_keyType, StringComparison.Ordinal))
@@ -211,7 +219,7 @@ namespace DieFledermaus.Cli
                 }
             }
 
-            AsymmetricKeyParameter pubKey = ReadPublicKey();
+            AsymmetricKeyParameter pubKey = _readPublicKey();
             if (pubKey == null) throw new InvalidDataException();
 
             if (_keyType.Equals(Program.KeyFmtRSA, StringComparison.Ordinal))
@@ -224,10 +232,11 @@ namespace DieFledermaus.Cli
                 BigInteger p = Program.ReadBigInteger(_privBytes, ref offset);
                 BigInteger q = Program.ReadBigInteger(_privBytes, ref offset);
                 BigInteger qInv = Program.ReadBigInteger(_privBytes, ref offset);
-                if (qInv.CompareTo(q.ModInverse(p)) != 0)
-                    throw new InvalidDataException();
 
                 if (offset < _privBytes.Length && _encType.Equals(EncFmtNone, StringComparison.Ordinal))
+                    throw new InvalidDataException();
+
+                if (qInv.CompareTo(q.ModInverse(p)) != 0 || pubRsa.Modulus.CompareTo(p.Multiply(q)) != 0)
                     throw new InvalidDataException();
 
                 BigInteger pSub1 = p.Subtract(BigInteger.One);
@@ -248,19 +257,27 @@ namespace DieFledermaus.Cli
                 ECPublicKeyParameters pubEC = (ECPublicKeyParameters)pubKey;
                 int offset = 0;
                 BigInteger d = Program.ReadBigInteger(_privBytes, ref offset);
+
+                if (!pubEC.Q.Equals(new Org.BouncyCastle.Math.EC.Multiplier.FixedPointCombMultiplier().Multiply(pubEC.Parameters.G, d)))
+                    throw new InvalidDataException();
+
                 ECPrivateKeyParameters privEC = new ECPrivateKeyParameters(d, pubEC.Parameters);
 
                 return new AsymmetricCipherKeyPair(pubEC, privEC);
             }
-            else
+            else //DSA
             {
                 DsaPublicKeyParameters pubDsa = (DsaPublicKeyParameters)pubKey;
                 DsaPrivateKeyParameters privDsa;
                 {
                     int offset = 0;
-                    BigInteger x = Program.ReadBigInteger(_pubBytes, ref offset);
+                    BigInteger x = Program.ReadBigInteger(_privBytes, ref offset);
                     if (offset < _privBytes.Length && _encType.Equals(EncFmtNone, StringComparison.Ordinal))
                         throw new InvalidDataException();
+
+                    if (pubDsa.Y.CompareTo(pubDsa.Parameters.G.ModPow(x, pubDsa.Parameters.P)) != 0)
+                        throw new InvalidDataException();
+
                     privDsa = new DsaPrivateKeyParameters(x, pubDsa.Parameters);
                 }
                 return new AsymmetricCipherKeyPair(pubDsa, privDsa);
