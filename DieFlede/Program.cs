@@ -245,12 +245,12 @@ namespace DieFledermaus.Cli
                 }
             }
 
-            if ((help.IsSet && !acting) || args.Length == 0)
+            if (help.IsSet || args.Length == 0)
             {
                 bool showFull = help.IsSet && !acting;
 
                 ShowHelp(clParams, showFull);
-                if (showFull)
+                if (showFull || args.Length == 0)
                     return Return(0, interactive);
             }
 
