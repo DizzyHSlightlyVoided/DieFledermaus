@@ -47,6 +47,7 @@ using Org.BouncyCastle.Crypto.EC;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Utilities.Encoders;
 
 namespace DieFledermaus.Cli
 {
@@ -310,7 +311,7 @@ namespace DieFledermaus.Cli
                             if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
                                 return -3;
 
-                            if (CreateEncrypted(cEncFmt, out encFormat, out ssPassword))
+                            if (CreateEncrypted(cEncFmt, interactive, out encFormat, out ssPassword))
                                 return -4;
 
                             if (archiveFile.Value == null)
@@ -407,7 +408,7 @@ namespace DieFledermaus.Cli
                             return -3;
 
                         MausEncryptionFormat encFormat = MausEncryptionFormat.None;
-                        if (CreateEncrypted(cEncFmt, out encFormat, out ssPassword))
+                        if (CreateEncrypted(cEncFmt, interactive, out encFormat, out ssPassword))
                             return -4;
 
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
@@ -482,7 +483,7 @@ namespace DieFledermaus.Cli
 
                         Console.WriteLine(TextResources.EncryptedEx);
 
-                        if (EncryptionPrompt(dz, dz.EncryptionFormat, out ssPassword))
+                        if (EncryptionPrompt(dz, interactive, out ssPassword))
                             return -4;
                     }
 
@@ -803,7 +804,7 @@ namespace DieFledermaus.Cli
             if (ssPassword == null)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, entry.EncryptionFormat, out ssPassword);
+                return EncryptionPrompt(entry, interactive, out ssPassword);
             }
 
             try
@@ -816,7 +817,7 @@ namespace DieFledermaus.Cli
             catch (CryptoException)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, entry.EncryptionFormat, out ssPassword);
+                return EncryptionPrompt(entry, interactive, out ssPassword);
             }
         }
 
@@ -833,14 +834,14 @@ namespace DieFledermaus.Cli
             return string.Format(TextResources.ListEncryptedEntry, i + 1);
         }
 
-        private static bool CreateEncrypted(ClParamEnum<MausEncryptionFormat> cEncFmt, out MausEncryptionFormat encFormat, out string ssPassword)
+        private static bool CreateEncrypted(ClParamEnum<MausEncryptionFormat> cEncFmt, ClParamFlag interactive, out MausEncryptionFormat encFormat, out string ssPassword)
         {
             encFormat = MausEncryptionFormat.None;
             if (cEncFmt.IsSet) //Only true if Interactive is also true
             {
                 encFormat = cEncFmt.Value.Value;
 
-                if (EncryptionPrompt(null, encFormat, out ssPassword))
+                if (EncryptionPrompt(null, interactive, out ssPassword))
                     return true;
                 return false;
             }
@@ -952,71 +953,43 @@ namespace DieFledermaus.Cli
             return false;
         }
 
-        private static bool EncryptionPrompt(IMausCrypt ds, MausEncryptionFormat encFormat, out string ss)
+        private static bool EncryptionPrompt(IMausCrypt ds, ClParamFlag interactive, out string ss)
         {
             bool notFound1 = true;
             ss = null;
             do
             {
-                Console.WriteLine();
-                Console.WriteLine();
-                Console.WriteLine("1. " + TextResources.EncryptedPrompt1Pwd);
-                Console.WriteLine("2. " + TextResources.Cancel);
-                Console.Write("> ");
-
-                string line = Console.ReadLine().Trim(' ', '.');
-                if (line.Length != 1) continue;
-
-                switch (line[0])
+                try
                 {
-                    case '1':
-                        Console.Write(TextResources.EncryptedPrompt1Pwd + ":");
-                        List<char> charList = new List<char>();
-                        ConsoleKeyInfo cKey;
-                        do
-                        {
-                            cKey = Console.ReadKey();
-
-                            if (cKey.Key == ConsoleKey.Backspace)
-                            {
-                                Console.Write(":");
-                                if (charList.Count > 0)
-                                    charList.RemoveAt(ss.Length - 1);
-                            }
-                            else if (cKey.Key != ConsoleKey.Enter)
-                            {
-                                Console.Write("\b \b");
-                                charList.Add(cKey.KeyChar);
-                            }
-                        }
-                        while (cKey.Key != ConsoleKey.Enter);
-                        Console.WriteLine();
-                        ss = new string(charList.ToArray());
-
-                        if (ss.Length == 0)
-                        {
-                            Console.WriteLine(TextResources.PasswordZeroLength);
-                            continue;
-                        }
-
-                        if (ds == null)
-                            Console.WriteLine(TextResources.KeepSecret);
-                        else
-                            ds.Password = ss;
-                        break;
-                    case '2':
-                        return true;
-                    default:
-                        continue;
+                    ss = new string(new ClPassword(interactive, null).GetPassword());
                 }
+                catch (PasswordCancelledException)
+                {
+                    return true;
+                }
+
                 if (ds == null)
+                {
+                    Console.WriteLine(TextResources.KeepSecret);
                     notFound1 = false;
+                }
                 else
                 {
                     try
                     {
+                        ds.Key = Hex.Decode(Encoding.UTF8.GetBytes(ss));
                         ds.Decrypt();
                         return false;
+                    }
+                    catch
+                    {
+                        ds.Key = null;
+                    }
+                    try
+                    {
+                        ds.Password = ss;
+                        ds.Decrypt();
+                        notFound1 = false;
                     }
                     catch (CryptoException)
                     {
@@ -1155,7 +1128,7 @@ namespace DieFledermaus.Cli
                     if (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
-                        PuttyPpkReader reader = new PuttyPpkReader(ms, new ClPassword(interactive));
+                        PuttyPpkReader reader = new PuttyPpkReader(ms, new ClPassword(interactive, null));
 
                         try
                         {
@@ -1164,7 +1137,11 @@ namespace DieFledermaus.Cli
                                 if (getPrivate)
                                 {
                                     if (!reader.EncType.Equals("none", StringComparison.Ordinal))
-                                        Console.WriteLine(reader.Comment);
+                                    {
+                                        Console.WriteLine(TextResources.KeyFile, path);
+                                        if (!string.IsNullOrWhiteSpace(reader.Comment))
+                                            Console.WriteLine(reader.Comment);
+                                    }
 
                                     do
                                     {
@@ -1196,12 +1173,13 @@ namespace DieFledermaus.Cli
                     #endregion
 
                     #region PEM
+                    bool seen = false;
                     while (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
                         using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, BufferSize, true))
                         {
-                            PemReader reader = new PemReader(sr, new ClPassword(interactive));
+                            PemReader reader = new PemReader(sr, new ClPassword(interactive, seen ? null : path));
                             try
                             {
                                 keyObj = reader.ReadObject();
@@ -1215,6 +1193,7 @@ namespace DieFledermaus.Cli
                             }
                             catch (InvalidCipherTextException)
                             {
+                                seen = true;
                                 Console.Error.WriteLine(TextResources.BadPassword);
                                 continue;
                             }
@@ -1270,18 +1249,20 @@ namespace DieFledermaus.Cli
                                     keyObj = privKey.Key;
                                 }
 
+                                seen = false;
                                 do
                                 {
                                     char[] password = null;
                                     try
                                     {
-                                        password = new ClPassword(interactive).GetPassword();
+                                        password = new ClPassword(interactive, seen ? null : path).GetPassword();
                                         PgpPrivateKey privKey = pKey.ExtractPrivateKeyUtf8(password);
 
                                         keyObj = privKey.Key;
                                     }
                                     catch (PgpException)
                                     {
+                                        seen = true;
                                         if (password != null && password.Length == 0)
                                             return null;
                                         Console.Error.WriteLine(TextResources.BadPassword);
@@ -1480,6 +1461,10 @@ namespace DieFledermaus.Cli
                     return null;
                 }
             }
+            catch (PasswordCancelledException)
+            {
+                return null;
+            }
             catch (Exception x)
             {
                 Console.Error.WriteLine(x.Message);
@@ -1653,10 +1638,12 @@ namespace DieFledermaus.Cli
     internal class ClPassword : IPasswordFinder
     {
         private ClParam _interactive;
+        private string _path;
 
-        public ClPassword(ClParam interactive)
+        public ClPassword(ClParamFlag interactive, string path)
         {
             _interactive = interactive;
+            _path = path;
         }
 
         public char[] GetPassword()
@@ -1665,7 +1652,12 @@ namespace DieFledermaus.Cli
                 throw new InvalidDataException(TextResources.NoPassword);
 
             List<char> charList = new List<char>();
-            Console.WriteLine(TextResources.NoPassword);
+            if (!string.IsNullOrWhiteSpace(_path))
+            {
+                Console.WriteLine(TextResources.KeyFile, _path);
+                _path = null;
+            }
+            Console.WriteLine(TextResources.PasswordPrompt);
             Console.Write("> ");
 
             ConsoleKeyInfo c;
@@ -1685,7 +1677,14 @@ namespace DieFledermaus.Cli
             }
             Console.WriteLine(">");
 
+            if (charList.Count == 0)
+                throw new PasswordCancelledException();
+
             return charList.ToArray();
         }
+    }
+
+    internal class PasswordCancelledException : Exception
+    {
     }
 }

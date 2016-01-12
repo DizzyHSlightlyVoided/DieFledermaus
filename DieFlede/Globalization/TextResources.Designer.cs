@@ -187,15 +187,6 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter password.
-        /// </summary>
-        internal static string EncryptedPrompt1Pwd {
-            get {
-                return ResourceManager.GetString("EncryptedPrompt1Pwd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Encryption can only be used in interactive mode..
         /// </summary>
         internal static string EncryptionNoOpts {
@@ -511,6 +502,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Key file: {0}.
+        /// </summary>
+        internal static string KeyFile {
+            get {
+                return ResourceManager.GetString("KeyFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to (Encrypted file #{0}).
         /// </summary>
         internal static string ListEncryptedEntry {
@@ -736,11 +736,11 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The password must have at least one character..
+        ///   Looks up a localized string similar to Enter password. Leave blank to cancel..
         /// </summary>
-        internal static string PasswordZeroLength {
+        internal static string PasswordPrompt {
             get {
-                return ResourceManager.GetString("PasswordZeroLength", resourceCulture);
+                return ResourceManager.GetString("PasswordPrompt", resourceCulture);
             }
         }
         

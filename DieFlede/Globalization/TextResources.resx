@@ -318,8 +318,8 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="EncryptedPrompt1Pwd" xml:space="preserve">
-    <value>Enter password</value>
+  <data name="PasswordPrompt" xml:space="preserve">
+    <value>Enter password. Leave blank to cancel.</value>
   </data>
   <data name="EncryptedBadKey" xml:space="preserve">
     <value>The key or password is incorrect!</value>
@@ -340,9 +340,6 @@
   </data>
   <data name="Completed" xml:space="preserve">
     <value>All operations completed successfully.</value>
-  </data>
-  <data name="PasswordZeroLength" xml:space="preserve">
-    <value>The password must have at least one character.</value>
   </data>
   <data name="TimeCGet" xml:space="preserve">
     <value>Unable to read file's creation time: {0}</value>
@@ -579,5 +576,9 @@
   </data>
   <data name="BadPpkVersion" xml:space="preserve">
     <value>PuTTY .ppk version 1.1 is unsupported. Please use a PuTTY.ppk version 2 key file.</value>
+  </data>
+  <data name="KeyFile" xml:space="preserve">
+    <value>Key file: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
 </root>
