@@ -261,7 +261,7 @@ namespace DieFledermaus.Cli
                 if (!pubEC.Q.Equals(new Org.BouncyCastle.Math.EC.Multiplier.FixedPointCombMultiplier().Multiply(pubEC.Parameters.G, d)))
                     throw new InvalidDataException();
 
-                ECPrivateKeyParameters privEC = new ECPrivateKeyParameters(d, pubEC.Parameters);
+                ECPrivateKeyParameters privEC = new ECPrivateKeyParameters(pubEC.AlgorithmName, d, pubEC.PublicKeyParamSet);
 
                 return new AsymmetricCipherKeyPair(pubEC, privEC);
             }
