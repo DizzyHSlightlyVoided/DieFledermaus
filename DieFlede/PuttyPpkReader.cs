@@ -284,31 +284,29 @@ namespace DieFledermaus.Cli
             }
         }
 
+        private static readonly byte[] _keyZero = new byte[4], _keyOne = { 0, 0, 0, 1 };
+
         internal static byte[] GetKey(string passphrase)
         {
-            Sha1Digest keyDigest1 = new Sha1Digest();
+            byte[] passBytes = Encoding.UTF8.GetBytes(passphrase);
             byte[] bothDigests;
-            {
-                byte[] block1 = Encoding.UTF8.GetBytes("\0\0\0\0" + passphrase);
-                Sha1Digest digest = new Sha1Digest();
-                digest.BlockUpdate(block1, 0, block1.Length);
 
-                bothDigests = new byte[digest.GetDigestSize() << 1];
-                digest.DoFinal(bothDigests, 0);
-            }
-            {
-                byte[] block2 = Encoding.UTF8.GetBytes("\0\0\0\u0001" + passphrase);
-                Sha1Digest digest = new Sha1Digest();
-                digest.BlockUpdate(block2, 0, block2.Length);
+            Sha1Digest digest = new Sha1Digest();
+            digest.BlockUpdate(_keyZero, 0, 4);
+            digest.BlockUpdate(passBytes, 0, passBytes.Length);
+            bothDigests = new byte[digest.GetDigestSize() << 1];
+            digest.DoFinal(bothDigests, 0);
 
-                digest.DoFinal(bothDigests, digest.GetDigestSize());
-            }
+            digest.Reset();
+            digest.BlockUpdate(_keyOne, 0, 4);
+            digest.BlockUpdate(passBytes, 0, passBytes.Length);
+
+            digest.DoFinal(bothDigests, digest.GetDigestSize());
 
             byte[] key = new byte[32];
             Array.Copy(bothDigests, key, 32);
             return key;
         }
-
 
         internal static byte[] GetMac(string passphrase, string _keyType, string _encType, string _comment, byte[] _pubBytes, byte[] _privBytes)
         {
@@ -324,16 +322,11 @@ namespace DieFledermaus.Cli
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(ms))
             {
-                WriteBigEndian(writer, _keyType.Length);
-                writer.Write(_keyType.ToCharArray());
-                WriteBigEndian(writer, _encType.Length);
-                writer.Write(_encType.ToCharArray());
-                WriteBigEndian(writer, _comment.Length);
-                writer.Write(_comment.ToCharArray());
-                WriteBigEndian(writer, _pubBytes.Length);
-                writer.Write(_pubBytes);
-                WriteBigEndian(writer, _privBytes.Length);
-                writer.Write(_privBytes);
+                WriteBigEndian(writer, _keyType);
+                WriteBigEndian(writer, _encType);
+                WriteBigEndian(writer, _comment);
+                WriteBigEndian(writer, _pubBytes);
+                WriteBigEndian(writer, _privBytes);
                 blob = ms.ToArray();
             }
 
@@ -347,9 +340,28 @@ namespace DieFledermaus.Cli
             return output;
         }
 
-        internal static void WriteBigEndian(BinaryWriter writer, int value)
+        private static void WriteBigEndian(BinaryWriter writer, int value)
         {
             writer.Write(new byte[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value });
+        }
+
+        private static void WriteBigEndian(BinaryWriter writer, byte[] value)
+        {
+            WriteBigEndian(writer, value.Length);
+            writer.Write(value);
+        }
+
+        private static void WriteBigEndian(BinaryWriter writer, BigInteger value)
+        {
+            byte[] exp = value.ToByteArray();
+            WriteBigEndian(writer, exp.Length);
+            writer.Write(exp);
+        }
+
+        private static void WriteBigEndian(BinaryWriter writer, string value)
+        {
+            WriteBigEndian(writer, Encoding.UTF8.GetByteCount(value));
+            writer.Write(value.ToCharArray());
         }
 
         private byte[] ReadLines(int lineCount, StreamReader reader)
