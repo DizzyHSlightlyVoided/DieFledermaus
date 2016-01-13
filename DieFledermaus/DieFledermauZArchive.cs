@@ -316,6 +316,9 @@ namespace DieFledermaus
 
                 string path = GetString(reader, ref curOffset);
 
+                if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal) && index != entryCount - 1)
+                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
+
                 curOffset += (sizeof(int) + sizeof(long));
 
                 entries[index] = LoadMausStream(reader.BaseStream, path, true, index, curBaseOffset, ref curOffset);

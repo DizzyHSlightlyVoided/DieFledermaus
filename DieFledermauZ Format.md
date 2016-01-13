@@ -94,7 +94,7 @@ If the filename is encrypted on an individual basis, the **Entry Filename** in b
 
 Signature Manitest
 ------------------
-For further security, an end user may specify that an archive will include a **file manifest**, a file named "/Manifest.dat" (`2f 4d 61 6e 69 66 65 73 74 2e 64 61 74`), which bypasses the usual filename validation and which must be signed, but which is otherwise just like any other file entry. The purpose of this is to protect the validity of the archive itself; without a signature for the entire archive, an attacker might transmit previously-signed valid entries and try to pass them off collectively as a valid archive.
+For further security, an end user may specify that an archive will include a **file manifest**, a file named "/Manifest.dat" (`2f 4d 61 6e 69 66 65 73 74 2e 64 61 74`), which bypasses the usual filename validation and which must be signed, but which is otherwise just like any other file entry. The purpose of this is to protect the validity of the archive itself; without a signature for the entire archive, an attacker might transmit previously-signed valid entries and try to pass them off collectively as a valid archive. The Entry ID of the file manifest must be the highest in the file (i.e. the same as the number of non-manifest files in the archive), and an encoder should always add it to the end of the archive.
 
 The structure of the signature manifest is as follows:
 
@@ -108,4 +108,5 @@ The structure of the signature manifest is as follows:
 
 The manifest must include every file listed in the archive *except* the manifest itself. It must not be compressed, encrypted (apart from encrypting the entire archive), or contain any other entries in its **Format** except the file path.
 
-A decoder which detects an invalid manifest file must treat the archive itself as invalid, for consistency with the way the decoder should behave towards any other invalid format values, even though the manifest is "a file within the archive" in the strictest technical sense.
+A decoder which detects an invalid manifest file must treat the archive itself as invalid, for consistency with the way the decoder should behave towards any other invalid format values, even though the manifest is merely "a file within the archive" in the strictest technical sense.
+
