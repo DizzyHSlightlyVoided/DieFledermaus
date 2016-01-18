@@ -493,9 +493,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
+        /// <para>In a set operation, the specified value does not represent a valid private key.</para>
         /// </exception>
         public RsaKeyParameters DefaultRSASignParameters
         {
@@ -504,7 +502,7 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 DieFledermausStream.CheckSignParam(value, null, false, false);
-                DieFledermausStream.CheckSignHash(value, _hashFunc, false, true);
+                DieFledermausStream.CheckSignParam(value, true);
                 _rsaKeyParamDef = value;
             }
         }
@@ -776,8 +774,6 @@ namespace DieFledermaus
         /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
@@ -1606,10 +1602,6 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// The specified value is not a valid <see cref="MausHashFunction"/> value.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
-        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
         /// </exception>
         public MausHashFunction HashFunction
         {

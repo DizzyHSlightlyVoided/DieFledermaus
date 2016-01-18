@@ -980,8 +980,6 @@ namespace DieFledermaus
         /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid private key.</para>
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid public or private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
@@ -991,52 +989,19 @@ namespace DieFledermaus
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
                 CheckSignParam(value, _rsaSignature, _rsaSignVerified, _mode == CompressionMode.Decompress);
-                CheckSignHash(value, _hashFunc, false, _mode == CompressionMode.Compress);
+                CheckSignParam(value, _mode == CompressionMode.Compress);
 
                 _rsaSignParamBC = value;
             }
         }
 
-        internal static void CheckSignHash(RsaKeyParameters rsaKey, MausHashFunction hashFunc, bool gettingHash, bool writing)
+        internal static void CheckSignParam(RsaKeyParameters value, bool writing)
         {
-            const string pName = "value";
-            if (rsaKey == null) return;
+            if (value == null)
+                return;
 
-            RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
-            OaepEncoding engine = new OaepEncoding(rsaEngine, GetHashObject(hashFunc));
-            if (!writing)
-                rsaKey = PublicFromPrivate(rsaKey);
-            try
-            {
-                engine.Init(writing, rsaKey);
-            }
-            catch (Exception)
-            {
-                throw new ArgumentException(writing ?
-                    TextResources.RsaNeedPrivate :
-                    TextResources.RsaNeedPublic, pName);
-            }
-
-            int hashLen = GetHashLength(hashFunc);
-            int messageLen = GetDerEncoded(new byte[hashLen], hashFunc).Length;
-
-            int inputBlockSize = engine.GetInputBlockSize();
-
-            if (inputBlockSize < 0 || messageLen > inputBlockSize)
-            {
-                if (gettingHash)
-                {
-                    int byteSize = (rsaKey.Exponent.BitLength + 7) >> 3;
-
-                    int maxMessageLen = (byteSize - (messageLen - hashLen)) / 3;
-
-                    throw new ArgumentException(string.Format(TextResources.RsaHashTooBig, maxMessageLen << 3, maxMessageLen));
-                }
-
-                int neededLength = messageLen + 1 + 2 * hashLen;
-
-                throw new ArgumentException(string.Format(TextResources.RsaTooShort, (neededLength << 3) - 7, neededLength), pName);
-            }
+            if (writing && !(value is RsaPrivateCrtKeyParameters))
+                throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
         }
 
         internal static RsaKeyParameters PublicFromPrivate(RsaKeyParameters rsaKey)
@@ -1767,10 +1732,6 @@ namespace DieFledermaus
         /// <exception cref="InvalidEnumArgumentException">
         /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
         /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
-        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
-        /// </exception>
         public MausHashFunction HashFunction
         {
             get { return _hashFunc; }
@@ -1779,8 +1740,6 @@ namespace DieFledermaus
                 _ensureCanWrite();
                 if (!HashBDict.ContainsKey(value))
                     throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausHashFunction));
-
-                CheckSignHash(_rsaSignParamBC, value, true, _mode == CompressionMode.Compress);
                 _hashFunc = value;
             }
         }

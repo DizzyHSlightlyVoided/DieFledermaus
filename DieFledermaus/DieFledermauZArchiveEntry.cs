@@ -122,8 +122,6 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode,
         /// and the specified value does not represent a valid public or private key.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the specified value is too short for <see cref="HashFunction"/>.</para>
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
@@ -485,10 +483,6 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, <see cref="RSASignParameters"/> is not <see langword="null"/>, and the specified value would produce a larger
-        /// encrypted value than that supported by <see cref="RSASignParameters"/>.
         /// </exception>
         public override MausHashFunction HashFunction
         {
