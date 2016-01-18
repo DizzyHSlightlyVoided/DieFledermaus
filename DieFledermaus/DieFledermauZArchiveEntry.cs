@@ -472,24 +472,6 @@ namespace DieFledermaus
         }
         #endregion
 
-        /// <summary>
-        /// Gets and sets the hash function used by the current instance. The default is <see cref="MausHashFunction.Sha256"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidEnumArgumentException">
-        /// In a set operation, the specified value is not a valid <see cref="MausHashFunction"/> value.
-        /// </exception>
-        public override MausHashFunction HashFunction
-        {
-            get { return base.HashFunction; }
-            set { base.HashFunction = value; }
-        }
-
         internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
         {
             MausStream.SetSignatures(rsaKey, rsaKeyId, dsaKey, dsaKeyId, ecdsaKey, ecdsaKeyId);

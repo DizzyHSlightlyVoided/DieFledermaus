@@ -149,7 +149,7 @@ namespace DieFledermaus
         /// <exception cref="InvalidEnumArgumentException">
         /// The specified value is not a valid <see cref="MausHashFunction"/> value.
         /// </exception>
-        public virtual MausHashFunction HashFunction
+        public MausHashFunction HashFunction
         {
             get { return MausStream.HashFunction; }
             set
