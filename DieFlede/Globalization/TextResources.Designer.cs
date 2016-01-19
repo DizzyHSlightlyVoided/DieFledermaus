@@ -556,11 +556,20 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Key file: {0}.
+        ///   Looks up a localized string similar to Encryption key file: {0}.
         /// </summary>
-        internal static string KeyFile {
+        internal static string KeyFileEnc {
             get {
-                return ResourceManager.GetString("KeyFile", resourceCulture);
+                return ResourceManager.GetString("KeyFileEnc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature key file: {0}.
+        /// </summary>
+        internal static string KeyFileSig {
+            get {
+                return ResourceManager.GetString("KeyFileSig", resourceCulture);
             }
         }
         

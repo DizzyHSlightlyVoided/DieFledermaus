@@ -272,7 +272,7 @@ namespace DieFledermaus.Cli
                 }
                 else index = null;
 
-                keyObj = LoadKeyFile(sigKey.Value, index, create.IsSet, interactive);
+                keyObj = LoadKeyFile(sigKey.Value, index, create.IsSet, interactive, false);
 
                 if (keyObj == null)
                     return Return(-7, interactive);
@@ -303,7 +303,7 @@ namespace DieFledermaus.Cli
                 }
                 else index = null;
 
-                object kObj = LoadKeyFile(encKey.Value, index, !create.IsSet, interactive);
+                object kObj = LoadKeyFile(encKey.Value, index, !create.IsSet, interactive, true);
                 if (kObj == null)
                     return Return(-8, interactive);
 
@@ -1020,7 +1020,10 @@ namespace DieFledermaus.Cli
             if (rsaKey != null)
             {
                 ss = null;
-                if (ds != null)
+                if (ds == null)
+                    return false;
+
+                if (ds.IsRSAEncrypted)
                 {
                     ds.RSAEncryptParameters = rsaKey;
                     try
@@ -1032,9 +1035,8 @@ namespace DieFledermaus.Cli
                         Console.Error.WriteLine(x.Message);
                         return true;
                     }
+                    return false;
                 }
-
-                return false;
             }
 
             bool notFound1 = true;
@@ -1043,7 +1045,7 @@ namespace DieFledermaus.Cli
             {
                 try
                 {
-                    ss = new string(new ClPassword(interactive, null).GetPassword());
+                    ss = new string(new ClPassword(interactive).GetPassword());
                 }
                 catch (PasswordCancelledException)
                 {
@@ -1193,7 +1195,7 @@ namespace DieFledermaus.Cli
 
         internal const int BufferSize = 8192;
 
-        private static AsymmetricKeyParameter LoadKeyFile(string path, BigInteger index, bool getPrivate, ClParamFlag interactive)
+        private static AsymmetricKeyParameter LoadKeyFile(string path, BigInteger index, bool getPrivate, ClParamFlag interactive, bool encryption)
         {
             if (!File.Exists(path))
             {
@@ -1210,7 +1212,7 @@ namespace DieFledermaus.Cli
                     if (keyObj == null)
                     {
                         ms.Seek(0, SeekOrigin.Begin);
-                        PuttyPpkReader reader = new PuttyPpkReader(ms, new ClPassword(interactive, null));
+                        PuttyPpkReader reader = new PuttyPpkReader(ms, new ClPassword(interactive));
 
                         try
                         {
@@ -1220,7 +1222,7 @@ namespace DieFledermaus.Cli
                                 {
                                     if (!reader.EncType.Equals("none", StringComparison.Ordinal))
                                     {
-                                        Console.WriteLine(TextResources.KeyFile, path);
+                                        Console.WriteLine(encryption ? TextResources.KeyFileEnc : TextResources.KeyFileSig, path);
                                         if (!string.IsNullOrWhiteSpace(reader.Comment))
                                             Console.WriteLine(reader.Comment);
                                     }
@@ -1261,7 +1263,7 @@ namespace DieFledermaus.Cli
                         ms.Seek(0, SeekOrigin.Begin);
                         using (StreamReader sr = new StreamReader(ms, Encoding.UTF8, true, BufferSize, true))
                         {
-                            PemReader reader = new PemReader(sr, new ClPassword(interactive, seen ? null : path));
+                            PemReader reader = new PemReader(sr, new ClPassword(interactive, seen ? null : path, encryption));
                             try
                             {
                                 keyObj = reader.ReadObject();
@@ -1337,7 +1339,7 @@ namespace DieFledermaus.Cli
                                     char[] password = null;
                                     try
                                     {
-                                        password = new ClPassword(interactive, seen ? null : path).GetPassword();
+                                        password = new ClPassword(interactive, seen ? null : path, encryption).GetPassword();
                                         PgpPrivateKey privKey = pKey.ExtractPrivateKeyUtf8(password);
 
                                         keyObj = privKey.Key;
@@ -1721,11 +1723,18 @@ namespace DieFledermaus.Cli
     {
         private ClParam _interactive;
         private string _path;
+        private bool _enc;
 
-        public ClPassword(ClParamFlag interactive, string path)
+        public ClPassword(ClParamFlag interactive, string path, bool encryption)
         {
             _interactive = interactive;
             _path = path;
+            _enc = encryption;
+        }
+
+        public ClPassword(ClParamFlag interactive)
+            : this(interactive, null, true)
+        {
         }
 
         public char[] GetPassword()
@@ -1736,7 +1745,7 @@ namespace DieFledermaus.Cli
             List<char> charList = new List<char>();
             if (!string.IsNullOrWhiteSpace(_path))
             {
-                Console.WriteLine(TextResources.KeyFile, _path);
+                Console.WriteLine(_enc ? TextResources.KeyFileEnc : TextResources.KeyFileSig, _path);
                 _path = null;
             }
             Console.WriteLine(TextResources.PasswordPrompt);

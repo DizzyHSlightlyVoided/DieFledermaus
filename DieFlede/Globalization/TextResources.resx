@@ -577,8 +577,8 @@
   <data name="BadPpkVersion" xml:space="preserve">
     <value>PuTTY .ppk version 1.1 is unsupported. Please use a PuTTY.ppk version 2 key file.</value>
   </data>
-  <data name="KeyFile" xml:space="preserve">
-    <value>Key file: {0}</value>
+  <data name="KeyFileSig" xml:space="preserve">
+    <value>Signature key file: {0}</value>
     <comment>{0} = filename</comment>
   </data>
   <data name="EncDexNeedsEnc" xml:space="preserve">
@@ -608,5 +608,9 @@
   <data name="PNameEncKey" xml:space="preserve">
     <value>encryption-key</value>
     <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="KeyFileEnc" xml:space="preserve">
+    <value>Encryption key file: {0}</value>
+    <comment>{0} = filename</comment>
   </data>
 </root>
