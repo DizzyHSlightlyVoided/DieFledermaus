@@ -576,8 +576,6 @@ namespace DieFledermaus.Cli
                         for (int i = 0; i < dz.Entries.Count; i++)
                         {
                             var curEntry = dz.Entries[i];
-                            if (curEntry.Path == "/Manifest.dat")
-                                continue;
 
                             if (DoFailDecrypt(curEntry, encObj, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
                             {

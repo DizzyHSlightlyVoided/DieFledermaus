@@ -365,6 +365,8 @@ namespace DieFledermaus
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
             _entries.AddRange(entries);
+            if (_manifest != null)
+                _entries.RemoveAt(_entries.Count - 1);
         }
 
         internal static string GetString(BinaryReader reader, ref long curOffset)
@@ -750,12 +752,7 @@ namespace DieFledermaus
         /// </summary>
         public bool IsRSASigned
         {
-            get
-            {
-                if (_mode == MauZArchiveMode.Create)
-                    return _manifest.RSASignParameters != null;
-                return _manifest != null && _manifest.IsRSASigned;
-            }
+            get { return _manifest != null && _manifest.IsRSASigned; }
         }
 
         /// <summary>
@@ -777,7 +774,11 @@ namespace DieFledermaus
         /// </exception>
         public RsaKeyParameters RSASignParameters
         {
-            get { return _manifest.RSASignParameters; }
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.RSASignParameters;
+            }
             set
             {
                 EnsureCanSetRSASig();
@@ -891,12 +892,7 @@ namespace DieFledermaus
         /// </summary>
         public bool IsDSASigned
         {
-            get
-            {
-                if (_mode == MauZArchiveMode.Create)
-                    return _manifest.DSASignParameters != null;
-                return _manifest != null && _manifest.IsDSASigned;
-            }
+            get { return _manifest != null && _manifest.IsDSASigned; }
         }
 
         /// <summary>
@@ -918,7 +914,11 @@ namespace DieFledermaus
         /// </exception>
         public DsaKeyParameters DSASignParameters
         {
-            get { return _manifest.DSASignParameters; }
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.DSASignParameters;
+            }
             set
             {
                 EnsureCanSetDSASig();
@@ -1025,19 +1025,14 @@ namespace DieFledermaus
         /// <summary>
         /// Gets a value indicating whether the manifest of the current instance has been successfully verified using <see cref="ECDSASignParameters"/>.
         /// </summary>
-        public bool IsECDSASignVerified { get { return _manifest != null && _manifest.IsECDSASigned; } }
+        public bool IsECDSASignVerified { get { return _manifest != null && _manifest.IsECDSASignVerified; } }
 
         /// <summary>
         /// Gets a value indicating whether the current instance has an ECDSA-signed manifest.
         /// </summary>
         public bool IsECDSASigned
         {
-            get
-            {
-                if (_mode == MauZArchiveMode.Create)
-                    return _manifest.ECDSASignParameters != null;
-                return _manifest != null && _manifest.IsECDSASigned;
-            }
+            get { return _manifest != null && _manifest.IsECDSASigned; }
         }
 
         /// <summary>
@@ -1059,7 +1054,11 @@ namespace DieFledermaus
         /// </exception>
         public ECKeyParameters ECDSASignParameters
         {
-            get { return _manifest.ECDSASignParameters; }
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.ECDSASignParameters;
+            }
             set
             {
                 EnsureCanSetECDSASig();
