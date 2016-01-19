@@ -34,6 +34,7 @@ using System.IO;
 
 using DieFledermaus.Globalization;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
@@ -442,6 +443,51 @@ namespace DieFledermaus
                 MausStream.Password = value;
             }
         }
+
+        #region RSA Encryption
+        /// <summary>
+        /// Gets a value indicating whether the current instance is encrypted with an RSA key.
+        /// </summary>
+        /// <remarks>
+        /// If <see cref="Archive"/> is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
+        /// was encrypted with an RSA key when it was written.
+        /// If <see cref="Archive"/> is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptionParameters"/>
+        /// is not <see langword="null"/>.
+        /// </remarks>
+        public bool IsRSAEncrypted
+        {
+            get { return MausStream.IsRSAEncrypted; }
+        }
+
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance is in read-mode, and is not RSA encrypted.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="Archive"/> is in read-mode, and the current instance has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, <see cref="Archive"/> is in write-mode, and the specified value does not represent a valid public or private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the specified value does not represent a valid private key.</para>
+        /// </exception>
+        public RsaKeyParameters RSAEncryptionParameters
+        {
+            get { return MausStream.RSAEncryptionParameters; }
+            set
+            {
+                _ensureCanSetKey();
+                MausStream.RSAEncryptionParameters = value;
+            }
+        }
+        #endregion
 
         private void _ensureCanSetKey()
         {

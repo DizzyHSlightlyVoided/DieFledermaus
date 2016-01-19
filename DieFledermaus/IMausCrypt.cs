@@ -150,6 +150,32 @@ namespace DieFledermaus
         MausHashFunction HashFunction { get; set; }
 
         /// <summary>
+        /// Gets a value indicating whether the current instance is encrypted with an RSA key.
+        /// </summary>
+        bool IsRSAEncrypted { get; }
+
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current instance is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current instance is in read-mode, and is not RSA encrypted.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid public or private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid private key.</para>
+        /// </exception>
+        RsaKeyParameters RSAEncryptionParameters { get; set; }
+
+        /// <summary>
         /// Gets the maximum number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is 
         /// <see cref="MausEncryptionFormat.None"/>.
         /// </summary>

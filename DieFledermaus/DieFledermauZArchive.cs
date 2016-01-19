@@ -1162,6 +1162,61 @@ namespace DieFledermaus
         }
         #endregion
 
+        #region RSA Encrypted Key
+        private byte[] _rsaEncKey;
+        /// <summary>
+        /// Gets a value indicating whether the current stream is encrypted with an RSA key.
+        /// </summary>
+        /// <remarks>
+        /// If the current stream is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
+        /// was encrypted with an RSA key when it was written.
+        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptionParameters"/>
+        /// is not <see langword="null"/>.
+        /// </remarks>
+        public bool IsRSAEncrypted
+        {
+            get
+            {
+                if (_mode == MauZArchiveMode.Create)
+                    return _rsaEncParamBC != null;
+                return _rsaEncKey != null;
+            }
+        }
+
+        private RsaKeyParameters _rsaEncParamBC;
+        /// <summary>
+        /// Gets and sets an RSA key used to encrypt or decrypt the current stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <para>The current stream is not encrypted.</para>
+        /// <para>-OR-</para>
+        /// <para>The current stream is in read-mode, and is not RSA encrypted.</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current stream is in read-mode and has already been successfully decrypted.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current stream is in write-mode, and the specified value does not represent a valid public or private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid private key.</para>
+        /// </exception>
+        public RsaKeyParameters RSAEncryptionParameters
+        {
+            get { return _rsaEncParamBC; }
+            set
+            {
+                _ensureCanSetKey();
+                if (_mode == MauZArchiveMode.Read && _rsaEncKey == null)
+                    throw new NotSupportedException(TextResources.RsaEncNone);
+                DieFledermausStream.CheckSignParam(value, _mode == MauZArchiveMode.Read);
+                _rsaEncParamBC = value;
+            }
+        }
+        #endregion
+
         private DieFledermauZManifest _manifest;
 
         private MausBufferStream _bufferStream;
@@ -1210,7 +1265,14 @@ namespace DieFledermaus
 
             byte[] key = _key;
             if (_password == null && key == null)
-                throw new CryptoException(TextResources.KeyNotSetZ);
+            {
+                if (_rsaEncKey == null)
+                    throw new CryptoException(TextResources.KeyNotSetZ);
+                if (_rsaEncParamBC == null)
+                    throw new CryptoException(TextResources.KeyRsaNotSetZ);
+
+                key = DieFledermausStream.RsaDecrypt(_rsaEncKey, _rsaEncParamBC, _hashFunc, true);
+            }
 
             if (key == null)
             {
@@ -1218,7 +1280,7 @@ namespace DieFledermaus
                 key = DieFledermausStream.GetKey(this);
             }
 
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, key, _bufferStream))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, key, _bufferStream, _rsaEncParamBC != null))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
@@ -1272,6 +1334,21 @@ namespace DieFledermaus
                         _hashFunc = hashFunc;
                         _gotHash = true;
                     }
+
+                    continue;
+                }
+
+                if (curOption.Equals(DieFledermausStream._kEncRsa, StringComparison.Ordinal))
+                {
+                    if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash)
+                        throw new NotSupportedException(TextResources.FormatUnknownZ);
+
+                    byte[] gotKey = curValue[0].Value;
+
+                    if (_rsaEncKey == null)
+                        _rsaEncKey = gotKey;
+                    else if (!DieFledermausStream.CompareBytes(gotKey, _rsaEncKey))
+                        throw new InvalidDataException(TextResources.FormatBadZ);
 
                     continue;
                 }
@@ -2302,16 +2379,23 @@ namespace DieFledermaus
             if (_mode == MauZArchiveMode.Read || _entries.Count == 0)
                 return;
 
-            if (_encFmt != MausEncryptionFormat.None && _password == null)
-                throw new InvalidOperationException(TextResources.KeyNotSetZ);
+            if (_encFmt != MausEncryptionFormat.None && _password == null && _rsaEncParamBC == null)
+                throw new InvalidOperationException(TextResources.KeyRsaNotSetZ);
 
             long length = 16;
 
             if (_encFmt != MausEncryptionFormat.None && _key == null)
             {
-                OnProgress(MausProgressState.BuildingKey);
-                _key = DieFledermausStream.GetKey(this);
+                if (_password == null)
+                    _key = DieFledermausStream.FillBuffer(_keySize >> 3);
+                else
+                {
+                    OnProgress(MausProgressState.BuildingKey);
+                    _key = DieFledermausStream.GetKey(this);
+                }
             }
+
+            byte[] rsaKey = DieFledermausStream.RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, true);
 
             DieFledermauZItem[] entries = _entries.ToArray();
             MausBufferStream[] entryStreams = new MausBufferStream[entries.Length];

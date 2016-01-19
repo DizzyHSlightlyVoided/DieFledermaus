@@ -196,11 +196,38 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The key or password is invalid..
+        ///   Looks up a localized string similar to The key or password is incorrect..
         /// </summary>
         internal static string BadKey {
             get {
                 return ResourceManager.GetString("BadKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The key, password, or RSA key is incorrect..
+        /// </summary>
+        internal static string BadKeyRsa {
+            get {
+                return ResourceManager.GetString("BadKeyRsa", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA key used to decrypt the stream is invalid..
+        /// </summary>
+        internal static string BadRsaKey {
+            get {
+                return ResourceManager.GetString("BadRsaKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA key used to decrypt the archive is invalid..
+        /// </summary>
+        internal static string BadRsaKeyZ {
+            get {
+                return ResourceManager.GetString("BadRsaKeyZ", resourceCulture);
             }
         }
         
@@ -538,6 +565,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DieFledermaus stream is encrypted, and requires a key, password, or RSA key..
+        /// </summary>
+        internal static string KeyRsaNotSet {
+            get {
+                return ResourceManager.GetString("KeyRsaNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DieFledermauZ archive is encrypted, and requires a key, password, or RSA key..
+        /// </summary>
+        internal static string KeyRsaNotSetZ {
+            get {
+                return ResourceManager.GetString("KeyRsaNotSetZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current instance is not encrypted..
         /// </summary>
         internal static string NotEncrypted {
@@ -615,6 +660,33 @@ namespace DieFledermaus.Globalization {
         internal static string PasswordZeroLength {
             get {
                 return ResourceManager.GetString("PasswordZeroLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA key used to encrypt the stream is invalid..
+        /// </summary>
+        internal static string RsaEncInvalid {
+            get {
+                return ResourceManager.GetString("RsaEncInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The RSA key used to encrypt the archive is invalid..
+        /// </summary>
+        internal static string RsaEncInvalidZ {
+            get {
+                return ResourceManager.GetString("RsaEncInvalidZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current instance does not have an RSA-encrypted key..
+        /// </summary>
+        internal static string RsaEncNone {
+            get {
+                return ResourceManager.GetString("RsaEncNone", resourceCulture);
             }
         }
         

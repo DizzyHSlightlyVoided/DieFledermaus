@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlreadyDecrypted" xml:space="preserve">
     <value>The DieFledermaus stream has already been successfully decrypted.</value>
@@ -161,7 +161,7 @@
     <value>The computed checksum did not match the expected value.</value>
   </data>
   <data name="BadKey" xml:space="preserve">
-    <value>The key or password is invalid.</value>
+    <value>The key or password is incorrect.</value>
   </data>
   <data name="CollectBadArray" xml:space="preserve">
     <value>The specified array is invalid.</value>
@@ -362,5 +362,29 @@
   </data>
   <data name="InvalidManifest" xml:space="preserve">
     <value>The signature manifest of the current archive is invalid.</value>
+  </data>
+  <data name="BadKeyRsa" xml:space="preserve">
+    <value>The key, password, or RSA key is incorrect.</value>
+  </data>
+  <data name="BadRsaKey" xml:space="preserve">
+    <value>The RSA key used to decrypt the stream is invalid.</value>
+  </data>
+  <data name="BadRsaKeyZ" xml:space="preserve">
+    <value>The RSA key used to decrypt the archive is invalid.</value>
+  </data>
+  <data name="KeyRsaNotSet" xml:space="preserve">
+    <value>The DieFledermaus stream is encrypted, and requires a key, password, or RSA key.</value>
+  </data>
+  <data name="KeyRsaNotSetZ" xml:space="preserve">
+    <value>The DieFledermauZ archive is encrypted, and requires a key, password, or RSA key.</value>
+  </data>
+  <data name="RsaEncInvalid" xml:space="preserve">
+    <value>The RSA key used to encrypt the stream is invalid.</value>
+  </data>
+  <data name="RsaEncInvalidZ" xml:space="preserve">
+    <value>The RSA key used to encrypt the archive is invalid.</value>
+  </data>
+  <data name="RsaEncNone" xml:space="preserve">
+    <value>The current instance does not have an RSA-encrypted key.</value>
   </data>
 </root>
