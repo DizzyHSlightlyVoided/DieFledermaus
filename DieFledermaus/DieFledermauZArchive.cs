@@ -2379,7 +2379,7 @@ namespace DieFledermaus
             if (_mode == MauZArchiveMode.Read || _entries.Count == 0)
                 return;
 
-            if (_encFmt != MausEncryptionFormat.None && _password == null && _rsaEncParamBC == null)
+            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null && _rsaEncParamBC == null)
                 throw new InvalidOperationException(TextResources.KeyRsaNotSetZ);
 
             long length = 16;
@@ -2451,6 +2451,13 @@ namespace DieFledermaus
                 options.Add(fEnc);
 
                 options.Add(DieFledermausStream._kHash, DieFledermausStream._vHash, DieFledermausStream.HashBDict[_hashFunc]);
+
+                if (rsaKey != null)
+                {
+                    FormatValue fKey = new FormatValue(DieFledermausStream._kEncRsa, DieFledermausStream._vEnc);
+                    fKey.Add(rsaKey);
+                    options.Add(fKey);
+                }
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
