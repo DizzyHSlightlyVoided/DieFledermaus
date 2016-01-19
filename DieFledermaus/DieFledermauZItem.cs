@@ -451,7 +451,7 @@ namespace DieFledermaus
         /// <remarks>
         /// If <see cref="Archive"/> is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
         /// was encrypted with an RSA key when it was written.
-        /// If <see cref="Archive"/> is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptionParameters"/>
+        /// If <see cref="Archive"/> is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptParameters"/>
         /// is not <see langword="null"/>.
         /// </remarks>
         public bool IsRSAEncrypted
@@ -478,13 +478,13 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, <see cref="Archive"/> is in read-mode, and the specified value does not represent a valid private key.</para>
         /// </exception>
-        public RsaKeyParameters RSAEncryptionParameters
+        public RsaKeyParameters RSAEncryptParameters
         {
-            get { return MausStream.RSAEncryptionParameters; }
+            get { return MausStream.RSAEncryptParameters; }
             set
             {
                 _ensureCanSetKey();
-                MausStream.RSAEncryptionParameters = value;
+                MausStream.RSAEncryptParameters = value;
             }
         }
         #endregion

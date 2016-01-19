@@ -1439,7 +1439,7 @@ namespace DieFledermaus
         /// <remarks>
         /// If the current stream is in read-mode, this property will return <see langword="true"/> if and only if the underlying stream
         /// was encrypted with an RSA key when it was written.
-        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptionParameters"/>
+        /// If the current stream is in write-mode, this property will return <see langword="true"/> if <see cref="RSAEncryptParameters"/>
         /// is not <see langword="null"/>.
         /// </remarks>
         public bool IsRSAEncrypted
@@ -1472,7 +1472,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current stream is in read-mode, and the specified value does not represent a valid private key.</para>
         /// </exception>
-        public RsaKeyParameters RSAEncryptionParameters
+        public RsaKeyParameters RSAEncryptParameters
         {
             get { return _rsaEncParamBC; }
             set
@@ -3261,7 +3261,7 @@ namespace DieFledermaus
                 return;
             if (_bufferStream == null || _mode != CompressionMode.Compress || _bufferStream.Length == 0)
                 return;
-            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null && _rsaEncKey == null)
+            if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null && _rsaEncParamBC == null)
                 throw new InvalidOperationException(TextResources.KeyRsaNotSet);
 
             _bufferStream.Reset();

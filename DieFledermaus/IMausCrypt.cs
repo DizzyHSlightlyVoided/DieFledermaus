@@ -173,7 +173,7 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid private key.</para>
         /// </exception>
-        RsaKeyParameters RSAEncryptionParameters { get; set; }
+        RsaKeyParameters RSAEncryptParameters { get; set; }
 
         /// <summary>
         /// Gets the maximum number of bits in a single block of data, or 0 if <see cref="EncryptionFormat"/> is 

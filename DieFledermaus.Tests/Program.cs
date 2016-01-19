@@ -38,9 +38,9 @@ namespace DieFledermaus.Tests
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
                     archive.RSASignParameters = archive.DefaultRSASignParameters = privateKeySig;
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes);
-                    SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, publicKeyEnc);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, publicKeyEnc);
+                    SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish, publicKeyEnc);
                     Console.WriteLine(" - Building empty directory: EmptyDir/");
                     var emptyDir = archive.AddEmptyDirectory("EmptyDir/", MausEncryptionFormat.Twofish);
                     SetPasswd(emptyDir);
@@ -64,7 +64,11 @@ namespace DieFledermaus.Tests
                     foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
                         Console.WriteLine(" - Decrypting file ...");
-                        SetPasswd(item);
+                        if (item.IsRSAEncrypted)
+                            item.RSAEncryptParameters = privateKeyEnc;
+                        else
+                            SetPasswd(item);
+
                         sw = Stopwatch.StartNew();
                         var dItem = item.Decrypt();
                         sw.Stop();
@@ -86,6 +90,7 @@ namespace DieFledermaus.Tests
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Press any key to continue ...");
             Console.ReadKey();
         }
@@ -99,16 +104,15 @@ namespace DieFledermaus.Tests
             }
         }
 
-        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat)
+        private static void SetEntry(DieFledermauZArchive archive, byte[] bigBuffer, MausCompressionFormat compFormat, MausEncryptionFormat encFormat,
+            RsaKeyParameters encKey)
         {
             var entry = archive.Create("Files/" + compFormat.ToString() + encFormat.ToString() + ".dat", compFormat, encFormat);
 
             Console.WriteLine(" - Building file: " + entry.Path);
 
             if (encFormat != MausEncryptionFormat.None)
-            {
-                SetPasswd(entry);
-            }
+                entry.RSAEncryptParameters = encKey;
 
             using (Stream stream = entry.OpenWrite())
                 stream.Write(bigBuffer, 0, bigBufferLength);
