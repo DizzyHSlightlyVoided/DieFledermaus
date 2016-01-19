@@ -326,7 +326,7 @@ namespace DieFledermaus.Cli
                 return Return(-8, interactive);
 
             }
-            encObj = null;
+            else encObj = null;
 
             string ssPassword = null;
             List<FileStream> streams = null;
@@ -349,7 +349,7 @@ namespace DieFledermaus.Cli
                             if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
                                 return -3;
 
-                            if (CreateEncrypted(cEncFmt, interactive, out encFormat, out ssPassword))
+                            if (CreateEncrypted(cEncFmt, encObj, interactive, out encFormat, out ssPassword))
                                 return -4;
 
                             if (archiveFile.Value == null)
@@ -447,7 +447,7 @@ namespace DieFledermaus.Cli
                             return -3;
 
                         MausEncryptionFormat encFormat = MausEncryptionFormat.None;
-                        if (CreateEncrypted(cEncFmt, interactive, out encFormat, out ssPassword))
+                        if (CreateEncrypted(cEncFmt, encObj, interactive, out encFormat, out ssPassword))
                             return -4;
 
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
@@ -518,7 +518,7 @@ namespace DieFledermaus.Cli
                 {
                     if (dz.EncryptionFormat != MausEncryptionFormat.None)
                     {
-                        if (!interactive.IsSet)
+                        if (!interactive.IsSet && encObj == null)
                         {
                             Console.Error.WriteLine(TextResources.EncryptedEx);
                             Console.Error.WriteLine(TextResources.EncryptionNoOptsEx);
@@ -527,7 +527,7 @@ namespace DieFledermaus.Cli
 
                         Console.WriteLine(TextResources.EncryptedEx);
 
-                        if (EncryptionPrompt(dz, interactive, out ssPassword))
+                        if (EncryptionPrompt(dz, encObj, interactive, out ssPassword))
                             return -4;
                     }
 
@@ -579,7 +579,7 @@ namespace DieFledermaus.Cli
                             if (curEntry.Path == "/Manifest.dat")
                                 continue;
 
-                            if (DoFailDecrypt(curEntry, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
+                            if (DoFailDecrypt(curEntry, encObj, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
                             {
                                 Console.WriteLine(GetName(i, curEntry));
                                 continue;
@@ -635,7 +635,7 @@ namespace DieFledermaus.Cli
                         for (int i = 0; i < dz.Entries.Count; i++)
                         {
                             var entry = dz.Entries[i];
-                            if (DoFailDecrypt(entry, interactive, i, ref ssPassword))
+                            if (DoFailDecrypt(entry, encObj, interactive, i, ref ssPassword))
                                 continue;
 
                             VerifySigns(keyObj, entry as DieFledermauZArchiveEntry);
@@ -852,11 +852,11 @@ namespace DieFledermaus.Cli
 
         }
 
-        private static bool DoFailDecrypt(DieFledermauZItem entry, ClParamFlag interactive, int i, ref string ssPassword)
+        private static bool DoFailDecrypt(DieFledermauZItem entry, RsaKeyParameters rsaKey, ClParamFlag interactive, int i, ref string ssPassword)
         {
             if (entry.EncryptionFormat == MausEncryptionFormat.None || entry.IsDecrypted)
                 return false;
-            if (!interactive.IsSet)
+            if (!interactive.IsSet && rsaKey == null)
             {
                 Console.Error.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
                 return true;
@@ -865,7 +865,7 @@ namespace DieFledermaus.Cli
             if (ssPassword == null)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, interactive, out ssPassword);
+                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword);
             }
 
             try
@@ -878,7 +878,7 @@ namespace DieFledermaus.Cli
             catch (CryptoException)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, interactive, out ssPassword);
+                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword);
             }
         }
 
@@ -895,14 +895,15 @@ namespace DieFledermaus.Cli
             return string.Format(TextResources.ListEncryptedEntry, i + 1);
         }
 
-        private static bool CreateEncrypted(ClParamEnum<MausEncryptionFormat> cEncFmt, ClParamFlag interactive, out MausEncryptionFormat encFormat, out string ssPassword)
+        private static bool CreateEncrypted(ClParamEnum<MausEncryptionFormat> cEncFmt, RsaKeyParameters rsaKey, ClParamFlag interactive,
+            out MausEncryptionFormat encFormat, out string ssPassword)
         {
             encFormat = MausEncryptionFormat.None;
             if (cEncFmt.IsSet) //Only true if Interactive is also true
             {
                 encFormat = cEncFmt.Value.Value;
 
-                if (EncryptionPrompt(null, interactive, out ssPassword))
+                if (EncryptionPrompt(null, rsaKey, interactive, out ssPassword))
                     return true;
                 return false;
             }
@@ -1014,8 +1015,28 @@ namespace DieFledermaus.Cli
             return false;
         }
 
-        private static bool EncryptionPrompt(IMausCrypt ds, ClParamFlag interactive, out string ss)
+        private static bool EncryptionPrompt(IMausCrypt ds, RsaKeyParameters rsaKey, ClParamFlag interactive, out string ss)
         {
+            if (rsaKey != null)
+            {
+                ss = null;
+                if (ds != null)
+                {
+                    ds.RSAEncryptParameters = rsaKey;
+                    try
+                    {
+                        ds.Decrypt();
+                    }
+                    catch (CryptoException x)
+                    {
+                        Console.Error.WriteLine(x.Message);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             bool notFound1 = true;
             ss = null;
             do
