@@ -1433,6 +1433,15 @@ namespace DieFledermaus
 
         #region RSA Encrypted Key
         private byte[] _rsaEncKey;
+        byte[] IMausProgress.RSAEncryptedKey
+        {
+            get
+            {
+                if (_rsaEncKey == null) return null;
+                return (byte[])_rsaEncKey.Clone();
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether the current stream is encrypted with an RSA key.
         /// </summary>
@@ -2590,28 +2599,11 @@ namespace DieFledermaus
             if (_headerGotten)
                 return;
 
-            byte[] key = _key;
-            if (_encFmt != MausEncryptionFormat.None && _password == null && key == null)
-            {
-                if (_rsaEncKey == null)
-                    throw new CryptoException(TextResources.KeyNotSet);
-
-                if (_rsaEncParamBC == null)
-                    throw new CryptoException(TextResources.KeyRsaNotSet);
-                key = RsaDecrypt(_rsaEncKey, _rsaEncParamBC, _hashFunc, false);
-            }
-
             GetBuffer();
 
             if (_encFmt != MausEncryptionFormat.None)
             {
-                if (key == null)
-                {
-                    OnProgress(MausProgressState.BuildingKey);
-                    key = GetKey(this);
-                }
-
-                using (MausBufferStream bufferStream = Decrypt(this, key, _bufferStream, _rsaEncParamBC != null))
+                using (MausBufferStream bufferStream = Decrypt(this, _bufferStream, false))
                 {
 #if NOLEAVEOPEN
                     BinaryReader reader = new BinaryReader(bufferStream);
@@ -2627,7 +2619,6 @@ namespace DieFledermaus
                     bufferStream.BufferCopyTo(_bufferStream, true);
 
                     _bufferStream.Reset();
-                    _key = key;
                 }
             }
             long oldLength = _bufferStream.Length;
@@ -2715,20 +2706,6 @@ namespace DieFledermaus
                 _hashExpected = hashActual;
             }
             else _hashExpected = hashActual;
-        }
-
-        internal static byte[] RsaDecrypt(byte[] rsaEncKey, RsaKeyParameters rsaKeyParam, MausHashFunction hashFunc, bool mauZ)
-        {
-            try
-            {
-                OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(hashFunc));
-                engine.Init(false, rsaKeyParam);
-                return engine.ProcessBlock(rsaEncKey, 0, rsaEncKey.Length);
-            }
-            catch (Exception x)
-            {
-                throw new CryptoException(mauZ ? TextResources.BadRsaKeyZ : TextResources.BadRsaKey, x);
-            }
         }
 
         #region Verify RSA
@@ -3172,8 +3149,45 @@ namespace DieFledermaus
             }
         }
 
-        internal static MausBufferStream Decrypt(IMausProgress o, byte[] key, MausBufferStream bufferStream, bool hasRsa)
+        internal static MausBufferStream Decrypt(IMausProgress o, MausBufferStream bufferStream, bool mauZ)
         {
+            byte[] key = o.Key;
+            string password = o.Password;
+
+            bool noKey = false, hasRsa = false;
+            if (key == null)
+            {
+                noKey = true;
+                if (password == null)
+                {
+                    byte[] rsaEncKey = o.RSAEncryptedKey;
+
+                    if (rsaEncKey == null)
+                        throw new CryptoException(mauZ ? TextResources.KeyNotSetZ : TextResources.KeyNotSet);
+
+                    RsaKeyParameters rsaKeyParam = o.RSAEncryptParameters;
+                    if (rsaKeyParam == null)
+                        throw new CryptoException(mauZ ? TextResources.KeyRsaNotSetZ : TextResources.KeyRsaNotSet);
+
+                    try
+                    {
+                        OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(o.HashFunction));
+                        engine.Init(false, rsaKeyParam);
+                        key = engine.ProcessBlock(rsaEncKey, 0, rsaEncKey.Length);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptoException(mauZ ? TextResources.BadRsaKeyZ : TextResources.BadRsaKey, x);
+                    }
+                    hasRsa = true;
+                }
+                else
+                {
+                    o.OnProgress(MausProgressState.BuildingKey);
+                    key = GetKey(o);
+                }
+            }
+
             o.OnProgress(MausProgressState.Decrypting);
 
             MausBufferStream output = new MausBufferStream();
@@ -3187,6 +3201,9 @@ namespace DieFledermaus
             byte[] actualHmac = ComputeHmac(output, key, o.HashFunction);
             if (!success || !CompareBytes(actualHmac, o.HMAC))
                 throw new InvalidCipherTextException(hasRsa ? TextResources.BadKeyRsa : TextResources.BadKey);
+
+            if (noKey)
+                o.Key = key;
 
             return output;
         }

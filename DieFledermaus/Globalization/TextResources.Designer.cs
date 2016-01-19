@@ -205,7 +205,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The key, password, or RSA key is incorrect..
+        ///   Looks up a localized string similar to The RSA encryption key is incorrect..
         /// </summary>
         internal static string BadKeyRsa {
             get {

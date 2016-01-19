@@ -227,5 +227,7 @@ namespace DieFledermaus
     {
         void OnProgress(MausProgressState state);
         void OnProgress(MausProgressEventArgs e);
+
+        byte[] RSAEncryptedKey { get; }
     }
 }

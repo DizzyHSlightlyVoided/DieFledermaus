@@ -1163,6 +1163,15 @@ namespace DieFledermaus
 
         #region RSA Encrypted Key
         private byte[] _rsaEncKey;
+        byte[] IMausProgress.RSAEncryptedKey
+        {
+            get
+            {
+                if (_rsaEncKey == null) return null;
+                return (byte[])_rsaEncKey.Clone();
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether the current stream is encrypted with an RSA key.
         /// </summary>
@@ -1262,30 +1271,12 @@ namespace DieFledermaus
 
             _bufferStream.Reset();
 
-            byte[] key = _key;
-            if (_password == null && key == null)
-            {
-                if (_rsaEncKey == null)
-                    throw new CryptoException(TextResources.KeyNotSetZ);
-                if (_rsaEncParamBC == null)
-                    throw new CryptoException(TextResources.KeyRsaNotSetZ);
-
-                key = DieFledermausStream.RsaDecrypt(_rsaEncKey, _rsaEncParamBC, _hashFunc, true);
-            }
-
-            if (key == null)
-            {
-                OnProgress(MausProgressState.BuildingKey);
-                key = DieFledermausStream.GetKey(this);
-            }
-
-            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, key, _bufferStream, _rsaEncParamBC != null))
+            using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _bufferStream, true))
             using (BinaryReader reader = new BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
                 long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
                 ReadDecrypted(reader, ref curOffset);
-                _key = key;
             }
             OnProgress(MausProgressState.CompletedLoading);
         }

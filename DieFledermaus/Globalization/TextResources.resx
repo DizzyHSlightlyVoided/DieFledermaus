@@ -364,7 +364,7 @@
     <value>The signature manifest of the current archive is invalid.</value>
   </data>
   <data name="BadKeyRsa" xml:space="preserve">
-    <value>The key, password, or RSA key is incorrect.</value>
+    <value>The RSA encryption key is incorrect.</value>
   </data>
   <data name="BadRsaKey" xml:space="preserve">
     <value>The RSA key used to decrypt the stream is invalid.</value>
