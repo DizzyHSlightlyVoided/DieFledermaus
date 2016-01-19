@@ -502,7 +502,7 @@
     <value>index</value>
   </data>
   <data name="HelpMSigDex" xml:space="preserve">
-    <value>The zero-based index of the signing key within the signature file.</value>
+    <value>The zero-based index of the signing key within the key file.</value>
     <comment>Help description.</comment>
   </data>
   <data name="IndexFile" xml:space="preserve">
@@ -517,7 +517,7 @@
     <comment>Localized parameter name, keep this unique</comment>
   </data>
   <data name="SigDexNeedsKey" xml:space="preserve">
-    <value>Signature index </value>
+    <value>Signature index was given, but no key file was specified.</value>
   </data>
   <data name="UnknownKeyType" xml:space="preserve">
     <value>The specified file contains an unknown or unspported key type "{0}". Only RSA, DSA, and ECDSA keys are supported.</value>
@@ -580,5 +580,33 @@
   <data name="KeyFile" xml:space="preserve">
     <value>Key file: {0}</value>
     <comment>{0} = filename</comment>
+  </data>
+  <data name="EncDexNeedsEnc" xml:space="preserve">
+    <value>RSA encryption key index was given, but no encryption settings were specified.</value>
+  </data>
+  <data name="EncDexNeedsKey" xml:space="preserve">
+    <value>RSA encryption key index was given, but no encryption key file was specified.</value>
+  </data>
+  <data name="EncKeyNeedsEnc" xml:space="preserve">
+    <value>RSA encryption key file was given, but no encryption settings were specified.</value>
+  </data>
+  <data name="EncKeyNeedsRsa" xml:space="preserve">
+    <value>Only RSA keys are supported for encryption.</value>
+  </data>
+  <data name="HelpMEncDex" xml:space="preserve">
+    <value>The zero-based index of the RSA encryption key within the key file.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="HelpMEncKey" xml:space="preserve">
+    <value>Path to a file containing an RSA encryption key.</value>
+    <comment>Help description.</comment>
+  </data>
+  <data name="PNameEncDex" xml:space="preserve">
+    <value>encryption-idnex</value>
+    <comment>Localized parameter name, keep this unique</comment>
+  </data>
+  <data name="PNameEncKey" xml:space="preserve">
+    <value>encryption-key</value>
+    <comment>Localized parameter name, keep this unique</comment>
   </data>
 </root>

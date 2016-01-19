@@ -148,6 +148,8 @@ namespace DieFledermaus.Cli
 
             ClParamValue sigKey = new ClParamValue(parser, TextResources.HelpMSigKey, TextResources.HelpPath, '\0', "signature-key", TextResources.PNameSigKey);
             ClParamValue sigDex = new ClParamValue(parser, TextResources.HelpMSigDex, TextResources.HelpIndex, '\0', "signature-index", TextResources.PNameSigDex);
+            ClParamValue encKey = new ClParamValue(parser, TextResources.HelpMEncKey, TextResources.HelpPath, '\0', "encryption-key", TextResources.PNameEncKey);
+            ClParamValue encDex = new ClParamValue(parser, TextResources.HelpMEncDex, TextResources.HelpPath, '\0', "encryption-idnex", TextResources.PNameEncDex);
 
             ClParam[] clParams = parser.Params.ToArray();
 
@@ -259,26 +261,18 @@ namespace DieFledermaus.Cli
 
             if (sigKey.IsSet)
             {
-                string path = sigKey.Value;
                 BigInteger index;
 
                 if (sigDex.IsSet)
                 {
-                    try
-                    {
-                        index = new BigInteger(sigDex.Value);
-                        if (index.CompareTo(BigInteger.Zero) < 0)
-                            throw new InvalidDataException();
-                    }
-                    catch
-                    {
-                        Console.Error.WriteLine(TextResources.BadInteger, sigDex.Key, sigDex.Value);
+                    index = ReadIndex(sigDex);
+
+                    if (index == null)
                         return Return(-7, interactive);
-                    }
                 }
                 else index = null;
 
-                keyObj = LoadKeyFile(path, index, create.IsSet, interactive);
+                keyObj = LoadKeyFile(sigKey.Value, index, create.IsSet, interactive);
 
                 if (keyObj == null)
                     return Return(-7, interactive);
@@ -289,6 +283,50 @@ namespace DieFledermaus.Cli
                 return Return(-7, interactive);
             }
             else keyObj = null;
+
+            RsaKeyParameters encObj;
+            if (encKey.IsSet)
+            {
+                if (create.IsSet && !cEncFmt.IsSet)
+                {
+                    Console.Error.WriteLine(TextResources.EncKeyNeedsEnc);
+                    return Return(-8, interactive);
+                }
+
+                BigInteger index;
+                if (encDex.IsSet)
+                {
+                    index = ReadIndex(encDex);
+
+                    if (index == null)
+                        return Return(-8, interactive);
+                }
+                else index = null;
+
+                object kObj = LoadKeyFile(encKey.Value, index, !create.IsSet, interactive);
+                if (kObj == null)
+                    return Return(-8, interactive);
+
+                encObj = kObj as RsaKeyParameters;
+                if (encObj == null)
+                {
+                    Console.Error.WriteLine(TextResources.EncKeyNeedsRsa);
+                    return Return(-8, interactive);
+                }
+            }
+            else if (encDex.IsSet)
+            {
+                if (!cEncFmt.IsSet)
+                {
+                    Console.Error.WriteLine(TextResources.EncDexNeedsEnc);
+                    return Return(-8, interactive);
+                }
+
+                Console.Error.WriteLine(TextResources.EncDexNeedsKey);
+                return Return(-8, interactive);
+
+            }
+            encObj = null;
 
             string ssPassword = null;
             List<FileStream> streams = null;
@@ -329,6 +367,7 @@ namespace DieFledermaus.Cli
                                 ds.RSASignParameters = keyObj as RsaKeyParameters;
                                 ds.DSASignParameters = keyObj as DsaKeyParameters;
                                 ds.ECDSASignParameters = keyObj as ECKeyParameters;
+                                ds.RSAEncryptParameters = encObj;
 
                                 if (hash.Value.HasValue)
                                     ds.HashFunction = hash.Value.Value;
@@ -417,6 +456,8 @@ namespace DieFledermaus.Cli
                             archive.RSASignParameters = archive.DefaultRSASignParameters = keyObj as RsaKeyParameters;
                             archive.DSASignParameters = archive.DefaultDSASignParameters = keyObj as DsaKeyParameters;
                             archive.ECDSASignParameters = archive.DefaultECDSASignParameters = keyObj as ECKeyParameters;
+                            if (hide.IsSet)
+                                archive.RSAEncryptParameters = encObj;
 
                             if (hash.Value.HasValue)
                                 archive.HashFunction = hash.Value.Value;
@@ -433,7 +474,10 @@ namespace DieFledermaus.Cli
                                     entry.Progress += Entry_Progress;
 
                                 if (cEncFmt.IsSet && !hide.IsSet)
+                                {
                                     entry.Password = ssPassword;
+                                    entry.RSAEncryptParameters = encObj;
+                                }
 
                                 using (Stream writeStream = entry.OpenWrite())
                                     streams[i].CopyTo(writeStream);
@@ -709,6 +753,23 @@ namespace DieFledermaus.Cli
                     for (int i = 0; i < streams.Count; i++)
                         streams[i].Dispose();
                 }
+            }
+        }
+
+        private static BigInteger ReadIndex(ClParamValue cIndex)
+        {
+            try
+            {
+                BigInteger index = new BigInteger(cIndex.Value);
+                if (index.CompareTo(BigInteger.Zero) < 0)
+                    throw new InvalidDataException();
+
+                return index;
+            }
+            catch
+            {
+                Console.Error.WriteLine(TextResources.BadInteger, cIndex.Key, cIndex.Value);
+                return null;
             }
         }
 

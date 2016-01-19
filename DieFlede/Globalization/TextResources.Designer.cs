@@ -160,6 +160,42 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to RSA encryption key index was given, but no encryption settings were specified..
+        /// </summary>
+        internal static string EncDexNeedsEnc {
+            get {
+                return ResourceManager.GetString("EncDexNeedsEnc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA encryption key index was given, but no encryption key file was specified..
+        /// </summary>
+        internal static string EncDexNeedsKey {
+            get {
+                return ResourceManager.GetString("EncDexNeedsKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RSA encryption key file was given, but no encryption settings were specified..
+        /// </summary>
+        internal static string EncKeyNeedsEnc {
+            get {
+                return ResourceManager.GetString("EncKeyNeedsEnc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only RSA keys are supported for encryption..
+        /// </summary>
+        internal static string EncKeyNeedsRsa {
+            get {
+                return ResourceManager.GetString("EncKeyNeedsRsa", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The key or password is incorrect!.
         /// </summary>
         internal static string EncryptedBadKey {
@@ -313,11 +349,29 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The zero-based index of the RSA encryption key within the key file..
+        /// </summary>
+        internal static string HelpMEncDex {
+            get {
+                return ResourceManager.GetString("HelpMEncDex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encrypt the archive with the specified format..
         /// </summary>
         internal static string HelpMEncFmt {
             get {
                 return ResourceManager.GetString("HelpMEncFmt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path to a file containing an RSA encryption key..
+        /// </summary>
+        internal static string HelpMEncKey {
+            get {
+                return ResourceManager.GetString("HelpMEncKey", resourceCulture);
             }
         }
         
@@ -421,7 +475,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The zero-based index of the signing key within the signature file..
+        ///   Looks up a localized string similar to The zero-based index of the signing key within the key file..
         /// </summary>
         internal static string HelpMSigDex {
             get {
@@ -772,11 +826,29 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to encryption-idnex.
+        /// </summary>
+        internal static string PNameEncDex {
+            get {
+                return ResourceManager.GetString("PNameEncDex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to encryption.
         /// </summary>
         internal static string PNameEncFmt {
             get {
                 return ResourceManager.GetString("PNameEncFmt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to encryption-key.
+        /// </summary>
+        internal static string PNameEncKey {
+            get {
+                return ResourceManager.GetString("PNameEncKey", resourceCulture);
             }
         }
         
@@ -961,7 +1033,7 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Signature index .
+        ///   Looks up a localized string similar to Signature index was given, but no key file was specified..
         /// </summary>
         internal static string SigDexNeedsKey {
             get {
