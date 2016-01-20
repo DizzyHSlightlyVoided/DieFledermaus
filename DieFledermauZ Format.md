@@ -28,10 +28,9 @@ The structure of a DieFledermauZ file is as follows:
 ### Options
 The following elements are specified for the **Options** field:
 * `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
-* `AES` - *1 parameter.* Indicates that the file is encrypted using the AES algorithm. Same parameter format as in DieFledermaus; must be in plaintext. See below for further information.
-* `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Twofish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
-* `Twofish` - *1 parameter.* Indicates that the file is encrypted using the Threefish algorithm. Same parameter format as in DieFledermaus; must be in plaintext.
+* `Ver` - *2 parameters.* Indicates that the archive is encrypted. Same format as in DieFledermaus; must be in plaintext.
 * `Hash` - *1 parameter.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
+* `RSAsch` - *1 parameter.* Indicates that the archive uses an RSA-encrypted key. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
 
 Entry List
 ----------
