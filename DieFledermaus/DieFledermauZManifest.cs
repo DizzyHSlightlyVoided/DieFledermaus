@@ -29,12 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Linq;
 
 using DieFledermaus.Globalization;
+
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
