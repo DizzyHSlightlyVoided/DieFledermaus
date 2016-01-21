@@ -2375,15 +2375,7 @@ namespace DieFledermaus
             long length = 16;
 
             if (_encFmt != MausEncryptionFormat.None && _key == null)
-            {
-                if (_password == null)
-                    _key = DieFledermausStream.FillBuffer(_keySize >> 3);
-                else
-                {
-                    OnProgress(MausProgressState.BuildingKey);
-                    _key = DieFledermausStream.GetKey(this);
-                }
-            }
+                _key = DieFledermausStream.GetKey(this);
 
             byte[] rsaKey = DieFledermausStream.RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, true);
 
@@ -2423,35 +2415,12 @@ namespace DieFledermaus
             ByteOptionList options = new ByteOptionList();
             if (_encFmt != MausEncryptionFormat.None)
             {
-                FormatValue fEnc = new FormatValue(DieFledermausStream._kEnc, DieFledermausStream._vEnc);
-
-                switch (_encFmt)
-                {
-                    case MausEncryptionFormat.Aes:
-                        fEnc.Add(DieFledermausStream._kEncAes);
-                        break;
-                    case MausEncryptionFormat.Twofish:
-                        fEnc.Add(DieFledermausStream._kEncTwofish);
-                        break;
-                    case MausEncryptionFormat.Threefish:
-                        fEnc.Add(DieFledermausStream._kEncThreefish);
-                        break;
-                }
-                fEnc.Add((ushort)_keySize);
-                options.Add(fEnc);
-
+                DieFledermausStream.WriteEncFormat(_encFmt, _keySize, rsaKey, options);
                 options.Add(DieFledermausStream._kHash, DieFledermausStream._vHash, DieFledermausStream.HashBDict[_hashFunc]);
-
-                if (rsaKey != null)
-                {
-                    FormatValue fKey = new FormatValue(DieFledermausStream._kEncRsa, DieFledermausStream._vEnc);
-                    fKey.Add(rsaKey);
-                    options.Add(fKey);
-                }
             }
 
             if (_encryptedOptions == null || !_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
-                AddComment(options);
+                DieFledermausStream.FormatSetComment(_comBytes, options);
 
             long curOffset = BaseOffset;
             AddSize(options, ref length, ref curOffset);
@@ -2476,9 +2445,7 @@ namespace DieFledermaus
                 curOffset += size;
 
                 if (_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
-                    AddComment(encryptedOptions);
-
-                //TODO: Other encrypted options
+                    DieFledermausStream.FormatSetComment(_comBytes, encryptedOptions);
 
                 AddSize(encryptedOptions, ref length, ref curOffset);
             }
@@ -2549,12 +2516,6 @@ namespace DieFledermaus
 #endif
             }
             OnProgress(MausProgressState.CompletedWriting);
-        }
-
-        private void AddComment(ByteOptionList options)
-        {
-            if (_comBytes != null && _comBytes.Length != 0)
-                options.Add(DieFledermausStream._kComment, DieFledermausStream._vComment, _comBytes);
         }
 
         private static void AddSize(ByteOptionList options, ref long length, ref long curOffset)
