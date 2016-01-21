@@ -443,7 +443,8 @@ namespace DieFledermaus
             else
             {
                 string regPath;
-                int end = path.Length - 1; if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+                int end = path.Length - 1;
+                if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
                 {
                     returner = _manifest = new DieFledermauZManifest(this, mausStream, baseOffset, curOffset);
                     regPath = originalPath;
@@ -462,12 +463,15 @@ namespace DieFledermaus
                     regPath = path;
                 }
 
-                PathSeparator pathSep = new PathSeparator(regPath);
+                if (returner != _manifest)
+                {
+                    PathSeparator pathSep = new PathSeparator(regPath);
 
-                if (_entryDict.ContainsKey(path) || _entryDict.ContainsKey(regPath) ||
-                    _entryDict.Keys.Any(pathSep.BeginsWith) || _entryDict.Keys.Any(pathSep.OtherBeginsWith))
-                    throw new InvalidDataException(TextResources.InvalidDataMauZ);
-                _entryDict.Add(path, (int)index);
+                    if (_entryDict.ContainsKey(path) || _entryDict.ContainsKey(regPath) ||
+                        _entryDict.Keys.Any(pathSep.BeginsWith) || _entryDict.Keys.Any(pathSep.OtherBeginsWith))
+                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    _entryDict.Add(path, (int)index);
+                }
             }
 
             if (notDir)
