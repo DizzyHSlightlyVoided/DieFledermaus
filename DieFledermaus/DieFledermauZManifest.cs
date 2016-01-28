@@ -92,11 +92,8 @@ namespace DieFledermaus
                     if (entry == this || !DieFledermauZArchive.GetString(reader, ref curOffset).Equals(entry.OriginalPath, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
-                    byte[] hash;
-                    if (entry.EncryptionFormat == MausEncryptionFormat.None)
-                        hash = entry.Hash;
-                    else
-                        hash = entry.HMAC;
+                    byte[] hash = entry.CompressedHash;
+
                     byte[] buffer = DieFledermausStream.ReadBytes(reader, hash.Length);
 
                     if (!DieFledermausStream.CompareBytes(hash, buffer))
@@ -213,10 +210,7 @@ namespace DieFledermaus
                     writer.Write((byte)paths[i].Length);
                     writer.Write(paths[i]);
 
-                    if (entries[i].EncryptionFormat == MausEncryptionFormat.None)
-                        writer.Write(entries[i].Hash);
-                    else
-                        writer.Write(entries[i].HMAC);
+                    writer.Write(entries[i].CompressedHash);
                 }
 
                 return GetWritten();

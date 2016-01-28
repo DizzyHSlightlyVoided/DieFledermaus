@@ -92,10 +92,11 @@ namespace DieFledermaus
         public byte[] Hash { get { return MausStream.Hash; } }
 
         /// <summary>
-        /// Gets the loaded HMAC of the encrypted data, or <see langword="null"/> if <see cref="Archive"/> is in write-mode or
-        /// the current instance is not encrypted.
+        /// Gets the loaded hash code of the compressed version of the current instance and options,
+        /// the HMAC of the current instance if the current instance is encrypted,
+        /// or <see langword="null"/> if <see cref="Archive"/> is in write-mode.
         /// </summary>
-        public byte[] HMAC { get { return MausStream.HMAC; } }
+        public byte[] CompressedHash { get { return MausStream.CompressedHash; } }
 
         /// <summary>
         /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.

@@ -45,7 +45,7 @@ namespace DieFledermaus
             : base(archive, path, new NoneCompressionFormat(), encryptionFormat)
         {
             if (encryptionFormat != MausEncryptionFormat.None)
-                MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Filename);
+                MausStream.SecondaryOptions.Add(MausOptionToEncrypt.Filename);
         }
 
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset, long realOffset)
@@ -66,15 +66,15 @@ namespace DieFledermaus
         /// </exception>
         public bool EncryptComment
         {
-            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Comment); }
+            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Comment); }
             set
             {
-                if (MausStream.EncryptedOptions == null)
+                if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
                 if (value)
-                    MausStream.EncryptedOptions.Add(MausOptionToEncrypt.Comment);
+                    MausStream.SecondaryOptions.Add(MausOptionToEncrypt.Comment);
                 else
-                    MausStream.EncryptedOptions.Remove(MausOptionToEncrypt.Comment);
+                    MausStream.SecondaryOptions.Remove(MausOptionToEncrypt.Comment);
             }
         }
 
@@ -123,7 +123,7 @@ namespace DieFledermaus
 
         internal override bool IsFilenameEncrypted
         {
-            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Filename); }
+            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Filename); }
         }
 
         internal override MausBufferStream GetWritten()

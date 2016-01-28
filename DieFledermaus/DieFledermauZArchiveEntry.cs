@@ -54,7 +54,7 @@ namespace DieFledermaus
 
         internal override bool IsFilenameEncrypted
         {
-            get { return MausStream.EncryptedOptions != null && MausStream.EncryptedOptions.Contains(MausOptionToEncrypt.Filename); }
+            get { return MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Filename); }
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace DieFledermaus
         /// <summary>
         /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current entry is not encrypted.
         /// </summary>
-        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.EncryptedOptions; } }
+        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.SecondaryOptions; } }
 
         /// <summary>
         /// Gets and sets the time at which the underlying file was created, or <see langword="null"/> to specify no creation time.

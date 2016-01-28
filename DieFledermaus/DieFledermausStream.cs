@@ -75,7 +75,7 @@ namespace DieFledermaus
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 99, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 100, _minVersionShort = _versionShort;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
@@ -102,6 +102,11 @@ namespace DieFledermaus
         }
 
         #region Constructors
+        private DieFledermausStream()
+        {
+            _encryptedOptions = new SettableOptions(this);
+        }
+
         /// <summary>
         /// Creates a new instance in the specified mode.
         /// </summary>
@@ -130,6 +135,7 @@ namespace DieFledermaus
         /// The stream is in read-mode, and <paramref name="stream"/> contains data which is a lower version than the one expected.
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode, bool leaveOpen)
+            : this()
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (compressionMode == CompressionMode.Compress)
@@ -137,6 +143,7 @@ namespace DieFledermaus
                 CheckStreamWrite(stream);
                 _bufferStream = new MausBufferStream();
                 _baseStream = stream;
+                _encryptedOptions.DoAddAll();
             }
             else if (compressionMode == CompressionMode.Decompress)
             {
@@ -250,6 +257,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
+            : this()
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             CheckStreamWrite(stream);
@@ -265,8 +273,8 @@ namespace DieFledermaus
                 default:
                     throw new InvalidEnumArgumentException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
             }
-
             _baseStream = stream;
+            _encryptedOptions.DoAddAll();
             _mode = CompressionMode.Compress;
             _leaveOpen = leaveOpen;
         }
@@ -468,10 +476,12 @@ namespace DieFledermaus
         /// </exception>
         /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
+            : this()
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             CheckStreamWrite(stream);
             _setCompLvl(compressionLevel);
+            _encryptedOptions.DoAddAll();
             _bufferStream = new MausBufferStream();
             _baseStream = stream;
             _mode = CompressionMode.Compress;
@@ -497,7 +507,7 @@ namespace DieFledermaus
         /// </exception>
         /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
-                : this(stream, compressionLevel, false)
+            : this(stream, compressionLevel, false)
         {
         }
 
@@ -558,6 +568,7 @@ namespace DieFledermaus
 #endif
 
         internal DieFledermausStream(DieFledermauZItem entry, string path, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
+            : this()
         {
             _baseStream = stream;
             _bufferStream = new MausBufferStream();
@@ -576,6 +587,7 @@ namespace DieFledermaus
             }
             _cmpFmt = compFormat.CompressionFormat;
             _entry = entry;
+            _encryptedOptions.DoAddAll();
             _setEncFormat(encryptionFormat);
             _filename = path;
             _allowDirNames = entry is DieFledermauZArchiveEntry ? AllowDirNames.Yes : AllowDirNames.EmptyDir;
@@ -584,6 +596,7 @@ namespace DieFledermaus
         }
 
         internal DieFledermausStream(Stream stream, bool readMagNum, string path)
+            : this()
         {
             _baseStream = stream;
             _mode = CompressionMode.Decompress;
@@ -627,7 +640,6 @@ namespace DieFledermaus
             _keySizes = _getKeySizes(encryptionFormat, out _blockByteCount);
             _encFmt = encryptionFormat;
             if (_encFmt == MausEncryptionFormat.None) return;
-            _encryptedOptions = new SettableOptions(this);
             _keySize = _keySizes.MaxSize;
             do
             {
@@ -790,9 +802,11 @@ namespace DieFledermaus
 
         private byte[] _hmacExpected;
         /// <summary>
-        /// Gets the loaded HMAC of the encrypted data, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
+        /// Gets the loaded hash code of the compressed version of the current instance and options,
+        /// the HMAC of the current instance if the current instance is encrypted,
+        /// or <see langword="null"/> if the current instance is in write-mode.
         /// </summary>
-        public byte[] HMAC
+        public byte[] CompressedHash
         {
             get
             {
@@ -1561,9 +1575,9 @@ namespace DieFledermaus
 
         private SettableOptions _encryptedOptions;
         /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current instance is not encrypted.
+        /// Gets a collection containing options which should be included in checksum calculations.
         /// </summary>
-        public SettableOptions EncryptedOptions { get { return _encryptedOptions; } }
+        public SettableOptions SecondaryOptions { get { return _encryptedOptions; } }
 
         private string _filename;
         /// <summary>
@@ -2036,9 +2050,6 @@ namespace DieFledermaus
 
                 _headSize = ReadFormat(reader, false);
 
-                if ((_rsaSignId != null && _rsaSignature == null) || (_dsaSignId != null && _dsaSignature == null) || (_ecdsaSignId != null && _ecdsaSignature == null))
-                    throw new InvalidDataException(TextResources.FormatBad);
-
                 int hashLength = GetHashLength(_hashFunc);
                 if (_rsaSignature != null && _rsaSignature.Length < hashLength)
                     throw new InvalidDataException(TextResources.FormatBad);
@@ -2063,14 +2074,12 @@ namespace DieFledermaus
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
                 else gotULen = true;
 
-                byte[] hash = ReadBytes(reader, hashLength);
+                _hmacExpected = ReadBytes(reader, hashLength);
 
                 if (_encFmt == MausEncryptionFormat.None)
-                    _hashExpected = hash;
+                    _headSize += ReadFormat(reader, true);
                 else
                 {
-                    _hmacExpected = hash;
-
                     int keySize = _keySize >> 3;
                     _salt = ReadBytes(reader, keySize);
 
@@ -2092,7 +2101,7 @@ namespace DieFledermaus
             const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
                 sizeof(long) + sizeof(long); //compressed length, uncompressed length
 
-            long headSize = baseHeadSize;
+            long headSize = fromEncrypted ? sizeof(short) : baseHeadSize;
 
             ByteOptionList optionList;
             try
@@ -2205,11 +2214,7 @@ namespace DieFledermaus
                 }
 
                 if (ReadEncFormat(curValue, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount, false))
-                {
-                    if (_encryptedOptions == null)
-                        _encryptedOptions = new SettableOptions(this);
                     continue;
-                }
 
                 if (curForm.Equals(_kFilename, StringComparison.Ordinal))
                 {
@@ -2281,6 +2286,12 @@ namespace DieFledermaus
                 }
 
                 throw new NotSupportedException(TextResources.FormatUnknown);
+            }
+
+            if (fromEncrypted)
+            {
+                _hashExpected = ReadBytes(reader, GetHashLength(_hashFunc));
+                headSize += _hashExpected.Length;
             }
 
             return headSize;
@@ -2423,7 +2434,7 @@ namespace DieFledermaus
             else
             {
                 if (fromEncrypted)
-                    _encryptedOptions.Add(option);
+                    _encryptedOptions.InternalAdd(option);
                 curTime = newVal;
             }
         }
@@ -2697,20 +2708,14 @@ namespace DieFledermaus
             _headerGotten = true;
             OnProgress(new MausProgressEventArgs(MausProgressState.CompletedLoading, oldLength, _bufferStream.Length));
 
-            OnProgress(_encFmt == MausEncryptionFormat.None ? MausProgressState.VerifyingHash : MausProgressState.ComputingHash);
+            OnProgress(MausProgressState.VerifyingHash);
             byte[] hashActual = ComputeHash(_bufferStream, _hashFunc);
+
+            if (!CompareBytes(hashActual, _hashExpected))
+                throw new InvalidDataException(TextResources.BadChecksum);
+
             if (_encFmt != MausEncryptionFormat.None)
                 OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashActual));
-            if (_encFmt == MausEncryptionFormat.None || _rsaSignature != null)
-            {
-                if (_encFmt == MausEncryptionFormat.None)
-                {
-                    if (!CompareBytes(hashActual, _hashExpected))
-                        throw new InvalidDataException(TextResources.BadChecksum);
-                }
-                _hashExpected = hashActual;
-            }
-            else _hashExpected = hashActual;
         }
 
         #region Verify RSA
@@ -2756,10 +2761,10 @@ namespace DieFledermaus
                 {
                     return false;
                 }
-                if (CompareBytes(_hashExpected, sig))
+                if (CompareBytes(_hmacExpected, sig))
                     return _rsaSignVerified = true;
 
-                byte[] expected = GetDerEncoded(_hashExpected, _hashFunc);
+                byte[] expected = GetDerEncoded(_hmacExpected, _hashFunc);
 
                 if (CompareBytes(expected, sig))
                     return _rsaSignVerified = true;
@@ -2767,13 +2772,13 @@ namespace DieFledermaus
                 if (sig.Length != expected.Length - 2)
                     return false;
 
-                int sigOffset = sig.Length - _hashExpected.Length - 2;
-                int expectedOffset = expected.Length - _hashExpected.Length - 2;
+                int sigOffset = sig.Length - _hmacExpected.Length - 2;
+                int expectedOffset = expected.Length - _hmacExpected.Length - 2;
 
                 expected[1] -= 2;      // adjust lengths
                 expected[3] -= 2;
 
-                for (int i = 0; i < _hashExpected.Length; i++)
+                for (int i = 0; i < _hmacExpected.Length; i++)
                 {
                     if (sig[sigOffset + i] != expected[expectedOffset + i])
                         return false;
@@ -2827,7 +2832,7 @@ namespace DieFledermaus
             {
                 DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
 
-                return _dsaSignVerified = VerifyDsaSignature(_hashExpected, _dsaSignature, signer, _dsaSignPub);
+                return _dsaSignVerified = VerifyDsaSignature(_hmacExpected, _dsaSignature, signer, _dsaSignPub);
             }
             catch (Exception x)
             {
@@ -2869,7 +2874,7 @@ namespace DieFledermaus
             {
                 ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
 
-                return _ecdsaSignVerified = VerifyDsaSignature(_hashExpected, _ecdsaSignature, signer, _ecdsaSignPub);
+                return _ecdsaSignVerified = VerifyDsaSignature(_hmacExpected, _ecdsaSignature, signer, _ecdsaSignPub);
             }
             catch (Exception x)
             {
@@ -3204,7 +3209,7 @@ namespace DieFledermaus
             o.OnProgress(MausProgressState.VerifyingHMAC);
 
             byte[] actualHmac = ComputeHmac(output, key, o.HashFunction);
-            if (!success || !CompareBytes(actualHmac, o.HMAC))
+            if (!success || !CompareBytes(actualHmac, o.CompressedHash))
                 throw new InvalidCipherTextException(hasRsa ? TextResources.BadKeyRsa : TextResources.BadKey);
 
             if (noKey)
@@ -3213,8 +3218,16 @@ namespace DieFledermaus
             return output;
         }
 
-        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream bufferStream, byte[] key)
+        internal static byte[] Encrypt(IMausProgress o, MausBufferStream output, MausBufferStream bufferStream)
         {
+            byte[] key = o.Key;
+            if (key == null)
+                o.Key = key = GetKey(o);
+            {
+                output.Write(o.Salt, 0, key.Length);
+                byte[] iv = o.IV;
+                output.Write(iv, 0, o.EncryptionFormat == MausEncryptionFormat.Threefish ? key.Length : iv.Length);
+            }
             o.OnProgress(MausProgressState.Encrypting);
 
             RunCipher(key, o, bufferStream, output, true);
@@ -3277,6 +3290,34 @@ namespace DieFledermaus
             CoderPropID.EndMarker,
         };
 
+        private void AddOptions(ByteOptionList formats, bool secondary)
+        {
+            if (_filename != null && (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.Filename)))
+                formats.Add(_kFilename, _vFilename, _textEncoding.GetBytes(_filename));
+
+            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.Compression))
+            {
+                switch (_cmpFmt)
+                {
+                    case MausCompressionFormat.None:
+                        formats.Add(_kCmpNone, 1);
+                        break;
+                    case MausCompressionFormat.Lzma:
+                        formats.Add(_kCmpLzma, 1);
+                        break;
+                    default:
+                        formats.Add(_kCmpDef, 1);
+                        break;
+                }
+            }
+
+            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.CreatedTime))
+                FormatSetTimes(formats, _kTimeC, _timeC);
+
+            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
+                FormatSetTimes(formats, _kTimeM, _timeM);
+        }
+
         private void WriteFile()
         {
             if (_entry != null && _entry.Archive == null)
@@ -3287,73 +3328,34 @@ namespace DieFledermaus
                 throw new InvalidOperationException(TextResources.KeyRsaNotSet);
 
             _bufferStream.Reset();
+            OnProgress(MausProgressState.ComputingHash);
+            _hashExpected = ComputeHash(_bufferStream, _hashFunc);
+            OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, _hashExpected));
+            _bufferStream.Reset();
 
-            #region Signatures
-            byte[] rsaSignature, dsaSignature, ecdsaSignature;
+            MausBufferStream secondaryStream = new MausBufferStream();
 
-            if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
+            #region Secondary Format
+#if NOLEAVEOPEN
+            BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding);
+#else
+            using (BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding, true))
+#endif
             {
-                OnProgress(MausProgressState.ComputingHash);
-                _hashExpected = ComputeHash(_bufferStream, _hashFunc);
-                OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, _hashExpected));
-                if (_rsaSignParamBC != null)
-                {
-                    OnProgress(MausProgressState.SigningRSA);
-                    byte[] message = GetDerEncoded(_hashExpected, _hashFunc);
-                    OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
-                    try
-                    {
-                        engine.Init(true, _rsaSignParamBC);
-                        rsaSignature = engine.ProcessBlock(message, 0, message.Length);
-                    }
-                    catch (Exception x)
-                    {
-                        throw new CryptoException(TextResources.RsaSigPrivInvalid, x);
-                    }
-                }
-                else rsaSignature = null;
-                if (_dsaSignParamBC != null)
-                {
-                    OnProgress(MausProgressState.SigningDSA);
-                    try
-                    {
-                        DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
+                ByteOptionList secondaryFormat = new ByteOptionList();
+                AddOptions(secondaryFormat, true);
 
-                        dsaSignature = GenerateDsaSignature(_hashExpected, signer, _dsaSignParamBC);
-                    }
-                    catch (Exception x)
-                    {
-                        throw new CryptoException(TextResources.DsaSigPrivInvalid, x);
-                    }
-                }
-                else dsaSignature = null;
-                if (_ecdsaSignParamBC != null)
-                {
-                    OnProgress(MausProgressState.SigningECDSA);
-                    try
-                    {
-                        ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
-                        ecdsaSignature = GenerateDsaSignature(_hashExpected, signer, _ecdsaSignParamBC);
-                    }
-                    catch (Exception x)
-                    {
-                        throw new CryptoException(TextResources.EcdsaSigPrivInvalid, x);
-                    }
-                }
-                else ecdsaSignature = null;
+                if (_encFmt != MausEncryptionFormat.None)
+                    secondaryFormat.Add(_kULen, 1, _bufferStream.Length);
+
+                secondaryFormat.Write(secWriter);
             }
-            else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
             #endregion
 
-            if (_encFmt != MausEncryptionFormat.None && _key == null)
-                _key = GetKey(this);
-
-            byte[] rsaKey = RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, false);
-
-            long oldLength = _bufferStream.Length;
+            secondaryStream.Write(_hashExpected, 0, _hashExpected.Length);
 
             #region Compress
-            MausBufferStream compressedStream;
+            MausBufferStream compressedStream = new MausBufferStream();
             if (_cmpFmt == MausCompressionFormat.None)
                 compressedStream = _bufferStream;
             else if (_cmpFmt == MausCompressionFormat.Lzma)
@@ -3391,6 +3393,82 @@ namespace DieFledermaus
             compressedStream.Reset();
             #endregion
 
+            long oldLength = _bufferStream.Length;
+            long compLength = compressedStream.Length;
+
+            compressedStream.BufferCopyTo(secondaryStream, false);
+            compressedStream.Dispose();
+            compressedStream = secondaryStream;
+
+            if (_encFmt == MausEncryptionFormat.None)
+                _hmacExpected = ComputeHash(compressedStream, _hashFunc);
+            else
+            {
+                MausBufferStream encryptionStream = new MausBufferStream();
+                _hmacExpected = Encrypt(this, encryptionStream, compressedStream);
+                compressedStream.Dispose();
+                compressedStream = encryptionStream;
+            }
+            _bufferStream.Dispose();
+            _bufferStream = compressedStream;
+            _bufferStream.Reset();
+
+            byte[] rsaKey = RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, false);
+
+            #region Signatures
+            byte[] rsaSignature, dsaSignature, ecdsaSignature;
+
+            if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
+            {
+                if (_rsaSignParamBC != null)
+                {
+                    OnProgress(MausProgressState.SigningRSA);
+                    byte[] message = GetDerEncoded(_hmacExpected, _hashFunc);
+                    OaepEncoding engine = new OaepEncoding(new RsaBlindedEngine(), GetHashObject(_hashFunc));
+                    try
+                    {
+                        engine.Init(true, _rsaSignParamBC);
+                        rsaSignature = engine.ProcessBlock(message, 0, message.Length);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptoException(TextResources.RsaSigPrivInvalid, x);
+                    }
+                }
+                else rsaSignature = null;
+                if (_dsaSignParamBC != null)
+                {
+                    OnProgress(MausProgressState.SigningDSA);
+                    try
+                    {
+                        DsaSigner signer = new DsaSigner(GetDsaCalc(_hashFunc));
+
+                        dsaSignature = GenerateDsaSignature(_hmacExpected, signer, _dsaSignParamBC);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptoException(TextResources.DsaSigPrivInvalid, x);
+                    }
+                }
+                else dsaSignature = null;
+                if (_ecdsaSignParamBC != null)
+                {
+                    OnProgress(MausProgressState.SigningECDSA);
+                    try
+                    {
+                        ECDsaSigner signer = new ECDsaSigner(GetDsaCalc(_hashFunc));
+                        ecdsaSignature = GenerateDsaSignature(_hmacExpected, signer, _ecdsaSignParamBC);
+                    }
+                    catch (Exception x)
+                    {
+                        throw new CryptoException(TextResources.EcdsaSigPrivInvalid, x);
+                    }
+                }
+                else ecdsaSignature = null;
+            }
+            else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
+            #endregion
+
 #if NOLEAVEOPEN
             BinaryWriter writer = new BinaryWriter(_baseStream);
 #else
@@ -3403,116 +3481,41 @@ namespace DieFledermaus
                 {
                     ByteOptionList formats = new ByteOptionList();
 
-                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Filename))
-                        FormatSetFilename(formats);
-
-                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Compression))
-                        FormatSetCompression(formats);
-
-                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.CreatedTime))
-                        FormatSetTimes(formats, _kTimeC, _timeC);
-
-                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
-                        FormatSetTimes(formats, _kTimeM, _timeM);
-
-                    if (_encryptedOptions == null || !_encryptedOptions.Contains(MausOptionToEncrypt.Comment))
-                        FormatSetComment(_comBytes, formats);
+                    AddOptions(formats, false);
 
                     formats.Add(_kHash, _vHash, HashBDict[_hashFunc]);
 
-                    if (_encFmt == MausEncryptionFormat.None)
-                        WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
-                    else
+                    if (_encFmt != MausEncryptionFormat.None)
+                    {
                         WriteEncFormat(_encFmt, _keySize, rsaKey, formats);
+
+                        if (rsaKey != null)
+                            formats.Add(_kEncRsa, _vEnc, rsaKey);
+                    }
+
+                    WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
                     formats.Write(writer);
                 }
 
                 if (_encFmt == MausEncryptionFormat.None)
                 {
-                    writer.Write(compressedStream.Length);
-                    writer.Write(_bufferStream.Length);
-                    if (_hashExpected == null)
-                    {
-                        _bufferStream.Reset();
-                        OnProgress(MausProgressState.ComputingHash);
-                        _hashExpected = ComputeHash(_bufferStream, _hashFunc);
-                        OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, _hashExpected));
-                    }
-                    writer.Write(_hashExpected);
-
-                    if (_bufferStream != compressedStream)
-                    {
-                        _bufferStream.Close();
-                        _bufferStream = compressedStream;
-                    }
-                    _bufferStream.Reset();
-
-                    _bufferStream.BufferCopyTo(_baseStream, false);
+                    writer.Write(compLength);
+                    writer.Write(oldLength);
                 }
                 else
                 {
-                    using (MausBufferStream opts = new MausBufferStream())
-                    {
-                        ByteOptionList formats = new ByteOptionList();
-
-                        foreach (MausOptionToEncrypt opt in _encryptedOptions)
-                        {
-                            switch (opt)
-                            {
-                                case MausOptionToEncrypt.Filename:
-                                    FormatSetFilename(formats);
-                                    continue;
-                                case MausOptionToEncrypt.Compression:
-                                    FormatSetCompression(formats);
-                                    continue;
-                                case MausOptionToEncrypt.CreatedTime:
-                                    FormatSetTimes(formats, _kTimeC, _timeC);
-                                    continue;
-                                case MausOptionToEncrypt.ModTime:
-                                    FormatSetTimes(formats, _kTimeM, _timeM);
-                                    continue;
-                                case MausOptionToEncrypt.Comment:
-                                    FormatSetComment(_comBytes, formats);
-                                    continue;
-                            }
-                        }
-
-                        WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
-
-                        formats.Add(_kULen, 1, _bufferStream.Length);
-
-                        if (compressedStream != _bufferStream)
-                        {
-                            _bufferStream.Close();
-                            _bufferStream = compressedStream;
-                        }
-
-                        using (BinaryWriter encWriter = new BinaryWriter(opts))
-                        {
-                            formats.Write(encWriter);
-                            _bufferStream.Prepend(opts);
-                        }
-                    }
-
-                    using (MausBufferStream output = new MausBufferStream())
-                    {
-                        output.Write(_salt, 0, _key.Length);
-                        output.Write(_iv, 0, _encFmt == MausEncryptionFormat.Threefish ? _key.Length : _iv.Length);
-                        _hmacExpected = Encrypt(this, output, _bufferStream, _key);
-
-                        writer.Write(output.Length);
-                        writer.Write((long)_pkCount);
-                        writer.Write(_hmacExpected);
-
-                        output.BufferCopyTo(_baseStream, false);
-                    }
+                    writer.Write(compressedStream.Length);
+                    writer.Write((long)_pkCount);
                 }
+                _baseStream.Write(_hmacExpected, 0, _hmacExpected.Length);
+
+                compressedStream.BufferCopyTo(_baseStream, false);
             }
-            OnProgress(new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, _bufferStream.Length));
 #if NOLEAVEOPEN
             _baseStream.Flush();
 #endif
+            OnProgress(new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, compLength));
         }
 
         internal static void WriteEncFormat(MausEncryptionFormat _encFmt, int _keySize, byte[] rsaKey, ByteOptionList formats)

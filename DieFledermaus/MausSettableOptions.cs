@@ -117,6 +117,11 @@ namespace DieFledermaus
             UnionWith(_allValues);
         }
 
+        internal void DoAddAll()
+        {
+            _set.UnionWith(_allValues);
+        }
+
         /// <summary>
         /// Removes the specified value from the collection.
         /// </summary>

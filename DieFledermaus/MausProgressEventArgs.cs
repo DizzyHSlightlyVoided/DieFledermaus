@@ -143,7 +143,8 @@ namespace DieFledermaus
         /// </summary>
         ComputingHash,
         /// <summary>
-        /// Computing the HMAC of the encrypted data.
+        /// Computing the hash of the compresseed data plus specified metadata,
+        /// or the HMAC if the archive is encrypted.
         /// </summary>
         ComputingHMAC,
         /// <summary>
@@ -167,7 +168,8 @@ namespace DieFledermaus
         /// </summary>
         ComputingHashCompleted,
         /// <summary>
-        /// Finished computing the HMAC of the compressed data.
+        /// Finished computing the hash of the compressed data plus specified metadata,
+        /// or the HMAC if the archive is encrypted.
         /// </summary>
         ComputingHMACCompleted,
         /// <summary>

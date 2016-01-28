@@ -187,9 +187,11 @@ namespace DieFledermaus
         bool IsDecrypted { get; }
 
         /// <summary>
-        /// Gets the HMAC of the current instance, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
+        /// Gets the loaded hash code of the compressed version of the current instance and options,
+        /// the HMAC of the current instance if the current instance is encrypted,
+        /// or <see langword="null"/> if the current instance is in write-mode.
         /// </summary>
-        byte[] HMAC { get; }
+        byte[] CompressedHash { get; }
 
         /// <summary>
         /// Gets and sets the number of PBKDF2 cycles used to generate the password, minus 9001.

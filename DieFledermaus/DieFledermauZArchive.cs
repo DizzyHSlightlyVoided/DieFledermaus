@@ -60,7 +60,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const ushort _versionShort = 99, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 100, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;
@@ -1388,9 +1388,11 @@ namespace DieFledermaus
 
         private byte[] _hmacExpected;
         /// <summary>
-        /// Gets the loaded HMAC of the current instance, or <see langword="null"/> if the current instance is in write-mode or is not encrypted.
+        /// Gets the loaded hash code of the compressed version of the current instance and options,
+        /// the HMAC of the current instance if the current instance is encrypted,
+        /// or <see langword="null"/> if the current instance is in write-mode.
         /// </summary>
-        public byte[] HMAC
+        public byte[] CompressedHash
         {
             get
             {
@@ -2436,28 +2438,15 @@ namespace DieFledermaus
             else
             {
                 encryptedOptions = new ByteOptionList();
-                long keyByteLength = _keySize >> 3;
-                long size = keyByteLength + sizeof(long);
-                if (_encFmt == MausEncryptionFormat.Threefish)
-                    size += keyByteLength;
-                else
-                    size += _blockByteCount;
-
-                size += DieFledermausStream.GetHashLength(_hashFunc);
-
-                length += size;
-                curOffset += size;
-
                 if (_encryptedOptions.Contains(MauZOptionToEncrypt.Comment))
                     DieFledermausStream.FormatSetComment(_comBytes, encryptedOptions);
 
-                AddSize(encryptedOptions, ref length, ref curOffset);
+                length += sizeof(long) + DieFledermausStream.GetHashLength(_hashFunc);
             }
 
             using (MausBufferStream dataStream = new MausBufferStream())
             {
                 OnProgress(MausProgressState.ArchiveBuildingEntries);
-                byte[] hmac = null;
                 if (_encFmt == MausEncryptionFormat.None)
                 {
 #if NOLEAVEOPEN
@@ -2486,7 +2475,7 @@ namespace DieFledermaus
 
                         cryptStream.Reset();
 
-                        hmac = DieFledermausStream.Encrypt(this, dataStream, cryptStream, _key);
+                        _hmacExpected = DieFledermausStream.Encrypt(this, dataStream, cryptStream);
                     }
                 }
                 dataStream.Reset();
@@ -2509,9 +2498,7 @@ namespace DieFledermaus
                     if (_encFmt != MausEncryptionFormat.None)
                     {
                         writer.Write((long)_pkCount);
-                        writer.Write(hmac);
-                        writer.Write(_salt, 0, _key.Length);
-                        writer.Write(_iv);
+                        writer.Write(_hmacExpected);
                     }
                     dataStream.BufferCopyTo(_baseStream, false);
                 }

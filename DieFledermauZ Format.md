@@ -1,6 +1,6 @@
 ﻿DieFledermauZ (DieFledermaus Zip) format (.mauz file)
 =====================================================
-Version 0.99
+Version 1.00
 ------------
 * Extension: ".mauz" or ".maus"
 * Byte order: little-endian
@@ -17,9 +17,9 @@ Structure
 The structure of a DieFledermauZ file is as follows:
 
 * **Magic Number:** `mAuZ` (`6d 41 75 5a`)
-* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `00 63` (hex) = integer `99` (decimal) = version 0.99.
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `64 00` (hex) = integer `100` (decimal) = version 1.00.
 * **Total Size:** A signed 64-bit integer, indicating the total size of the current file in bytes, starting from the `m` in `mAuZ`.
-* **Options:** A collection of values signifying options for the archive, with the same form and structure as the **Format** field in a DieFledermaus file.
+* **Primary Options:** A collection of values signifying options for the archive, with the same form and structure as the **Format** fields in a DieFledermaus file. Unlike DieFledermaus, there is no "Secondary Options" field unless the archive is encrypted.
 * **Entry Count:** A signed 64-bit integer, indicating the number of entries in the archive.
 * **Entry List:** Contains every entry in the archive.
 * **Offset List:** A list of the locations of each element in **Entry List** within the file.
@@ -37,7 +37,7 @@ Entry List
 The **Entry List** is prefixed with the **Entry List Prefix**, the string "`\x03`DAT" (`03 44 41 54`). The number of elements in the list must be equal to **Entry Count**. Each element in **Entry List** has the following structure:
 * **Entry Prefix:** The string "`\x03`dat" (`03 64 61 74`)
 * **Entry ID:** A signed 64-bit integer, used to uniquely identify the entry when the filename is encrypted.
-* **Entry Filename:** An 8-bit length-prefixed UTF-8 string, in the form of the elements in **Format** and **Options**, specifying the full path of the entry within the DieFledermauZ archive's file structure.
+* **Entry Filename:** An 8-bit length-prefixed UTF-8 string specifying the full path of the entry within the DieFledermauZ archive's file structure.
 * **Entry:** An entire DieFledermaus file, with a slightly modified format:
  - The `Name` value in the **Entry**'s **Format** is mandatory and must have the same value as the **Entry Filename**, *unless* the filename has been encrypted.
  - `Name` now permits the use of forward-slashes in order to specify directory separators.
@@ -103,7 +103,7 @@ The structure of the signature manifest is as follows:
  * **Signature Header:** The string "`\x03`sig" (`03 73 69 67`).
  * The **Entry ID** as it occurs in **Entry List** and **Offset List**.
  * The **Entry Filename** as it occurs in **Entry List** and **Offset List**.
- * A 16-bit length-prefixed string containing the contents of the file's **Checksum** field: the hash of the file's uncompressed data, or its HMAC if the file is encrypted.
+ * A 16-bit length-prefixed string containing the contents of the file's **HMAC** field.
 
 The manifest must include every file listed in the archive *except* the manifest itself. It must not be compressed, encrypted (apart from encrypting the entire archive), or contain any other entries in its **Format** except the file path.
 
