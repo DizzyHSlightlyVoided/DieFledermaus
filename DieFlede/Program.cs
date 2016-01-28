@@ -347,10 +347,10 @@ namespace DieFledermaus.Cli
                             MausEncryptionFormat encFormat = MausEncryptionFormat.None;
 
                             if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
-                                return -3;
+                                return Return(-3, interactive);
 
                             if (CreateEncrypted(cEncFmt, encObj, interactive, out encFormat, out ssPassword))
-                                return -4;
+                                return Return(-4, interactive);
 
                             if (archiveFile.Value == null)
                                 archiveFile.Value = entry + mausExt;
@@ -444,11 +444,11 @@ namespace DieFledermaus.Cli
                         }
 
                         if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref archiveFile.Value))
-                            return -3;
+                            return Return(-3, interactive);
 
                         MausEncryptionFormat encFormat = MausEncryptionFormat.None;
                         if (CreateEncrypted(cEncFmt, encObj, interactive, out encFormat, out ssPassword))
-                            return -4;
+                            return Return(-4, interactive);
 
                         using (FileStream fs = File.OpenWrite(archiveFile.Value))
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
@@ -528,7 +528,7 @@ namespace DieFledermaus.Cli
                         Console.WriteLine(TextResources.EncryptedEx);
 
                         if (EncryptionPrompt(dz, encObj, interactive, out ssPassword))
-                            return -4;
+                            return Return(-4, interactive);
                     }
 
                     #region Archive Signature
