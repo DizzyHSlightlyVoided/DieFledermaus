@@ -332,10 +332,15 @@ namespace DieFledermaus.Cli
             List<FileStream> streams = null;
             const string mausExt = ".maus";
             const int mausExtLen = 5;
+
+            string archivePath = null, archiveTemp = null;
             try
             {
                 if (create.IsSet)
                 {
+                    archivePath = Path.GetFullPath(archiveFile.Value);
+                    archiveTemp = GetTempPath(archivePath);
+
                     #region Create - Single
                     if (single.IsSet)
                     {
@@ -361,7 +366,7 @@ namespace DieFledermaus.Cli
                                 return Return(-3, interactive);
                             }
 
-                            using (Stream arStream = File.Create(archiveFile.Value))
+                            using (Stream arStream = File.Create(archiveTemp))
                             using (DieFledermausStream ds = new DieFledermausStream(arStream, compFormat, encFormat))
                             {
                                 ds.RSASignParameters = keyObj as RsaKeyParameters;
@@ -398,10 +403,6 @@ namespace DieFledermaus.Cli
                                 ds.Filename = Path.GetFileName(entry);
                                 fs.CopyTo(ds);
                             }
-
-                            if (verbose.IsSet)
-                                Console.WriteLine(TextResources.Completed);
-                            return Return(0, interactive);
                         }
                     }
                     #endregion
@@ -450,7 +451,7 @@ namespace DieFledermaus.Cli
                         if (CreateEncrypted(cEncFmt, encObj, interactive, out encFormat, out ssPassword))
                             return Return(-4, interactive);
 
-                        using (FileStream fs = File.OpenWrite(archiveFile.Value))
+                        using (FileStream fs = File.Create(archiveTemp))
                         using (DieFledermauZArchive archive = new DieFledermauZArchive(fs, hide.IsSet ? encFormat : MausEncryptionFormat.None))
                         {
                             archive.RSASignParameters = archive.DefaultRSASignParameters = keyObj as RsaKeyParameters;
@@ -504,12 +505,16 @@ namespace DieFledermaus.Cli
                             if (verbose.IsSet)
                                 Console.WriteLine();
                         }
-
-                        if (verbose.IsSet)
-                            Console.WriteLine(TextResources.Completed);
-                        return Return(0, interactive);
                     }
                     #endregion
+
+                    if (File.Exists(archivePath))
+                        File.Delete(archivePath);
+                    File.Move(archiveTemp, archivePath);
+
+                    if (verbose.IsSet)
+                        Console.WriteLine(TextResources.Completed);
+                    return Return(0, interactive);
                 }
 
                 #region Extract/List
@@ -751,7 +756,68 @@ namespace DieFledermaus.Cli
                     for (int i = 0; i < streams.Count; i++)
                         streams[i].Dispose();
                 }
+                if (archiveTemp != null && File.Exists(archiveTemp))
+                    File.Delete(archiveTemp);
             }
+        }
+
+        private static string GetTempPath(string archivePath)
+        {
+            string[] exts = { ".temp", ".tmp" };
+
+            for (int i = 0; i < exts.Length; i++)
+            {
+                try
+                {
+                    string getPath = Path.GetFullPath(archivePath + exts[i]);
+                    if (!File.Exists(getPath))
+                        return getPath;
+                }
+                catch (PathTooLongException) { }
+            }
+
+            for (int i = 0; i < exts.Length; i++)
+            {
+                try
+                {
+                    string getPath = Path.GetFullPath(Path.ChangeExtension(archivePath, exts[i]));
+                    if (!File.Exists(getPath))
+                        return getPath;
+                }
+                catch (PathTooLongException) { }
+            }
+
+            int len = Path.GetFileNameWithoutExtension(archivePath).Length;
+
+            const string alphanumeric = "abcdefghijklmnopqrstuvwxyz0123456789-+!=";
+
+            string dir = Path.GetDirectoryName(archivePath);
+            string returnPath;
+
+            Random rng = new Random();
+
+            do
+            {
+                StringBuilder sb = new StringBuilder();
+
+                for (int i = 0; i < len; i++)
+                    sb.Append(alphanumeric[rng.Next(alphanumeric.Length)]);
+
+                returnPath = Path.Combine(dir, sb.ToString());
+
+                for (int i = 0; i < exts.Length; i++)
+                {
+                    try
+                    {
+                        returnPath = Path.GetFullPath(returnPath + exts[i]);
+                        break;
+                    }
+                    catch (PathTooLongException) { }
+                }
+            }
+            while (File.Exists(returnPath));
+
+            return returnPath;
         }
 
         private static BigInteger ReadIndex(ClParamValue cIndex)
