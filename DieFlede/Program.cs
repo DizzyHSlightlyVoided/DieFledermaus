@@ -989,7 +989,7 @@ namespace DieFledermaus.Cli
             Console.WriteLine(" > {0} -cf [{1}.maus] {2}1 {2}2 {2}3 ...", commandName, TextResources.HelpArchive, TextResources.HelpInput);
             Console.WriteLine();
             Console.WriteLine(TextResources.HelpDecompress);
-            Console.WriteLine(" > {0} -xf [{1}.maus]", commandName, TextResources.HelpArchive, TextResources.HelpOutput);
+            Console.WriteLine(" > {0} -xf [{1}.maus]", commandName, TextResources.HelpArchive);
             Console.WriteLine();
             Console.WriteLine(TextResources.HelpList);
             Console.WriteLine(" > {0} -lvf [{1}.maus]", commandName, TextResources.HelpArchive);
@@ -1839,6 +1839,7 @@ namespace DieFledermaus.Cli
         }
     }
 
+    [Serializable]
     internal class PasswordCancelledException : Exception
     {
     }

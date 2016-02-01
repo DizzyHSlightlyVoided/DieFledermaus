@@ -1,7 +1,6 @@
 // LzmaEncoder.cs
 
 using System;
-using DieFledermaus;
 
 namespace SevenZip.Compression.LZMA
 {
