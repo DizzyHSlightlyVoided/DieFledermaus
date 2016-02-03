@@ -1,5 +1,9 @@
 ﻿Third-Party Licenses
 ====================
+The LZMA compression is &copy; Igor Pavlov. The [LZMA SDK](http://www.7-zip.org/sdk.html) has been released into the public domain.
+
+The blue "Die Fledermaus" icon is a modified version of the [Bat icon by Marianna Nardella](https://thenounproject.com/term/bat/216021/), which was released under the [Creative Commons 3.0 Attribution](http://creativecommons.org/licenses/by/3.0/us/) license.
+
 BouncyCastle
 ------------
 **Please note:** our license is an adaptation of the [MIT X11 License](http://opensource.org/licenses/mit-license.php) and should be read as such.
