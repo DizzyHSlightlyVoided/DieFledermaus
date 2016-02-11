@@ -387,4 +387,13 @@
   <data name="RsaEncNone" xml:space="preserve">
     <value>The current instance does not have an RSA-encrypted key.</value>
   </data>
+  <data name="ManifestVersionTooHigh" xml:space="preserve">
+    <value>The version number of the archive's signature manifest is too high.</value>
+  </data>
+  <data name="ManifestVersionTooLow" xml:space="preserve">
+    <value>The version number of the archive's signature manifest is too low.</value>
+  </data>
+  <data name="ManifestBad" xml:space="preserve">
+    <value>The archive's signature manifest is invalid.</value>
+  </data>
 </root>

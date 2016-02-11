@@ -1,6 +1,6 @@
 ﻿DieFledermaus format (.maus file)
 =================================
-Version 1.00
+Version 1.01
 ------------
 * File Extension: ".maus"
 * Byte order: little-endian
@@ -22,14 +22,14 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Structure
 ---------
-Any encoder or decoder must support version 1.00 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
+Any encoder or decoder must support version 1.01 at minimum. A decoder must be able to support any non-depreciated version, but an encoder may only support a single version. A re-encoder should encode using the highest version understood by the decoder.
 
 When encoding a file to a DieFledermaus archive, the filename of the DieFledermaus file should be the same as the file to encode but with the extension ".maus" added to the end, unless a specific filename is requested by the user.
 
 A DieFledermaus stream contains the following fields:
 
 * **Magic Number:** "`mAuS`" (`6d 41 75 53`)
-* **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100 to get the actual version number, i.e. `64 00` (hex) = integer `100` (decimal) = version 1.00.
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100.0 to get the actual version number, i.e. `65 00` (hex) = integer `101` (decimal) = version 1.01.
 * **Primary Format:** A collection of options specifying the format.
 * **Compressed Length:** A signed 64-bit integer containing the number of bytes in the **Data** field.
 * **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the compressed data stream decodes to a length greater than this value, the extra data is discarded. The minimum length of the decompressed data must be 1 byte.
@@ -112,9 +112,9 @@ The **Salt** field must be included even if the file does not use a text-based p
 ### Padding
 AES, Twofish, and Threefish are [block ciphers](https://en.wikipedia.org/wiki/Block_cipher), which means that they divide the data in to *blocks* of a certain size (128 bits in the case of AES and Twofish, or 16 bytes; and with a block size equal to the key size, in the case of Threefish, equal to 32, 64, and 128 bytes). The plaintext must be [padded](https://en.wikipedia.org/wiki/Padding_%28cryptography%29) using the PKCS7 algorithm, and the padding must be added *after* the HMAC is computed. If the length of the compressed plaintext is not a multiple of the block size, it must be padded with enough bytes to make it a multiple of the block size; the value of each padding byte is equal to the total number of bytes which were added.
 
-For example, in the case of AES: the original length is 50 bytes. 14 bytes are added to make a total of 64, and each byte has a value of `0x0e` (14 decimal).
+For example, in the case of AES: the original length is 50 bytes. 14 bytes are added to make a total of 64, and each padding byte has a value of `0x0e` (14 decimal).
 
-If the original value *is* a multiple of 16, then an extra block of 16 bytes must be added to the plaintext, each with a value of `0x10` (16 decimal). In short, extra bytes of padding must always be added to the encrypted value. The number of padding bytes must not exceed the size of a single block.
+If the original value *is* a multiple of the block size, then an extra block of bytes must be added to the plaintext, each with a value of the number of bytes in the block, i.e. with AES, an original length of 48 bytes, you'd add 16 bytes, each with a value of `0x10` (16 decimal). In other words, extra bytes of padding must *always* be added to the encrypted value. The number of padding bytes must not exceed the size of a single block.
 
 If the decrypted value has invalid padding (i.e. the last two bytes in the last block are `6f 02`), this probably means that the key or password is invalid. However, there is effectively a 1 in 256 chance that an incorrect key will transform the last byte in the stream into `0x01`, which is technically valid padding; therefore, the decrypted value must still be compared against the transmitted HMAC after the padding is removed.
 

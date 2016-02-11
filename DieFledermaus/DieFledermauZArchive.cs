@@ -60,7 +60,7 @@ namespace DieFledermaus
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
-        private const ushort _versionShort = 100, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 101, _minVersionShort = _versionShort;
 
         private bool _leaveOpen;
         private Stream _baseStream;

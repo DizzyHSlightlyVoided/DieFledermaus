@@ -583,6 +583,33 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive&apos;s signature manifest is invalid..
+        /// </summary>
+        internal static string ManifestBad {
+            get {
+                return ResourceManager.GetString("ManifestBad", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The version number of the archive&apos;s signature manifest is too high..
+        /// </summary>
+        internal static string ManifestVersionTooHigh {
+            get {
+                return ResourceManager.GetString("ManifestVersionTooHigh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The version number of the archive&apos;s signature manifest is too low..
+        /// </summary>
+        internal static string ManifestVersionTooLow {
+            get {
+                return ResourceManager.GetString("ManifestVersionTooLow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current instance is not encrypted..
         /// </summary>
         internal static string NotEncrypted {

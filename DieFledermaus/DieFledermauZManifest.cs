@@ -42,6 +42,7 @@ namespace DieFledermaus
     {
         internal const string Filename = "/Manifest.dat";
         internal static readonly byte[] FilenameBytes = Filename.Select(i => (byte)i).ToArray();
+        internal const ushort _versionShort = 1, _versionShortMin = 1;
 
         internal DieFledermauZManifest(DieFledermauZArchive archive)
             : base(archive, Filename, new NoneCompressionFormat(), MausEncryptionFormat.None)
@@ -53,7 +54,7 @@ namespace DieFledermaus
         {
             if (stream.EncryptionFormat != MausEncryptionFormat.None || stream.CompressionFormat != MausCompressionFormat.None ||
                 stream.Comment != null || stream.CreatedTime.HasValue || stream.ModifiedTime.HasValue)
-                throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                throw new InvalidDataException(TextResources.ManifestBad);
         }
 
         private MausBufferStream _readStream;
@@ -75,29 +76,35 @@ namespace DieFledermaus
             {
                 bool[] results = new bool[entries.Length];
 
-                if (reader.ReadInt32() != _sigAll) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                if (reader.ReadInt32() != _sigAll) throw new InvalidDataException(TextResources.ManifestBad);
+                ushort _version = reader.ReadUInt16();
+                if (_version < _versionShortMin)
+                    throw new InvalidDataException(TextResources.ManifestVersionTooLow);
+                if (_version > _versionShort)
+                    throw new InvalidDataException(TextResources.ManifestVersionTooHigh);
+                else _version = 0;
                 long itemCount = reader.ReadInt64();
-                if (itemCount != results.Length - 1) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                if (itemCount != results.Length - 1) throw new InvalidDataException(TextResources.ManifestBad);
 
                 long curOffset = 0;
 
                 for (long i = 0; i < itemCount; i++)
                 {
-                    if (reader.ReadInt32() != _sigCur) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    if (reader.ReadInt32() != _sigCur) throw new InvalidDataException(TextResources.ManifestBad);
                     long index = reader.ReadInt64();
-                    if (results[index]) throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                    if (results[index]) throw new InvalidDataException(TextResources.ManifestBad);
                     results[index] = true;
                     var entry = entries[index];
 
                     if (entry == this || !DieFledermauZArchive.GetString(reader, ref curOffset).Equals(entry.OriginalPath, StringComparison.Ordinal))
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                        throw new InvalidDataException(TextResources.ManifestBad);
 
                     byte[] hash = entry.CompressedHash;
 
                     byte[] buffer = DieFledermausStream.ReadBytes(reader, hash.Length);
 
                     if (!DieFledermausStream.CompareBytes(hash, buffer))
-                        throw new InvalidDataException(TextResources.InvalidDataMauZ);
+                        throw new InvalidDataException(TextResources.ManifestBad);
                 }
             }
         }
@@ -201,6 +208,7 @@ namespace DieFledermaus
             using (BinaryWriter writer = new BinaryWriter(MausStream))
             {
                 writer.Write(_sigAll);
+                writer.Write(_versionShort);
                 writer.Write(entries.LongLength);
 
                 for (long i = 0; i < entries.LongLength; i++)

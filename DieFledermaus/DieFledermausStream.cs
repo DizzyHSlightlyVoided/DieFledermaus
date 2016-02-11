@@ -75,7 +75,7 @@ namespace DieFledermaus
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
-        private const ushort _versionShort = 100, _minVersionShort = _versionShort;
+        private const ushort _versionShort = 101, _minVersionShort = _versionShort;
 
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 

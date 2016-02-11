@@ -1,6 +1,6 @@
 ﻿DieFledermauZ (DieFledermaus Zip) format (.mauz file)
 =====================================================
-Version 1.00
+Version 1.01
 ------------
 * Extension: ".mauz" or ".maus"
 * Byte order: little-endian
@@ -17,7 +17,7 @@ Structure
 The structure of a DieFledermauZ file is as follows:
 
 * **Magic Number:** `mAuZ` (`6d 41 75 5a`)
-* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100 to get the actual version number, i.e. `64 00` (hex) = integer `100` (decimal) = version 1.00.
+* **Version:** An unsigned 16-bit value containing the version number in fixed-point form. As with DieFledermaus, divide the integer value by 100.0 to get the actual version number, i.e. `65 00` (hex) = integer `101` (decimal) = version 1.01.
 * **Total Size:** A signed 64-bit integer, indicating the total size of the current file in bytes, starting from the `m` in `mAuZ`.
 * **Primary Options:** A collection of values signifying options for the archive, with the same form and structure as the **Format** fields in a DieFledermaus file. Unlike DieFledermaus, there is no "Secondary Options" field unless the archive is encrypted.
 * **Entry Count:** A signed 64-bit integer, indicating the number of entries in the archive.
@@ -98,6 +98,7 @@ For further security, an end user may specify that an archive will include a **f
 The structure of the signature manifest is as follows:
 
 * **Header:** The magic number "`\x03`SIG" (`03 53 49 47`).
+* **Manifest version:** A 16-bit unsigned integer indicating the version-number of the manifest.
 * **Signature Count:** A signed 64-bit integer indicating the number of files in the manifest.
 * **Signature List:** A list of **manifest entries** with the following format:
  * **Signature Header:** The string "`\x03`sig" (`03 73 69 67`).
@@ -107,5 +108,4 @@ The structure of the signature manifest is as follows:
 
 The manifest must include every file listed in the archive *except* the manifest itself. It must not be compressed, encrypted (apart from encrypting the entire archive), or contain any other entries in its **Format** except the file path.
 
-A decoder which detects an invalid manifest file must treat the archive itself as invalid, for consistency with the way the decoder should behave towards any other invalid format values, even though the manifest is merely "a file within the archive" in the strictest technical sense.
-
+A decoder which detects an invalid manifest file must treat the archive itself as invalid. This is for consistency with the way the decoder should behave towards any other invalid format values, even though the manifest is merely "a file within the archive" in the strictest technical sense.
