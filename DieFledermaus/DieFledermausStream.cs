@@ -60,7 +60,14 @@ using SevenZip.Compression.LZMA;
 
 namespace DieFledermaus
 {
+#if PCL
+    using InvalidEnumArgumentException = DieFledermaus.MausInvalidEnumException;
+#endif
+#if NOCRYPT
+    using Org.BouncyCastle.Security;
+#else
     using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
+#endif
 
     /// <summary>
     /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format.
@@ -3106,6 +3113,10 @@ namespace DieFledermaus
         internal static byte[] FillBuffer(int length)
         {
             byte[] buffer = new byte[length];
+#if NOCRYPT
+            SecureRandom rng = new SecureRandom();
+            rng.NextBytes(buffer);
+#else
 #if NOCRYPTOCLOSE
             RandomNumberGenerator rng = RandomNumberGenerator.Create();
 #else
@@ -3114,6 +3125,7 @@ namespace DieFledermaus
             {
                 rng.GetBytes(buffer);
             }
+#endif
             return buffer;
         }
 

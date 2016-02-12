@@ -37,6 +37,9 @@ using System.Runtime.InteropServices;
 #elif NET_4_5
 [assembly: AssemblyProduct("DieFledermaus (.Net 4.5)")]
 [assembly: AssemblyConfiguration(".Net 4.5")]
+#elif PCL_4_5
+[assembly: AssemblyProduct("DieFledermaus (PCL 4.5)")]
+[assembly: AssemblyConfiguration("PCL 4.5")]
 #endif
 
 // Version information for an assembly consists of the following four values:

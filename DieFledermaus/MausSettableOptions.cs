@@ -50,7 +50,10 @@ namespace DieFledermaus
 #if IREADONLY
         , IReadOnlyCollection<TValue>
 #endif
-        where TValue : struct, IConvertible
+        where TValue : struct
+#if !PCL
+            , IConvertible
+#endif
     {
         private static readonly HashSet<TValue> _allValues = new HashSet<TValue>((TValue[])Enum.GetValues(typeof(TValue)));
 
@@ -357,7 +360,9 @@ namespace DieFledermaus
             return GetEnumerator();
         }
 
+#if !PCL
         [NonSerialized]
+#endif
         private object _syncRoot;
         object ICollection.SyncRoot
         {

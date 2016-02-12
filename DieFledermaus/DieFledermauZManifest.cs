@@ -207,11 +207,12 @@ namespace DieFledermaus
         {
             using (BinaryWriter writer = new BinaryWriter(MausStream))
             {
+                long length = entries.Length;
                 writer.Write(_sigAll);
                 writer.Write(_versionShort);
-                writer.Write(entries.LongLength);
+                writer.Write(length);
 
-                for (long i = 0; i < entries.LongLength; i++)
+                for (long i = 0; i < length; i++)
                 {
                     writer.Write(_sigCur);
                     writer.Write(i);

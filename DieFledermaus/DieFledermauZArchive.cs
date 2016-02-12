@@ -44,6 +44,9 @@ using SevenZip;
 
 namespace DieFledermaus
 {
+#if PCL
+    using InvalidEnumArgumentException = DieFledermaus.MausInvalidEnumException;
+#endif
 #if COMPLVL
     using System.IO.Compression;
 #endif
@@ -69,7 +72,9 @@ namespace DieFledermaus
         /// </summary>
         public Stream BaseStream { get { return _baseStream; } }
 
+#if !PCL
         [NonSerialized]
+#endif
         internal readonly object _lock = new object();
 
         private bool _headerGotten;
@@ -2518,13 +2523,14 @@ namespace DieFledermaus
 
         private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, BinaryWriter writer, long curOffset)
         {
-            writer.Write(entries.LongLength);
+            long length = entries.Length;
+            writer.Write(length);
 
             writer.Write(_allEntries);
 
             long[] offsets = new long[entries.Length];
 
-            for (long i = 0; i < entries.LongLength; i++)
+            for (long i = 0; i < length; i++)
             {
                 var curStream = entryStreams[i];
                 offsets[i] = curOffset;
@@ -2545,7 +2551,7 @@ namespace DieFledermaus
 
             writer.Write(_allOffsets);
 
-            for (long i = 0; i < entries.LongLength; i++)
+            for (long i = 0; i < length; i++)
             {
                 byte[] pathBytes = paths[i];
                 writer.Write(_curOffset);

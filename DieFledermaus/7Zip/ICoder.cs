@@ -1,13 +1,18 @@
 // ICoder.h
 
 using System;
+#if PCL
+using ApplicationException = System.Exception;
+#endif
 
 namespace SevenZip
 {
     /// <summary>
     /// The exception that is thrown when an error in input stream occurs during decoding.
     /// </summary>
+#if !PCL
     [Serializable]
+#endif
     class DataErrorException : ApplicationException
     {
         public DataErrorException() : base("Data Error") { }
@@ -16,7 +21,9 @@ namespace SevenZip
     /// <summary>
     /// The exception that is thrown when the value of an argument is outside the allowable range.
     /// </summary>
+#if !PCL
     [Serializable]
+#endif
     class InvalidParamException : ApplicationException
     {
         public InvalidParamException() : base("Invalid Parameter") { }
