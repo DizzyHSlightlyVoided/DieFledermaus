@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E2303BBB-4500-4A01-AEE5-42FBE06BE030}</ProjectGuid>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DieFledermaus</RootNamespace>
+    <AssemblyName>DieFledermaus</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <AndroidUseLatestPlatformSdk>False</AndroidUseLatestPlatformSdk>
+    <TargetFrameworkVersion>v4.0.3</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Android\Debug\</OutputPath>
+    <IntermediateOutputPath>obj\Android\Debug\</IntermediateOutputPath>
+    <DefineConstants>TRACE;DEBUG;ANDROID;COMPLVL;IREADONLY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Android\Debug\DieFledermaus.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Android\Release\</OutputPath>
+    <IntermediateOutputPath>obj\Android\Release\</IntermediateOutputPath>
+    <DefineConstants>TRACE;ANDROID;COMPLVL;IREADONLY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Android\Release\DieFledermaus.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Mono.Android" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="7Zip\Common\CRC.cs" />
+    <Compile Include="7Zip\Common\InBuffer.cs" />
+    <Compile Include="7Zip\Common\OutBuffer.cs" />
+    <Compile Include="7Zip\Compress\LZ\IMatchFinder.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzBinTree.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzInWindow.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="7Zip\ICoder.cs" />
+    <Compile Include="ByteOptionList.cs" />
+    <Compile Include="DieFledermausStream.cs" />
+    <Compile Include="DieFledermauZArchive.cs" />
+    <Compile Include="DieFledermauZArchiveEntry.cs" />
+    <Compile Include="DieFledermauZEmptyDirectory.cs" />
+    <Compile Include="DieFledermauZItem.cs" />
+    <Compile Include="DieFledermauZItemUnknown.cs" />
+    <Compile Include="DieFledermauZManifest.cs" />
+    <Compile Include="Globalization\TextResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TextResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="IMausCrypt.cs" />
+    <Compile Include="KeySizeList.cs" />
+    <Compile Include="MausBufferStream.cs" />
+    <Compile Include="MausProgressEventArgs.cs" />
+    <Compile Include="MausSettableOptions.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Globalization\TextResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BouncyCastle\crypto\BouncyCastle.Android.csproj">
+      <Project>{a0d302cb-8866-4ab1-98b9-f0772eabf5df}</Project>
+      <Name>BouncyCastle.Android</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFlede", "DieFlede\DieFlede.csproj", "{BD01E3EC-13D0-41A3-8A17-64105E0AF9B3}"
 EndProject
@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net40", "DieF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Net35", "DieFledermaus\DieFledermaus.Net35.csproj", "{E2303BBA-3500-4A01-AEE5-42FBE06BE030}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Android", "DieFledermaus\DieFledermaus.Android.csproj", "{E2303BBB-4500-4A01-AEE5-42FBE06BE030}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.iOS", "DieFledermaus\DieFledermaus.iOS.csproj", "{E2303BBC-4500-4A01-AEE5-42FBE06BE030}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net46", "DieFledermaus.Tests\DieFledermaus.Tests.Net46.csproj", "{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net45", "DieFledermaus.Tests\DieFledermaus.Tests.Net45.csproj", "{7C2CBD42-4500-41C7-84D2-EC9CE34D0A0B}"
@@ -22,6 +26,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net35", "DieFledermaus.Tests\DieFledermaus.Tests.Net35.csproj", "{7C2CBD42-3500-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle", "BouncyCastle\crypto\BouncyCastle.csproj", "{4C235092-820C-4DEB-9074-D356FB797D8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle.Android", "BouncyCastle\crypto\BouncyCastle.Android.csproj", "{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle.iOS", "BouncyCastle\crypto\BouncyCastle.iOS.csproj", "{0249241C-205E-4AC0-828B-90F822359B9E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +57,14 @@ Global
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2303BBA-3500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2303BBB-4500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2303BBB-4500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2303BBB-4500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2303BBB-4500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2303BBC-4500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2303BBC-4500-4A01-AEE5-42FBE06BE030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2303BBC-4500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2303BBC-4500-4A01-AEE5-42FBE06BE030}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -69,6 +85,14 @@ Global
 		{4C235092-820C-4DEB-9074-D356FB797D8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C235092-820C-4DEB-9074-D356FB797D8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C235092-820C-4DEB-9074-D356FB797D8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0249241C-205E-4AC0-828B-90F822359B9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0249241C-205E-4AC0-828B-90F822359B9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0249241C-205E-4AC0-828B-90F822359B9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0249241C-205E-4AC0-828B-90F822359B9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

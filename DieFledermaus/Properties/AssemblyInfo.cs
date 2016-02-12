@@ -19,7 +19,13 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-#if NET_3_5
+#if ANDROID
+[assembly: AssemblyProduct("DieFledermaus (Android)")]
+[assembly: AssemblyConfiguration("Android")]
+#elif IOS
+[assembly: AssemblyProduct("DieFledermaus (iOS)")]
+[assembly: AssemblyConfiguration("iOS")]
+#elif NET_3_5
 [assembly: AssemblyProduct("DieFledermaus (.Net 3.5)")]
 [assembly: AssemblyConfiguration(".Net 3.5")]
 #elif NET_4_0
@@ -28,7 +34,7 @@ using System.Runtime.InteropServices;
 #elif NET_4_6
 [assembly: AssemblyProduct("DieFledermaus (.Net 4.6)")]
 [assembly: AssemblyConfiguration(".Net 4.6")]
-#else
+#elif NET_4_5
 [assembly: AssemblyProduct("DieFledermaus (.Net 4.5)")]
 [assembly: AssemblyConfiguration(".Net 4.5")]
 #endif

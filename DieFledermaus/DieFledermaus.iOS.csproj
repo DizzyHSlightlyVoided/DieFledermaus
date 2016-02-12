@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E2303BBC-4500-4A01-AEE5-42FBE06BE030}</ProjectGuid>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectTypeGuids>{FEACFBD2-3405-455C-9665-78FE426C6842};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>DieFledermaus</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>DieFledermaus</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iOS\Debug\</OutputPath>
+    <IntermediateOutputPath>obj\iOS\Debug\</IntermediateOutputPath>
+    <DefineConstants>TRACE;DEBUG;IOS;COMPLVL;IREADONLY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\iOS\Debug\DieFledermaus.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iOS\Release\</OutputPath>
+    <IntermediateOutputPath>obj\iOS\Release\</IntermediateOutputPath>
+    <DefineConstants>IOS;COMPLVL;IREADONLY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\iOS\Release\DieFledermaus.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Xamarin.iOS" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="7Zip\Common\CRC.cs" />
+    <Compile Include="7Zip\Common\InBuffer.cs" />
+    <Compile Include="7Zip\Common\OutBuffer.cs" />
+    <Compile Include="7Zip\Compress\LZ\IMatchFinder.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzBinTree.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzInWindow.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="7Zip\ICoder.cs" />
+    <Compile Include="ByteOptionList.cs" />
+    <Compile Include="DieFledermausStream.cs" />
+    <Compile Include="DieFledermauZArchive.cs" />
+    <Compile Include="DieFledermauZArchiveEntry.cs" />
+    <Compile Include="DieFledermauZEmptyDirectory.cs" />
+    <Compile Include="DieFledermauZItem.cs" />
+    <Compile Include="DieFledermauZItemUnknown.cs" />
+    <Compile Include="DieFledermauZManifest.cs" />
+    <Compile Include="Globalization\TextResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TextResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="IMausCrypt.cs" />
+    <Compile Include="KeySizeList.cs" />
+    <Compile Include="MausBufferStream.cs" />
+    <Compile Include="MausProgressEventArgs.cs" />
+    <Compile Include="MausSettableOptions.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Globalization\TextResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>TextResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BouncyCastle\crypto\BouncyCastle.iOS.csproj">
+      <Project>{0249241c-205e-4ac0-828b-90f822359b9e}</Project>
+      <Name>BouncyCastle.iOS</Name>
+      <IsAppExtension>false</IsAppExtension>
+      <IsWatchApp>false</IsWatchApp>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
+</Project>
