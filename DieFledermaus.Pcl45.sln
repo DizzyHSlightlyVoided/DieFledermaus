@@ -3,12 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl45", "DieFledermaus.Pcl45\DieFledermaus.Pcl45.csproj", "{E2303BBA-450F-4A01-AEE5-42FBE06BE030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl45", "DieFledermaus\DieFledermaus.Pcl45.csproj", "{E2303BBA-450F-4A01-AEE5-42FBE06BE030}"
 	ProjectSection(ProjectDependencies) = postProject
 		{F416677D-8338-40FE-9D97-893D20D78093} = {F416677D-8338-40FE-9D97-893D20D78093}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Pcl45", "DieFledermaus.Pcl45\DieFledermaus.Tests.Pcl45.csproj", "{7C2CBD42-450F-41C7-84D2-EC9CE34D0A0B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Pcl45", "DieFledermaus.Tests\DieFledermaus.Tests.Pcl45.csproj", "{7C2CBD42-450F-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto.pcl2", "BouncyCastle\crypto\crypto.pcl2.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A1}"
 EndProject

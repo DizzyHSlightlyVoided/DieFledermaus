@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E2303BBA-450F-4A01-AEE5-42FBE06BE030}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DieFledermaus</RootNamespace>
+    <AssemblyName>DieFledermaus</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Pcl 4.5\Debug\</OutputPath>
+    <IntermediateOutputPath>obj\Pcl 4.5\Debug\</IntermediateOutputPath>
+    <DefineConstants>TRACE;DEBUG;PCL_4_5;PCL;IREADONLY;NOCRYPT;NOCOMPMODE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Pcl 4.5\Release\</OutputPath>
+    <IntermediateOutputPath>obj\Pclt 4.5\Release\</IntermediateOutputPath>
+    <DefineConstants>TRACE;PCL_4_5;PCL;IREADONLY;NOCRYPT;NOCOMPMODE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="7Zip\Common\CRC.cs" />
+    <Compile Include="7Zip\Common\InBuffer.cs" />
+    <Compile Include="7Zip\Common\OutBuffer.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="7Zip\Compress\LZ\IMatchFinder.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzBinTree.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzInWindow.cs" />
+    <Compile Include="7Zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="7Zip\ICoder.cs" />
+    <Compile Include="ByteOptionList.cs" />
+    <Compile Include="DieFledermausStream.cs" />
+    <Compile Include="DieFledermauZArchive.cs" />
+    <Compile Include="DieFledermauZArchiveEntry.cs" />
+    <Compile Include="DieFledermauZEmptyDirectory.cs" />
+    <Compile Include="DieFledermauZItem.cs" />
+    <Compile Include="DieFledermauZItemUnknown.cs" />
+    <Compile Include="DieFledermauZManifest.cs" />
+    <Compile Include="Globalization\TextResources.Portable.cs" />
+    <Compile Include="IMausCrypt.cs" />
+    <Compile Include="KeySizeList.cs" />
+    <Compile Include="MausBufferStream.cs" />
+    <Compile Include="MausProgressEventArgs.cs" />
+    <Compile Include="MausSettableOptions.cs" />
+    <Compile Include="PCLHelper\ExtensionMethods.cs" />
+    <Compile Include="PCLHelper\MausInvalidEnumException.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BouncyCastle\crypto\crypto.pcl2.csproj">
+      <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a1}</Project>
+      <Name>crypto.pcl2</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Globalization\TextResources.resx" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <Target Name="BeforeBuild" BeforeTargets="Build">
+  </Target>
+  <PropertyGroup>
+    <PreBuildEvent>"$(ProjectDir)\..\GenerateCode\bin\$(Configuration)\GenerateCode.exe" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Designer.cs" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Portable.cs"</PreBuildEvent>
+  </PropertyGroup>
+</Project>

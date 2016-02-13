@@ -18,8 +18,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\DieFledermaus.Tests\bin\Pcl 4.5\Debug\</OutputPath>
-    <IntermediateOutputPath>..\DieFledermaus.Tests\obj\Pcl 4.5\Debug\</IntermediateOutputPath>
+    <OutputPath>bin\Pcl 4.5\Debug\</OutputPath>
+    <IntermediateOutputPath>obj\Pcl 4.5\Debug\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,8 +28,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\DieFledermaus.Tests\bin\Pcl 4.5\Release\</OutputPath>
-    <IntermediateOutputPath>..\DieFledermaus.Tests\obj\Pcl 4.5\Release\</IntermediateOutputPath>
+    <OutputPath>bin\Pcl 4.5\Release\</OutputPath>
+    <IntermediateOutputPath>obj\Pcl 4.5\Release\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -38,40 +38,30 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\DieFledermaus.Tests\Resources\Encryption.pem">
-      <Link>Resources\Encryption.pem</Link>
-    </None>
-    <None Include="..\DieFledermaus.Tests\Resources\Signature.pem">
-      <Link>Resources\Signature.pem</Link>
-    </None>
+    <None Include="Resources\Encryption.pem" />
+    <None Include="Resources\Signature.pem" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BouncyCastle\crypto\crypto.pcl2.csproj">
       <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a1}</Project>
       <Name>crypto.pcl2</Name>
     </ProjectReference>
-    <ProjectReference Include="DieFledermaus.Pcl45.csproj">
+    <ProjectReference Include="..\DieFledermaus\DieFledermaus.Pcl45.csproj">
       <Project>{e2303bba-450f-4a01-aee5-42fbe06be030}</Project>
       <Name>DieFledermaus.Pcl45</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DieFledermaus.Tests\Keys.Designer.cs">
-      <Link>Keys.Designer.cs</Link>
+    <Compile Include="Keys.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Keys.resx</DependentUpon>
     </Compile>
-    <Compile Include="..\DieFledermaus.Tests\Program.cs">
-      <Link>Program.cs</Link>
-    </Compile>
-    <Compile Include="..\DieFledermaus.Tests\Properties\AssemblyInfo.cs">
-      <Link>Properties\AssemblyInfo.cs</Link>
-    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\DieFledermaus.Tests\Keys.resx">
-      <Link>Keys.resx</Link>
+    <EmbeddedResource Include="Keys.resx">
       <LastGenOutput>Keys.Designer.cs</LastGenOutput>
       <Generator>ResXFileCodeGenerator</Generator>
     </EmbeddedResource>
