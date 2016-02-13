@@ -36,7 +36,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DieFledermaus.Tests\Resources\Encryption.pem">
@@ -45,7 +44,6 @@
     <None Include="..\DieFledermaus.Tests\Resources\Signature.pem">
       <Link>Resources\Signature.pem</Link>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BouncyCastle\crypto\crypto.pcl2.csproj">

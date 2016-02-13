@@ -88,7 +88,7 @@ namespace DieFledermaus
 
         private Stream _baseStream;
         private MausBufferStream _bufferStream;
-        private CompressionMode _mode;
+        private MausStreamMode _mode;
         private bool _leaveOpen;
         private long _uncompressedLength;
 
@@ -125,6 +125,59 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionMode"/> is not a valid <see cref="MausStreamMode"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="compressionMode"/> is <see cref="MausStreamMode.Compress"/>, and <paramref name="stream"/> does not support writing.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="compressionMode"/> is <see cref="MausStreamMode.Decompress"/>, and <paramref name="stream"/> does not support reading.</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream is in read-mode, and <paramref name="stream"/> contains invalid data.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The stream is in read-mode, and <paramref name="stream"/> contains data which is a lower version than the one expected.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausStreamMode compressionMode, bool leaveOpen)
+            : this()
+        {
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (compressionMode == MausStreamMode.Compress)
+            {
+                CheckStreamWrite(stream);
+                _bufferStream = new MausBufferStream();
+                _baseStream = stream;
+                _encryptedOptions.DoAddAll();
+            }
+            else if (compressionMode == MausStreamMode.Decompress)
+            {
+                CheckStreamRead(stream);
+                _baseStream = stream;
+                if (stream.CanSeek && stream.Length == stream.Position)
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                _getHeader(true);
+            }
+            else throw new InvalidEnumArgumentException(nameof(compressionMode), (int)compressionMode, typeof(MausStreamMode));
+            _mode = compressionMode;
+            _leaveOpen = leaveOpen;
+        }
+
+#if !PCL
+        /// <summary>
+        /// Creates a new instance in the specified mode.
+        /// </summary>
+        /// <param name="stream">The stream to read to or write from.</param>
+        /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
         /// <paramref name="compressionMode"/> is not a valid <see cref="CompressionMode"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
@@ -142,30 +195,36 @@ namespace DieFledermaus
         /// The stream is in read-mode, and <paramref name="stream"/> contains data which is a lower version than the one expected.
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode, bool leaveOpen)
-            : this()
+            : this(stream, (MausStreamMode)compressionMode, leaveOpen)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (compressionMode == CompressionMode.Compress)
-            {
-                CheckStreamWrite(stream);
-                _bufferStream = new MausBufferStream();
-                _baseStream = stream;
-                _encryptedOptions.DoAddAll();
-            }
-            else if (compressionMode == CompressionMode.Decompress)
-            {
-                CheckStreamRead(stream);
-                _baseStream = stream;
-                if (stream.CanSeek && stream.Length == stream.Position)
-                    stream.Seek(0, SeekOrigin.Begin);
+        }
+#endif
 
-                _getHeader(true);
-            }
-            else throw new InvalidEnumArgumentException(nameof(compressionMode), (int)compressionMode, typeof(CompressionMode));
-            _mode = compressionMode;
-            _leaveOpen = leaveOpen;
+        /// <summary>
+        /// Creates a new instance with the specified mode.
+        /// </summary>
+        /// <param name="stream">The stream to read to or write from.</param>
+        /// <param name="compressionMode">Indicates whether the stream should be in compression or decompression mode.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// <paramref name="compressionMode"/> is not a valid <see cref="MausStreamMode"/> value.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="compressionMode"/> is <see cref="MausStreamMode.Compress"/>, and <paramref name="stream"/> does not support writing.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="compressionMode"/> is <see cref="MausStreamMode.Decompress"/>, and <paramref name="stream"/> does not support reading.</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, MausStreamMode compressionMode)
+            : this(stream, compressionMode, false)
+        {
         }
 
+#if !PCL
         /// <summary>
         /// Creates a new instance with the specified mode.
         /// </summary>
@@ -186,9 +245,10 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode)
-            : this(stream, compressionMode, false)
+            : this(stream, (MausStreamMode)compressionMode, false)
         {
         }
+#endif
 
         /// <summary>
         /// Creates a new instance in write-mode, with the specified compression and encryption formats.
@@ -282,7 +342,7 @@ namespace DieFledermaus
             }
             _baseStream = stream;
             _encryptedOptions.DoAddAll();
-            _mode = CompressionMode.Compress;
+            _mode = MausStreamMode.Compress;
             _leaveOpen = leaveOpen;
         }
 
@@ -328,7 +388,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, MausEncryptionFormat encryptionFormat, bool leaveOpen)
-            : this(stream, CompressionMode.Compress, leaveOpen)
+            : this(stream, MausStreamMode.Compress, leaveOpen)
         {
             _setEncFormat(encryptionFormat);
         }
@@ -351,7 +411,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, MausEncryptionFormat encryptionFormat)
-            : this(stream, CompressionMode.Compress, false)
+            : this(stream, MausStreamMode.Compress, false)
         {
             _setEncFormat(encryptionFormat);
         }
@@ -491,7 +551,7 @@ namespace DieFledermaus
             _encryptedOptions.DoAddAll();
             _bufferStream = new MausBufferStream();
             _baseStream = stream;
-            _mode = CompressionMode.Compress;
+            _mode = MausStreamMode.Compress;
             _leaveOpen = leaveOpen;
         }
 
@@ -598,7 +658,7 @@ namespace DieFledermaus
             _setEncFormat(encryptionFormat);
             _filename = path;
             _allowDirNames = entry is DieFledermauZArchiveEntry ? AllowDirNames.Yes : AllowDirNames.EmptyDir;
-            _mode = CompressionMode.Compress;
+            _mode = MausStreamMode.Compress;
             _leaveOpen = true;
         }
 
@@ -606,7 +666,7 @@ namespace DieFledermaus
             : this()
         {
             _baseStream = stream;
-            _mode = CompressionMode.Decompress;
+            _mode = MausStreamMode.Decompress;
             _leaveOpen = true;
             if (path == null)
                 _allowDirNames = AllowDirNames.Unknown;
@@ -716,7 +776,7 @@ namespace DieFledermaus
         /// </summary>
         public override bool CanRead
         {
-            get { return _baseStream != null && _mode == CompressionMode.Decompress; }
+            get { return _baseStream != null && _mode == MausStreamMode.Decompress; }
         }
 
         /// <summary>
@@ -732,7 +792,7 @@ namespace DieFledermaus
         /// </summary>
         public override bool CanWrite
         {
-            get { return _baseStream != null && _mode == CompressionMode.Compress; }
+            get { return _baseStream != null && _mode == MausStreamMode.Compress; }
         }
 
         private MausEncryptionFormat _encFmt;
@@ -750,7 +810,7 @@ namespace DieFledermaus
         /// <summary>
         /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
         /// </summary>
-        public bool IsDecrypted { get { return _mode == CompressionMode.Decompress && _encFmt == MausEncryptionFormat.None || _headerGotten; } }
+        public bool IsDecrypted { get { return _mode == MausStreamMode.Decompress && _encFmt == MausEncryptionFormat.None || _headerGotten; } }
         internal bool DataIsLoaded { get { return _bufferStream != null; } }
 
         private DateTime? _timeC;
@@ -941,7 +1001,7 @@ namespace DieFledermaus
                 throw new ObjectDisposedException(null, TextResources.CurrentClosed);
             if (_encFmt == MausEncryptionFormat.None)
                 throw new NotSupportedException(TextResources.NotEncrypted);
-            if (_mode == CompressionMode.Decompress && _headerGotten)
+            if (_mode == MausStreamMode.Decompress && _headerGotten)
                 throw new InvalidOperationException(TextResources.AlreadyDecrypted);
         }
 
@@ -978,7 +1038,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_mode == CompressionMode.Compress)
+                if (_mode == MausStreamMode.Compress)
                     return _rsaSignParamBC != null;
                 return _rsaSignature != null;
             }
@@ -1009,8 +1069,8 @@ namespace DieFledermaus
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                CheckSignParam(value, _rsaSignature, _rsaSignVerified, _mode == CompressionMode.Decompress);
-                CheckSignParam(value, _mode == CompressionMode.Compress);
+                CheckSignParam(value, _rsaSignature, _rsaSignVerified, _mode == MausStreamMode.Decompress);
+                CheckSignParam(value, _mode == MausStreamMode.Compress);
 
                 _rsaSignParamBC = value;
             }
@@ -1140,7 +1200,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_mode == CompressionMode.Decompress)
+                if (_mode == MausStreamMode.Decompress)
                     return _dsaSignature != null;
                 return _dsaSignParamBC != null;
             }
@@ -1172,8 +1232,8 @@ namespace DieFledermaus
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                CheckSignParam(value, _dsaSignature, _dsaSignVerified, _mode == CompressionMode.Decompress);
-                _dsaSignPub = CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
+                CheckSignParam(value, _dsaSignature, _dsaSignVerified, _mode == MausStreamMode.Decompress);
+                _dsaSignPub = CheckSignParam(value, _mode == MausStreamMode.Compress, _hashFunc);
                 _dsaSignParamBC = value;
             }
         }
@@ -1305,7 +1365,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_mode == CompressionMode.Decompress)
+                if (_mode == MausStreamMode.Decompress)
                     return _ecdsaSignature != null;
                 return _ecdsaSignParamBC != null;
             }
@@ -1337,8 +1397,8 @@ namespace DieFledermaus
             {
                 if (_baseStream == null)
                     throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified, _mode == CompressionMode.Decompress);
-                _ecdsaSignPub = CheckSignParam(value, _mode == CompressionMode.Compress, _hashFunc);
+                CheckSignParam(value, _ecdsaSignature, _ecdsaSignVerified, _mode == MausStreamMode.Decompress);
+                _ecdsaSignPub = CheckSignParam(value, _mode == MausStreamMode.Compress, _hashFunc);
                 _ecdsaSignParamBC = value;
             }
         }
@@ -1476,7 +1536,7 @@ namespace DieFledermaus
         {
             get
             {
-                if (_mode == CompressionMode.Compress)
+                if (_mode == MausStreamMode.Compress)
                     return _rsaEncParamBC != null;
                 return _rsaEncKey != null;
             }
@@ -1508,9 +1568,9 @@ namespace DieFledermaus
             set
             {
                 _ensureCanSetKey();
-                if (_mode == CompressionMode.Decompress && _rsaEncKey == null)
+                if (_mode == MausStreamMode.Decompress && _rsaEncKey == null)
                     throw new NotSupportedException(TextResources.RsaEncNone);
-                CheckSignParam(value, _mode == CompressionMode.Decompress);
+                CheckSignParam(value, _mode == MausStreamMode.Decompress);
                 _rsaEncParamBC = value;
             }
         }
@@ -2605,7 +2665,7 @@ namespace DieFledermaus
             if (_baseStream == null)
                 throw new ObjectDisposedException(null, TextResources.CurrentClosed);
 
-            if (_mode == CompressionMode.Compress)
+            if (_mode == MausStreamMode.Compress)
             {
                 using (MausBufferStream tempStream = new MausBufferStream())
                 {
@@ -3021,7 +3081,7 @@ namespace DieFledermaus
         private void _ensureCanRead()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-            if (_mode == CompressionMode.Compress) throw new NotSupportedException(TextResources.CurrentWrite);
+            if (_mode == MausStreamMode.Compress) throw new NotSupportedException(TextResources.CurrentWrite);
         }
 
         /// <summary>
@@ -3083,7 +3143,7 @@ namespace DieFledermaus
         private void _ensureCanWrite()
         {
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-            if (_mode == CompressionMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
+            if (_mode == MausStreamMode.Decompress) throw new NotSupportedException(TextResources.CurrentRead);
         }
 
         internal static byte[] ComputeHash(MausBufferStream inputStream, MausHashFunction hashFunc)
@@ -3334,7 +3394,7 @@ namespace DieFledermaus
         {
             if (_entry != null && _entry.Archive == null)
                 return;
-            if (_bufferStream == null || _mode != CompressionMode.Compress || _bufferStream.Length == 0)
+            if (_bufferStream == null || _mode != MausStreamMode.Compress || _bufferStream.Length == 0)
                 return;
             if (_encFmt != MausEncryptionFormat.None && _password == null && _key == null && _rsaEncParamBC == null)
                 throw new InvalidOperationException(TextResources.KeyRsaNotSet);
@@ -3716,7 +3776,7 @@ namespace DieFledermaus
         void ICodeProgress.SetProgress(long inSize, long outSize)
         {
             MausProgressState state;
-            if (_mode == CompressionMode.Compress)
+            if (_mode == MausStreamMode.Compress)
                 state = MausProgressState.CompressingWithSize;
             else
                 state = MausProgressState.DecompressingWithSize;
@@ -3755,7 +3815,7 @@ namespace DieFledermaus
             /// </remarks>
             public override bool IsReadOnly
             {
-                get { return _stream._baseStream == null || _stream._mode == CompressionMode.Decompress; }
+                get { return _stream._baseStream == null || _stream._mode == MausStreamMode.Decompress; }
             }
 
             /// <summary>
@@ -3765,7 +3825,7 @@ namespace DieFledermaus
             /// </summary>
             public override bool IsFrozen
             {
-                get { return _stream._baseStream == null || (_stream._mode == CompressionMode.Decompress && _stream._headerGotten); }
+                get { return _stream._baseStream == null || (_stream._mode == MausStreamMode.Decompress && _stream._headerGotten); }
             }
         }
 
@@ -3882,6 +3942,21 @@ namespace DieFledermaus
         /// The Whirlpool hash function.
         /// </summary>
         Whirlpool,
+    }
+
+    /// <summary>
+    /// Indicates whether the stream is in read or write mode.
+    /// </summary>
+    public enum MausStreamMode
+    {
+        /// <summary>
+        /// The stream is in write-mode.
+        /// </summary>
+        Compress = 1,
+        /// <summary>
+        /// The stream is in read-mode.
+        /// </summary>
+        Decompress = 0,
     }
 
     /// <summary>
