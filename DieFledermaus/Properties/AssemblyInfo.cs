@@ -14,10 +14,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en-US")]
 
+#if !PCL_4_0
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
+#endif
 
 #if ANDROID
 [assembly: AssemblyProduct("DieFledermaus (Android)")]
@@ -40,6 +42,9 @@ using System.Runtime.InteropServices;
 #elif PCL_4_5
 [assembly: AssemblyProduct("DieFledermaus (PCL 4.5)")]
 [assembly: AssemblyConfiguration("PCL 4.5")]
+#elif PCL_4_0
+[assembly: AssemblyProduct("DieFledermaus (PCL 4.0)")]
+[assembly: AssemblyConfiguration("PCL 4.0")]
 #endif
 
 // Version information for an assembly consists of the following four values:

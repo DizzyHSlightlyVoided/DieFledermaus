@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl45", "DieF
 		{F416677D-8338-40FE-9D97-893D20D78093} = {F416677D-8338-40FE-9D97-893D20D78093}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl40", "DieFledermaus\DieFledermaus.Pcl40.csproj", "{E2303BBA-400F-4A01-AEE5-42FBE06BE030}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net46", "DieFledermaus.Tests\DieFledermaus.Tests.Net46.csproj", "{7C2CBD42-4600-41C7-84D2-EC9CE34D0A0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net45", "DieFledermaus.Tests\DieFledermaus.Tests.Net45.csproj", "{7C2CBD42-4500-41C7-84D2-EC9CE34D0A0B}"
@@ -32,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Net35",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Pcl45", "DieFledermaus.Tests\DieFledermaus.Tests.Pcl45.csproj", "{7C2CBD42-450F-41C7-84D2-EC9CE34D0A0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Tests.Pcl40", "DieFledermaus.Tests\DieFledermaus.Tests.Pcl40.csproj", "{7C2CBD42-400F-41C7-84D2-EC9CE34D0A0B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle", "BouncyCastle\crypto\BouncyCastle.csproj", "{4C235092-820C-4DEB-9074-D356FB797D8B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle.Android", "BouncyCastle\crypto\BouncyCastle.Android.csproj", "{A0D302CB-8866-4AB1-98B9-F0772EABF5DF}"
@@ -39,6 +43,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle.iOS", "BouncyCastle\crypto\BouncyCastle.iOS.csproj", "{0249241C-205E-4AC0-828B-90F822359B9E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto.pcl2", "BouncyCastle\crypto\crypto.pcl2.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto.pcl", "BouncyCastle\crypto\crypto.pcl.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateCode", "GenerateCode\GenerateCode.csproj", "{F416677D-8338-40FE-9D97-893D20D78093}"
 EndProject

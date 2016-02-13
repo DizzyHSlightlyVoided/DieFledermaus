@@ -35,6 +35,9 @@ using System.Diagnostics;
 using System.Linq;
 using DieFledermaus.Globalization;
 
+#if NOARG3
+using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
+#endif
 namespace DieFledermaus
 {
     /// <summary>
@@ -407,9 +410,9 @@ namespace DieFledermaus
                         oArray[i++] = opt;
                 }
             }
-            catch (InvalidCastException x)
+            catch (InvalidCastException)
             {
-                throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array), x);
+                throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array));
             }
         }
 

@@ -37,6 +37,9 @@ using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
+#if NOARG3
+    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
+#endif
     /// <summary>
     /// Represents a collection of key sizes. All values in the collection are unique, and stored in ascending order.
     /// </summary>

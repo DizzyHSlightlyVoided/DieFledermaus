@@ -70,6 +70,9 @@ namespace DieFledermaus
 #else
     using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 #endif
+#if NOARG3
+    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
+#endif
 
     /// <summary>
     /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format.
@@ -110,7 +113,7 @@ namespace DieFledermaus
             throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
-        #region Constructors
+#region Constructors
         private DieFledermausStream()
         {
             _encryptedOptions = new SettableOptions(this);
@@ -742,7 +745,7 @@ namespace DieFledermaus
             if (_allowDirNames == AllowDirNames.Manifest && _filename == null)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
-        #endregion
+#endregion
 
         private int _cmpLvl = 6;
 
@@ -1069,7 +1072,7 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
-        #region RSA Signature
+#region RSA Signature
         private byte[] _rsaSignature;
 
         private bool _rsaSignVerified;
@@ -1229,9 +1232,9 @@ namespace DieFledermaus
             return x != null && y != null && x.Exponent != null && x.Exponent.Equals(y.Exponent) &&
                 x.Modulus != null && x.Modulus.Equals(y.Modulus);
         }
-        #endregion
+#endregion
 
-        #region DSA Signature
+#region DSA Signature
         private DerIntegerPair _dsaSignature;
 
         private bool _dsaSignVerified;
@@ -1328,9 +1331,9 @@ namespace DieFledermaus
                 BigInteger y = dsaKeyPriv.Parameters.G.ModPow(dsaKeyPriv.X, dsaKeyPriv.Parameters.P);
                 return new DsaPublicKeyParameters(y, dsaKeyPriv.Parameters);
             }
-            catch (Exception x)
+            catch
             {
-                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
             }
         }
 
@@ -1394,9 +1397,9 @@ namespace DieFledermaus
                     DSASignIdBytes = _textEncoding.GetBytes(value);
             }
         }
-        #endregion
+#endregion
 
-        #region ECDSA Signature
+#region ECDSA Signature
         private DerIntegerPair _ecdsaSignature;
 
         private bool _ecdsaSignVerified;
@@ -1497,9 +1500,9 @@ namespace DieFledermaus
                     return new ECPublicKeyParameters(ecdsaPrivate.AlgorithmName, q, ec);
                 return new ECPublicKeyParameters(ecdsaPrivate.AlgorithmName, q, ecdsaPrivate.PublicKeyParamSet);
             }
-            catch (Exception x)
+            catch
             {
-                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value), x);
+                throw new ArgumentException(TextResources.RsaNeedPublic, nameof(value));
             }
         }
 
@@ -1563,9 +1566,9 @@ namespace DieFledermaus
                     ECDSASignIdBytes = _textEncoding.GetBytes(value);
             }
         }
-        #endregion
+#endregion
 
-        #region RSA Encrypted Key
+#region RSA Encrypted Key
         private byte[] _rsaEncKey;
         byte[] IMausProgress.RSAEncryptedKey
         {
@@ -1627,7 +1630,7 @@ namespace DieFledermaus
                 _rsaEncParamBC = value;
             }
         }
-        #endregion
+#endregion
 
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -2044,7 +2047,7 @@ namespace DieFledermaus
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
         }
 
-        #region Not supported
+#region Not supported
         /// <summary>
         /// Gets the length of the stream.
         /// This property is not supported and always throws <see cref="NotSupportedException"/>.
@@ -2097,7 +2100,7 @@ namespace DieFledermaus
         {
             throw new NotSupportedException();
         }
-        #endregion
+#endregion
 
         internal const int _blockByteCtAes = 16, _blockByteCtThreefish = 128;
         internal const int _keyBitAes256 = 256;
@@ -2214,7 +2217,7 @@ namespace DieFledermaus
             }
         }
 
-        #region ReadFormat
+#region ReadFormat
         bool gotFormat, gotULen, _gotHash;
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
@@ -2558,7 +2561,7 @@ namespace DieFledermaus
                 curTime = newVal;
             }
         }
-        #endregion
+#endregion
 
         internal static int GetHashLength(MausHashFunction hashFunc)
         {
@@ -2838,7 +2841,7 @@ namespace DieFledermaus
                 OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashActual));
         }
 
-        #region Verify RSA
+#region Verify RSA
         /// <summary>
         /// Tests whether <see cref="RSASignParameters"/> is valid.
         /// </summary>
@@ -2917,9 +2920,9 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.RsaSigInvalid, x);
             }
         }
-        #endregion
+#endregion
 
-        #region Verify DSA
+#region Verify DSA
         /// <summary>
         /// Tests whether <see cref="DSASignParameters"/> is valid.
         /// </summary>
@@ -2959,9 +2962,9 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.DsaSigInvalid, x);
             }
         }
-        #endregion
+#endregion
 
-        #region Verify ECDSA
+#region Verify ECDSA
         /// <summary>
         /// Tests whether <see cref="ECDSASignParameters"/> is valid.
         /// </summary>
@@ -3001,7 +3004,7 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.EcdsaSigInvalid, x);
             }
         }
-        #endregion
+#endregion
 
         private static HMacDsaKCalculator GetDsaCalc(MausHashFunction _hashFunc)
         {
@@ -3365,7 +3368,7 @@ namespace DieFledermaus
             return hmac;
         }
 
-        #region Disposal
+#region Disposal
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
         /// </summary>
@@ -3460,7 +3463,7 @@ namespace DieFledermaus
 
             MausBufferStream secondaryStream = new MausBufferStream();
 
-            #region Secondary Format
+#region Secondary Format
 #if NOLEAVEOPEN
             BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding);
 #else
@@ -3475,11 +3478,11 @@ namespace DieFledermaus
 
                 secondaryFormat.Write(secWriter);
             }
-            #endregion
+#endregion
 
             secondaryStream.Write(_hashExpected, 0, _hashExpected.Length);
 
-            #region Compress
+#region Compress
             MausBufferStream compressedStream = new MausBufferStream();
             if (_cmpFmt == MausCompressionFormat.None)
                 compressedStream = _bufferStream;
@@ -3513,7 +3516,7 @@ namespace DieFledermaus
                     _bufferStream.BufferCopyTo(ds, false);
             }
             compressedStream.Reset();
-            #endregion
+#endregion
 
             long oldLength = _bufferStream.Length;
             long compLength = compressedStream.Length;
@@ -3537,7 +3540,7 @@ namespace DieFledermaus
 
             byte[] rsaKey = RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, false);
 
-            #region Signatures
+#region Signatures
             byte[] rsaSignature, dsaSignature, ecdsaSignature;
 
             if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
@@ -3589,7 +3592,7 @@ namespace DieFledermaus
                 else ecdsaSignature = null;
             }
             else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
-            #endregion
+#endregion
 
 #if NOLEAVEOPEN
             BinaryWriter writer = new BinaryWriter(_baseStream);
@@ -3795,7 +3798,7 @@ namespace DieFledermaus
 
             formats.Add(_kComment, _vComment, _comBytes);
         }
-        #endregion
+#endregion
 
         /// <summary>
         /// Raised when the current stream is reading or writing data, and the progress changes meaningfully.

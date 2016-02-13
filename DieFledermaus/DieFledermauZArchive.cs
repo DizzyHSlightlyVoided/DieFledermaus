@@ -50,6 +50,9 @@ namespace DieFledermaus
 #if COMPLVL
     using System.IO.Compression;
 #endif
+#if NOARG3
+    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
+#endif
     /// <summary>
     /// Represents a DieFledermauZ archive file.
     /// </summary>

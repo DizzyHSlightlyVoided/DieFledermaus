@@ -28,45 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-using System;
-
-namespace DieFledermaus
+namespace System.IO
 {
-    internal class MausInvalidEnumException : ArgumentException
+    internal class InvalidDataException : Exception
     {
-        public MausInvalidEnumException(string paramName, int value, Type type)
-            : base(string.Format("Invalid {0} value: {1}", type, value), paramName)
+        public InvalidDataException()
+            : base()
+        {
+        }
+
+        public InvalidDataException(string message)
+            : base(message)
+        {
+        }
+
+        public InvalidDataException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }
-
-#if NOARG3
-    internal class ArgumentOutOfRangeException3 : ArgumentOutOfRangeException
-    {
-        public ArgumentOutOfRangeException3(string paramName, object value, string message)
-            : base(paramName, message)
-        {
-            _value = value;
-        }
-
-        private object _value;
-        public object ActualValue { get { return _value; } }
-
-        public override string Message
-        {
-            get
-            {
-                if (_value == null)
-                    return base.Message;
-
-                System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                sb.AppendLine(base.Message);
-
-                sb.Append("Value: " + _value);
-
-                return sb.ToString();
-            }
-        }
-    }
-#endif
 }
