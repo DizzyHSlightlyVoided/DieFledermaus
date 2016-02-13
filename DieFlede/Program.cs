@@ -688,7 +688,7 @@ namespace DieFledermaus.Cli
 
                                 var curEntry = curItem as DieFledermauZArchiveEntry;
 
-                                using (Stream curS = curEntry.OpenWrite())
+                                using (Stream curS = curEntry.OpenRead())
                                 using (FileStream curFS = File.Create(curPath))
                                     curS.CopyTo(curFS);
 
