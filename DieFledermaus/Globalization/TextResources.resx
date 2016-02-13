@@ -396,4 +396,7 @@
   <data name="ManifestBad" xml:space="preserve">
     <value>The archive's signature manifest is invalid.</value>
   </data>
+  <data name="CompressionLevel" xml:space="preserve">
+    <value>The DEFLATE compression level must be between 0 (no compression) and 9 inclusive.</value>
+  </data>
 </root>

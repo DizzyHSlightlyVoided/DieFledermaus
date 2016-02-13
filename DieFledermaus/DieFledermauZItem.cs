@@ -569,9 +569,8 @@ namespace DieFledermaus
     internal struct DeflateCompressionFormat : ICompressionFormat
     {
         public MausCompressionFormat CompressionFormat { get { return MausCompressionFormat.Deflate; } }
-#if COMPLVL
-        public System.IO.Compression.CompressionLevel CompressionLevel;
-#endif
+
+        public int CompressionLevel;
     }
 
     internal struct LzmaCompressionFormat : ICompressionFormat

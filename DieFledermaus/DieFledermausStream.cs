@@ -32,7 +32,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
@@ -54,6 +53,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC.Multiplier;
+using Org.BouncyCastle.Utilities.Zlib;
 
 using SevenZip;
 using SevenZip.Compression.LZMA;
@@ -62,6 +62,8 @@ namespace DieFledermaus
 {
 #if PCL
     using InvalidEnumArgumentException = DieFledermaus.MausInvalidEnumException;
+#else
+    using System.IO.Compression;
 #endif
 #if NOCRYPT
     using Org.BouncyCastle.Security;
@@ -73,7 +75,7 @@ namespace DieFledermaus
     /// Provides methods and properties for compressing and decompressing files and streams in the DieFledermaus format.
     /// </summary>
     /// <remarks>
-    /// <para>Unlike streams such as <see cref="DeflateStream"/>, this method reads part of the stream during the constructor, rather than the first call
+    /// <para>Unlike streams such as <see cref="T:System.IO.Compression.DeflateStream"/>, this class reads part of the stream during the constructor, rather than the first call
     /// to <see cref="Read(byte[], int, int)"/> or <see cref="ReadByte()"/>.</para>
     /// <para>When writing, if nothing has been written to the current stream when the current instance is disposed, nothing will be written to the
     /// underlying stream.</para>
@@ -166,7 +168,7 @@ namespace DieFledermaus
             _leaveOpen = leaveOpen;
         }
 
-#if !PCL
+#if !NOCOMPMODE
         /// <summary>
         /// Creates a new instance in the specified mode.
         /// </summary>
@@ -224,7 +226,7 @@ namespace DieFledermaus
         {
         }
 
-#if !PCL
+#if !NOCOMPMODE
         /// <summary>
         /// Creates a new instance with the specified mode.
         /// </summary>
@@ -333,6 +335,9 @@ namespace DieFledermaus
             switch (compressionFormat)
             {
                 case MausCompressionFormat.Deflate:
+                    _cmpLvl = 6;
+                    _cmpFmt = MausCompressionFormat.Deflate;
+                    break;
                 case MausCompressionFormat.None:
                 case MausCompressionFormat.Lzma:
                     _cmpFmt = compressionFormat;
@@ -521,7 +526,49 @@ namespace DieFledermaus
             _setEncFormat(encryptionFormat);
         }
 
+
+
+        /// <summary>
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream. 0 = no compression, 1 = fastest compression, 9 = optimal compression.</param>
+        /// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="stream"/> open when the current instance is disposed;
+        /// <see langword="false"/> to close <paramref name="stream"/>.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="compressionLevel"/> is less than 0 or is greater than 9.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        public DieFledermausStream(Stream stream, int compressionLevel, bool leaveOpen)
+            : this(stream, MausCompressionFormat.Deflate, leaveOpen)
+        {
+            _cmpLvl = GetCompLvl(compressionLevel);
+        }
+
 #if COMPLVL
+        internal static int GetCompLvl(CompressionLevel compressionLevel)
+        {
+            switch (compressionLevel)
+            {
+                case CompressionLevel.Fastest:
+                    return 1;
+                case CompressionLevel.Optimal:
+                    return 9;
+                case CompressionLevel.NoCompression:
+                    return 0;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
+            }
+        }
+
         /// <summary>
         /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
         /// </summary>
@@ -543,18 +590,35 @@ namespace DieFledermaus
         /// </exception>
         /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
-            : this()
+            : this(stream, GetCompLvl(compressionLevel), leaveOpen)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
-            CheckStreamWrite(stream);
-            _setCompLvl(compressionLevel);
-            _encryptedOptions.DoAddAll();
-            _bufferStream = new MausBufferStream();
-            _baseStream = stream;
-            _mode = MausStreamMode.Compress;
-            _leaveOpen = leaveOpen;
+        }
+#endif
+
+        /// <summary>
+        /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
+        /// </summary>
+        /// <param name="stream">The stream to which compressed data will be written.</param>
+        /// <param name="compressionLevel">Indicates the compression level of the stream. 0 = no compression, 1 = fastest compression, 9 = optimal compression.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="stream"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="compressionLevel"/> is less than 0 or is greater than 9.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="stream"/> does not support writing.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// <paramref name="stream"/> is closed.
+        /// </exception>
+        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
+        public DieFledermausStream(Stream stream, int compressionLevel)
+            : this(stream, compressionLevel, false)
+        {
         }
 
+#if COMPLVL
         /// <summary>
         /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
         /// </summary>
@@ -574,7 +638,7 @@ namespace DieFledermaus
         /// </exception>
         /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
-            : this(stream, compressionLevel, false)
+            : this(stream, GetCompLvl(compressionLevel), false)
         {
         }
 
@@ -642,9 +706,7 @@ namespace DieFledermaus
             switch (compFormat.CompressionFormat)
             {
                 default:
-#if COMPLVL
-                    _setCompLvl(((DeflateCompressionFormat)compFormat).CompressionLevel);
-#endif
+                    _cmpLvl = GetCompLvl(((DeflateCompressionFormat)compFormat).CompressionLevel);
                     break;
                 case MausCompressionFormat.Lzma:
                     _lzmaDictSize = ((LzmaCompressionFormat)compFormat).DictionarySize;
@@ -682,25 +744,16 @@ namespace DieFledermaus
         }
         #endregion
 
-#if COMPLVL
-        private CompressionLevel _cmpLvl;
-
-        private void _setCompLvl(CompressionLevel compressionLevel)
-        {
-            switch (compressionLevel)
-            {
-                case CompressionLevel.Fastest:
-                case CompressionLevel.NoCompression:
-                case CompressionLevel.Optimal:
-                    _cmpLvl = compressionLevel;
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
-            }
-        }
-#endif
+        private int _cmpLvl = 6;
 
         internal DieFledermauZItem _entry;
+
+        internal static int GetCompLvl(int compressionLevel)
+        {
+            if (compressionLevel < 0 || compressionLevel > 9)
+                throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, TextResources.CompressionLevel);
+            return compressionLevel;
+        }
 
         private void _setEncFormat(MausEncryptionFormat encryptionFormat)
         {
@@ -2737,7 +2790,7 @@ namespace DieFledermaus
                 default:
                     OnProgress(MausProgressState.Decompressing);
                     long oldLen = _bufferStream.Length;
-                    using (DeflateStream _deflateStream = new DeflateStream(_bufferStream, CompressionMode.Decompress, true))
+                    using (ZInputStream _deflateStream = new ZInputStream(_bufferStream, true))
                     {
                         _bufferStream = new MausBufferStream();
 #if NOCOPY
@@ -3455,11 +3508,8 @@ namespace DieFledermaus
             {
                 OnProgress(MausProgressState.Compressing);
                 compressedStream = new MausBufferStream();
-#if COMPLVL
-                using (DeflateStream ds = new DeflateStream(compressedStream, _cmpLvl, true))
-#else
-                using (DeflateStream ds = new DeflateStream(compressedStream, CompressionMode.Compress, true))
-#endif
+
+                using (ZOutputStream ds = new ZOutputStream(compressedStream, _cmpLvl, true))
                     _bufferStream.BufferCopyTo(ds, false);
             }
             compressedStream.Reset();

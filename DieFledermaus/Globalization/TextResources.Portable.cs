@@ -269,6 +269,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DEFLATE compression level must be between 0 (no compression) and 9 inclusive..
+        /// </summary>
+        internal static string CompressionLevel {
+            get {
+                return ResourceManager.GetString("CompressionLevel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current stream is closed..
         /// </summary>
         internal static string CurrentClosed {
