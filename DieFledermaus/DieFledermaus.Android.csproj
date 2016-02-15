@@ -74,7 +74,11 @@
     </Compile>
     <Compile Include="IMausCrypt.cs" />
     <Compile Include="KeySizeList.cs" />
+    <Compile Include="LzmaDictionarySize.cs" />
     <Compile Include="MausBufferStream.cs" />
+    <Compile Include="MausCompressionFormat.cs" />
+    <Compile Include="MausEncryptionFormat.cs" />
+    <Compile Include="MausHashFunction.cs" />
     <Compile Include="MausProgressEventArgs.cs" />
     <Compile Include="MausSettableOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

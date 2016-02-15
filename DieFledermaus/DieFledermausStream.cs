@@ -113,7 +113,7 @@ namespace DieFledermaus
             throw new ObjectDisposedException(nameof(stream), TextResources.StreamClosed);
         }
 
-#region Constructors
+        #region Constructors
         private DieFledermausStream()
         {
             _encryptedOptions = new SettableOptions(this);
@@ -529,8 +529,6 @@ namespace DieFledermaus
             _setEncFormat(encryptionFormat);
         }
 
-
-
         /// <summary>
         /// Creates a new instance in write-mode using DEFLATE with the specified compression level.
         /// </summary>
@@ -745,7 +743,7 @@ namespace DieFledermaus
             if (_allowDirNames == AllowDirNames.Manifest && _filename == null)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
-#endregion
+        #endregion
 
         private int _cmpLvl = 6;
 
@@ -1072,7 +1070,7 @@ namespace DieFledermaus
         /// </summary>
         public int BlockByteCount { get { return _blockByteCount; } }
 
-#region RSA Signature
+        #region RSA Signature
         private byte[] _rsaSignature;
 
         private bool _rsaSignVerified;
@@ -1232,9 +1230,9 @@ namespace DieFledermaus
             return x != null && y != null && x.Exponent != null && x.Exponent.Equals(y.Exponent) &&
                 x.Modulus != null && x.Modulus.Equals(y.Modulus);
         }
-#endregion
+        #endregion
 
-#region DSA Signature
+        #region DSA Signature
         private DerIntegerPair _dsaSignature;
 
         private bool _dsaSignVerified;
@@ -1397,9 +1395,9 @@ namespace DieFledermaus
                     DSASignIdBytes = _textEncoding.GetBytes(value);
             }
         }
-#endregion
+        #endregion
 
-#region ECDSA Signature
+        #region ECDSA Signature
         private DerIntegerPair _ecdsaSignature;
 
         private bool _ecdsaSignVerified;
@@ -1566,9 +1564,9 @@ namespace DieFledermaus
                     ECDSASignIdBytes = _textEncoding.GetBytes(value);
             }
         }
-#endregion
+        #endregion
 
-#region RSA Encrypted Key
+        #region RSA Encrypted Key
         private byte[] _rsaEncKey;
         byte[] IMausProgress.RSAEncryptedKey
         {
@@ -1630,7 +1628,7 @@ namespace DieFledermaus
                 _rsaEncParamBC = value;
             }
         }
-#endregion
+        #endregion
 
         /// <summary>
         /// Gets and sets a comment on the file.
@@ -2047,7 +2045,7 @@ namespace DieFledermaus
             if (_baseStream == null) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
         }
 
-#region Not supported
+        #region Not supported
         /// <summary>
         /// Gets the length of the stream.
         /// This property is not supported and always throws <see cref="NotSupportedException"/>.
@@ -2100,7 +2098,7 @@ namespace DieFledermaus
         {
             throw new NotSupportedException();
         }
-#endregion
+        #endregion
 
         internal const int _blockByteCtAes = 16, _blockByteCtThreefish = 128;
         internal const int _keyBitAes256 = 256;
@@ -2217,7 +2215,7 @@ namespace DieFledermaus
             }
         }
 
-#region ReadFormat
+        #region ReadFormat
         bool gotFormat, gotULen, _gotHash;
         private long ReadFormat(BinaryReader reader, bool fromEncrypted)
         {
@@ -2561,7 +2559,7 @@ namespace DieFledermaus
                 curTime = newVal;
             }
         }
-#endregion
+        #endregion
 
         internal static int GetHashLength(MausHashFunction hashFunc)
         {
@@ -2841,7 +2839,7 @@ namespace DieFledermaus
                 OnProgress(new MausProgressEventArgs(MausProgressState.ComputingHashCompleted, hashActual));
         }
 
-#region Verify RSA
+        #region Verify RSA
         /// <summary>
         /// Tests whether <see cref="RSASignParameters"/> is valid.
         /// </summary>
@@ -2920,9 +2918,9 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.RsaSigInvalid, x);
             }
         }
-#endregion
+        #endregion
 
-#region Verify DSA
+        #region Verify DSA
         /// <summary>
         /// Tests whether <see cref="DSASignParameters"/> is valid.
         /// </summary>
@@ -2962,9 +2960,9 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.DsaSigInvalid, x);
             }
         }
-#endregion
+        #endregion
 
-#region Verify ECDSA
+        #region Verify ECDSA
         /// <summary>
         /// Tests whether <see cref="ECDSASignParameters"/> is valid.
         /// </summary>
@@ -3004,7 +3002,7 @@ namespace DieFledermaus
                 throw new CryptoException(TextResources.EcdsaSigInvalid, x);
             }
         }
-#endregion
+        #endregion
 
         private static HMacDsaKCalculator GetDsaCalc(MausHashFunction _hashFunc)
         {
@@ -3368,7 +3366,7 @@ namespace DieFledermaus
             return hmac;
         }
 
-#region Disposal
+        #region Disposal
         /// <summary>
         /// Releases all unmanaged resources used by the current instance, and optionally releases all managed resources.
         /// </summary>
@@ -3463,7 +3461,7 @@ namespace DieFledermaus
 
             MausBufferStream secondaryStream = new MausBufferStream();
 
-#region Secondary Format
+            #region Secondary Format
 #if NOLEAVEOPEN
             BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding);
 #else
@@ -3478,11 +3476,11 @@ namespace DieFledermaus
 
                 secondaryFormat.Write(secWriter);
             }
-#endregion
+            #endregion
 
             secondaryStream.Write(_hashExpected, 0, _hashExpected.Length);
 
-#region Compress
+            #region Compress
             MausBufferStream compressedStream = new MausBufferStream();
             if (_cmpFmt == MausCompressionFormat.None)
                 compressedStream = _bufferStream;
@@ -3516,7 +3514,7 @@ namespace DieFledermaus
                     _bufferStream.BufferCopyTo(ds, false);
             }
             compressedStream.Reset();
-#endregion
+            #endregion
 
             long oldLength = _bufferStream.Length;
             long compLength = compressedStream.Length;
@@ -3540,7 +3538,7 @@ namespace DieFledermaus
 
             byte[] rsaKey = RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, false);
 
-#region Signatures
+            #region Signatures
             byte[] rsaSignature, dsaSignature, ecdsaSignature;
 
             if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
@@ -3592,7 +3590,7 @@ namespace DieFledermaus
                 else ecdsaSignature = null;
             }
             else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
-#endregion
+            #endregion
 
 #if NOLEAVEOPEN
             BinaryWriter writer = new BinaryWriter(_baseStream);
@@ -3798,7 +3796,7 @@ namespace DieFledermaus
 
             formats.Add(_kComment, _vComment, _comBytes);
         }
-#endregion
+        #endregion
 
         /// <summary>
         /// Raised when the current stream is reading or writing data, and the progress changes meaningfully.
@@ -3886,48 +3884,6 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// Options indicating the format used to encrypt the DieFledermaus stream.
-    /// </summary>
-    public enum MausEncryptionFormat
-    {
-        /// <summary>
-        /// No encryption.
-        /// </summary>
-        None,
-        /// <summary>
-        /// The Advanced Encryption Standard algorithm.
-        /// </summary>
-        Aes,
-        /// <summary>
-        /// The Twofish encryption algorithm.
-        /// </summary>
-        Twofish,
-        /// <summary>
-        /// The Threefish encryption algorithm.
-        /// </summary>
-        Threefish,
-    }
-
-    /// <summary>
-    /// Options indicating the format used to compress the DieFledermaus stream.
-    /// </summary>
-    public enum MausCompressionFormat
-    {
-        /// <summary>
-        /// The file is DEFLATE-compressed.
-        /// </summary>
-        Deflate,
-        /// <summary>
-        /// The file is not compressed.
-        /// </summary>
-        None,
-        /// <summary>
-        /// The file is compressed using the Lempel-Ziv-Markov chain algorithm
-        /// </summary>
-        Lzma,
-    }
-
-    /// <summary>
     /// Indicates values to encrypt in a <see cref="DieFledermausStream"/>.
     /// </summary>
     public enum MausOptionToEncrypt
@@ -3955,49 +3911,6 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// Specifies which hash function is used.
-    /// </summary>
-    public enum MausHashFunction
-    {
-        /// <summary>
-        /// The SHA-256 hash function (SHA-2).
-        /// </summary>
-        Sha256,
-        /// <summary>
-        /// The SHA-512 hash function (SHA-2).
-        /// </summary>
-        Sha512,
-        /// <summary>
-        /// The SHA-3/256 hash function.
-        /// </summary>
-        Sha3_256,
-        /// <summary>
-        /// The SHA-3/512 hash function.
-        /// </summary>
-        Sha3_512,
-        /// <summary>
-        /// The SHA-224 hash function (SHA-2).
-        /// </summary>
-        Sha224,
-        /// <summary>
-        /// The SHA-384 hash function (SHA-2).
-        /// </summary>
-        Sha384,
-        /// <summary>
-        /// The SHA-3/224 hash function.
-        /// </summary>
-        Sha3_224,
-        /// <summary>
-        /// The SHA-3/384 hash function.
-        /// </summary>
-        Sha3_384,
-        /// <summary>
-        /// The Whirlpool hash function.
-        /// </summary>
-        Whirlpool,
-    }
-
-    /// <summary>
     /// Indicates whether the stream is in read or write mode.
     /// </summary>
     public enum MausStreamMode
@@ -4010,81 +3923,5 @@ namespace DieFledermaus
         /// The stream is in read-mode.
         /// </summary>
         Decompress = 0,
-    }
-
-    /// <summary>
-    /// Options for setting the LZMA dictionary size.
-    /// A larger value alows a smaller compression size, but results in a higher memory usage when encoding and decoding and a longer encoding time. 
-    /// </summary>
-    public enum LzmaDictionarySize
-    {
-        /// <summary>
-        /// The default value, <see cref="Size8m"/>
-        /// </summary>
-        Default = 0,
-        /// <summary>
-        /// 16 kilobytes.
-        /// </summary>
-        Size16k = 1 << 14,
-        /// <summary>
-        /// 64 kilobytes.
-        /// </summary>
-        Size64k = 1 << 16,
-        /// <summary>
-        /// 1 megabyte.
-        /// </summary>
-        Size1m = 1 << 20,
-        /// <summary>
-        /// 2 megabytes.
-        /// </summary>
-        Size2m = 1 << 21,
-        /// <summary>
-        /// 3 megabytes.
-        /// </summary>
-        Size3m = Size1m + Size2m,
-        /// <summary>
-        /// 4 megabytes.
-        /// </summary>
-        Size4m = 1 << 22,
-        /// <summary>
-        /// 6 megabytes.
-        /// </summary>
-        Size6m = Size3m * 2,
-        /// <summary>
-        /// 8 megabytes.
-        /// </summary>
-        Size8m = 1 << 23,
-        /// <summary>
-        /// 12 megabytes.
-        /// </summary>
-        Size12m = Size6m * 2,
-        /// <summary>
-        /// 16 megabytes.
-        /// </summary>
-        Size16m = 1 << 24,
-        /// <summary>
-        /// 24 megabytes.
-        /// </summary>
-        Size24m = Size12m * 2,
-        /// <summary>
-        /// 32 megabytes.
-        /// </summary>
-        Size32m = 1 << 25,
-        /// <summary>
-        /// 48 megabytes.
-        /// </summary>
-        Size48m = Size24m * 2,
-        /// <summary>
-        /// 64 megabytes.
-        /// </summary>
-        Size64m = 1 << 26,
-        /// <summary>
-        /// The minimum value, equal to <see cref="Size16k"/>
-        /// </summary>
-        MinValue = Size16k,
-        /// <summary>
-        /// The maximum value, equal to <see cref="Size64m"/>.
-        /// </summary>
-        MaxValue = Size64m,
     }
 }
