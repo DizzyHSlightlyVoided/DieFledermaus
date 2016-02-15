@@ -32,11 +32,31 @@ using System;
 
 namespace DieFledermaus
 {
-    internal class MausInvalidEnumException : ArgumentException
+    internal class ArgumentOutOfRangeException3 : ArgumentOutOfRangeException
     {
-        public MausInvalidEnumException(string paramName, int value, Type type)
-            : base(string.Format("Invalid {0} value: {1}", type, value), paramName)
+        public ArgumentOutOfRangeException3(string paramName, object value, string message)
+            : base(paramName, message)
         {
+            _value = value;
+        }
+
+        private object _value;
+        public object ActualValue { get { return _value; } }
+
+        public override string Message
+        {
+            get
+            {
+                if (_value == null)
+                    return base.Message;
+
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.AppendLine(base.Message);
+
+                sb.Append("Value: " + _value);
+
+                return sb.ToString();
+            }
         }
     }
 }
