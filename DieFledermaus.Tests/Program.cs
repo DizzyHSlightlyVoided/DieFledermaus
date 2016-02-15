@@ -130,8 +130,6 @@ namespace DieFledermaus.Tests
             Console.WriteLine("Time to derive key: {0}ms", sw.Elapsed.TotalMilliseconds);
 
             DieFledermauZArchiveEntry entry = item as DieFledermauZArchiveEntry;
-            if (entry != null && entry.EncryptedOptions != null && !entry.EncryptedOptions.IsReadOnly)
-                entry.EncryptedOptions.AddAll();
         }
 
         private static string GetString(byte[] hash)

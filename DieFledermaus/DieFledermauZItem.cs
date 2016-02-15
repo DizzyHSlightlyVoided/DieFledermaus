@@ -231,6 +231,28 @@ namespace DieFledermaus
             }
         }
 
+        /// <summary>
+        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CommentSaving
+        {
+            get { return MausStream.CommentSaving; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CommentSaving = value;
+            }
+        }
+
         private string _path;
         /// <summary>
         /// Gets the path of the current instance within the archive.

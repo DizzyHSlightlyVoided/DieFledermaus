@@ -114,11 +114,6 @@ namespace DieFledermaus
         }
 
         #region Constructors
-        private DieFledermausStream()
-        {
-            _encryptedOptions = new SettableOptions(this);
-        }
-
         /// <summary>
         /// Creates a new instance in the specified mode.
         /// </summary>
@@ -147,7 +142,6 @@ namespace DieFledermaus
         /// The stream is in read-mode, and <paramref name="stream"/> contains data which is a lower version than the one expected.
         /// </exception>
         public DieFledermausStream(Stream stream, MausStreamMode compressionMode, bool leaveOpen)
-            : this()
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (compressionMode == MausStreamMode.Compress)
@@ -155,7 +149,6 @@ namespace DieFledermaus
                 CheckStreamWrite(stream);
                 _bufferStream = new MausBufferStream();
                 _baseStream = stream;
-                _encryptedOptions.DoAddAll();
             }
             else if (compressionMode == MausStreamMode.Decompress)
             {
@@ -329,7 +322,6 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is closed.
         /// </exception>
         public DieFledermausStream(Stream stream, MausCompressionFormat compressionFormat, bool leaveOpen)
-            : this()
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             CheckStreamWrite(stream);
@@ -349,7 +341,6 @@ namespace DieFledermaus
                     throw new InvalidEnumArgumentException(nameof(compressionFormat), (int)compressionFormat, typeof(MausCompressionFormat));
             }
             _baseStream = stream;
-            _encryptedOptions.DoAddAll();
             _mode = MausStreamMode.Compress;
             _leaveOpen = leaveOpen;
         }
@@ -700,7 +691,6 @@ namespace DieFledermaus
 #endif
 
         internal DieFledermausStream(DieFledermauZItem entry, string path, Stream stream, ICompressionFormat compFormat, MausEncryptionFormat encryptionFormat)
-            : this()
         {
             _baseStream = stream;
             _bufferStream = new MausBufferStream();
@@ -717,7 +707,6 @@ namespace DieFledermaus
             }
             _cmpFmt = compFormat.CompressionFormat;
             _entry = entry;
-            _encryptedOptions.DoAddAll();
             _setEncFormat(encryptionFormat);
             _filename = path;
             _allowDirNames = entry is DieFledermauZArchiveEntry ? AllowDirNames.Yes : AllowDirNames.EmptyDir;
@@ -726,7 +715,6 @@ namespace DieFledermaus
         }
 
         internal DieFledermausStream(Stream stream, bool readMagNum, string path)
-            : this()
         {
             _baseStream = stream;
             _mode = MausStreamMode.Decompress;
@@ -861,6 +849,44 @@ namespace DieFledermaus
         /// </summary>
         public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
 
+        private MausSavingOptions _saveCmpFmt;
+        /// <summary>
+        /// Gets and sets a value indicating how <see cref="CompressionFormat"/> is saved.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CompressionFormatSaving
+        {
+            get { return _saveCmpFmt; }
+            set
+            {
+                _ensureCanWrite();
+                _saveCmpFmt = SetSavingOption(value);
+            }
+        }
+
+        internal static MausSavingOptions SetSavingOption(MausSavingOptions value)
+        {
+            switch (value)
+            {
+                case MausSavingOptions.SecondaryOnly:
+                case MausSavingOptions.Default:
+                    return MausSavingOptions.SecondaryOnly;
+                case MausSavingOptions.PrimaryOnly:
+                case MausSavingOptions.Both:
+                    return value;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausSavingOptions));
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether the current instance is in read-mode and has been successfully decrypted.
         /// </summary>
@@ -887,6 +913,29 @@ namespace DieFledermaus
             }
         }
 
+        private MausSavingOptions _saveTimeC;
+        /// <summary>
+        /// Gets and sets options for saving <see cref="CreatedTime"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CreatedTimeSaving
+        {
+            get { return _saveTimeC; }
+            set
+            {
+                _ensureCanWrite();
+                _saveTimeC = SetSavingOption(value);
+            }
+        }
+
         private DateTime? _timeM;
         /// <summary>
         /// Gets and sets the time at which the underlying file was last modified prior to being archived,
@@ -905,6 +954,29 @@ namespace DieFledermaus
             {
                 _ensureCanWrite();
                 _timeM = value;
+            }
+        }
+
+        private MausSavingOptions _saveTimeM;
+        /// <summary>
+        /// Gets and sets options for saving <see cref="ModifiedTime"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions ModifiedTimeSaving
+        {
+            get { return _saveTimeM; }
+            set
+            {
+                _ensureCanWrite();
+                _saveTimeM = SetSavingOption(value);
             }
         }
 
@@ -1680,6 +1752,29 @@ namespace DieFledermaus
             }
         }
 
+        private MausSavingOptions _saveComBytes;
+        /// <summary>
+        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CommentSaving
+        {
+            get { return _saveComBytes; }
+            set
+            {
+                _ensureCanWrite();
+                _saveComBytes = SetSavingOption(value);
+            }
+        }
+
         internal static byte[] CheckComment(string value)
         {
             if (value == null) return null;
@@ -1693,12 +1788,6 @@ namespace DieFledermaus
             if (value != null && value.Length == 0 || value.Length > Max16Bit)
                 throw new ArgumentException(TextResources.CommentLength, nameof(value));
         }
-
-        private SettableOptions _encryptedOptions;
-        /// <summary>
-        /// Gets a collection containing options which should be included in checksum calculations.
-        /// </summary>
-        public SettableOptions SecondaryOptions { get { return _encryptedOptions; } }
 
         private string _filename;
         /// <summary>
@@ -1724,6 +1813,30 @@ namespace DieFledermaus
                     _filename = value;
             }
         }
+
+        private MausSavingOptions _saveFilename;
+        /// <summary>
+        /// Gets and sets options for saving <see cref="Filename"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions FilenameSaving
+        {
+            get { return _saveFilename; }
+            set
+            {
+                _ensureCanWrite();
+                _saveFilename = SetSavingOption(value);
+            }
+        }
+
 
         /// <summary>
         /// Sets <see cref="Key"/> to a value derived from <see cref="Password"/>.
@@ -2249,13 +2362,17 @@ namespace DieFledermaus
                     {
                         if (_cmpFmt != cmpFmt)
                             throw new InvalidDataException(TextResources.FormatBad);
-                        continue;
                     }
-                    else if (fromEncrypted)
-                        _encryptedOptions.InternalAdd(MausOptionToEncrypt.Compression);
+                    else
+                    {
+                        _cmpFmt = cmpFmt;
+                        gotFormat = true;
+                    }
+                    if (fromEncrypted)
+                        _saveCmpFmt |= MausSavingOptions.SecondaryOnly;
+                    else
+                        _saveCmpFmt |= MausSavingOptions.PrimaryOnly;
 
-                    gotFormat = true;
-                    _cmpFmt = cmpFmt;
                     continue;
                 }
 
@@ -2346,9 +2463,6 @@ namespace DieFledermaus
 
                     if (_filename == null)
                     {
-                        if (fromEncrypted)
-                            _encryptedOptions.InternalAdd(MausOptionToEncrypt.Filename);
-
                         if (!IsValidFilename(filename, false, _allowDirNames, null))
                             throw new InvalidDataException(TextResources.FormatBad);
 
@@ -2356,6 +2470,12 @@ namespace DieFledermaus
                     }
                     else if (!filename.Equals(_filename, StringComparison.Ordinal))
                         throw new InvalidDataException(TextResources.FormatBad);
+
+                    if (fromEncrypted)
+                        _saveFilename |= MausSavingOptions.SecondaryOnly;
+                    else
+                        _saveFilename |= MausSavingOptions.PrimaryOnly;
+
                     continue;
                 }
 
@@ -2376,13 +2496,13 @@ namespace DieFledermaus
 
                 if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
                 {
-                    GetDate(curValue, ref _timeC, fromEncrypted, MausOptionToEncrypt.CreatedTime);
+                    GetDate(curValue, ref _timeC, fromEncrypted, ref _saveTimeC);
                     continue;
                 }
 
                 if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
                 {
-                    GetDate(curValue, ref _timeM, fromEncrypted, MausOptionToEncrypt.ModTime);
+                    GetDate(curValue, ref _timeM, fromEncrypted, ref _saveTimeM);
                     continue;
                 }
 
@@ -2394,14 +2514,14 @@ namespace DieFledermaus
                     byte[] comBytes = curValue[0].Value;
 
                     if (_comBytes == null)
-                    {
-                        if (fromEncrypted)
-                            _encryptedOptions.InternalAdd(MausOptionToEncrypt.Comment);
-
                         _comBytes = comBytes;
-                    }
                     else if (!CompareBytes(comBytes, _comBytes))
                         throw new InvalidDataException(TextResources.FormatBad);
+
+                    if (fromEncrypted)
+                        _saveComBytes |= MausSavingOptions.SecondaryOnly;
+                    else
+                        _saveComBytes |= MausSavingOptions.PrimaryOnly;
 
                     continue;
                 }
@@ -2535,7 +2655,7 @@ namespace DieFledermaus
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
-        private void GetDate(FormatValue curValue, ref DateTime? curTime, bool fromEncrypted, MausOptionToEncrypt option)
+        private void GetDate(FormatValue curValue, ref DateTime? curTime, bool fromEncrypted, ref MausSavingOptions savingOption)
         {
             if (curValue.Count != 1 || curValue.Version != _vTime)
                 throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2552,12 +2672,12 @@ namespace DieFledermaus
                 if (curTime.Value != newVal)
                     throw new InvalidDataException(TextResources.FormatBad);
             }
+            else curTime = newVal;
+
+            if (fromEncrypted)
+                savingOption |= MausSavingOptions.SecondaryOnly;
             else
-            {
-                if (fromEncrypted)
-                    _encryptedOptions.InternalAdd(option);
-                curTime = newVal;
-            }
+                savingOption |= MausSavingOptions.PrimaryOnly;
         }
         #endregion
 
@@ -3416,12 +3536,12 @@ namespace DieFledermaus
             CoderPropID.EndMarker,
         };
 
-        private void AddOptions(ByteOptionList formats, bool secondary)
+        private void AddOptions(ByteOptionList formats, MausSavingOptions savingOption)
         {
-            if (_filename != null && (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.Filename)))
+            if (_filename != null && (savingOption & _saveFilename) != 0)
                 formats.Add(_kFilename, _vFilename, _textEncoding.GetBytes(_filename));
 
-            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.Compression))
+            if ((savingOption & _saveCmpFmt) != 0)
             {
                 switch (_cmpFmt)
                 {
@@ -3437,10 +3557,10 @@ namespace DieFledermaus
                 }
             }
 
-            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.CreatedTime))
+            if ((savingOption & _saveTimeC) != 0)
                 FormatSetTimes(formats, _kTimeC, _timeC);
 
-            if (secondary == _encryptedOptions.Contains(MausOptionToEncrypt.ModTime))
+            if ((savingOption & _saveTimeM) != 0)
                 FormatSetTimes(formats, _kTimeM, _timeM);
         }
 
@@ -3468,8 +3588,14 @@ namespace DieFledermaus
             using (BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding, true))
 #endif
             {
+                _saveCmpFmt = SetSavingOption(_saveCmpFmt);
+                _saveComBytes = SetSavingOption(_saveCmpFmt);
+                _saveFilename = SetSavingOption(_saveFilename);
+                _saveTimeC = SetSavingOption(_saveTimeC);
+                _saveTimeM = SetSavingOption(_saveTimeM);
+
                 ByteOptionList secondaryFormat = new ByteOptionList();
-                AddOptions(secondaryFormat, true);
+                AddOptions(secondaryFormat, MausSavingOptions.SecondaryOnly);
 
                 if (_encFmt != MausEncryptionFormat.None)
                     secondaryFormat.Add(_kULen, 1, _bufferStream.Length);
@@ -3604,7 +3730,7 @@ namespace DieFledermaus
                 {
                     ByteOptionList formats = new ByteOptionList();
 
-                    AddOptions(formats, false);
+                    AddOptions(formats, MausSavingOptions.PrimaryOnly);
 
                     formats.Add(_kHash, _vHash, HashBDict[_hashFunc]);
 
@@ -3843,71 +3969,7 @@ namespace DieFledermaus
             Dispose(false);
         }
 
-        /// <summary>
-        /// A collection of <see cref="MausOptionToEncrypt"/> values.
-        /// </summary>
-        public sealed class SettableOptions : MausSettableOptions<MausOptionToEncrypt>
-        {
-            private DieFledermausStream _stream;
-
-            internal SettableOptions(DieFledermausStream stream)
-            {
-                _stream = stream;
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether the current instance is read-only.
-            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode;
-            /// <see langword="false"/> otherwise.
-            /// </summary>
-            /// <remarks>
-            /// This property indicates that the collection cannot be changed externally. If <see cref="IsFrozen"/> is <see langword="false"/>,
-            /// however, it may still be changed by the base stream.
-            /// </remarks>
-            public override bool IsReadOnly
-            {
-                get { return _stream._baseStream == null || _stream._mode == MausStreamMode.Decompress; }
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether the current instance is entirely frozen against all further changes.
-            /// Returns <see langword="true"/> if the underlying stream is closed or is in read-mode and has successfully decoded the file;
-            /// <see langword="false"/> otherwise.
-            /// </summary>
-            public override bool IsFrozen
-            {
-                get { return _stream._baseStream == null || (_stream._mode == MausStreamMode.Decompress && _stream._headerGotten); }
-            }
-        }
-
         internal const string CollectionDebuggerDisplay = "Count = {Count}";
-    }
-
-    /// <summary>
-    /// Indicates values to encrypt in a <see cref="DieFledermausStream"/>.
-    /// </summary>
-    public enum MausOptionToEncrypt
-    {
-        /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.Filename"/> will be encrypted.
-        /// </summary>
-        Filename,
-        /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.CompressionFormat"/> will be encrypted.
-        /// </summary>
-        Compression,
-        /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.CreatedTime"/> will be encrypted.
-        /// </summary>
-        CreatedTime,
-        /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.ModifiedTime"/> will be encrypted.
-        /// </summary>
-        ModTime,
-        /// <summary>
-        /// Indicates that <see cref="DieFledermausStream.Comment"/> will be encrypted.
-        /// </summary>
-        Comment,
     }
 
     /// <summary>

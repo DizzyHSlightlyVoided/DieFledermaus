@@ -311,8 +311,6 @@ namespace DieFledermaus
 
         DateTime? ModifiedTime { get; }
 
-        DieFledermausStream.SettableOptions EncryptedOptions { get; }
-
         byte[] Hash { get; }
 
         byte[] ComputeHash();

@@ -71,7 +71,7 @@
     <Compile Include="MausEncryptionFormat.cs" />
     <Compile Include="MausHashFunction.cs" />
     <Compile Include="MausProgressEventArgs.cs" />
-    <Compile Include="MausSettableOptions.cs" />
+    <Compile Include="MausSavingOptions.cs" />
     <Compile Include="PCLHelper\ExtensionMethods.cs" />
     <Compile Include="PCLHelper\MausInvalidEnumException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -37,6 +37,11 @@ using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
+#if PCL
+    using InvalidEnumArgumentException = DieFledermaus.MausInvalidEnumException;
+#else
+    using System.ComponentModel;
+#endif
     /// <summary>
     /// Represents a single file entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
@@ -54,7 +59,7 @@ namespace DieFledermaus
 
         internal override bool IsFilenameEncrypted
         {
-            get { return MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Filename); }
+            get { return DieFledermausStream.SetSavingOption(MausStream.FilenameSaving) == MausSavingOptions.SecondaryOnly; }
         }
 
         /// <summary>
@@ -63,9 +68,26 @@ namespace DieFledermaus
         public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
 
         /// <summary>
-        /// Gets a collection containing options which should be encrypted, or <see langword="null"/> if the current entry is not encrypted.
+        /// Gets and sets options for saving <see cref="CompressionFormat"/>.
         /// </summary>
-        public DieFledermausStream.SettableOptions EncryptedOptions { get { return MausStream.SecondaryOptions; } }
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CompressionFormatSaving
+        {
+            get { return MausStream.CompressionFormatSaving; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CompressionFormatSaving = value;
+            }
+        }
 
         /// <summary>
         /// Gets and sets the time at which the underlying file was created, or <see langword="null"/> to specify no creation time.
@@ -87,6 +109,28 @@ namespace DieFledermaus
         }
 
         /// <summary>
+        /// Gets and sets options for saving <see cref="CreatedTime"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions CreatedTimeSaving
+        {
+            get { return MausStream.CreatedTimeSaving; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CreatedTimeSaving = value;
+            }
+        }
+
+        /// <summary>
         /// Gets and sets the time at which the underlying file was last modified, or <see langword="null"/> to specify no modification time.
         /// </summary>
         /// <exception cref="NotSupportedException">
@@ -99,6 +143,28 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 MausStream.ModifiedTime = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets options for saving <see cref="ModifiedTime"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        public MausSavingOptions ModifiedTimeSaving
+        {
+            get { return MausStream.ModifiedTimeSaving; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.ModifiedTimeSaving = value;
             }
         }
 

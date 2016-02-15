@@ -44,38 +44,11 @@ namespace DieFledermaus
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, MausEncryptionFormat encryptionFormat)
             : base(archive, path, new NoneCompressionFormat(), encryptionFormat)
         {
-            if (encryptionFormat != MausEncryptionFormat.None)
-                MausStream.SecondaryOptions.Add(MausOptionToEncrypt.Filename);
         }
 
         internal DieFledermauZEmptyDirectory(DieFledermauZArchive archive, string path, DieFledermausStream stream, long offset, long realOffset)
             : base(archive, path, path, stream, offset, realOffset)
         {
-        }
-
-        /// <summary>
-        /// Gets and sets a value indicating whether <see cref="DieFledermauZItem.Comment"/> will be encrypted.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current instance is not encrypted.</para>
-        /// </exception>
-        public bool EncryptComment
-        {
-            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Comment); }
-            set
-            {
-                if (MausStream.EncryptionFormat == MausEncryptionFormat.None)
-                    throw new NotSupportedException(TextResources.NotEncrypted);
-                if (value)
-                    MausStream.SecondaryOptions.Add(MausOptionToEncrypt.Comment);
-                else
-                    MausStream.SecondaryOptions.Remove(MausOptionToEncrypt.Comment);
-            }
         }
 
         /// <summary>
@@ -123,7 +96,11 @@ namespace DieFledermaus
 
         internal override bool IsFilenameEncrypted
         {
-            get { return MausStream.EncryptionFormat != MausEncryptionFormat.None && MausStream.SecondaryOptions.Contains(MausOptionToEncrypt.Filename); }
+            get
+            {
+                return MausStream.EncryptionFormat != MausEncryptionFormat.None &&
+                    DieFledermausStream.SetSavingOption(MausStream.FilenameSaving) == MausSavingOptions.SecondaryOnly;
+            }
         }
 
         internal override MausBufferStream GetWritten()

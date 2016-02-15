@@ -32,7 +32,7 @@ namespace DieFledermaus
 {
     /// <summary>
     /// Options for setting the LZMA dictionary size.
-    /// A larger value alows a smaller compression size, but results in a higher memory usage when encoding and decoding and a longer encoding time. 
+    /// A larger value allows a smaller compressed size, but results in a higher memory usage when encoding and decoding and a longer encoding time. 
     /// </summary>
     public enum LzmaDictionarySize
     {
