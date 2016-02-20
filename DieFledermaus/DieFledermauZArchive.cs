@@ -379,10 +379,7 @@ namespace DieFledermaus
 
         internal static string GetString(BinaryReader reader, ref long curOffset)
         {
-            int len = reader.ReadByte();
-            if (len == 0) len = DieFledermausStream.Max8Bit;
-
-            byte[] bytes = DieFledermausStream.ReadBytes(reader, len);
+            byte[] bytes = DieFledermausStream.ReadBytes8Bit(reader);
             curOffset += bytes.Length + 1L;
             return DieFledermausStream._textEncoding.GetString(bytes);
         }
@@ -2853,19 +2850,19 @@ namespace DieFledermaus
             /// Copies all elements in the collection to the specified array, starting at the specified index.
             /// </summary>
             /// <param name="array">The array to which the collection will be copied. The array must have zero-based indexing.</param>
-            /// <param name="index">The index in <paramref name="array"/> at which copying begins.</param>
+            /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
             /// <exception cref="ArgumentNullException">
             /// <paramref name="array"/> is <see langword="null"/>.
             /// </exception>
             /// <exception cref="ArgumentOutOfRangeException">
-            /// <paramref name="index"/> is less than 0.
+            /// <paramref name="arrayIndex"/> is less than 0.
             /// </exception>
             /// <exception cref="ArgumentException">
-            /// <paramref name="index"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
+            /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the length of <paramref name="array"/>.
             /// </exception>
-            public void CopyTo(DieFledermauZItem[] array, int index)
+            public void CopyTo(DieFledermauZItem[] array, int arrayIndex)
             {
-                _archive._entries.CopyTo(array, index);
+                _archive._entries.CopyTo(array, arrayIndex);
             }
 
             void ICollection.CopyTo(Array array, int index)

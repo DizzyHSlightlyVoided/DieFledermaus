@@ -224,12 +224,7 @@ namespace DieFledermaus
             _values = new List<ByteValue>(itemCount);
 
             for (int i = 0; i < itemCount; i++)
-            {
-                int curCount = reader.ReadUInt16();
-                if (curCount == 0) curCount = DieFledermausStream.Max16Bit;
-
-                _values.Add(new ByteValue(DieFledermausStream.ReadBytes(reader, curCount)));
-            }
+                _values.Add(new ByteValue(DieFledermausStream.ReadBytes16Bit(reader)));
         }
 
         public ByteValue this[int index]

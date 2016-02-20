@@ -102,8 +102,8 @@ The structure of the signature manifest is as follows:
 * **Signature Count:** A signed 64-bit integer indicating the number of files in the manifest.
 * **Signature List:** A list of **manifest entries** with the following format:
  * **Signature Header:** The string "`\x03`sig" (`03 73 69 67`).
- * The **Entry ID** as it occurs in **Entry List** and **Offset List**.
- * The **Entry Filename** as it occurs in **Entry List** and **Offset List**.
+ * The **Entry ID** as it occurs in **Entry List** and **Offset List**, a signed 64-bit integer.
+ * The **Entry Filename** as it occurs in **Entry List** and **Offset List**, a 16-bit length-prefixed string.
  * A 16-bit length-prefixed string containing the contents of the file's **HMAC** field.
 
 The manifest must include every file listed in the archive *except* the manifest itself. It must not be compressed, encrypted (apart from encrypting the entire archive), or contain any other entries in its **Format** except the file path.

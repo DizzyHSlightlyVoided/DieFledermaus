@@ -251,6 +251,60 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified collection contains a null value..
+        /// </summary>
+        internal static string CollectContainsNull {
+            get {
+                return ResourceManager.GetString("CollectContainsNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified collection is empty..
+        /// </summary>
+        internal static string CollectEmpty {
+            get {
+                return ResourceManager.GetString("CollectEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified collection contains an invalid value..
+        /// </summary>
+        internal static string CollectManifestInvalid {
+            get {
+                return ResourceManager.GetString("CollectManifestInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified collection contains a null Filename value..
+        /// </summary>
+        internal static string CollectManifestNullFilename {
+            get {
+                return ResourceManager.GetString("CollectManifestNullFilename", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified collection contains a stream with a null CompressedHash value..
+        /// </summary>
+        internal static string CollectManifestNullHash {
+            get {
+                return ResourceManager.GetString("CollectManifestNullHash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified collection contains a null Path value..
+        /// </summary>
+        internal static string CollectManifestNullPath {
+            get {
+                return ResourceManager.GetString("CollectManifestNullPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current collection is read-only..
         /// </summary>
         internal static string CollectReadOnly {
@@ -598,6 +652,33 @@ namespace DieFledermaus.Globalization {
         internal static string ManifestBad {
             get {
                 return ResourceManager.GetString("ManifestBad", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The manifest is invalid..
+        /// </summary>
+        internal static string ManifestCurBad {
+            get {
+                return ResourceManager.GetString("ManifestCurBad", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The version number of the manifest is too high..
+        /// </summary>
+        internal static string ManifestCurVersionTooHigh {
+            get {
+                return ResourceManager.GetString("ManifestCurVersionTooHigh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The version number of the manifest is too low..
+        /// </summary>
+        internal static string ManifestCurVersionTooLow {
+            get {
+                return ResourceManager.GetString("ManifestCurVersionTooLow", resourceCulture);
             }
         }
         

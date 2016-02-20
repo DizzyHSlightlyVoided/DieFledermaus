@@ -399,4 +399,33 @@
   <data name="CompressionLevel" xml:space="preserve">
     <value>The DEFLATE compression level must be between 0 (no compression) and 9 inclusive.</value>
   </data>
+  <data name="CollectContainsNull" xml:space="preserve">
+    <value>The specified collection contains a null value.</value>
+  </data>
+  <data name="CollectEmpty" xml:space="preserve">
+    <value>The specified collection is empty.</value>
+  </data>
+  <data name="CollectManifestInvalid" xml:space="preserve">
+    <value>The specified collection contains an invalid value.</value>
+  </data>
+  <data name="CollectManifestNullFilename" xml:space="preserve">
+    <value>The specified collection contains a null Filename value.</value>
+    <comment>CompressedHash = property name.</comment>
+  </data>
+  <data name="CollectManifestNullHash" xml:space="preserve">
+    <value>The specified collection contains a stream with a null CompressedHash value.</value>
+    <comment>CompressedHash = property name.</comment>
+  </data>
+  <data name="CollectManifestNullPath" xml:space="preserve">
+    <value>The specified collection contains a null Path value.</value>
+  </data>
+  <data name="ManifestCurBad" xml:space="preserve">
+    <value>The manifest is invalid.</value>
+  </data>
+  <data name="ManifestCurVersionTooHigh" xml:space="preserve">
+    <value>The version number of the manifest is too high.</value>
+  </data>
+  <data name="ManifestCurVersionTooLow" xml:space="preserve">
+    <value>The version number of the manifest is too low.</value>
+  </data>
 </root>

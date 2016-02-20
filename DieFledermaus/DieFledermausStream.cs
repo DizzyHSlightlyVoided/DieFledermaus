@@ -2653,6 +2653,20 @@ namespace DieFledermaus
             return data;
         }
 
+        internal static byte[] ReadBytes8Bit(BinaryReader reader)
+        {
+            int len = reader.ReadByte();
+            if (len == 0) len = Max8Bit;
+            return ReadBytes(reader, len);
+        }
+
+        internal static byte[] ReadBytes16Bit(BinaryReader reader)
+        {
+            int len = reader.ReadInt16();
+            if (len == 0) len = Max16Bit;
+            return ReadBytes(reader, len);
+        }
+
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
         private void GetDate(FormatValue curValue, ref DateTime? curTime, bool fromEncrypted, ref MausSavingOptions savingOption)
@@ -3171,6 +3185,9 @@ namespace DieFledermaus
 
         internal static bool CompareBytes(byte[] hashComputed, byte[] _hashExpected)
         {
+            if ((hashComputed == null) != (_hashExpected == null))
+                return false;
+
             if (hashComputed == _hashExpected)
                 return true;
 
