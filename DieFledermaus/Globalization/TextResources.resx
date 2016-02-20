@@ -428,4 +428,10 @@
   <data name="ManifestCurVersionTooLow" xml:space="preserve">
     <value>The version number of the manifest is too low.</value>
   </data>
+  <data name="NotCompressed" xml:space="preserve">
+    <value>The current stream is not compressed.</value>
+  </data>
+  <data name="NotLzma" xml:space="preserve">
+    <value>The current stream is not compressed using LZMA.</value>
+  </data>
 </root>

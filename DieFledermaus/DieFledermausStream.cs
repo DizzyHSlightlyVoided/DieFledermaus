@@ -550,11 +550,11 @@ namespace DieFledermaus
         {
             switch (compressionLevel)
             {
-                case CompressionLevel.Fastest:
+                case System.IO.Compression.CompressionLevel.Fastest:
                     return 1;
-                case CompressionLevel.Optimal:
+                case System.IO.Compression.CompressionLevel.Optimal:
                     return 9;
-                case CompressionLevel.NoCompression:
+                case System.IO.Compression.CompressionLevel.NoCompression:
                     return 0;
                 default:
                     throw new InvalidEnumArgumentException(nameof(compressionLevel), (int)compressionLevel, typeof(CompressionLevel));
@@ -572,7 +572,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
+        /// <paramref name="compressionLevel"/> is not a valid <see cref="System.IO.Compression.CompressionLevel"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -620,7 +620,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
-        /// <paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.
+        /// <paramref name="compressionLevel"/> is not a valid <see cref="System.IO.Compression.CompressionLevel"/> value.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="stream"/> does not support writing.
@@ -646,7 +646,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
-        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="System.IO.Compression.CompressionLevel"/> value.</para>
         /// <para>-OR-</para>
         /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
         /// </exception>
@@ -673,7 +673,7 @@ namespace DieFledermaus
         /// <paramref name="stream"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
-        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="CompressionLevel"/> value.</para>
+        /// <para><paramref name="compressionLevel"/> is not a valid <see cref="System.IO.Compression.CompressionLevel"/> value.</para>
         /// <para>-OR-</para>
         /// <para><paramref name="encryptionFormat"/> is not a valid <see cref="MausEncryptionFormat"/> value.</para>
         /// </exception>
@@ -732,8 +732,6 @@ namespace DieFledermaus
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
         }
         #endregion
-
-        private int _cmpLvl = 6;
 
         internal DieFledermauZItem _entry;
 
@@ -865,14 +863,83 @@ namespace DieFledermaus
                 switch (value)
                 {
                     case MausCompressionFormat.Deflate:
-                    case MausCompressionFormat.Lzma:
-                    case MausCompressionFormat.None:
                         _cmpFmt = value;
+                        _cmpLvl = 6;
+                        break;
+                    case MausCompressionFormat.None:
+                    case MausCompressionFormat.Lzma:
+                        _cmpFmt = value;
+                        _cmpLvl = 0;
                         break;
                     default:
                         throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausCompressionFormat));
                 }
             }
+        }
+
+        private int _cmpLvl = 6;
+        /// <summary>
+        /// Gets and sets the compression level of the current stream.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode or is not compressed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than 9 if <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Deflate"/>,
+        /// or is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or is greater than <see cref="LzmaDictionarySize.MaxValue"/> if
+        /// <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Lzma"/>.
+        /// </exception>
+        /// <remarks>
+        /// When the current stream is compressed using DEFLATE, this value is on a scale from 0 to 9 inclusive, where 0 is uncompressed, 1 is fastest compression,
+        /// and 9 is optimal compression. When the current instance is compressed using LZMA, this is the dictionary size in bytes, where 0 is the default value of
+        /// <see cref="LzmaDictionarySize.Default"/>. When the current instance is in read-mode or is uncompressed, this property returns 0.
+        /// </remarks>
+        public int CompressionLevel
+        {
+            get { return _cmpLvl; }
+            set
+            {
+                _ensureCanWrite();
+                switch (_cmpFmt)
+                {
+                    case MausCompressionFormat.None:
+                        throw new NotSupportedException(TextResources.NotCompressed);
+                    case MausCompressionFormat.Lzma:
+                        if (value != 0 && value < (int)LzmaDictionarySize.MinValue || value > (int)LzmaDictionarySize.MaxValue)
+                            throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.OutOfRangeLzma);
+                        break;
+                    default:
+                        if (value < 0 || value > 9)
+                            throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, 9));
+                        break;
+                }
+                _cmpLvl = value;
+            }
+        }
+
+        /// <summary>
+        /// Sets the compression level on the current stream.
+        /// </summary>
+        /// <param name="value">The dictionary size in bytes.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in read-only mode or is not compressed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, <paramref name="value"/> is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or is greater than
+        /// <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        public void SetCompressionLevel(LzmaDictionarySize value)
+        {
+            _ensureCanWrite();
+            if (_cmpFmt != MausCompressionFormat.Lzma)
+                throw new NotSupportedException(TextResources.NotLzma);
+            CompressionLevel = (int)value;
         }
 
         private MausSavingOptions _saveCmpFmt;

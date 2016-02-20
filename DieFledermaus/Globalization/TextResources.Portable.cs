@@ -701,11 +701,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The current stream is not compressed..
+        /// </summary>
+        internal static string NotCompressed {
+            get {
+                return ResourceManager.GetString("NotCompressed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The current instance is not encrypted..
         /// </summary>
         internal static string NotEncrypted {
             get {
                 return ResourceManager.GetString("NotEncrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current stream is not compressed using LZMA..
+        /// </summary>
+        internal static string NotLzma {
+            get {
+                return ResourceManager.GetString("NotLzma", resourceCulture);
             }
         }
         

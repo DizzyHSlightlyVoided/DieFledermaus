@@ -62,6 +62,7 @@ namespace DieFledermaus
             get { return DieFledermausStream.SetSavingOption(MausStream.FilenameSaving) == MausSavingOptions.SecondaryOnly; }
         }
 
+        #region Compression
         /// <summary>
         /// Gets and sets the compression format of the current instance.
         /// </summary>
@@ -105,6 +106,56 @@ namespace DieFledermaus
                 MausStream.CompressionFormatSaving = value;
             }
         }
+
+        /// <summary>
+        /// Gets and sets the compression level of the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode or the current instance is not compressed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than 9 if <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Deflate"/>,
+        /// or is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or is greater than <see cref="LzmaDictionarySize.MaxValue"/> if
+        /// <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Lzma"/>.
+        /// </exception>
+        /// <remarks>
+        /// When the current stream is compressed using DEFLATE, this value is on a scale from 0 to 9 inclusive, where 0 is uncompressed, 1 is fastest compression,
+        /// and 9 is optimal compression. When the current instance is compressed using LZMA, this is the dictionary size in bytes, where 0 is the default value of
+        /// <see cref="LzmaDictionarySize.Default"/>. When the current instance is in read-mode or is uncompressed, this property returns 0.
+        /// </remarks>
+        public int CompressionLevel
+        {
+            get { return MausStream.CompressionLevel; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CompressionLevel = value;
+            }
+        }
+
+        /// <summary>
+        /// Sets the compression level on the current instance.
+        /// </summary>
+        /// <param name="value">The dictionary size in bytes.</param>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in read-only mode or is not compressed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, <paramref name="value"/> is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or is greater than
+        /// <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        public void SetCompressionLevel(LzmaDictionarySize value)
+        {
+            EnsureCanWrite();
+            MausStream.SetCompressionLevel(value);
+        }
+        #endregion
 
         /// <summary>
         /// Gets and sets the time at which the underlying file was created, or <see langword="null"/> to specify no creation time.

@@ -578,15 +578,47 @@ namespace DieFledermaus
         /// Gets and sets options for saving <see cref="CompressionFormat"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
+        /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current instance is in read-only mode.
+        /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="InvalidEnumArgumentException">
         /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
         /// </exception>
         MausSavingOptions CompressionFormatSaving { get; set; }
+
+        /// <summary>
+        /// Gets and sets the compression level. If <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Deflate"/>,
+        /// returns a value between 0 and 9 inclusive; if <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Lzma"/>,
+        /// returns the dictionary size in bytes; if the current instance is uncompressed or is in read-mode, returns 0.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode or is not compressed.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// In a set operation, the specified value is less than 0 or is greater than 9 if <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Deflate"/>,
+        /// or is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or is greater than <see cref="LzmaDictionarySize.MaxValue"/> if
+        /// <see cref="CompressionFormat"/> is <see cref="MausCompressionFormat.Lzma"/>.
+        /// </exception>
+        int CompressionLevel { get; set; }
+
+        /// <summary>
+        /// Sets <see cref="CompressionLevel"/> using the corresponding <see cref="LzmaDictionarySize"/> value.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode, or <see cref="CompressionFormat"/> is not <see cref="MausCompressionFormat.Lzma"/>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// The specified value is nonzero and is less than <see cref="LzmaDictionarySize.MinValue"/> or greater than <see cref="LzmaDictionarySize.MaxValue"/>.
+        /// </exception>
+        void SetCompressionLevel(LzmaDictionarySize value);
 
         /// <summary>
         /// Gets and sets the time at which the file was created.
