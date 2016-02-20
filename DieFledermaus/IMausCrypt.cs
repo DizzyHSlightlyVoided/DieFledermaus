@@ -305,7 +305,7 @@ namespace DieFledermaus
 
     internal interface IMausStream : IMausSign
     {
-        MausCompressionFormat CompressionFormat { get; }
+        MausCompressionFormat CompressionFormat { get; set; }
 
         DateTime? CreatedTime { get; }
 

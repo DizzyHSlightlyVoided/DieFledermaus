@@ -45,7 +45,7 @@ namespace DieFledermaus
     /// <summary>
     /// Represents a single file entry in a <see cref="DieFledermauZArchive"/>.
     /// </summary>
-    public class DieFledermauZArchiveEntry : DieFledermauZItem, IMausSign
+    public class DieFledermauZArchiveEntry : DieFledermauZItem, IMausStream
     {
         internal DieFledermauZArchiveEntry(DieFledermauZArchive archive, string path, ICompressionFormat compFormat, MausEncryptionFormat encFormat)
             : base(archive, path, compFormat, encFormat)
@@ -63,9 +63,26 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets the compression format of the current instance.
+        /// Gets and sets the compression format of the current instance.
         /// </summary>
-        public MausCompressionFormat CompressionFormat { get { return MausStream.CompressionFormat; } }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
+        public MausCompressionFormat CompressionFormat
+        {
+            get { return MausStream.CompressionFormat; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.CompressionFormat = value;
+            }
+        }
 
         /// <summary>
         /// Gets and sets options for saving <see cref="CompressionFormat"/>.

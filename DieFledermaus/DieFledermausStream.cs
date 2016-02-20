@@ -83,7 +83,7 @@ namespace DieFledermaus
     /// <para>When writing, if nothing has been written to the current stream when the current instance is disposed, nothing will be written to the
     /// underlying stream.</para>
     /// </remarks>
-    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausSign
+    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausStream
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
@@ -845,9 +845,35 @@ namespace DieFledermaus
 
         private MausCompressionFormat _cmpFmt;
         /// <summary>
-        /// Gets the compression format of the current instance.
+        /// Gets and sets the compression format of the current instance.
         /// </summary>
-        public MausCompressionFormat CompressionFormat { get { return _cmpFmt; } }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
+        public MausCompressionFormat CompressionFormat
+        {
+            get { return _cmpFmt; }
+            set
+            {
+                _ensureCanWrite();
+                switch (value)
+                {
+                    case MausCompressionFormat.Deflate:
+                    case MausCompressionFormat.Lzma:
+                    case MausCompressionFormat.None:
+                        _cmpFmt = value;
+                        break;
+                    default:
+                        throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausCompressionFormat));
+                }
+            }
+        }
 
         private MausSavingOptions _saveCmpFmt;
         /// <summary>
