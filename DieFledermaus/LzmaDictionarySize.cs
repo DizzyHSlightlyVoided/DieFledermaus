@@ -43,11 +43,11 @@ namespace DieFledermaus
         /// <summary>
         /// 16 kilobytes.
         /// </summary>
-        Size16k = 1 << 14,
+        Size16k = 16 * 1024,
         /// <summary>
         /// 64 kilobytes.
         /// </summary>
-        Size64k = 1 << 16,
+        Size64k = 64 * 1024,
         /// <summary>
         /// 1 megabyte.
         /// </summary>
@@ -55,7 +55,7 @@ namespace DieFledermaus
         /// <summary>
         /// 2 megabytes.
         /// </summary>
-        Size2m = 1 << 21,
+        Size2m = Size1m * 2,
         /// <summary>
         /// 3 megabytes.
         /// </summary>
@@ -63,7 +63,7 @@ namespace DieFledermaus
         /// <summary>
         /// 4 megabytes.
         /// </summary>
-        Size4m = 1 << 22,
+        Size4m = Size2m * 2,
         /// <summary>
         /// 6 megabytes.
         /// </summary>
@@ -71,7 +71,7 @@ namespace DieFledermaus
         /// <summary>
         /// 8 megabytes.
         /// </summary>
-        Size8m = 1 << 23,
+        Size8m = Size4m * 2,
         /// <summary>
         /// 12 megabytes.
         /// </summary>
@@ -79,7 +79,7 @@ namespace DieFledermaus
         /// <summary>
         /// 16 megabytes.
         /// </summary>
-        Size16m = 1 << 24,
+        Size16m = Size8m * 2,
         /// <summary>
         /// 24 megabytes.
         /// </summary>
@@ -87,7 +87,7 @@ namespace DieFledermaus
         /// <summary>
         /// 32 megabytes.
         /// </summary>
-        Size32m = 1 << 25,
+        Size32m = Size16m * 2,
         /// <summary>
         /// 48 megabytes.
         /// </summary>
@@ -95,7 +95,7 @@ namespace DieFledermaus
         /// <summary>
         /// 64 megabytes.
         /// </summary>
-        Size64m = 1 << 26,
+        Size64m = Size32m * 2,
         /// <summary>
         /// The minimum value, equal to <see cref="Size16k"/>
         /// </summary>
