@@ -83,7 +83,7 @@ namespace DieFledermaus
     /// <para>When writing, if nothing has been written to the current stream when the current instance is disposed, nothing will be written to the
     /// underlying stream.</para>
     /// </remarks>
-    public partial class DieFledermausStream : Stream, IMausCrypt, IMausProgress, IMausStream
+    public partial class DieFledermausStream : Stream, IMausProgress, IMausStream
     {
         internal const int Max16Bit = 65536;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
@@ -1732,10 +1732,10 @@ namespace DieFledermaus
         /// Gets and sets a comment on the file.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
+        /// In a set operation, the current stream is closed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
+        /// In a set operation, the current stream is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.

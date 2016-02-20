@@ -63,7 +63,7 @@ namespace DieFledermaus
     /// does not have a filename set.</para>
     /// <para>When writing, if <see cref="Entries"/> contains zero elements, nothing will be written to the underlying stream.</para>
     /// </remarks>
-    public class DieFledermauZArchive : IDisposable, IMausCrypt, IMausProgress, IMausSign
+    public class DieFledermauZArchive : IDisposable, IMausProgress, IMausSign
     {
         private const int _mHead = 0x5a75416d;
         private const int _allEntries = 0x54414403, _curEntry = 0x74616403, _allOffsets = 0x52455603, _curOffset = 0x72657603;
@@ -892,7 +892,7 @@ namespace DieFledermaus
         /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
         /// </exception>
         /// <exception cref="InvalidDataException">
-        /// The entire structure of the signature manifest is invalid. <see cref="IsRSASigned"/> will be set <c>false</c>.
+        /// The entire structure of the signature manifest is invalid.
         /// </exception>
         public bool VerifyRSASignature()
         {

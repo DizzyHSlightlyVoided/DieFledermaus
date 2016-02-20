@@ -71,7 +71,7 @@ namespace DieFledermaus
         /// The current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted.
+        /// The current instance is not encrypted or is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.
@@ -88,9 +88,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current instance is in read-mode.</para>
+        /// The current instance is not encrypted or is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// In a set operation, the specified value is <see langword="null"/>.
@@ -107,9 +105,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <para>In a set operation, <see cref="EncryptionFormat"/> is <see cref="MausEncryptionFormat.None"/>.</para>
-        /// <para>-OR-</para>
-        /// <para>In a set operation, the current instance is in read-mode.</para>
+        /// The current instance is not encrypted or is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// In a set operation, the specified value is <see langword="null"/>.
@@ -262,57 +258,408 @@ namespace DieFledermaus
         /// Raised when the current instance is reading or writing data, and the progress state meaningfully changes.
         /// </summary>
         event MausProgressEventHandler Progress;
+
+        /// <summary>
+        /// Gets and sets a comment on the current instance. Also sets the value of <see cref="CommentBytes"/> using UTF-8.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// </exception>
+        string Comment { get; set; }
+
+        /// <summary>
+        /// Gets and sets a comment on the current instance. Also sets the value of <see cref="Comment"/> using UTF-8.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
+        /// </exception>
+        byte[] CommentBytes { get; set; }
+
+        /// <summary>
+        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        MausSavingOptions CommentSaving { get; set; }
     }
 
-    internal interface IMausSign
+    /// <summary>
+    /// Interface for classes which may be signed using RSA, DSA, or ECDSA.
+    /// </summary>
+    public interface IMausSign : IMausCrypt
     {
+        /// <summary>
+        /// Gets and sets an RSA key used to sign the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
+        /// </exception>
         RsaKeyParameters RSASignParameters { get; set; }
 
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         string RSASignId { get; set; }
 
+        /// <summary>
+        /// Gets and sets a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         byte[] RSASignIdBytes { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using RSA.
+        /// If the current instance is in write-mode, returns <see langword="true"/> if and only if <see cref="RSASignParameters"/> is not <see langword="null"/>.
+        /// </summary>
         bool IsRSASigned { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and was signed using <see cref="RSASignParameters"/>.
+        /// </summary>
         bool IsRSASignVerified { get; }
 
+        /// <summary>
+        /// Tests whether <see cref="RSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="RSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="RSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="RSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
         bool VerifyRSASignature();
-
+        /// <summary>
+        /// Gets and sets a DSA key used to sign the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
+        /// </exception>
         DsaKeyParameters DSASignParameters { get; set; }
 
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="DSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         string DSASignId { get; set; }
 
+        /// <summary>
+        /// Gets and sets a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         byte[] DSASignIdBytes { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using DSA.
+        /// If the current instance is in write-mode, returns <see langword="true"/> if and only if <see cref="DSASignParameters"/> is not <see langword="null"/>.
+        /// </summary>
         bool IsDSASigned { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and was signed using <see cref="DSASignParameters"/>.
+        /// </summary>
         bool IsDSASignVerified { get; }
 
+        /// <summary>
+        /// Tests whether <see cref="DSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="DSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="DSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="DSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
         bool VerifyDSASignature();
-
+        /// <summary>
+        /// Gets and sets an ECECDSA key used to sign the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode, and is not signed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, the current instance is in read-mode, and has already been verified.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <para>In a set operation, the current instance is in write-mode, and the specified value does not represent a valid private key.</para>
+        /// <para>-OR-</para>
+        /// <para>In a set operation, the current instance is in read-mode, and the specified value does not represent a valid public or private key.</para>
+        /// </exception>
         ECKeyParameters ECDSASignParameters { get; set; }
 
+        /// <summary>
+        /// Gets and sets a string which is used to identify the value of <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         string ECDSASignId { get; set; }
 
+        /// <summary>
+        /// Gets and sets a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// </exception>
         byte[] ECDSASignIdBytes { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is signed using ECDSA.
+        /// If the current instance is in write-mode, returns <see langword="true"/> if and only if <see cref="ECDSASignParameters"/> is not <see langword="null"/>.
+        /// </summary>
         bool IsECDSASigned { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the current instance is in read-mode and was signed using <see cref="ECDSASignParameters"/>.
+        /// </summary>
         bool IsECDSASignVerified { get; }
 
+        /// <summary>
+        /// Tests whether <see cref="ECDSASignParameters"/> is valid.
+        /// </summary>
+        /// <returns><see langword="true"/> if <see cref="ECDSASignParameters"/> is set to the correct public key; <see langword="false"/>
+        /// if the current instance is not signed, or if <see cref="ECDSASignParameters"/> is not set to the correct value.</returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current stream is in write-mode.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// <see cref="ECDSASignParameters"/> is set to an entirely invalid value.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The stream contains invalid data.
+        /// </exception>
         bool VerifyECDSASignature();
     }
 
-    internal interface IMausStream : IMausSign
+    /// <summary>
+    /// An interface for classes which allow direct access to a DieFledermaus stream.
+    /// </summary>
+    public interface IMausStream : IMausSign
     {
+        /// <summary>
+        /// Gets and sets the compression format of the current instance.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausCompressionFormat"/> value.
+        /// </exception>
         MausCompressionFormat CompressionFormat { get; set; }
 
+        /// <summary>
+        /// Gets and sets options for saving <see cref="CompressionFormat"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        MausSavingOptions CompressionFormatSaving { get; set; }
+
+        /// <summary>
+        /// Gets and sets the time at which the file was created.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
         DateTime? CreatedTime { get; }
 
+        /// <summary>
+        /// Gets and sets options for saving <see cref="CreatedTime"/>
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        MausSavingOptions CreatedTimeSaving { get; set; }
+
+        /// <summary>
+        /// Gets and sets the time at which the file was last modified.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
         DateTime? ModifiedTime { get; }
 
+        /// <summary>
+        /// Gets and sets options for saving <see cref="ModifiedTime"/>
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// The current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausSavingOptions"/> value.
+        /// </exception>
+        MausSavingOptions ModifiedTimeSaving { get; set; }
+
+        /// <summary>
+        /// Gets the hash of the unencrypted data, or <see langword="null"/> if the current instance is in write-mode.
+        /// </summary>
         byte[] Hash { get; }
 
+        /// <summary>
+        /// Computes the hash of the unencrypted data.
+        /// </summary>
+        /// <returns>The hash of the </returns>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance is disposed.
+        /// </exception>
+        /// <exception cref="CryptoException">
+        /// The current instance is in read-mode, and either <see cref="IMausCrypt.Key"/> or <see cref="IMausCrypt.Password"/> is incorrect.
+        /// It is safe to attempt to call <see cref="IMausCrypt.Decrypt()"/> or <see cref="ComputeHash()"/> again if this exception is caught.
+        /// </exception>
+        /// <exception cref="InvalidDataException">
+        /// The current instance is in read-mode, and contains invalid data.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
         byte[] ComputeHash();
     }
 }

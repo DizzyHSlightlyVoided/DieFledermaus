@@ -703,6 +703,9 @@ namespace DieFledermaus
         /// <see cref="DieFledermauZItem.Archive"/> is in write-mode, and the current instance has either not yet been written to, or the
         /// stream called from <see cref="OpenWrite()"/> has not yet been closed.
         /// </exception>
+        /// <exception cref="IOException">
+        /// An I/O error occurred.
+        /// </exception>
         /// <remarks>When <see cref="DieFledermauZItem.Archive"/> is in read-mode, returns the same value as <see cref="DieFledermauZItem.Hash"/>.
         /// In write-mode, this method computes the hash from the written data.</remarks>
         public byte[] ComputeHash()
