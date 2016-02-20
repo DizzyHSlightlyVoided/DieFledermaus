@@ -43,6 +43,7 @@ namespace DieFledermaus
 #if NOARG3
     using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
 #endif
+
     internal class DieFledermauZManifest : DieFledermauZItem, IMausSign
     {
         internal const string Filename = "/Manifest.dat";
@@ -70,20 +71,23 @@ namespace DieFledermaus
                 SeekToFile();
                 _readStream = new MausBufferStream();
                 MausStream.BufferCopyTo(_readStream);
+                _readStream.Reset();
             }
             if (!_readStream.CanRead)
                 return;
-
             _readStream.Reset();
 
-
-            MauZManifest manifest = new MauZManifest(_readStream, entries);
+            _manifest = new MauZManifest(_readStream, entries);
+            _readStream.Close();
         }
 
         internal override bool IsFilenameEncrypted
         {
             get { return false; }
         }
+
+        private MauZManifest _manifest;
+        public MauZManifest Manifest { get { return _manifest; } }
 
         #region RSA Signature
         public RsaKeyParameters RSASignParameters
@@ -174,9 +178,9 @@ namespace DieFledermaus
 
         internal MausBufferStream BuildSelf(DieFledermauZItem[] entries, byte[][] paths)
         {
-            MauZManifest manifest = new MauZManifest(entries, paths);
+            _manifest = new MauZManifest(entries, paths);
 
-            manifest.Write(MausStream);
+            _manifest.Write(MausStream);
             return GetWritten();
         }
     }
@@ -375,8 +379,6 @@ namespace DieFledermaus
 
                     if (index < 0 || index >= itemCount || _entries[index].IsValid)
                         throw new InvalidDataException(entries == null ? TextResources.ManifestCurBad : TextResources.ManifestBad);
-
-                    DieFledermauZItem entry = entries == null ? null : entries[index];
 
                     byte[] gotPath = DieFledermausStream.ReadBytes8Bit(reader);
                     byte[] gotHash = DieFledermausStream.ReadBytes8Bit(reader);

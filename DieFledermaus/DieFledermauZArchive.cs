@@ -750,6 +750,19 @@ namespace DieFledermaus
         }
         #endregion
 
+        /// <summary>
+        /// Gets the signature manifest associated with the current instance. Returns <see langword="null"/> if the current instance is in write-mode
+        /// or if the current archive has not yet been fully loaded or decrypted or the archive was not signed.
+        /// </summary>
+        public MauZManifest Manifest
+        {
+            get
+            {
+                if (_manifest == null) return null;
+                return _manifest.Manifest;
+            }
+        }
+
         #region RSA Signature
         /// <summary>
         /// Gets a value indicating whether the manifest of the current instance has been successfully verified using <see cref="RSASignParameters"/>.
