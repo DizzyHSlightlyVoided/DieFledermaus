@@ -1855,11 +1855,7 @@ namespace DieFledermaus
             switch (compressionFormat)
             {
                 case MausCompressionFormat.Deflate:
-#if COMPLVL
-                    compFormat = new DeflateCompressionFormat() { CompressionLevel = 0 };
-#else
-                    compFormat = new DeflateCompressionFormat();
-#endif
+                    compFormat = new DeflateCompressionFormat() { CompressionLevel = 6 };
                     break;
                 case MausCompressionFormat.None:
                     compFormat = new NoneCompressionFormat();
@@ -2063,8 +2059,9 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
-        /// (no-longer-)empty directory.
+        /// <para>If <paramref name="path"/> contains an existing empty directory as one of its subdirectories, this method will remove the existing
+        /// (no-longer-)empty directory.</para>
+        /// <para>This overload is only available in non-PCL versions in .Net 4.5 and higher.</para>
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
         {
@@ -2103,6 +2100,7 @@ namespace DieFledermaus
         {
             return Create(path, compressionLevel, MausEncryptionFormat.None);
         }
+
 #if COMPLVL
         /// <summary>
         /// Adds a new <see cref="DieFledermauZArchiveEntry"/> to the current archive using DEFLATE compression.
@@ -2128,8 +2126,9 @@ namespace DieFledermaus
         /// <para><paramref name="path"/> already exists.</para>
         /// </exception>
         /// <remarks>
-        /// If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
-        /// this method will remove the existing (no-longer-)empty directory.
+        /// <para>If <paramref name="path"/> contains an existing empty directory as one of its subdirectories,
+        /// this method will remove the existing (no-longer-)empty directory.</para>
+        /// <para>This overload is only available in non-PCL versions in .Net 4.5 and higher.</para>
         /// </remarks>
         public DieFledermauZArchiveEntry Create(string path, CompressionLevel compressionLevel)
         {

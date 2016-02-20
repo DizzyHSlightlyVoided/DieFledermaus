@@ -192,6 +192,7 @@ namespace DieFledermaus
         /// <exception cref="NotSupportedException">
         /// The stream is in read-mode, and <paramref name="stream"/> contains data which is a lower version than the one expected.
         /// </exception>
+        /// <remarks>This constructor is not available in PCL.</remarks>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode, bool leaveOpen)
             : this(stream, (MausStreamMode)compressionMode, leaveOpen)
         {
@@ -242,6 +243,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
+        /// <remarks>This constructor is not available in PCL.</remarks>
         public DieFledermausStream(Stream stream, CompressionMode compressionMode)
             : this(stream, (MausStreamMode)compressionMode, false)
         {
@@ -580,7 +582,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
+        /// <remarks>This constructor is only available in non-PCL versions in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, bool leaveOpen)
             : this(stream, GetCompLvl(compressionLevel), leaveOpen)
         {
@@ -604,7 +606,6 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, int compressionLevel)
             : this(stream, compressionLevel, false)
         {
@@ -628,7 +629,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
+        /// <remarks>This constructor is only available in non-PCL versions in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel)
             : this(stream, GetCompLvl(compressionLevel), false)
         {
@@ -656,7 +657,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
+        /// <remarks>This constructor is only available in non-PCL versions in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat, bool leaveOpen)
             : this(stream, compressionLevel, leaveOpen)
         {
@@ -683,7 +684,7 @@ namespace DieFledermaus
         /// <exception cref="ObjectDisposedException">
         /// <paramref name="stream"/> is closed.
         /// </exception>
-        /// <remarks>This constructor is only available in .Net 4.5 and higher.</remarks>
+        /// <remarks>This constructor is only available in non-PCL versions in .Net 4.5 and higher.</remarks>
         public DieFledermausStream(Stream stream, CompressionLevel compressionLevel, MausEncryptionFormat encryptionFormat)
             : this(stream, compressionLevel, encryptionFormat, false)
         {
