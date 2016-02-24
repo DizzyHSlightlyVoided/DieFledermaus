@@ -1432,9 +1432,27 @@ namespace DieFledermaus
 
         private MausEncryptionFormat _encFmt;
         /// <summary>
-        /// Gets the encryption format of the current instance.
+        /// Gets and sets the encryption format of the current instance.
         /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        public MausEncryptionFormat EncryptionFormat
+        {
+            get { return _encFmt; }
+            set
+            {
+                EnsureCanWrite();
+                _encFmt = DieFledermausStream.SetEncryptionFormat(value, ref _key, ref _iv, ref _salt, ref _keySize, ref _keySizes,
+                    ref _blockByteCount, ref _password, ref _rsaEncParamBC);
+            }
+        }
 
         /// <summary>
         /// Gets and sets the comment on the current instance.

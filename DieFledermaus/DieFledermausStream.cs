@@ -838,9 +838,65 @@ namespace DieFledermaus
 
         private MausEncryptionFormat _encFmt;
         /// <summary>
-        /// Gets the encryption format of the current instance.
+        /// Gets and sets the encryption format of the current instance.
         /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return _encFmt; } }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current stream is closed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current stream is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        public MausEncryptionFormat EncryptionFormat
+        {
+            get { return _encFmt; }
+            set
+            {
+                _ensureCanWrite();
+                _encFmt = SetEncryptionFormat(value, ref _key, ref _iv, ref _salt, ref _keySize, ref _keySizes, ref _blockByteCount, ref _password, ref _rsaEncParamBC);
+            }
+        }
+
+        internal static MausEncryptionFormat SetEncryptionFormat(MausEncryptionFormat value, ref byte[] _key, ref byte[] _iv, ref byte[] _salt,
+            ref int _keySize, ref KeySizeList _keySizes, ref int _blockByteCount, ref string _password, ref RsaKeyParameters _rsaEncParamBC)
+        {
+            switch (value)
+            {
+                case MausEncryptionFormat.None:
+                    _key = _iv = _salt = null;
+                    _keySize = 0;
+                    _password = null;
+                    _rsaEncParamBC = null;
+                    _keySizes = null;
+                    return value;
+                case MausEncryptionFormat.Aes:
+                case MausEncryptionFormat.Twofish:
+                case MausEncryptionFormat.Threefish:
+                    {
+                        _keySizes = _getKeySizes(value, out _blockByteCount);
+                        if (_key == null)
+                            _keySize = _keySizes.MaxSize;
+                        else if (!_keySizes.Contains(_key.Length << 3))
+                            _key = null;
+
+                        int maxSize = _keySizes.MaxSize;
+                        if (!_keySizes.Contains(_keySize))
+                            _keySize = maxSize;
+
+                        maxSize >>= 3;
+
+                        if (_salt == null || _salt.Length != maxSize)
+                            _salt = FillBuffer(maxSize);
+                        if (_iv == null || _iv.Length != _blockByteCount)
+                            _iv = FillBuffer(_blockByteCount);
+                    }
+                    return value;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MausEncryptionFormat));
+            }
+        }
 
         private MausCompressionFormat _cmpFmt;
         /// <summary>

@@ -60,18 +60,27 @@ namespace DieFledermaus
         string Password { get; set; }
 
         /// <summary>
-        /// Gets the encryption format of the current instance.
+        /// Gets and sets the encryption format of the current instance.
         /// </summary>
-        MausEncryptionFormat EncryptionFormat { get; }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is disposed.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the current instance is in read-mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        MausEncryptionFormat EncryptionFormat { get; set; }
 
         /// <summary>
         /// Gets and sets a binary key used to encrypt or decrypt the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
+        /// In a set operation, the current instance is disposed.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// The current instance is not encrypted or is in read-mode.
+        /// In a set operation, the current instance is not encrypted or is in read-mode.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// In a set operation, the current instance is in read-mode and has already been successfully decrypted.

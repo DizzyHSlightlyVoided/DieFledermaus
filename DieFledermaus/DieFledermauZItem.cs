@@ -353,9 +353,26 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets the encryption format of the current instance.
+        /// Gets and sets the encryption format of the current instance.
         /// </summary>
-        public MausEncryptionFormat EncryptionFormat { get { return MausStream.EncryptionFormat; } }
+        /// <exception cref="ObjectDisposedException">
+        /// In a set operation, the current instance is deleted.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// In a set operation, the <see cref="Archive"/> is in read-only mode.
+        /// </exception>
+        /// <exception cref="InvalidEnumArgumentException">
+        /// In a set operation, the specified value is not a valid <see cref="MausEncryptionFormat"/> value.
+        /// </exception>
+        public MausEncryptionFormat EncryptionFormat
+        {
+            get { return MausStream.EncryptionFormat; }
+            set
+            {
+                EnsureCanWrite();
+                MausStream.EncryptionFormat = value;
+            }
+        }
 
         /// <summary>
         /// Gets and sets a binary key used to encrypt or decrypt the current instance.
