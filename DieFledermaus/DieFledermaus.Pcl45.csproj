@@ -62,7 +62,11 @@
     <Compile Include="DieFledermauZItem.cs" />
     <Compile Include="DieFledermauZItemUnknown.cs" />
     <Compile Include="DieFledermauZManifest.cs" />
-    <Compile Include="Globalization\TextResources.Portable.cs" />
+    <Compile Include="Globalization\TextResources.Portable.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TextResources.Portable.tt</DependentUpon>
+    </Compile>
     <Compile Include="IMausCrypt.cs" />
     <Compile Include="KeySizeList.cs" />
     <Compile Include="LzmaDictionarySize.cs" />
@@ -85,6 +89,15 @@
   <ItemGroup>
     <EmbeddedResource Include="Globalization\TextResources.resx" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Globalization\TextResources.Portable.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>TextResources.Portable.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -93,7 +106,4 @@
   -->
   <Target Name="BeforeBuild" BeforeTargets="Build">
   </Target>
-  <PropertyGroup>
-    <PreBuildEvent>"$(ProjectDir)\..\GenerateCode\bin\$(Configuration)\GenerateCode.exe" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Designer.cs" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Portable.cs"</PreBuildEvent>
-  </PropertyGroup>
 </Project>

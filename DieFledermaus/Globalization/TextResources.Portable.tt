@@ -1,0 +1,26 @@
+﻿<#@ template debug="true" hostspecific="true" language="C#" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ output extension=".cs" #>
+<#
+    using (StreamReader reader = new StreamReader(Host.ResolvePath("TextResources.Designer.cs")))
+    {
+        Regex typeofRegex = new Regex(@"typeof\(([^\)]+)\)\.Assembly", RegexOptions.CultureInvariant);
+        string curLine;
+        while ((curLine = reader.ReadLine()) != null)
+        {
+            const string newLine = "\r\n";
+            const string sys = "using System;";
+
+            int dex = curLine.IndexOf(sys);
+
+            if (dex >= 0)
+            {
+                Write(curLine + newLine);
+                Write(curLine.Substring(0, dex + 12) + ".Reflection;");
+            }
+            else Write(typeofRegex.Replace(curLine, "typeof($1).GetTypeInfo().Assembly"));
+            Write(newLine);
+        }
+    }
+#>

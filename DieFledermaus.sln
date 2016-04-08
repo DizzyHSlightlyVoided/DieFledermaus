@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFlede", "DieFlede\DieFlede.csproj", "{BD01E3EC-13D0-41A3-8A17-64105E0AF9B3}"
 EndProject
@@ -18,9 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.iOS", "DieFledermaus\DieFledermaus.iOS.csproj", "{E2303BBC-4500-4A01-AEE5-42FBE06BE030}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl45", "DieFledermaus\DieFledermaus.Pcl45.csproj", "{E2303BBA-450F-4A01-AEE5-42FBE06BE030}"
-	ProjectSection(ProjectDependencies) = postProject
-		{F416677D-8338-40FE-9D97-893D20D78093} = {F416677D-8338-40FE-9D97-893D20D78093}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DieFledermaus.Pcl40", "DieFledermaus\DieFledermaus.Pcl40.csproj", "{E2303BBA-400F-4A01-AEE5-42FBE06BE030}"
 EndProject
@@ -45,8 +42,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto.pcl2", "BouncyCastle\crypto\crypto.pcl2.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto.pcl", "BouncyCastle\crypto\crypto.pcl.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateCode", "GenerateCode\GenerateCode.csproj", "{F416677D-8338-40FE-9D97-893D20D78093}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -134,10 +129,6 @@ Global
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F416677D-8338-40FE-9D97-893D20D78093}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F416677D-8338-40FE-9D97-893D20D78093}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F416677D-8338-40FE-9D97-893D20D78093}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F416677D-8338-40FE-9D97-893D20D78093}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
