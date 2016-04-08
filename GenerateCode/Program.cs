@@ -25,7 +25,7 @@ namespace GenerateCode
             else
             {
                 outPath = Path.GetFullPath(args[1]);
-                if (outPath.Equals(inPath, StringComparison.Ordinal))
+                if (outPath == inPath)
                     throw new ApplicationException("Source file is the same as the destination file!");
             }
 

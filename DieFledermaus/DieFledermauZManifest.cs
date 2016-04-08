@@ -391,7 +391,7 @@ namespace DieFledermaus
 
                         string path = DieFledermausStream._textEncoding.GetString(gotPath);
 
-                        if (!string.Equals(path, curEntry.OriginalPath, StringComparison.Ordinal) || !DieFledermausStream.CompareBytes(curEntry.CompressedHash, gotHash))
+                        if (path != curEntry.OriginalPath || !DieFledermausStream.CompareBytes(curEntry.CompressedHash, gotHash))
                             throw new InvalidDataException(entries == null ? TextResources.ManifestCurBad : TextResources.ManifestBad);
                     }
                 }
@@ -796,7 +796,7 @@ namespace DieFledermaus
         /// <returns><see langword="true"/> if the current instance is equal to <paramref name="other"/>; <see langword="false"/> otherwise.</returns>
         public bool Equals(MauZManifestEntry other)
         {
-            return string.Equals(Path, other.Path, StringComparison.Ordinal) && DieFledermausStream.CompareBytes(_hash, other._hash);
+            return Path == other.Path && DieFledermausStream.CompareBytes(_hash, other._hash);
         }
 
         /// <summary>

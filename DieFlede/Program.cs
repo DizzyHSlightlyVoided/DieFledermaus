@@ -360,7 +360,7 @@ namespace DieFledermaus.Cli
                             if (archiveFile.Value == null)
                                 archiveFile.Value = entry + mausExt;
 
-                            if (archiveFile.Value.Equals(entry, StringComparison.Ordinal))
+                            if (archiveFile.Value == entry)
                             {
                                 Console.WriteLine(TextResources.OverwriteSameEntry, entry);
                                 return Return(-3, interactive);
@@ -1284,7 +1284,7 @@ namespace DieFledermaus.Cli
                             {
                                 if (getPrivate)
                                 {
-                                    if (!reader.EncType.Equals("none", StringComparison.Ordinal))
+                                    if (reader.EncType != "none")
                                     {
                                         Console.WriteLine(encryption ? TextResources.KeyFileEnc : TextResources.KeyFileSig, path);
                                         if (!string.IsNullOrWhiteSpace(reader.Comment))
@@ -1653,12 +1653,12 @@ namespace DieFledermaus.Cli
                 if (type.Length > 64 || type != ReadString(buffer, ref curPos))
                     throw new InvalidDataException(TextResources.SignBadPublic);
 
-                if (type.Equals(KeyFmtRSA, StringComparison.Ordinal))
+                if (type == KeyFmtRSA)
                 {
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadRSAParams(buffer, ref curPos), comment);
                     continue;
                 }
-                if (type.Equals(KeyFmtDSA, StringComparison.Ordinal))
+                if (type == KeyFmtDSA)
                 {
                     yield return new Tuple<string, AsymmetricKeyParameter, string>(type, ReadDSAParams(buffer, ref curPos), comment);
                     continue;
@@ -1703,8 +1703,7 @@ namespace DieFledermaus.Cli
             X9ECParameters ecSpec;
             DerObjectIdentifier dId;
 
-            if (s.Equals("nistp256", StringComparison.Ordinal) || s.Equals("nitsp384", StringComparison.Ordinal) ||
-                s.Equals("nistp521", StringComparison.Ordinal))
+            if (s == "nistp256" || s == "nitsp384" || s == "nistp521")
             {
                 dId = NistNamedCurves.GetOid("P-" + s.Substring(5));
                 ecSpec = NistNamedCurves.GetByOid(dId);

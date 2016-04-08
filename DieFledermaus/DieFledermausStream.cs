@@ -724,7 +724,7 @@ namespace DieFledermaus
                 _allowDirNames = AllowDirNames.Unknown;
             else if (path[path.Length - 1] == '/')
                 _allowDirNames = AllowDirNames.EmptyDir;
-            else if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+            else if (path == DieFledermauZManifest.Filename)
                 _allowDirNames = AllowDirNames.Manifest;
             else
                 _allowDirNames = AllowDirNames.Yes;
@@ -2024,7 +2024,7 @@ namespace DieFledermaus
         internal static bool IsValidFilename(string value, bool throwOnInvalid, AllowDirNames dirFormat, string paramName)
         {
             if (dirFormat == AllowDirNames.Manifest)
-                return value.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal);
+                return value == DieFledermauZManifest.Filename;
 
             if (value == null) throw new ArgumentNullException(paramName);
 
@@ -2526,7 +2526,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kHash, StringComparison.Ordinal))
+                if (curForm == _kHash)
                 {
                     if (curValue.Count != 1 || curValue.Version != _vHash)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2549,7 +2549,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kEncRsa, StringComparison.Ordinal))
+                if (curForm == _kEncRsa)
                 {
                     if (curValue.Count != 1 || curValue.Version != _vHash)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2564,7 +2564,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kRsaSig, StringComparison.Ordinal))
+                if (curForm == _kRsaSig)
                 {
                     if ((curValue.Count != 1 && curValue.Count != 2) || curValue.Version != _vRsaSig)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2589,13 +2589,13 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kDsaSig, StringComparison.Ordinal))
+                if (curForm == _kDsaSig)
                 {
                     GetDsaValue(curValue, _vDsaSig, ref _dsaSignature, ref _dsaSignId);
                     continue;
                 }
 
-                if (curForm.Equals(_kECDsaSig, StringComparison.Ordinal))
+                if (curForm == _kECDsaSig)
                 {
                     GetDsaValue(curValue, _vECDsaSig, ref _ecdsaSignature, ref _ecdsaSignId);
                     continue;
@@ -2604,7 +2604,7 @@ namespace DieFledermaus
                 if (ReadEncFormat(curValue, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount, false))
                     continue;
 
-                if (curForm.Equals(_kFilename, StringComparison.Ordinal))
+                if (curForm == _kFilename)
                 {
                     if (curValue.Count != 1 || curValue.Version != _vFilename)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2618,7 +2618,7 @@ namespace DieFledermaus
 
                         _filename = filename;
                     }
-                    else if (!filename.Equals(_filename, StringComparison.Ordinal))
+                    else if (filename != _filename)
                         throw new InvalidDataException(TextResources.FormatBad);
 
                     if (fromEncrypted)
@@ -2629,7 +2629,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kULen, StringComparison.Ordinal))
+                if (curForm == _kULen)
                 {
                     if (curValue.Count != 1 || curValue.Version != 1)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2644,19 +2644,19 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curForm.Equals(_kTimeC, StringComparison.Ordinal))
+                if (curForm == _kTimeC)
                 {
                     GetDate(curValue, ref _timeC, fromEncrypted, ref _saveTimeC);
                     continue;
                 }
 
-                if (curForm.Equals(_kTimeM, StringComparison.Ordinal))
+                if (curForm == _kTimeM)
                 {
                     GetDate(curValue, ref _timeM, fromEncrypted, ref _saveTimeM);
                     continue;
                 }
 
-                if (curForm.Equals(_kComment, StringComparison.Ordinal))
+                if (curForm == _kComment)
                 {
                     if (curValue.Count != 1 || curValue.Version != _vComment)
                         throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2691,7 +2691,7 @@ namespace DieFledermaus
         internal static bool ReadEncFormat(FormatValue curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes,
             ref int _keySize, ref int _blockByteCount, bool mauZ)
         {
-            if (!curValue.Key.Equals(_kEnc, StringComparison.Ordinal))
+            if (curValue.Key != _kEnc)
                 return false;
             MausEncryptionFormat getEncFormat;
 

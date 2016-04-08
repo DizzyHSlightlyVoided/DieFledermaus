@@ -334,7 +334,7 @@ namespace DieFledermaus
                 _path = MausStream.Filename;
                 _arch.AddPath(_path, this);
             }
-            else if (!_path.Equals(MausStream.Filename, StringComparison.Ordinal))
+            else if (_path != MausStream.Filename)
                 throw new InvalidDataException(TextResources.InvalidDataMaus);
 
             return this;

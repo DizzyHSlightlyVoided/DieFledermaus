@@ -418,7 +418,7 @@ namespace DieFledermaus.Cli
             if (ConvertValue != null && value != null)
                 value = ConvertValue(value);
 
-            if (Value != null && value != null && !value.Equals(Value, StringComparison.Ordinal))
+            if (Value != null && value != null && value != Value)
             {
                 if (Key.Length == 0)
                     Console.Error.WriteLine(TextResources.ParamDupLit, value);

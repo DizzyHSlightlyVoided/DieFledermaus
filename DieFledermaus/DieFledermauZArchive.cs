@@ -324,7 +324,7 @@ namespace DieFledermaus
 
                 string path = GetString(reader, ref curOffset);
 
-                if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal) && index != entryCount - 1)
+                if (path == DieFledermauZManifest.Filename && index != entryCount - 1)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 curOffset += (sizeof(int) + sizeof(long));
@@ -361,7 +361,7 @@ namespace DieFledermaus
 
                 string curPath = GetString(reader, ref curOffset);
 
-                if (!string.Equals(curPath, basePath, StringComparison.Ordinal))
+                if (curPath != basePath)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 if (reader.ReadInt64() != entries[index].Offset)
@@ -387,14 +387,14 @@ namespace DieFledermaus
         internal DieFledermauZItem LoadMausStream(Stream _baseStream, string path, bool readMagNum, long index, long baseOffset, ref long curOffset)
         {
             string originalPath = path;
-            if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+            if (path == DieFledermauZManifest.Filename)
             {
                 if (_manifest != null)
                     throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
                 path = DieFledermauZManifest.Filename;
             }
-            else if (path.Equals("//V" + index.ToString(NumberFormatInfo.InvariantInfo), StringComparison.Ordinal))
+            else if (path == "//V" + index.ToString(NumberFormatInfo.InvariantInfo))
                 path = null;
             else if (index >= 0 && !DieFledermausStream.IsValidFilename(path, false, DieFledermausStream.AllowDirNames.Unknown, nameof(path)))
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
@@ -433,7 +433,7 @@ namespace DieFledermaus
             {
                 path = mausStream.Filename;
             }
-            else if (!path.Equals(mausStream.Filename, StringComparison.Ordinal))
+            else if (path != mausStream.Filename)
                 throw new InvalidDataException(TextResources.InvalidDataMauZ);
 
             if (path == null)
@@ -449,7 +449,7 @@ namespace DieFledermaus
             {
                 string regPath;
                 int end = path.Length - 1;
-                if (path.Equals(DieFledermauZManifest.Filename, StringComparison.Ordinal))
+                if (path == DieFledermauZManifest.Filename)
                 {
                     returner = _manifest = new DieFledermauZManifest(this, mausStream, baseOffset, curOffset);
                     regPath = originalPath;
@@ -1325,7 +1325,7 @@ namespace DieFledermaus
                 if (DieFledermausStream.ReadEncFormat(curValue, ref _encFmt, ref _keySizes, ref _keySize, ref _blockByteCount, true))
                     continue;
 
-                if (curOption.Equals(DieFledermausStream._kHash, StringComparison.Ordinal))
+                if (curOption == DieFledermausStream._kHash)
                 {
                     MausHashFunction hashFunc;
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash ||
@@ -1346,7 +1346,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curOption.Equals(DieFledermausStream._kEncRsa, StringComparison.Ordinal))
+                if (curOption == DieFledermausStream._kEncRsa)
                 {
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
@@ -1361,7 +1361,7 @@ namespace DieFledermaus
                     continue;
                 }
 
-                if (curOption.Equals(DieFledermausStream._kComment, StringComparison.Ordinal))
+                if (curOption == DieFledermausStream._kComment)
                 {
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vComment)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
