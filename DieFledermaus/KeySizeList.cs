@@ -45,7 +45,7 @@ namespace DieFledermaus
     /// </summary>
     [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
     [DebuggerTypeProxy(typeof(DebugView))]
-    public sealed class KeySizeList : IList<int>
+    public sealed class KeySizeList : IList<int>, IList
 #if IREADONLY
         , IReadOnlyList<int>
 #endif
@@ -63,20 +63,19 @@ namespace DieFledermaus
         public KeySizeList(IEnumerable<int> source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
+#if NOISET
             _items = new HashSet<int>(source).ToArray();
             Array.Sort(_items, 0, _items.Length);
-
-            if (_items.Length == 0)
-                return;
-
+#else
+            _items = new SortedSet<int>(source).ToArray();
+#endif
             if (_items.Length == 1)
-            {
                 _min = _max = _items[0];
-                return;
+            else if (_items.Length != 0)
+            {
+                _min = _items[0];
+                _max = _items[_items.Length - 1];
             }
-
-            _min = _items[0];
-            _max = _items[_items.Length - 1];
         }
 
         /// <summary>
@@ -150,6 +149,12 @@ namespace DieFledermaus
             set { throw new NotSupportedException(TextResources.CollectReadOnly); }
         }
 
+        object IList.this[int index]
+        {
+            get { return this[index]; }
+            set { throw new NotSupportedException(TextResources.CollectReadOnly); }
+        }
+
         /// <summary>
         /// Gets the number of elements in the list.
         /// </summary>
@@ -180,6 +185,12 @@ namespace DieFledermaus
             return IndexOf(value) >= 0;
         }
 
+        bool IList.Contains(object value)
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            return value is int && Contains((int)value);
+        }
+
         /// <summary>
         /// Gets the index of the specified value.
         /// </summary>
@@ -190,16 +201,15 @@ namespace DieFledermaus
             if (value == _min) return 0;
             if (value == _max)
                 return _items.Length - 1;
-            if (value < _min || value > _max)
-                return -1;
-            for (int i = 0; value <= _items[i]; i++)
-            {
-                int curVal = _items[i];
-                if (value == curVal)
-                    return i;
-                if (value > curVal)
-                    return -1;
-            }
+            int dex = Array.BinarySearch(_items, value);
+            if (dex < 0) return -1;
+            return dex;
+        }
+
+        int IList.IndexOf(object value)
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value is int) return IndexOf((int)value);
             return -1;
         }
 
@@ -216,8 +226,12 @@ namespace DieFledermaus
         /// </exception>
         public void CopyTo(int[] destinationArray, int destinationIndex)
         {
-            var items = _items ?? new int[0];
-            Array.Copy(items, 0, destinationArray, destinationIndex, items.Length);
+            Array.Copy(_items, 0, destinationArray, destinationIndex, _items.Length);
+        }
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            _items.CopyTo(array, index);
         }
 
         /// <summary>
@@ -235,7 +249,17 @@ namespace DieFledermaus
             throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
+        int IList.Add(object value)
+        {
+            throw new NotSupportedException(TextResources.CollectReadOnly);
+        }
+
         bool ICollection<int>.Remove(int item)
+        {
+            throw new NotSupportedException(TextResources.CollectReadOnly);
+        }
+
+        void IList.Remove(object value)
         {
             throw new NotSupportedException(TextResources.CollectReadOnly);
         }
@@ -245,12 +269,17 @@ namespace DieFledermaus
             throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
-        bool ICollection<int>.IsReadOnly
+        void IList.Clear()
         {
-            get { return true; }
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList<int>.Insert(int index, int item)
+        {
+            throw new NotSupportedException(TextResources.CollectReadOnly);
+        }
+
+        void IList.Insert(int index, object value)
         {
             throw new NotSupportedException(TextResources.CollectReadOnly);
         }
@@ -259,7 +288,34 @@ namespace DieFledermaus
         {
             throw new NotSupportedException(TextResources.CollectReadOnly);
         }
+
+        void IList.RemoveAt(int index)
+        {
+            throw new NotSupportedException(TextResources.CollectReadOnly);
+        }
         #endregion
+
+        bool ICollection<int>.IsReadOnly { get { return true; } }
+
+        bool IList.IsReadOnly { get { return true; } }
+
+        bool IList.IsFixedSize { get { return true; } }
+
+        bool ICollection.IsSynchronized { get { return true; } }
+#if PCL
+        private object _syncRoot;
+        object ICollection.SyncRoot
+        {
+            get
+            {
+                if (_syncRoot == null)
+                    System.Threading.Interlocked.CompareExchange(ref _syncRoot, new object(), null);
+                return _syncRoot;
+            }
+        }
+#else
+        object ICollection.SyncRoot { get { return ((ICollection)_items).SyncRoot; } }
+#endif
 
         /// <summary>
         /// Returns an enumerator which iterates through the list.
