@@ -54,7 +54,7 @@ On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http
 
 Class Library
 =============
-The DieFledermaus library contains a public type, `DieFledermaus.DieFledermausStream`, which provides much the same functionality as the [`System.IO.Compression.DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx) or [`System.IO.Compression.GZipStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.gzipstream.aspx) classes. Unlike either of these classes, however, DieFledermausStream must read part of the underlying stream before [`Stream.Read()`](https://msdn.microsoft.com/en-us/library/system.io.stream.read%28v=vs.110%29.aspx) is called.
+The DieFledermaus library contains a public type, `DieFledermaus.DieFledermausStream`, which provides the same functionality as the [`System.IO.Compression.DeflateStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream.aspx) or [`System.IO.Compression.GZipStream`](https://msdn.microsoft.com/en-us/library/system.io.compression.gzipstream.aspx) classes. Unlike either of these classes, however, DieFledermausStream must read part of the underlying stream before [`Stream.Read()`](https://msdn.microsoft.com/en-us/library/system.io.stream.read%28v=vs.110%29.aspx) is called.
 
 It also contains `DieFledermaus.DieFledermauZArchive`, which is more or less modelled after [`System.IO.Compression.ZipArchive`](https://msdn.microsoft.com/en-us/library/system.io.compression.ziparchive.aspx).
 
@@ -62,4 +62,4 @@ The DieFledermaus library computes SHA-3 data using the [C# Bouncy Castle librar
 
 Disclaimer
 ==========
-**This project is currently in-development. Features and functionality may be changed or removed without notice.**
+**This project is currently in-development. Features and functionality may be changed or removed without warning.**
