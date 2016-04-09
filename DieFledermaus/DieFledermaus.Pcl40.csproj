@@ -97,12 +97,9 @@
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild" BeforeTargets="Build">
+  </Target>
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="BeforeBuild" BeforeTargets="Build">
-  </Target>
-  <PropertyGroup>
-    <PreBuildEvent>"$(ProjectDir)\..\GenerateCode\bin\$(Configuration)\GenerateCode.exe" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Designer.cs" "$(ProjectDir)\..\DieFledermaus\Globalization\TextResources.Portable.cs"</PreBuildEvent>
-  </PropertyGroup>
 </Project>
