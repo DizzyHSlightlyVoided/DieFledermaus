@@ -85,7 +85,7 @@ namespace DieFledermaus.Cli
 
         public bool Init()
         {
-            using (StreamReader reader = new StreamReader(_stream, Encoding.UTF8, true, Program.BufferSize, true))
+            using (StreamReader reader = new StreamReader(_stream, Encoding.UTF8, true, 4096, true))
             {
                 string line = reader.ReadLine();
 
@@ -96,8 +96,8 @@ namespace DieFledermaus.Cli
                 else
                 {
                     string keyType = line.Substring(PpkFileHeader2.Length);
-                    if (keyType == Program.KeyFmtRSA || keyType == Program.KeyFmtDSA ||
-                        keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
+                    if (keyType == PublicKeyReadFuncs.KeyFmtRSA || keyType == PublicKeyReadFuncs.KeyFmtDSA ||
+                        keyType.StartsWith(PublicKeyReadFuncs.KeyFmtECDSA, StringComparison.Ordinal))
                         _keyType = keyType;
                     else
                         throw new InvalidDataException();
@@ -168,16 +168,16 @@ namespace DieFledermaus.Cli
         private AsymmetricKeyParameter _readPublicKey()
         {
             int offset = 0;
-            string type = Program.ReadString(_pubBytes, ref offset);
+            string type = PublicKeyReadFuncs.ReadString(_pubBytes, ref offset);
             if (type != _keyType)
                 throw new InvalidDataException();
 
-            if (_keyType == Program.KeyFmtRSA)
-                return Program.ReadRSAParams(_pubBytes, ref offset);
-            if (_keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
-                return Program.ReadECParams(_keyType, _pubBytes, ref offset);
+            if (_keyType == PublicKeyReadFuncs.KeyFmtRSA)
+                return PublicKeyReadFuncs.ReadRSAParams(_pubBytes, ref offset);
+            if (_keyType.StartsWith(PublicKeyReadFuncs.KeyFmtECDSA, StringComparison.Ordinal))
+                return PublicKeyReadFuncs.ReadECParams(_keyType, _pubBytes, ref offset);
 
-            return Program.ReadDSAParams(_pubBytes, ref offset);
+            return PublicKeyReadFuncs.ReadDSAParams(_pubBytes, ref offset);
         }
 
         public AsymmetricCipherKeyPair ReadKeyPair()
@@ -222,16 +222,16 @@ namespace DieFledermaus.Cli
             AsymmetricKeyParameter pubKey = _readPublicKey();
             if (pubKey == null) throw new InvalidDataException();
 
-            if (_keyType == Program.KeyFmtRSA)
+            if (_keyType == PublicKeyReadFuncs.KeyFmtRSA)
             {
                 RsaKeyParameters pubRsa = (RsaKeyParameters)pubKey;
                 RsaPrivateCrtKeyParameters privRsa;
 
                 int offset = 0;
-                BigInteger privEx = Program.ReadBigInteger(_privBytes, ref offset);
-                BigInteger p = Program.ReadBigInteger(_privBytes, ref offset);
-                BigInteger q = Program.ReadBigInteger(_privBytes, ref offset);
-                BigInteger qInv = Program.ReadBigInteger(_privBytes, ref offset);
+                BigInteger privEx = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
+                BigInteger p = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
+                BigInteger q = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
+                BigInteger qInv = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
 
                 if (offset < _privBytes.Length && _encType == EncFmtNone)
                     throw new InvalidDataException();
@@ -252,11 +252,11 @@ namespace DieFledermaus.Cli
 
                 return new AsymmetricCipherKeyPair(pubRsa, privRsa);
             }
-            else if (_keyType.StartsWith(Program.KeyFmtECDSA, StringComparison.Ordinal))
+            else if (_keyType.StartsWith(PublicKeyReadFuncs.KeyFmtECDSA, StringComparison.Ordinal))
             {
                 ECPublicKeyParameters pubEC = (ECPublicKeyParameters)pubKey;
                 int offset = 0;
-                BigInteger d = Program.ReadBigInteger(_privBytes, ref offset);
+                BigInteger d = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
 
                 if (!pubEC.Q.Equals(new Org.BouncyCastle.Math.EC.Multiplier.FixedPointCombMultiplier().Multiply(pubEC.Parameters.G, d)))
                     throw new InvalidDataException();
@@ -271,7 +271,7 @@ namespace DieFledermaus.Cli
                 DsaPrivateKeyParameters privDsa;
                 {
                     int offset = 0;
-                    BigInteger x = Program.ReadBigInteger(_privBytes, ref offset);
+                    BigInteger x = PublicKeyReadFuncs.ReadBigInteger(_privBytes, ref offset);
                     if (offset < _privBytes.Length && _encType == EncFmtNone)
                         throw new InvalidDataException();
 
