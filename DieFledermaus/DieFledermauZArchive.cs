@@ -1318,7 +1318,7 @@ namespace DieFledermaus
             }
             curOffset += optionList.GetSize();
 
-            foreach (FormatValue curValue in optionList)
+            foreach (FormatEntry curValue in optionList)
             {
                 string curOption = curValue.Key;
 

@@ -2498,7 +2498,7 @@ namespace DieFledermaus
             }
             headSize += optionList.GetSize();
 
-            foreach (FormatValue curValue in optionList)
+            foreach (FormatEntry curValue in optionList)
             {
                 string curForm = curValue.Key;
 
@@ -2688,7 +2688,7 @@ namespace DieFledermaus
             return headSize;
         }
 
-        internal static bool ReadEncFormat(FormatValue curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes,
+        internal static bool ReadEncFormat(FormatEntry curValue, ref MausEncryptionFormat _encFmt, ref KeySizeList _keySizes,
             ref int _keySize, ref int _blockByteCount, bool mauZ)
         {
             if (curValue.Key != _kEnc)
@@ -2737,7 +2737,7 @@ namespace DieFledermaus
             public readonly DerInteger S;
         }
 
-        private static void GetDsaValue(FormatValue formatValue, ushort vDsa, ref DerIntegerPair existing, ref byte[] keyId)
+        private static void GetDsaValue(FormatEntry formatValue, ushort vDsa, ref DerIntegerPair existing, ref byte[] keyId)
         {
             if ((formatValue.Count != 1 && formatValue.Count != 2) || formatValue.Version != vDsa)
                 throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2782,7 +2782,7 @@ namespace DieFledermaus
             }
         }
 
-        internal static void ReadBytes(FormatValue curValue, ushort version, ref byte[] oldValue)
+        internal static void ReadBytes(FormatEntry curValue, ushort version, ref byte[] oldValue)
         {
             if (curValue.Count != 1 || curValue.Version != version)
                 throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2819,7 +2819,7 @@ namespace DieFledermaus
 
         private static readonly long maxTicks = DateTime.MaxValue.Ticks;
 
-        private void GetDate(FormatValue curValue, ref DateTime? curTime, bool fromEncrypted, ref MausSavingOptions savingOption)
+        private void GetDate(FormatEntry curValue, ref DateTime? curTime, bool fromEncrypted, ref MausSavingOptions savingOption)
         {
             if (curValue.Count != 1 || curValue.Version != _vTime)
                 throw new NotSupportedException(TextResources.FormatUnknown);
@@ -3936,7 +3936,7 @@ namespace DieFledermaus
 
         internal static void WriteEncFormat(MausEncryptionFormat _encFmt, int _keySize, byte[] rsaKey, ByteOptionList formats)
         {
-            FormatValue encValue = new FormatValue(_kEnc, _vEnc);
+            FormatEntry encValue = new FormatEntry(_kEnc, _vEnc);
 
             switch (_encFmt)
             {
@@ -3956,7 +3956,7 @@ namespace DieFledermaus
 
             if (rsaKey != null)
             {
-                FormatValue encRsa = new FormatValue(_kEncRsa, _vEnc);
+                FormatEntry encRsa = new FormatEntry(_kEncRsa, _vEnc);
                 encRsa.Add(rsaKey);
 
                 formats.Add(encRsa);
@@ -4044,7 +4044,7 @@ namespace DieFledermaus
             if (rsaSignature == null)
                 return;
 
-            FormatValue formatValue = new FormatValue(kRsaSig, vRsaSig, rsaSignature);
+            FormatEntry formatValue = new FormatEntry(kRsaSig, vRsaSig, rsaSignature);
 
             if (rsaSignId != null)
                 formatValue.Add(rsaSignId);

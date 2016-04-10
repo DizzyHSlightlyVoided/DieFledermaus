@@ -232,6 +232,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The collection is at its maximum capacity of 65535..
+        /// </summary>
+        internal static string ByteListAtMaximum {
+            get {
+                return ResourceManager.GetString("ByteListAtMaximum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified array is invalid..
         /// </summary>
         internal static string CollectBadArray {
@@ -313,7 +322,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The length of a comment must be greater than 0 and less than or equal to 65536..
+        ///   Looks up a localized string similar to The length must be greater than 0 and less than or equal to 65536 UTF-8 bytes..
         /// </summary>
         internal static string CommentLength {
             get {
@@ -736,6 +745,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The length must be greater than 0 and less than or equal to 65536..
+        /// </summary>
+        internal static string OutOfRangeByteLength {
+            get {
+                return ResourceManager.GetString("OutOfRangeByteLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified index is less than 0 or is greater than or equal to the length of the list..
         /// </summary>
         internal static string OutOfRangeIndex {
@@ -781,6 +799,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The version must be greater than 0..
+        /// </summary>
+        internal static string OutOfRangeVersion {
+            get {
+                return ResourceManager.GetString("OutOfRangeVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No password has been set on the current instance..
         /// </summary>
         internal static string PasswordNotSet {
@@ -795,6 +822,15 @@ namespace DieFledermaus.Globalization {
         internal static string PasswordZeroLength {
             get {
                 return ResourceManager.GetString("PasswordZeroLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The {0} property is null..
+        /// </summary>
+        internal static string PropertyNull {
+            get {
+                return ResourceManager.GetString("PropertyNull", resourceCulture);
             }
         }
         
@@ -835,7 +871,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The length of an RSA key-identifier must either be null or must have a length between 1 and 65536..
+        ///   Looks up a localized string similar to The length of an RSA key-identifier must either be null or must have a length between 1 and 65536 inclusive..
         /// </summary>
         internal static string RsaIdLength {
             get {

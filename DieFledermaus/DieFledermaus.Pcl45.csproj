@@ -43,13 +43,13 @@
     <Compile Include="7Zip\Common\CRC.cs" />
     <Compile Include="7Zip\Common\InBuffer.cs" />
     <Compile Include="7Zip\Common\OutBuffer.cs" />
-    <Compile Include="7Zip\Compress\LZMA\LzmaBase.cs" />
-    <Compile Include="7Zip\Compress\LZMA\LzmaDecoder.cs" />
-    <Compile Include="7Zip\Compress\LZMA\LzmaEncoder.cs" />
     <Compile Include="7Zip\Compress\LZ\IMatchFinder.cs" />
     <Compile Include="7Zip\Compress\LZ\LzBinTree.cs" />
     <Compile Include="7Zip\Compress\LZ\LzInWindow.cs" />
     <Compile Include="7Zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="7Zip\Compress\LZMA\LzmaEncoder.cs" />
     <Compile Include="7Zip\Compress\RangeCoder\RangeCoder.cs" />
     <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBit.cs" />
     <Compile Include="7Zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
@@ -101,9 +101,9 @@
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild" BeforeTargets="Build">
+  </Target>
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="BeforeBuild" BeforeTargets="Build">
-  </Target>
 </Project>
