@@ -1485,8 +1485,15 @@ namespace DieFledermaus.Cli
                         {
                             AsymmetricKeyParameter pubKey;
                             if (PublicKeyReadFuncs.TryGetPublicKey(sr, index, out pubKey))
-                                return pubKey;
+                            {
+                                if (getPrivate)
+                                {
+                                    Console.Error.WriteLine(TextResources.SignNeedPrivate);
+                                    return null;
+                                }
 
+                                return pubKey;
+                            }
                         }
                     }
                     #endregion
