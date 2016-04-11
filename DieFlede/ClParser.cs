@@ -63,7 +63,7 @@ namespace DieFledermaus.Cli
 
             Dictionary<string, ClParam> stringDict = new Dictionary<string, ClParam>(_params.Count, StringComparer.OrdinalIgnoreCase);
             Dictionary<char, ClParam> charDict = new Dictionary<char, ClParam>(_params.Count);
-
+            List<ClParam> orderedParams = new List<ClParam>();
             bool result = false;
 
             for (int i = 0; i < _params.Count; i++)
@@ -103,6 +103,7 @@ namespace DieFledermaus.Cli
                         Console.Error.WriteLine(TextResources.ParamUnknown, curArg);
                         continue;
                     }
+                    orderedParams.Add(curParam);
 
                     curParam.Key = curArg;
 
@@ -130,7 +131,7 @@ namespace DieFledermaus.Cli
                         }
                     }
 
-                    if (curVal != null && curParam.SetValue(curVal))
+                    if (curVal != null && curParam.SetValue(curVal, i))
                         return true;
 
                     curParam.IsSet = true;
@@ -226,7 +227,7 @@ namespace DieFledermaus.Cli
                                 continue;
                             }
                         }
-                        else if (curParam.SetValue(curVal))
+                        else if (curParam.SetValue(curVal, i))
                         {
                             result = true;
                             continue;
@@ -246,14 +247,19 @@ namespace DieFledermaus.Cli
                 }
 
                 _rawParam.Key = string.Empty;
-                if (_rawParam.SetValue(curArg))
+                if (_rawParam.SetValue(curArg, i))
                     return true;
                 _rawParam.IsSet = true;
                 _setParams.Add(_rawParam);
             }
+            if (!result)
+                _orderedParams = orderedParams.ToArray();
             _disposed = true;
             return result;
         }
+
+        private ClParam[] _orderedParams;
+        public ClParam[] OrderedParams { get { return (ClParam[])_orderedParams?.Clone(); } }
 
         private void CurParam_SetChanged(object sender, EventArgs e)
         {
@@ -336,7 +342,14 @@ namespace DieFledermaus.Cli
 
         public abstract bool TakesValue { get; }
 
-        public abstract bool SetValue(string value);
+        private int _index = -1;
+        public int Index
+        {
+            get { return _index; }
+            protected set { _index = value; }
+        }
+
+        public abstract bool SetValue(string value, int index);
 
         private bool _isSet;
         public bool IsSet
@@ -413,7 +426,7 @@ namespace DieFledermaus.Cli
 
         public Func<string, string> ConvertValue;
 
-        public override bool SetValue(string value)
+        public override bool SetValue(string value, int index)
         {
             if (ConvertValue != null && value != null)
                 value = ConvertValue(value);
@@ -427,6 +440,7 @@ namespace DieFledermaus.Cli
                 return true;
             }
 
+            Index = index;
             Value = value;
             return false;
         }
@@ -457,7 +471,7 @@ namespace DieFledermaus.Cli
             get { return false; }
         }
 
-        public override bool SetValue(string value)
+        public override bool SetValue(string value, int index)
         {
             Console.Error.WriteLine(TextResources.ParamNoArg, Key);
             return false;
@@ -476,15 +490,17 @@ namespace DieFledermaus.Cli
             get { return true; }
         }
 
-        private List<string> _vals = new List<string>();
+        private List<IndexedString> _vals = new List<IndexedString>();
 
-        public string[] Values { get { return _vals.Distinct().ToArray(); } }
+        public IndexedString[] Values { get { return _vals.Distinct(new IndexedStringValueComparer()).ToArray(); } }
 
         public int Count { get { return Values.Length; } }
 
-        public override bool SetValue(string value)
+        public override bool SetValue(string value, int index)
         {
-            _vals.Add(value);
+            _vals.Add(new IndexedString(value, index));
+            if (Index < 0)
+                Index = index;
             return false;
         }
     }
@@ -508,7 +524,7 @@ namespace DieFledermaus.Cli
         public TEnum? Value;
         public string StrValue;
 
-        public override bool SetValue(string value)
+        public override bool SetValue(string value, int index)
         {
             if (value == null)
             {
@@ -550,5 +566,129 @@ namespace DieFledermaus.Cli
 
             return base.ToString();
         }
+    }
+
+    internal struct IndexedString : IEquatable<IndexedString>, IComparable<IndexedString>
+    {
+        public IndexedString(string value, int index)
+        {
+            _value = value;
+            _index = index;
+        }
+
+        private int _index;
+        public int Index { get { return _index; } }
+
+        private string _value;
+        public string Value { get { return _value; } }
+
+        public override string ToString()
+        {
+            return string.Format("[{0}], {{{1}}}", _index, _value);
+        }
+
+        #region Comparison
+        public int CompareTo(IndexedString other)
+        {
+            int comp = _index.CompareTo(other._index);
+            if (comp != 0) return comp;
+
+            return string.CompareOrdinal(_value, other._value);
+        }
+
+        public static bool operator <(IndexedString x, IndexedString y)
+        {
+            return x.CompareTo(y) < 0;
+        }
+
+        public static bool operator >(IndexedString x, IndexedString y)
+        {
+            return x.CompareTo(y) > 0;
+        }
+
+        public static bool operator <=(IndexedString x, IndexedString y)
+        {
+            return x.CompareTo(y) <= 0;
+        }
+
+        public static bool operator >=(IndexedString x, IndexedString y)
+        {
+            return x.CompareTo(y) >= 0;
+        }
+        #endregion
+
+        #region Equality
+        public bool Equals(IndexedString other)
+        {
+            return _index == other._index && _value == other._value;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is IndexedString && Equals((IndexedString)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            if (_value == null) return _index;
+            return _index + _value.GetHashCode();
+        }
+
+        public static bool operator ==(IndexedString x, IndexedString y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(IndexedString x, IndexedString y)
+        {
+            return !x.Equals(y);
+        }
+        #endregion
+    }
+
+    internal struct IndexedStringValueComparer : IEqualityComparer<IndexedString>, IComparer<IndexedString>, IEquatable<IndexedString>
+    {
+        public int Compare(IndexedString x, IndexedString y)
+        {
+            return string.CompareOrdinal(x.Value, y.Value);
+        }
+
+        public bool Equals(IndexedString x, IndexedString y)
+        {
+            return x.Value == y.Value;
+        }
+
+        public int GetHashCode(IndexedString obj)
+        {
+            if (obj.Value == null) return 0;
+            return obj.Value.GetHashCode();
+        }
+
+        #region Equatable Stuff
+        public bool Equals(IndexedString other)
+        {
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is IndexedStringValueComparer;
+        }
+
+        public override int GetHashCode()
+        {
+            return GetType().FullName.GetHashCode();
+        }
+
+        public static bool operator ==(IndexedStringValueComparer x, IndexedStringValueComparer y)
+        {
+            return true;
+        }
+
+        public static bool operator !=(IndexedStringValueComparer x, IndexedStringValueComparer y)
+        {
+            return false;
+        }
+        #endregion
     }
 }

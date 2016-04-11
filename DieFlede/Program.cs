@@ -336,7 +336,7 @@ namespace DieFledermaus.Cli
                     #region Create - Single
                     if (single.IsSet)
                     {
-                        string entry = Path.GetFullPath(entryFile.Values[0]);
+                        string entry = Path.GetFullPath(entryFile.Values[0].Value);
                         FileInfo entryInfo = new FileInfo(entry);
                         using (FileStream fs = File.OpenRead(entry))
                         {
@@ -405,7 +405,7 @@ namespace DieFledermaus.Cli
                         streams = new List<FileStream>(entryFile.Count);
                         List<FileInfo> fileInfos = new List<FileInfo>(streams.Capacity);
 
-                        var entries = entryFile.Values.Select(Path.GetFullPath).Distinct().ToArray();
+                        var entries = entryFile.Values.Select(i => Path.GetFullPath(i.Value)).Distinct().ToArray();
 
                         for (int i = 0; i < entries.Length; i++)
                         {
@@ -1054,9 +1054,9 @@ namespace DieFledermaus.Cli
                 throw new Exception(e.Message, e);
         }
 #endif
-        private static Regex GetRegex(string s)
+        private static Regex GetRegex(IndexedString s)
         {
-            return new Regex("^" + Regex.Escape(s).Replace("\\*", ".*").Replace("\\?", "."));
+            return new Regex("^" + Regex.Escape(s.Value).Replace("\\*", ".*").Replace("\\?", "."));
         }
 
         private static bool MatchesRegexAny(IEnumerable<Regex> regex, string path)
