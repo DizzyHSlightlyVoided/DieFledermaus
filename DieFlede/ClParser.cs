@@ -497,7 +497,7 @@ namespace DieFledermaus.Cli
 
         private List<IndexedString> _vals = new List<IndexedString>();
 
-        public IndexedString[] Values { get { return _vals.Distinct().ToArray(); } }
+        public IndexedString[] Values { get { return _vals.ToArray(); } }
 
         private readonly Dictionary<int, IndexedString> _indices;
         private readonly ReadOnlyDictionary<int, IndexedString> _indicesRO;
