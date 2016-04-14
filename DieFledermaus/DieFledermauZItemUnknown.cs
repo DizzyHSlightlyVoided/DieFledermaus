@@ -52,6 +52,7 @@ namespace DieFledermaus
             get { return true; }
         }
 
+        DieFledermauZItem _decrypted;
         /// <summary>
         /// Decrypts the current instance and replaces it in <see cref="DieFledermauZItem.Archive"/> with a properly decrypted instance. 
         /// </summary>
@@ -75,22 +76,23 @@ namespace DieFledermaus
         /// </exception>
         public override DieFledermauZItem Decrypt()
         {
+            if (_decrypted != null) return _decrypted;
+
             base.Decrypt();
 
-            DieFledermauZItem returner;
             if (MausStream.Filename.EndsWith("/"))
             {
                 DieFledermauZEmptyDirectory.CheckStream(MausStream);
                 if (!DieFledermauZArchive.IsValidEmptyDirectoryPath(MausStream.Filename))
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
-                returner = new DieFledermauZEmptyDirectory(Archive, null, MausStream, Offset, RealOffset);
+                _decrypted = new DieFledermauZEmptyDirectory(Archive, null, MausStream, Offset, RealOffset);
             }
-            else returner = new DieFledermauZArchiveEntry(Archive, null, OriginalPath, MausStream, Offset, RealOffset);
+            else _decrypted = new DieFledermauZArchiveEntry(Archive, null, OriginalPath, MausStream, Offset, RealOffset);
 
-            Archive.Entries.ReplaceElement(Archive.Entries.IndexOf(this), returner);
+            Archive.Entries.ReplaceElement(Archive.Entries.IndexOf(this), _decrypted);
             _isDecrypted = true;
             DoDelete(false);
-            return returner;
+            return _decrypted;
         }
     }
 }
