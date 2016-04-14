@@ -613,4 +613,33 @@
     <value>Encryption key file: {0}</value>
     <comment>{0} = filename</comment>
   </data>
+  <data name="HelpMEntryPath1" xml:space="preserve">
+    <value>When compressing, the path to the file within the archive.</value>
+  </data>
+  <data name="HelpMEntryPath2" xml:space="preserve">
+    <value>When decompressing, the output path of the file.</value>
+  </data>
+  <data name="HelpMEntryPath3" xml:space="preserve">
+    <value>Must come immediately after an entry name.</value>
+  </data>
+  <data name="PathDup" xml:space="preserve">
+    <value>Multiple contradictory values for path of file "{0}": {1}</value>
+    <comment>{0} = entry path, {1} = file path</comment>
+  </data>
+  <data name="PathInvalid" xml:space="preserve">
+    <value>Path name contains invalid characters: {0}</value>
+    <comment>{0} = path</comment>
+  </data>
+  <data name="PathTooLong" xml:space="preserve">
+    <value>Entry name is too long: {0}</value>
+    <comment>{0} = path</comment>
+  </data>
+  <data name="WarningPath" xml:space="preserve">
+    <value>A path was specified without a preceding file entry, ignoring: {0}</value>
+    <comment>{0} = path value.</comment>
+  </data>
+  <data name="ExtractNoPath" xml:space="preserve">
+    <value>The archive does not contain the file: {0}</value>
+    <comment>{0} = path</comment>
+  </data>
 </root>

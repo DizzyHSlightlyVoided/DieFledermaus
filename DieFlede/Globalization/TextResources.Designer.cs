@@ -259,6 +259,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The archive does not contain the file: {0}.
+        /// </summary>
+        internal static string ExtractNoPath {
+            get {
+                return ResourceManager.GetString("ExtractNoPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified file does not exist: {0}.
         /// </summary>
         internal static string FileNotFound {
@@ -390,6 +399,33 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string HelpMEntry2 {
             get {
                 return ResourceManager.GetString("HelpMEntry2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When compressing, the path to the file within the archive..
+        /// </summary>
+        internal static string HelpMEntryPath1 {
+            get {
+                return ResourceManager.GetString("HelpMEntryPath1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When decompressing, the output path of the file..
+        /// </summary>
+        internal static string HelpMEntryPath2 {
+            get {
+                return ResourceManager.GetString("HelpMEntryPath2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Must come immediately after an entry name..
+        /// </summary>
+        internal static string HelpMEntryPath3 {
+            get {
+                return ResourceManager.GetString("HelpMEntryPath3", resourceCulture);
             }
         }
         
@@ -804,6 +840,33 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PasswordPrompt {
             get {
                 return ResourceManager.GetString("PasswordPrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Multiple contradictory values for path of file &quot;{0}&quot;: {1}.
+        /// </summary>
+        internal static string PathDup {
+            get {
+                return ResourceManager.GetString("PathDup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path name contains invalid characters: {0}.
+        /// </summary>
+        internal static string PathInvalid {
+            get {
+                return ResourceManager.GetString("PathInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Entry name is too long: {0}.
+        /// </summary>
+        internal static string PathTooLong {
+            get {
+                return ResourceManager.GetString("PathTooLong", resourceCulture);
             }
         }
         
@@ -1290,6 +1353,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string Usage {
             get {
                 return ResourceManager.GetString("Usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A path was specified without a preceding file entry, ignoring: {0}.
+        /// </summary>
+        internal static string WarningPath {
+            get {
+                return ResourceManager.GetString("WarningPath", resourceCulture);
             }
         }
     }

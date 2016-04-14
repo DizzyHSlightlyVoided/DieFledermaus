@@ -104,6 +104,8 @@ namespace DieFledermaus.Cli
             ClParamMulti entryFile = new ClParamMulti(parser, string.Join(Environment.NewLine, TextResources.HelpMEntry, TextResources.HelpMEntry2),
                 TextResources.HelpInput, 'e');
             parser.RawParam = entryFile;
+            ClParamMulti entryPath = new ClParamMulti(parser, string.Join(Environment.NewLine, TextResources.HelpMEntryPath1, TextResources.HelpMEntryPath2,
+                TextResources.HelpMEntryPath3), TextResources.HelpPath, 'p');
 
             ClParamValue outFile = new ClParamValue(parser, TextResources.HelpMOut, TextResources.HelpOutput, 'o', "out", "output",
                 TextResources.PNameOut, TextResources.PNameOutput);
@@ -333,10 +335,17 @@ namespace DieFledermaus.Cli
                     archivePath = Path.GetFullPath(archiveFile.Value);
                     archiveTemp = GetTempPath(archivePath);
 
+                    Dictionary<string, string> allFilePaths;
+                    if (GetEntryPaths(create.IsSet, single.IsSet, entryFile, entryPath, parser.OrderedParams, null, out allFilePaths))
+                        return Return(-1, interactive);
+
                     #region Create - Single
                     if (single.IsSet)
                     {
-                        string entry = Path.GetFullPath(entryFile.Values[0].Value);
+                        var curKVP = allFilePaths.First();
+
+                        string entry = curKVP.Key;
+
                         FileInfo entryInfo = new FileInfo(entry);
                         using (FileStream fs = File.OpenRead(entry))
                         {
@@ -392,7 +401,7 @@ namespace DieFledermaus.Cli
                                         Console.WriteLine(TextResources.TimeMGet, entryInfo.FullName);
                                 }
 
-                                ds.Filename = Path.GetFileName(entry);
+                                ds.Filename = curKVP.Value;
                                 fs.CopyTo(ds);
                             }
                         }
@@ -402,14 +411,14 @@ namespace DieFledermaus.Cli
                     else
                     {
                         MausCompressionFormat compFormat = cFormat.Value.HasValue ? cFormat.Value.Value : MausCompressionFormat.Deflate;
-                        streams = new List<FileStream>(entryFile.Count);
+                        streams = new List<FileStream>(allFilePaths.Count);
                         List<FileInfo> fileInfos = new List<FileInfo>(streams.Capacity);
+                        List<string> entryNames = new List<string>(streams.Capacity);
 
-                        var entries = entryFile.Values.Select(i => Path.GetFullPath(i.Value)).Distinct().ToArray();
-
-                        for (int i = 0; i < entries.Length; i++)
+                        foreach (var curKVP in allFilePaths)
                         {
-                            var curEntry = entries[i];
+                            string curEntry = curKVP.Key;
+
                             var curInfo = new FileInfo(curEntry);
                             if (!curInfo.Exists)
                             {
@@ -421,6 +430,7 @@ namespace DieFledermaus.Cli
                             {
                                 streams.Add(File.OpenRead(curEntry));
                                 fileInfos.Add(curInfo);
+                                entryNames.Add(curKVP.Value);
                             }
                             catch (Exception e)
                             {
@@ -461,7 +471,7 @@ namespace DieFledermaus.Cli
                             {
                                 var curInfo = fileInfos[i];
 
-                                DieFledermauZArchiveEntry entry = archive.Create(curInfo.Name, compFormat, hide.IsSet ? MausEncryptionFormat.None : encFormat);
+                                DieFledermauZArchiveEntry entry = archive.Create(entryNames[i], compFormat, hide.IsSet ? MausEncryptionFormat.None : encFormat);
 
                                 if (verbose.IsSet)
                                     entry.Progress += Entry_Progress;
@@ -574,11 +584,13 @@ namespace DieFledermaus.Cli
                         {
                             var curEntry = dz.Entries[i];
 
-                            if (DoFailDecrypt(curEntry, encObj, interactive, i, ref ssPassword) || !MatchesRegexAny(matches, curEntry.Path))
+                            if (DoFailDecrypt(curEntry, matches, encObj, interactive, i, ref ssPassword))
                             {
                                 Console.WriteLine(GetName(i, curEntry));
                                 continue;
                             }
+                            if (curEntry.EncryptionFormat != MausEncryptionFormat.None)
+                                curEntry = curEntry.Decrypt();
 
                             Console.WriteLine(curEntry.Path);
 
@@ -619,19 +631,35 @@ namespace DieFledermaus.Cli
                     #region Extract
                     if (extract.IsSet)
                     {
+                        HashSet<string> paths = new HashSet<string>();
+                        for (int i = 0; i < dz.Entries.Count; i++)
+                        {
+                            var entry = dz.Entries[i];
+
+                            if (!DoFailDecrypt(entry, matches, encObj, interactive, i, ref ssPassword))
+                                paths.Add(entry.Decrypt().Path);
+                        }
+                        Dictionary<string, string> allFilePaths;
+                        if (GetEntryPaths(false, false, entryFile, entryPath, parser.OrderedParams, paths, out allFilePaths))
+                            return Return(-1, interactive);
+
                         string outDir;
                         if (outFile.IsSet)
                             outDir = outFile.Value;
                         else
                             outDir = Environment.CurrentDirectory;
 
-                        string[] outPaths = new string[dz.Entries.Count];
+                        entryFile.Values.Select(i => i.Value).Distinct();
 
-                        for (int i = 0; i < dz.Entries.Count; i++)
+                        foreach (var curKVP in allFilePaths.ToArray())
                         {
-                            var entry = dz.Entries[i];
-                            if (DoFailDecrypt(entry, encObj, interactive, i, ref ssPassword))
+                            DieFledermauZItem entry;
+                            if (!dz.Entries.TryGetEntry(curKVP.Key, out entry))
+                            {
+                                //Probably won't happen at all, but ...
+                                allFilePaths.Remove(curKVP.Key);
                                 continue;
+                            }
 
                             VerifySigns(keyObj, entry as DieFledermauZArchiveEntry);
 
@@ -639,6 +667,7 @@ namespace DieFledermaus.Cli
 
                             if (path == null) //The only time this will be happen is when decoding a single DieFledermaus file.
                             {
+                                //TODO: Get this to work with output-paths.
                                 if (mausExt.Equals(Path.GetExtension(archiveFile.Value), StringComparison.OrdinalIgnoreCase))
                                 {
                                     path = archiveFile.Value.Substring(0, archiveFile.Value.Length - mausExtLen);
@@ -647,23 +676,23 @@ namespace DieFledermaus.Cli
                                 }
                                 else OverwritePrompt(ref path);
                             }
-                            outPaths[i] = Path.Combine(outDir, path);
+                            if (!Path.IsPathRooted(curKVP.Value))
+                                allFilePaths[curKVP.Key] = Path.GetFullPath(curKVP.Value);
                         }
 
                         int extracted = 0;
 
-                        for (int i = 0; i < outPaths.Length; i++)
+                        foreach (var curKVP in allFilePaths)
                         {
-                            string curPath = outPaths[i];
-                            if (curPath == null)
-                                continue;
+                            string curPath = curKVP.Value;
 
                             try
                             {
                                 if (OverwritePrompt(interactive, overwrite, skipexist, verbose, ref curPath))
                                     continue;
 
-                                var curItem = dz.Entries[i];
+                                DieFledermauZItem curItem;
+                                dz.Entries.TryGetEntry(curKVP.Key, out curItem);
 
                                 var curDir = curItem as DieFledermauZEmptyDirectory;
 
@@ -723,7 +752,7 @@ namespace DieFledermaus.Cli
                         }
 
                         if (verbose.IsSet)
-                            Console.WriteLine(TextResources.SuccessExtract, extracted, dz.Entries.Count - extracted);
+                            Console.WriteLine(TextResources.SuccessExtract, extracted, allFilePaths.Count - extracted);
                     }
                     #endregion
                 }
@@ -751,6 +780,91 @@ namespace DieFledermaus.Cli
                 if (archiveTemp != null && File.Exists(archiveTemp))
                     File.Delete(archiveTemp);
             }
+        }
+
+        private static bool GetEntryPaths(bool creating, bool isSingle, ClParamMulti entryFile, ClParamMulti entryPath, ClParam[] ordered,
+            HashSet<string> paths, out Dictionary<string, string> allFilePaths)
+        {
+            allFilePaths = new Dictionary<string, string>();
+            foreach (IndexedString i in entryPath.Values)
+            {
+                if (i.Index == 0 || ordered[i.Index - 1] != entryFile)
+                    Console.Error.WriteLine(TextResources.WarningPath, i.Value);
+            }
+
+            IEnumerable<IndexedString> entries;
+
+            if (paths != null)
+            {
+                if (entryFile.IsSet)
+                {
+                    List<IndexedString> entryItems = new List<IndexedString>();
+                    foreach (IndexedString curItem in entryFile.Values)
+                    {
+                        string path = curItem.Value.Trim();
+
+                        if (paths.Contains(curItem.Value))
+                            entryItems.Add(new IndexedString(path, curItem.Index));
+                        else
+                            Console.Error.WriteLine(TextResources.ExtractNoPath, path);
+                    }
+                    entries = entryItems;
+                }
+                else entries = paths.Select(IndexedString.Selector);
+            }
+            else entries = entryFile.Values;
+
+            foreach (IndexedString i in entries)
+            {
+                string curPath;
+                string curEntry = i.Value;
+                if (creating)
+                    curEntry = Path.GetFullPath(i.Value);
+
+                int nextDex = i.Index + 1;
+
+                if (nextDex <= 0 || nextDex >= ordered.Length || ordered[nextDex] != entryPath)
+                    curPath = Path.GetFileName(i.Value);
+                else
+                    curPath = entryPath.ValuesByIndex[nextDex].Value;
+
+                if (!creating)
+                    curPath = Path.GetFullPath(curPath);
+                else
+                {
+                    curPath = curPath.Trim();
+                    try
+                    {
+                        if (new UTF8Encoding(false, true).GetByteCount(curPath) > byte.MaxValue)
+                        {
+                            Console.Error.WriteLine(TextResources.PathTooLong, curPath);
+                            return true;
+                        }
+
+                        if (isSingle)
+                        {
+                            if (DieFledermausStream.IsValidFilename(curPath))
+                                throw new EncoderFallbackException();
+                        }
+                        else if (!DieFledermauZArchive.IsValidFilePath(curPath))
+                            throw new EncoderFallbackException();
+                    }
+                    catch (EncoderFallbackException)
+                    {
+                        Console.Error.WriteLine(TextResources.PathInvalid, curPath);
+                    }
+                }
+
+                string existingPath;
+                if (!allFilePaths.TryGetValue(curEntry, out existingPath))
+                    allFilePaths.Add(curEntry, curPath);
+                else if (existingPath != curPath)
+                {
+                    Console.Error.WriteLine(TextResources.PathDup, curEntry, existingPath);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static string GetTempPath(string archivePath)
@@ -908,10 +1022,13 @@ namespace DieFledermaus.Cli
 
         }
 
-        private static bool DoFailDecrypt(DieFledermauZItem entry, RsaKeyParameters rsaKey, ClParamFlag interactive, int i, ref string ssPassword)
+        private static bool DoFailDecrypt(DieFledermauZItem entry, Regex[] matches, RsaKeyParameters rsaKey, ClParamFlag interactive, int i, ref string ssPassword)
         {
+            if (entry.Path != null && !MatchesRegexAny(matches, entry.Path))
+                return true;
             if (entry.EncryptionFormat == MausEncryptionFormat.None || entry.IsDecrypted)
-                return false;
+                return !MatchesRegexAny(matches, entry.Path);
+
             if (!interactive.IsSet && rsaKey == null)
             {
                 Console.Error.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
@@ -921,7 +1038,7 @@ namespace DieFledermaus.Cli
             if (ssPassword == null)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword);
+                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword) || !MatchesRegexAny(matches, entry.Path);
             }
 
             try
@@ -929,12 +1046,12 @@ namespace DieFledermaus.Cli
                 entry.Password = ssPassword;
 
                 entry = entry.Decrypt();
-                return false;
+                return !MatchesRegexAny(matches, entry.Path);
             }
             catch (CryptoException)
             {
                 Console.WriteLine(TextResources.EncryptedExEntry, GetName(i, entry));
-                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword);
+                return EncryptionPrompt(entry, rsaKey, interactive, out ssPassword) || !MatchesRegexAny(matches, entry.Decrypt().Path);
             }
         }
 

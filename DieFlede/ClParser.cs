@@ -654,5 +654,10 @@ namespace DieFledermaus.Cli
             return !x.Equals(y);
         }
         #endregion
+
+        internal static IndexedString Selector(string s)
+        {
+            return new IndexedString(s, -1);
+        }
     }
 }
