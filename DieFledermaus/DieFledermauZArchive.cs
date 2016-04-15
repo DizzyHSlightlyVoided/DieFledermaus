@@ -250,6 +250,7 @@ namespace DieFledermaus
 
                 if (head == DieFledermausStream._head)
                 {
+                    _maus = true;
                     long skipOffset = 0;
                     _entries.Add(LoadMausStream(_baseStream, null, false, -1, 0, ref skipOffset));
                     return;
@@ -762,6 +763,13 @@ namespace DieFledermaus
                 return _manifest.Manifest;
             }
         }
+
+        private bool _maus;
+        /// <summary>
+        /// Gets a value indicating whether the current instance contains a <see cref="DieFledermausStream"/>, rather than an entire
+        /// <see cref="DieFledermauZArchive"/>.
+        /// </summary>
+        public bool IsSingle { get { return _maus; } }
 
         #region RSA Signature
         /// <summary>
