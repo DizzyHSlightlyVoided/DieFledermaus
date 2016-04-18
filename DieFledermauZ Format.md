@@ -2,7 +2,7 @@
 =====================================================
 Version 1.01
 ------------
-* Extension: ".mauz" or ".maus"
+* Extension: ".mauz"
 * Byte order: little-endian
 * Signing form: two's complement
 
