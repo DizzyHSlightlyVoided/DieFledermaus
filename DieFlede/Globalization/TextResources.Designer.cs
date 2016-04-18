@@ -160,6 +160,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Duplicate output paths given: {0}.
+        /// </summary>
+        internal static string DuplicateOut {
+            get {
+                return ResourceManager.GetString("DuplicateOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to RSA encryption key index was given, but no encryption settings were specified..
         /// </summary>
         internal static string EncDexNeedsEnc {
@@ -673,6 +682,15 @@ namespace DieFledermaus.Cli.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No valid entries were specified..
+        /// </summary>
+        internal static string NoValidEntries {
+            get {
+                return ResourceManager.GetString("NoValidEntries", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Output-directory only makes sense when extracting..
         /// </summary>
         internal static string OutDirOnly {
@@ -849,6 +867,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PathDup {
             get {
                 return ResourceManager.GetString("PathDup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The archive is single-file, and multiple contradictory output-paths were given..
+        /// </summary>
+        internal static string PathDupSingle {
+            get {
+                return ResourceManager.GetString("PathDupSingle", resourceCulture);
             }
         }
         
@@ -1083,15 +1110,6 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string PNameVerbose {
             get {
                 return ResourceManager.GetString("PNameVerbose", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Filename not set! Changing output path to: {0}.
-        /// </summary>
-        internal static string RenameExtract {
-            get {
-                return ResourceManager.GetString("RenameExtract", resourceCulture);
             }
         }
         
@@ -1362,6 +1380,15 @@ namespace DieFledermaus.Cli.Globalization {
         internal static string WarningPath {
             get {
                 return ResourceManager.GetString("WarningPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The archive is single-file, ignoring entry arguments..
+        /// </summary>
+        internal static string WarningSingle {
+            get {
+                return ResourceManager.GetString("WarningSingle", resourceCulture);
             }
         }
     }

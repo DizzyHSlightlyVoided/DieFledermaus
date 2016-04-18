@@ -324,8 +324,6 @@ namespace DieFledermaus.Cli
 
             string ssPassword = null;
             List<FileStream> streams = null;
-            const string mausExt = ".maus";
-            const int mausExtLen = 5;
 
             string archivePath = null, archiveTemp = null;
             try
@@ -336,7 +334,7 @@ namespace DieFledermaus.Cli
                     archiveTemp = GetTempPath(archivePath);
 
                     Dictionary<string, string> allFilePaths;
-                    if (GetEntryPaths(create.IsSet, single.IsSet, entryFile, entryPath, parser.OrderedParams, null, out allFilePaths))
+                    if (GetEntryPaths(single.IsSet, archivePath, entryFile, entryPath, parser.OrderedParams, null, out allFilePaths))
                         return Return(-1, interactive);
 
                     #region Create - Single
@@ -572,10 +570,14 @@ namespace DieFledermaus.Cli
 
                     Regex[] matches;
 
-                    if (entryFile.IsSet)
-                        matches = entryFile.Values.Select(GetRegex).ToArray();
-                    else
+                    if (!entryFile.IsSet)
                         matches = null;
+                    else if (dz.IsSingle)
+                    {
+                        Console.WriteLine(TextResources.WarningSingle);
+                        matches = null;
+                    }
+                    else matches = entryFile.Values.Select(GetRegex).ToArray();
 
                     #region List
                     if (list.IsSet)
@@ -639,8 +641,14 @@ namespace DieFledermaus.Cli
                             if (!DoFailDecrypt(entry, matches, encObj, interactive, i, ref ssPassword))
                                 paths.Add(entry.Decrypt().Path);
                         }
+                        if (paths.Count == 0)
+                        {
+                            Console.Error.WriteLine(TextResources.NoValidEntries);
+                            return Return(-1, interactive);
+                        }
+
                         Dictionary<string, string> allFilePaths;
-                        if (GetEntryPaths(false, false, entryFile, entryPath, parser.OrderedParams, paths, out allFilePaths))
+                        if (GetEntryPaths(dz.IsSingle, archivePath, entryFile, entryPath, parser.OrderedParams, paths, out allFilePaths))
                             return Return(-1, interactive);
 
                         string outDir;
@@ -662,22 +670,6 @@ namespace DieFledermaus.Cli
                             }
 
                             VerifySigns(keyObj, entry as DieFledermauZArchiveEntry);
-
-                            string path = entry.Path;
-
-                            if (path == null) //The only time this will be happen is when decoding a single DieFledermaus file.
-                            {
-                                //TODO: Get this to work with output-paths.
-                                if (mausExt.Equals(Path.GetExtension(archiveFile.Value), StringComparison.OrdinalIgnoreCase))
-                                {
-                                    path = archiveFile.Value.Substring(0, archiveFile.Value.Length - mausExtLen);
-                                    if (verbose.IsSet)
-                                        Console.WriteLine(TextResources.RenameExtract, path);
-                                }
-                                else OverwritePrompt(ref path);
-                            }
-                            if (!Path.IsPathRooted(curKVP.Value))
-                                allFilePaths[curKVP.Key] = Path.GetFullPath(curKVP.Value);
                         }
 
                         int extracted = 0;
@@ -782,10 +774,58 @@ namespace DieFledermaus.Cli
             }
         }
 
-        private static bool GetEntryPaths(bool creating, bool isSingle, ClParamMulti entryFile, ClParamMulti entryPath, ClParam[] ordered,
+        const string mausExt = ".maus", mauzExt = ".mauz";
+        const int mausExtLen = 5;
+
+        private static bool GetEntryPaths(bool isSingle, string archivePath, ClParamMulti entryFile, ClParamMulti entryPath, ClParam[] ordered,
             HashSet<string> paths, out Dictionary<string, string> allFilePaths)
         {
             allFilePaths = new Dictionary<string, string>();
+
+            var chars = Path.GetInvalidFileNameChars();
+
+            if (paths != null && isSingle)
+            {
+                //Won't be empty because that got checked earlier.
+                string solePath = paths.First();
+
+                if (solePath == null)
+                {
+                    string archExt = Path.GetExtension(archivePath);
+
+                    if (string.Equals(archExt, mausExt, StringComparison.OrdinalIgnoreCase))
+                        solePath = archivePath.Substring(0, archivePath.Length - mausExtLen);
+                    else
+                    {
+                        if (string.IsNullOrWhiteSpace(archExt))
+                            solePath = archivePath + ".out";
+                        else
+                            solePath = Path.ChangeExtension(archivePath, ".out." + archExt);
+                    }
+                }
+
+                if (entryPath.IsSet)
+                {
+                    var entryPathValues = entryPath.Values;
+
+                    solePath = Path.GetFullPath(entryPathValues[0].Value);
+
+                    for (int i = 1; i < entryPathValues.Length; i++)
+                    {
+                        if (Path.GetFullPath(entryPathValues[i].Value) != solePath)
+                        {
+                            Console.Error.WriteLine(TextResources.PathDupSingle);
+                            return true;
+                        }
+                    }
+                }
+                else solePath = Path.GetFullPath(solePath);
+                allFilePaths.Add(string.Empty, solePath);
+
+                return false;
+            }
+
+            //TODO: Get this to work nicely with wildcards
             foreach (IndexedString i in entryPath.Values)
             {
                 if (i.Index == 0 || ordered[i.Index - 1] != entryFile)
@@ -814,11 +854,12 @@ namespace DieFledermaus.Cli
             }
             else entries = entryFile.Values;
 
+            var textEncoding = new UTF8Encoding(false, false);
             foreach (IndexedString i in entries)
             {
                 string curPath;
                 string curEntry = i.Value;
-                if (creating)
+                if (paths == null)
                     curEntry = Path.GetFullPath(i.Value);
 
                 int nextDex = i.Index + 1;
@@ -828,14 +869,13 @@ namespace DieFledermaus.Cli
                 else
                     curPath = entryPath.ValuesByIndex[nextDex].Value;
 
-                if (!creating)
+                if (paths != null)
                     curPath = Path.GetFullPath(curPath);
                 else
                 {
                     curPath = curPath.Trim();
-                    try
                     {
-                        if (new UTF8Encoding(false, true).GetByteCount(curPath) > byte.MaxValue)
+                        if (textEncoding.GetByteCount(curPath) > byte.MaxValue)
                         {
                             Console.Error.WriteLine(TextResources.PathTooLong, curPath);
                             return true;
@@ -844,14 +884,16 @@ namespace DieFledermaus.Cli
                         if (isSingle)
                         {
                             if (DieFledermausStream.IsValidFilename(curPath))
-                                throw new EncoderFallbackException();
+                            {
+                                Console.Error.WriteLine(TextResources.PathInvalid, curPath);
+                                continue;
+                            }
                         }
                         else if (!DieFledermauZArchive.IsValidFilePath(curPath))
-                            throw new EncoderFallbackException();
-                    }
-                    catch (EncoderFallbackException)
-                    {
-                        Console.Error.WriteLine(TextResources.PathInvalid, curPath);
+                        {
+                            Console.Error.WriteLine(TextResources.PathInvalid, curPath);
+                            continue;
+                        }
                     }
                 }
 
@@ -863,6 +905,12 @@ namespace DieFledermaus.Cli
                     Console.Error.WriteLine(TextResources.PathDup, curEntry, existingPath);
                     return true;
                 }
+            }
+
+            if (allFilePaths.Count == 0)
+            {
+                Console.Error.WriteLine(TextResources.NoValidEntries);
+                return true;
             }
             return false;
         }

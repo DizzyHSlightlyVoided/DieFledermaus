@@ -193,10 +193,6 @@
     <value>Unknown parameter "{0}".</value>
     <comment>{0} = param name</comment>
   </data>
-  <data name="RenameExtract" xml:space="preserve">
-    <value>Filename not set! Changing output path to: {0}</value>
-    <comment>{0} = new output filename</comment>
-  </data>
   <data name="Title" xml:space="preserve">
     <value>DieFlede command-line utility</value>
   </data>
@@ -641,5 +637,18 @@
   <data name="ExtractNoPath" xml:space="preserve">
     <value>The archive does not contain the file: {0}</value>
     <comment>{0} = path</comment>
+  </data>
+  <data name="NoValidEntries" xml:space="preserve">
+    <value>No valid entries were specified.</value>
+  </data>
+  <data name="DuplicateOut" xml:space="preserve">
+    <value>Duplicate output paths given: {0}</value>
+    <comment>{0} = path value</comment>
+  </data>
+  <data name="WarningSingle" xml:space="preserve">
+    <value>The archive is single-file, ignoring entry arguments.</value>
+  </data>
+  <data name="PathDupSingle" xml:space="preserve">
+    <value>The archive is single-file, and multiple contradictory output-paths were given.</value>
   </data>
 </root>
