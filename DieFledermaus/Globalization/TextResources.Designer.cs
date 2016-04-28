@@ -232,6 +232,15 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The maximum minus the minimum is not a multiple of the specified skip size..
+        /// </summary>
+        internal static string BadSkipSize {
+            get {
+                return ResourceManager.GetString("BadSkipSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The collection is at its maximum capacity of 65535..
         /// </summary>
         internal static string ByteListAtMaximum {
@@ -790,11 +799,29 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The minimum value is greater than the maximum..
+        /// </summary>
+        internal static string OutOfRangeMaxLessThanMin {
+            get {
+                return ResourceManager.GetString("OutOfRangeMaxLessThanMin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified value is less than {0} or is greater than {1}..
         /// </summary>
         internal static string OutOfRangeMinMax {
             get {
                 return ResourceManager.GetString("OutOfRangeMinMax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value is less than 0 or is greater the maximum minus the minimum..
+        /// </summary>
+        internal static string OutOfRangeSkipSize {
+            get {
+                return ResourceManager.GetString("OutOfRangeSkipSize", resourceCulture);
             }
         }
         

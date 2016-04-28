@@ -447,4 +447,13 @@
     <value>The {0} property is null.</value>
     <comment>{0} = property name.</comment>
   </data>
+  <data name="OutOfRangeMaxLessThanMin" xml:space="preserve">
+    <value>The minimum value is greater than the maximum.</value>
+  </data>
+  <data name="BadSkipSize" xml:space="preserve">
+    <value>The maximum minus the minimum is not a multiple of the specified skip size.</value>
+  </data>
+  <data name="OutOfRangeSkipSize" xml:space="preserve">
+    <value>The specified value is less than 0 or is greater the maximum minus the minimum.</value>
+  </data>
 </root>

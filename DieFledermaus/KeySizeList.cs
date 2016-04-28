@@ -123,6 +123,52 @@ namespace DieFledermaus
             else
                 _items = new int[] { _min, _max };
         }
+
+        private KeySizeList(int minSize, int maxSize, int step)
+        {
+            _min = minSize;
+            _max = maxSize;
+            int[] _items = new int[1 + ((_max - _min) / step)];
+
+            for (int i = 0; i < _items.Length; i++)
+                _items[i] = minSize + i * step;
+        }
+
+        /// <summary>
+        /// Creates a new instance using the specified range of values.
+        /// </summary>
+        /// <param name="minSize">The minimum value.</param>
+        /// <param name="maxSize">The maximum value.</param>
+        /// <param name="skipSize">The interval between valid sizes.</param>
+        /// <returns>A new <see cref="KeySizeList"/> instance.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <para><paramref name="minSize"/> is greater than <paramref name="maxSize"/>.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="skipSize"/> is less than 0, or is nonzero and greater than <paramref name="maxSize"/> minus <paramref name="minSize"/>.</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="skipSize"/> is nonzero, and <paramref name="maxSize"/> minus <paramref name="minSize"/> is not a multiple of <paramref name="skipSize"/>.
+        /// </exception>
+        public static KeySizeList FromStepRange(int minSize, int maxSize, int skipSize)
+        {
+            if (minSize > maxSize)
+                throw new ArgumentOutOfRangeException(nameof(maxSize), maxSize, TextResources.OutOfRangeMaxLessThanMin);
+
+            if (skipSize < 0 || (skipSize != 0 && skipSize >= maxSize - minSize))
+                throw new ArgumentOutOfRangeException(nameof(skipSize), skipSize, TextResources.OutOfRangeSkipSize);
+
+            int diff = maxSize - minSize;
+
+            if (skipSize == 0)
+            {
+                if (maxSize == minSize) skipSize = 1;
+                else skipSize = diff;
+            }
+            else if (diff % skipSize != 0)
+                throw new ArgumentException(TextResources.BadSkipSize, nameof(skipSize));
+
+            return new KeySizeList(minSize, maxSize, skipSize);
+        }
         #endregion
 
         /// <summary>
