@@ -214,7 +214,7 @@ namespace DieFledermaus
     /// Represents all elements in a format-list.
     /// </summary>
     [DebuggerTypeProxy(typeof(DebugView))]
-    public class FormatEntry : IList<FormatValue>, IList
+    internal class FormatEntry : IList<FormatValue>, IList
 #if IREADONLY
         , IReadOnlyList<FormatValue>
 #endif
@@ -1125,210 +1125,9 @@ namespace DieFledermaus
     }
 
     /// <summary>
-    /// A read-only wrapper for a <see cref="FormatEntry"/>.
-    /// </summary>
-    public class ReadOnlyFormatEntry : IList<FormatValue>, IList
-#if IREADONLY
-        , IReadOnlyList<FormatValue>
-#endif
-    {
-        private FormatEntry _list;
-
-        /// <summary>
-        /// Creates a new instance wrapped around the specified <see cref="FormatEntry"/> object.
-        /// </summary>
-        /// <param name="collection">The <see cref="FormatEntry"/> to wrap around.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="collection"/> is <see langword="null" />.
-        /// </exception>
-        public ReadOnlyFormatEntry(FormatEntry collection)
-        {
-            if (collection == null) throw new ArgumentNullException(nameof(collection));
-            _list = collection;
-        }
-
-        /// <summary>
-        /// Gets the element at the specified index.
-        /// </summary>
-        public FormatValue this[int index]
-        {
-            get { return _list[index]; }
-        }
-
-        FormatValue IList<FormatValue>.this[int index]
-        {
-            get { return _list[index]; }
-            set { throw new NotSupportedException(); }
-        }
-
-        object IList.this[int index]
-        {
-            get { return _list[index]; }
-            set { throw new NotSupportedException(); }
-        }
-
-        /// <summary>
-        /// Gets the number of elements contained in the list.
-        /// </summary>
-        public int Count { get { return _list.Count; } }
-
-        /// <summary>
-        /// Gets the key of the current entry.
-        /// </summary>
-        public string Key { get { return _list.Key; } }
-
-        /// <summary>
-        /// Gets the version number of the current entry.
-        /// </summary>
-        public ushort Version { get { return _list.Version; } }
-
-        /// <summary>
-        /// Gets a value indicating whether <see cref="Count"/> is equal to the maximum value of 65535.
-        /// </summary>
-        public bool AtMaximumCapacity { get { return _list.AtMaximumCapacity; } }
-
-        /// <summary>
-        /// Gets a value indicating whether the specified element exists in the list.
-        /// </summary>
-        /// <param name="value">The element to search for in the list.</param>
-        /// <returns><see langword="true"/> if <paramref name="value"/> was found; <see langword="false"/> otherwise.</returns>
-        public bool Contains(FormatValue value)
-        {
-            return _list.Contains(value);
-        }
-
-        bool IList.Contains(object value)
-        {
-            return ((IList)_list).Contains(value);
-        }
-
-        /// <summary>
-        /// Returns the index in the list of the specified value.
-        /// </summary>
-        /// <param name="value">The value to search for in the list.</param>
-        /// <returns>The index of <paramref name="value"/>, if found; otherwise, -1.</returns>
-        public int IndexOf(FormatValue value)
-        {
-            return _list.IndexOf(value);
-        }
-
-        int IList.IndexOf(object value)
-        {
-            return ((IList)_list).IndexOf(value);
-        }
-
-        /// <summary>
-        /// Copies all elements in the current instance to the specified array.
-        /// </summary>
-        /// <param name="array">The array to which the current instance will be copied.</param>
-        /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="array"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the number of elements in <paramref name="array"/>.
-        /// </exception>
-        public void CopyTo(FormatValue[] array, int arrayIndex)
-        {
-            _list.CopyTo(array, arrayIndex);
-        }
-
-        void ICollection.CopyTo(Array array, int index)
-        {
-            ((ICollection)_list).CopyTo(array, index);
-        }
-
-        /// <summary>
-        /// Returns an array containing all elements in the list.
-        /// </summary>
-        /// <returns>An array containing all elements in the list.</returns>
-        public FormatValue[] ToArray()
-        {
-            return _list.ToArray();
-        }
-
-        bool ICollection<FormatValue>.IsReadOnly { get { return true; } }
-        bool IList.IsReadOnly { get { return true; } }
-        bool IList.IsFixedSize { get { return false; } }
-        bool ICollection.IsSynchronized { get { return false; } }
-        object ICollection.SyncRoot { get { return ((ICollection)_list).SyncRoot; } }
-
-        /// <summary>
-        /// Returns an enumerator which iterates through the list.
-        /// </summary>
-        /// <returns>An enumerator which iterates through the list.</returns>
-        public FormatEntry.Enumerator GetEnumerator()
-        {
-            return _list.GetEnumerator();
-        }
-
-        IEnumerator<FormatValue> IEnumerable<FormatValue>.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        #region Not Supported
-        void ICollection<FormatValue>.Add(FormatValue value)
-        {
-            throw new NotSupportedException();
-        }
-
-        int IList.Add(object value)
-        {
-            throw new NotSupportedException();
-        }
-
-        bool ICollection<FormatValue>.Remove(FormatValue value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList.Remove(object value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<FormatValue>.Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList.Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList<FormatValue>.Insert(int index, FormatValue value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList.Insert(int index, object value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList<FormatValue>.RemoveAt(int index)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList.RemoveAt(int index)
-        {
-            throw new NotSupportedException();
-        }
-        #endregion
-    }
-
-    /// <summary>
     /// Represents a single element of a format value.
     /// </summary>
-    public struct FormatValue : IEquatable<FormatValue>
+    internal struct FormatValue : IEquatable<FormatValue>
     {
         #region Constructors
         /// <summary>
@@ -1493,7 +1292,7 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(short)) return null;
-                return (short)(_value[0] | ((short)_value[1] << 8));
+                return (short)(_value[0] | _value[1] << 8);
             }
         }
 
@@ -1506,7 +1305,7 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(ushort)) return null;
-                return (ushort)(_value[0] | ((ushort)_value[1] << 8));
+                return (ushort)(_value[0] | _value[1] << 8);
             }
         }
 
@@ -1519,7 +1318,7 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(int)) return null;
-                return (int)(_value[0] | ((int)_value[1] << 8) | ((int)_value[2] << 16) | ((int)_value[3] << 24));
+                return _value[0] | _value[1] << 8 | _value[2] << 16 | _value[3] << 24;
             }
         }
 
@@ -1532,7 +1331,7 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(uint)) return null;
-                return (uint)(_value[0] | ((uint)_value[1] << 8) | ((uint)_value[2] << 16) | ((uint)_value[3] << 24));
+                return _value[0] | ((uint)_value[1] << 8) | ((uint)_value[2] << 16) | ((uint)_value[3] << 24);
             }
         }
 
@@ -1545,8 +1344,8 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(long)) return null;
-                return (long)(_value[0] | ((long)_value[1] << 8) | ((long)_value[2] << 16) | ((long)_value[3] << 24) |
-                    ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56));
+                return _value[0] | ((long)_value[1] << 8) | ((long)_value[2] << 16) | ((long)_value[3] << 24) |
+                    ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56);
             }
         }
 
@@ -1559,8 +1358,8 @@ namespace DieFledermaus
             get
             {
                 if (_value == null || _value.Length != sizeof(ulong)) return null;
-                return (ulong)(_value[0] | ((ulong)_value[1] << 8) | ((ulong)_value[2] << 16) | ((ulong)_value[3] << 24) |
-                    ((ulong)_value[4] << 32) | ((ulong)_value[5] << 40) | ((ulong)_value[6] << 48) | ((ulong)_value[7] << 56));
+                return _value[0] | ((ulong)_value[1] << 8) | ((ulong)_value[2] << 16) | ((ulong)_value[3] << 24) |
+                    ((ulong)_value[4] << 32) | ((ulong)_value[5] << 40) | ((ulong)_value[6] << 48) | ((ulong)_value[7] << 56);
             }
         }
 
