@@ -22,7 +22,7 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Pcl 4.5\Debug\</OutputPath>
     <IntermediateOutputPath>obj\Pcl 4.5\Debug\</IntermediateOutputPath>
-    <DefineConstants>TRACE;DEBUG;PCL_4_5;PCL;IREADONLY;NOCRYPT;NOCOMPMODE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PCL_4_5;PCL;IREADONLY;NOCOMPMODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -33,7 +33,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Pcl 4.5\Release\</OutputPath>
     <IntermediateOutputPath>obj\Pcl 4.5\Release\</IntermediateOutputPath>
-    <DefineConstants>TRACE;PCL_4_5;PCL;IREADONLY;NOCRYPT;NOCOMPMODE</DefineConstants>
+    <DefineConstants>TRACE;PCL_4_5;PCL;IREADONLY;NOCOMPMODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>

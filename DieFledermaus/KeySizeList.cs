@@ -37,9 +37,6 @@ using DieFledermaus.Globalization;
 
 namespace DieFledermaus
 {
-#if NOARG3
-    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
-#endif
     /// <summary>
     /// Represents a collection of key sizes. All values in the collection are unique, and stored in ascending order.
     /// </summary>
@@ -152,10 +149,10 @@ namespace DieFledermaus
         public static KeySizeList FromStepRange(int minSize, int maxSize, int skipSize)
         {
             if (minSize > maxSize)
-                throw new ArgumentOutOfRangeException(nameof(maxSize), maxSize, TextResources.OutOfRangeMaxLessThanMin);
+                throw new ArgumentOutOfRangeException(nameof(maxSize), TextResources.OutOfRangeMaxLessThanMin);
 
             if (skipSize < 0 || (skipSize != 0 && skipSize >= maxSize - minSize))
-                throw new ArgumentOutOfRangeException(nameof(skipSize), skipSize, TextResources.OutOfRangeSkipSize);
+                throw new ArgumentOutOfRangeException(nameof(skipSize), TextResources.OutOfRangeSkipSize);
 
             int diff = maxSize - minSize;
 
@@ -184,7 +181,7 @@ namespace DieFledermaus
             get
             {
                 if (index < 0 || index >= _items.Length)
-                    throw new ArgumentOutOfRangeException(nameof(index), index, TextResources.OutOfRangeIndex);
+                    throw new ArgumentOutOfRangeException(nameof(index), TextResources.OutOfRangeIndex);
                 return _items[index];
             }
         }

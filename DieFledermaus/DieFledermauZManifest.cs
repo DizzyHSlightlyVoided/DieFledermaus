@@ -40,10 +40,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 
 namespace DieFledermaus
 {
-#if NOARG3
-    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
-#endif
-
     internal class DieFledermauZManifest : DieFledermauZItem, IMausSign
     {
         internal const string Filename = "/Manifest.dat";
@@ -412,7 +408,7 @@ namespace DieFledermaus
             get
             {
                 if (index < 0 || index >= _entries.Length)
-                    throw new ArgumentOutOfRangeException(nameof(index), index, TextResources.OutOfRangeIndex);
+                    throw new ArgumentOutOfRangeException(nameof(index), TextResources.OutOfRangeIndex);
                 return _entries[index];
             }
         }
@@ -527,7 +523,7 @@ namespace DieFledermaus
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
             if (arrayIndex < 0)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, TextResources.OutOfRangeLessThanZero);
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), TextResources.OutOfRangeLessThanZero);
             if (arrayIndex + _entries.Length > array.Length)
                 throw new ArgumentException(TextResources.BadIndexRange);
 
@@ -539,7 +535,7 @@ namespace DieFledermaus
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
             if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), index, TextResources.OutOfRangeLessThanZero);
+                throw new ArgumentOutOfRangeException(nameof(index), TextResources.OutOfRangeLessThanZero);
 
             if (array.Rank != 1 || array.GetLowerBound(0) != 0)
                 throw new ArgumentException(TextResources.CollectBadArray, nameof(array));

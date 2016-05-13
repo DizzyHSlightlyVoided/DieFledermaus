@@ -41,9 +41,6 @@ using Org.BouncyCastle.Asn1;
 
 namespace DieFledermaus
 {
-#if NOARG3
-    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
-#endif
     [DebuggerDisplay(DieFledermausStream.CollectionDebuggerDisplay)]
     [DebuggerTypeProxy(typeof(DebugView))]
     internal class ByteOptionList : ICollection<FormatEntry>
@@ -251,9 +248,9 @@ namespace DieFledermaus
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (key.Length == 0 || TextEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
-                throw new ArgumentOutOfRangeException(nameof(key), key, TextResources.CommentLength);
+                throw new ArgumentOutOfRangeException(nameof(key), TextResources.CommentLength);
             if (version == 0)
-                throw new ArgumentOutOfRangeException(nameof(version), version, TextResources.OutOfRangeVersion);
+                throw new ArgumentOutOfRangeException(nameof(version), TextResources.OutOfRangeVersion);
 
             _key = key;
             _version = version;
@@ -1341,7 +1338,7 @@ namespace DieFledermaus
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
             if (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit)
-                throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.OutOfRangeByteLength);
+                throw new ArgumentOutOfRangeException(nameof(value), TextResources.OutOfRangeByteLength);
             _value = (byte[])value.Clone();
             _typeCode = typeCode;
         }
@@ -1362,7 +1359,7 @@ namespace DieFledermaus
         public FormatValue(string s)
         {
             if (FormatEntry.TextEncoding.GetByteCount(s) > DieFledermausStream.Max16Bit || s.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(s), s, TextResources.CommentLength);
+                throw new ArgumentOutOfRangeException(nameof(s), TextResources.CommentLength);
             _value = FormatEntry.TextEncoding.GetBytes(s);
             _typeCode = FormatValueTypeCode.StringUtf8;
         }

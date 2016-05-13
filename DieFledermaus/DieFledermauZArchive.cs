@@ -51,9 +51,6 @@ namespace DieFledermaus
 #if COMPLVL
     using System.IO.Compression;
 #endif
-#if NOARG3
-    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
-#endif
     /// <summary>
     /// Represents a DieFledermauZ archive file.
     /// </summary>
@@ -1621,7 +1618,7 @@ namespace DieFledermaus
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
                 if (value < 0 || value > DieFledermausStream.maxPkCount)
-                    throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, DieFledermausStream.maxPkCount));
+                    throw new ArgumentOutOfRangeException(nameof(value), string.Format(TextResources.OutOfRangeMinMax, 0, DieFledermausStream.maxPkCount));
                 _pkCount = value;
             }
         }
@@ -1725,7 +1722,7 @@ namespace DieFledermaus
                 if (_key != null && value != _key.Length << 3)
                     throw new NotSupportedException(TextResources.NotSameLength);
                 if (!IsValidKeyBitSize(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
+                    throw new ArgumentOutOfRangeException(nameof(value), TextResources.KeyLength);
                 _keySize = value;
             }
         }
@@ -2207,7 +2204,7 @@ namespace DieFledermaus
             if (dictionarySize != LzmaDictionarySize.Default)
                 dictionarySize = LzmaDictionarySize.Size8m;
             else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
-                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize, TextResources.OutOfRangeLzma);
+                throw new ArgumentOutOfRangeException(nameof(dictionarySize), TextResources.OutOfRangeLzma);
 
             LzmaCompressionFormat compFormat = new LzmaCompressionFormat() { DictionarySize = dictionarySize };
 

@@ -52,6 +52,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC.Multiplier;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities.Zlib;
 
 using SevenZip;
@@ -64,14 +65,6 @@ namespace DieFledermaus
 #else
     using System.ComponentModel;
     using System.IO.Compression;
-#endif
-#if NOCRYPT
-    using Org.BouncyCastle.Security;
-#else
-    using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
-#endif
-#if NOARG3
-    using ArgumentOutOfRangeException = DieFledermaus.ArgumentOutOfRangeException3;
 #endif
 
     /// <summary>
@@ -443,7 +436,7 @@ namespace DieFledermaus
             if (dictionarySize == 0)
                 dictionarySize = LzmaDictionarySize.Size8m;
             else if (dictionarySize < LzmaDictionarySize.MinValue || dictionarySize > LzmaDictionarySize.MaxValue)
-                throw new ArgumentOutOfRangeException(nameof(dictionarySize), dictionarySize, TextResources.OutOfRangeLzma);
+                throw new ArgumentOutOfRangeException(nameof(dictionarySize), TextResources.OutOfRangeLzma);
             _lzmaDictSize = dictionarySize;
         }
 
@@ -739,7 +732,7 @@ namespace DieFledermaus
         internal static int GetCompLvl(int compressionLevel)
         {
             if (compressionLevel < 0 || compressionLevel > 9)
-                throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, TextResources.CompressionLevel);
+                throw new ArgumentOutOfRangeException(nameof(compressionLevel), TextResources.CompressionLevel);
             return compressionLevel;
         }
 
@@ -966,11 +959,11 @@ namespace DieFledermaus
                         throw new NotSupportedException(TextResources.NotCompressed);
                     case MausCompressionFormat.Lzma:
                         if (value != 0 && value < (int)LzmaDictionarySize.MinValue || value > (int)LzmaDictionarySize.MaxValue)
-                            throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.OutOfRangeLzma);
+                            throw new ArgumentOutOfRangeException(nameof(value), TextResources.OutOfRangeLzma);
                         break;
                     default:
                         if (value < 0 || value > 9)
-                            throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, 9));
+                            throw new ArgumentOutOfRangeException(nameof(value), string.Format(TextResources.OutOfRangeMinMax, 0, 9));
                         break;
                 }
                 _cmpLvl = value;
@@ -1266,7 +1259,7 @@ namespace DieFledermaus
                 if (_key != null && value != _key.Length << 3)
                     throw new NotSupportedException(TextResources.NotSameLength);
                 if (!_keySizes.Contains(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.KeyLength);
+                    throw new ArgumentOutOfRangeException(nameof(value), TextResources.KeyLength);
                 _keySize = value;
             }
         }
@@ -2924,7 +2917,7 @@ namespace DieFledermaus
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
                 if (value < 0 || value > maxPkCount)
-                    throw new ArgumentOutOfRangeException(nameof(value), value, string.Format(TextResources.OutOfRangeMinMax, 0, maxPkCount));
+                    throw new ArgumentOutOfRangeException(nameof(value), string.Format(TextResources.OutOfRangeMinMax, 0, maxPkCount));
                 _pkCount = value;
             }
         }
@@ -3039,14 +3032,14 @@ namespace DieFledermaus
                     LzmaDecoder decoder = new LzmaDecoder();
                     decoder.SetDecoderProperties(opts);
                     if (decoder.DictionarySize < 1 || decoder.DictionarySize > (uint)LzmaDictionarySize.MaxValue)
-                        throw new InvalidDataException();
+                        throw new InvalidDataException(TextResources.InvalidDataMaus);
                     try
                     {
                         decoder.Code(_bufferStream, lzmaStream, _bufferStream.Length - optLen, -1, this);
                     }
                     catch (DataErrorException)
                     {
-                        throw new InvalidDataException();
+                        throw new InvalidDataException(TextResources.InvalidDataMaus);
                     }
                     if (lzmaStream.Length < _uncompressedLength || lzmaStream.Length == 0)
                         throw new EndOfStreamException();
@@ -3342,9 +3335,9 @@ namespace DieFledermaus
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
             if (offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), offset, TextResources.OutOfRangeLessThanZero);
+                throw new ArgumentOutOfRangeException(nameof(offset), TextResources.OutOfRangeLessThanZero);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), count, TextResources.OutOfRangeLessThanZero);
+                throw new ArgumentOutOfRangeException(nameof(count), TextResources.OutOfRangeLessThanZero);
             if (offset + count > buffer.Length)
                 throw new ArgumentException(string.Format(TextResources.OutOfRangeLength, nameof(offset), nameof(count)));
         }
@@ -3499,19 +3492,8 @@ namespace DieFledermaus
         internal static byte[] FillBuffer(int length)
         {
             byte[] buffer = new byte[length];
-#if NOCRYPT
             SecureRandom rng = new SecureRandom();
             rng.NextBytes(buffer);
-#else
-#if NOCRYPTOCLOSE
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-#else
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-#endif
-            {
-                rng.GetBytes(buffer);
-            }
-#endif
             return buffer;
         }
 
