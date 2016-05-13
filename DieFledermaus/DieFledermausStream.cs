@@ -2554,6 +2554,9 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vHash)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
+                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                        throw new InvalidDataException(TextResources.FormatBad);
+
                     byte[] gotKey = curValue[0].Value;
 
                     if (_rsaEncKey == null)
@@ -2569,6 +2572,7 @@ namespace DieFledermaus
                     if ((curValue.Count != 1 && curValue.Count != 2) || curValue.Version != _vRsaSig)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
+                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray) throw new InvalidDataException(TextResources.FormatBad);
                     byte[] rsaSig = curValue[0].Value;
 
                     if (_rsaSignature == null)
@@ -2579,6 +2583,14 @@ namespace DieFledermaus
                     if (curValue.Count == 1)
                         continue;
 
+                    switch (curValue[1].TypeCode)
+                    {
+                        case FormatValueTypeCode.ByteArray:
+                        case FormatValueTypeCode.StringUtf8:
+                            break;
+                        default:
+                            throw new InvalidDataException(TextResources.FormatBad);
+                    }
                     byte[] rsaId = curValue[1].Value;
 
                     if (_rsaSignId == null)
@@ -2609,7 +2621,7 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vFilename)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    string filename = _textEncoding.GetString(curValue[0].Value);
+                    string filename = curValue[0].ValueString;
 
                     if (_filename == null)
                     {
@@ -2661,6 +2673,8 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vComment)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
+                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                        throw new InvalidDataException(TextResources.FormatBad);
                     byte[] comBytes = curValue[0].Value;
 
                     if (_comBytes == null)
@@ -2694,6 +2708,9 @@ namespace DieFledermaus
             if (curValue.Key != _kEnc)
                 return false;
             MausEncryptionFormat getEncFormat;
+
+            if (curValue.Count != 2)
+                throw new NotSupportedException(mauZ ? TextResources.FormatUnknownZ : TextResources.FormatUnknown);
 
             if (curValue.Count != 2 || !_encDict.TryGetValue(curValue[0].ValueString, out getEncFormat))
                 throw new NotSupportedException(mauZ ? TextResources.FormatUnknownZ : TextResources.FormatUnknown);
@@ -2742,30 +2759,11 @@ namespace DieFledermaus
             if ((formatValue.Count != 1 && formatValue.Count != 2) || formatValue.Version != vDsa)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            byte[] message = formatValue[0].Value;
-
-            Asn1Sequence seq;
-            try
-            {
-                seq = (Asn1Sequence)Asn1Object.FromByteArray(message);
-            }
-            catch
-            {
-                throw new InvalidDataException(TextResources.FormatBad);
-            }
-
-            if (seq.Count != 2)
+            DerSequence seq = formatValue[0].GetDerObject() as DerSequence;
+            if (seq == null || seq.Count != 2 || !seq.Cast<Asn1Encodable>().All(i => i is DerInteger))
                 throw new InvalidDataException(TextResources.FormatBad);
 
-            DerIntegerPair newVal;
-            try
-            {
-                newVal = new DerIntegerPair((DerInteger)seq[0], (DerInteger)seq[1]);
-            }
-            catch
-            {
-                throw new InvalidDataException(TextResources.FormatBad);
-            }
+            DerIntegerPair newVal = new DerIntegerPair((DerInteger)seq[0], (DerInteger)seq[1]);
 
             if (existing == null)
                 existing = newVal;
@@ -2774,25 +2772,14 @@ namespace DieFledermaus
 
             if (formatValue.Count == 2)
             {
+                if (formatValue[1].TypeCode != FormatValueTypeCode.ByteArray) throw new InvalidDataException(TextResources.FormatBad);
                 byte[] newId = formatValue[1].Value;
+
                 if (keyId == null)
                     keyId = newId;
                 else if (!CompareBytes(keyId, newId))
                     throw new InvalidDataException(TextResources.FormatBad);
             }
-        }
-
-        internal static void ReadBytes(FormatEntry curValue, ushort version, ref byte[] oldValue)
-        {
-            if (curValue.Count != 1 || curValue.Version != version)
-                throw new NotSupportedException(TextResources.FormatUnknown);
-
-            byte[] bytes = curValue[0].Value;
-
-            if (oldValue == null)
-                oldValue = bytes;
-            else if (!CompareBytes(bytes, oldValue))
-                throw new InvalidDataException(TextResources.FormatBad);
         }
 
         internal static byte[] ReadBytes(BinaryReader reader, int size)
@@ -2824,19 +2811,17 @@ namespace DieFledermaus
             if (curValue.Count != 1 || curValue.Version != _vTime)
                 throw new NotSupportedException(TextResources.FormatUnknown);
 
-            long? value = curValue[0].ValueInt64;
+            DateTime? value = curValue[0].ValueDateTime;
 
-            if (!value.HasValue || value < 0 || value > maxTicks)
+            if (!value.HasValue)
                 throw new InvalidDataException(TextResources.FormatBad);
-
-            DateTime newVal = new DateTime(value.Value, DateTimeKind.Utc);
 
             if (curTime.HasValue)
             {
-                if (curTime.Value != newVal)
+                if (curTime.Value != value.Value)
                     throw new InvalidDataException(TextResources.FormatBad);
             }
-            else curTime = newVal;
+            else curTime = value;
 
             if (fromEncrypted)
                 savingOption |= MausSavingOptions.SecondaryOnly;
@@ -3706,7 +3691,7 @@ namespace DieFledermaus
         private void AddOptions(ByteOptionList formats, MausSavingOptions savingOption)
         {
             if (_filename != null && (savingOption & _saveFilename) != 0)
-                formats.Add(_kFilename, _vFilename, _textEncoding.GetBytes(_filename));
+                formats.Add(_kFilename, _vFilename, _filename);
 
             if ((savingOption & _saveCmpFmt) != 0)
             {
@@ -3724,11 +3709,11 @@ namespace DieFledermaus
                 }
             }
 
-            if ((savingOption & _saveTimeC) != 0)
-                FormatSetTimes(formats, _kTimeC, _timeC);
+            if ((savingOption & _saveTimeC) != 0 && _timeC.HasValue)
+                formats.Add(_kTimeC, _vTime, _timeC.Value);
 
-            if ((savingOption & _saveTimeM) != 0)
-                FormatSetTimes(formats, _kTimeM, _timeM);
+            if ((savingOption & _saveTimeM) != 0 && _timeM.HasValue)
+                formats.Add(_kTimeM, _vTime, _timeM.Value);
         }
 
         private void WriteFile()
@@ -3832,7 +3817,8 @@ namespace DieFledermaus
             byte[] rsaKey = RsaEncrypt(_key, _rsaEncParamBC, _hashFunc, false);
 
             #region Signatures
-            byte[] rsaSignature, dsaSignature, ecdsaSignature;
+            byte[] rsaSignature;
+            DerSequence dsaSignature, ecdsaSignature;
 
             if (_rsaSignParamBC != null || _dsaSignParamBC != null || _ecdsaSignParamBC != null)
             {
@@ -3882,7 +3868,11 @@ namespace DieFledermaus
                 }
                 else ecdsaSignature = null;
             }
-            else rsaSignature = dsaSignature = ecdsaSignature = _hashExpected = null;
+            else
+            {
+                rsaSignature = _hashExpected = null;
+                dsaSignature = ecdsaSignature = null;
+            }
             #endregion
 
 #if NOLEAVEOPEN
@@ -4010,9 +4000,7 @@ namespace DieFledermaus
                     derId = NistObjectIdentifiers.IdSha3_512;
                     break;
                 case MausHashFunction.Whirlpool:
-                    //Taken from http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/asn1/structures/AlgorithmID.html
-                    //(and verified in other places)
-                    derId = new DerObjectIdentifier("1.0.10118.3.0.55");
+                    derId = _whirlpoolOID;
                     break;
                 default:
                     throw new InvalidEnumArgumentException(nameof(hashFunc), (int)hashFunc, typeof(MausHashFunction));
@@ -4023,23 +4011,34 @@ namespace DieFledermaus
             return dInfo.GetDerEncoded();
         }
 
-        private static byte[] GenerateDsaSignature(byte[] hash, IDsa signer, AsymmetricKeyParameter key)
+        //Taken from http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/asn1/structures/AlgorithmID.html
+        //(and verified in other places)
+        private static readonly DerObjectIdentifier _whirlpoolOID = new DerObjectIdentifier("1.0.10118.3.0.55");
+
+        private static DerSequence GenerateDsaSignature(byte[] hash, IDsa signer, AsymmetricKeyParameter key)
         {
             signer.Init(true, key);
 
             var ints = signer.GenerateSignature(hash);
 
-            return new DerSequence(new DerInteger(ints[0]), new DerInteger(ints[1])).GetDerEncoded();
+            return new DerSequence(new DerInteger(ints[0]), new DerInteger(ints[1]));
         }
 
-        private void WriteRsaSig(byte[] rsaSignature, byte[] dsaSignature, byte[] ecdsaSignature, ByteOptionList formats)
+        private void WriteRsaSig(byte[] rsaSignature, DerSequence dsaSignature, DerSequence ecdsaSignature, ByteOptionList formats)
         {
-            WriteRsaSig(rsaSignature, _rsaSignId, _kRsaSig, _vRsaSig, formats);
+            if (rsaSignature != null)
+            {
+                FormatEntry formatValue = new FormatEntry(_kRsaSig, _vRsaSig, rsaSignature);
+
+                if (_rsaSignId != null) formatValue.Add(_rsaSignId);
+
+                formats.Add(formatValue);
+            }
             WriteRsaSig(dsaSignature, _dsaSignId, _kDsaSig, _vDsaSig, formats);
             WriteRsaSig(ecdsaSignature, _ecdsaSignId, _kECDsaSig, _vECDsaSig, formats);
         }
 
-        private static void WriteRsaSig(byte[] rsaSignature, byte[] rsaSignId, string kRsaSig, ushort vRsaSig, ByteOptionList formats)
+        private static void WriteRsaSig(DerSequence rsaSignature, byte[] rsaSignId, string kRsaSig, ushort vRsaSig, ByteOptionList formats)
         {
             if (rsaSignature == null)
                 return;
@@ -4072,14 +4071,6 @@ namespace DieFledermaus
                     formats.Add(_kCmpDef, 1);
                     break;
             }
-        }
-
-        private static void FormatSetTimes(ByteOptionList formats, string kTime, DateTime? dateTime)
-        {
-            if (!dateTime.HasValue)
-                return;
-
-            formats.Add(kTime, _vTime, dateTime.Value.ToUniversalTime().Ticks);
         }
 
         internal static void FormatSetComment(byte[] _comBytes, ByteOptionList formats)

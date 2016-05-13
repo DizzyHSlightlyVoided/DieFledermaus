@@ -37,6 +37,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using DieFledermaus.Globalization;
+using Org.BouncyCastle.Asn1;
 
 namespace DieFledermaus
 {
@@ -138,6 +139,16 @@ namespace DieFledermaus
         }
 
         public void Add(string key, ushort version, double value)
+        {
+            Add(new FormatEntry(key, version, value));
+        }
+
+        public void Add(string key, ushort version, DateTime value)
+        {
+            Add(new FormatEntry(key, version, value));
+        }
+
+        public void Add(string key, ushort version, Asn1Encodable value)
         {
             Add(new FormatEntry(key, version, value));
         }
@@ -454,6 +465,47 @@ namespace DieFledermaus
             Add(value);
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified key, version, and initial value.
+        /// </summary>
+        /// <param name="key">The key to set.</param>
+        /// <param name="version">The current version of the byte value.</param>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="key"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="version"/> is 0.</para>
+        /// </exception>
+        public FormatEntry(string key, ushort version, DateTime value)
+            : this(key, version)
+        {
+            Add(value);
+        }
+
+
+        /// <summary>
+        /// Creates a new instance with the specified key, version, and initial value.
+        /// </summary>
+        /// <param name="key">The key to set.</param>
+        /// <param name="version">The current version of the byte value.</param>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="key"/> or <paramref name="value"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
+        /// <para>-OR-</para>
+        /// <para><paramref name="version"/> is 0.</para>
+        /// </exception>
+        public FormatEntry(string key, ushort version, Asn1Encodable value)
+            : this(key, version)
+        {
+            Add(value);
+        }
+
         internal FormatEntry(BinaryReader reader)
         {
             int strLen = reader.ReadUInt16();
@@ -467,7 +519,67 @@ namespace DieFledermaus
             _values = new List<FormatValue>(itemCount);
 
             for (int i = 0; i < itemCount; i++)
-                _values.Add(new FormatValue(DieFledermausStream.ReadBytes16Bit(reader)));
+            {
+                FormatValueTypeCode code = (FormatValueTypeCode)reader.ReadByte();
+                byte[] buffer;
+
+                switch (code)
+                {
+                    case FormatValueTypeCode.ByteArray:
+                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        break;
+                    case FormatValueTypeCode.StringUtf8:
+                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        try
+                        {
+                            TextEncoding.GetString(buffer);
+                        }
+                        catch (DecoderFallbackException)
+                        {
+                            throw new InvalidDataException();
+                        }
+                        break;
+                    case FormatValueTypeCode.DerEncoded:
+                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        try
+                        {
+                            Asn1Object.FromByteArray(buffer);
+                        }
+                        catch
+                        {
+                            throw new InvalidDataException();
+                        }
+                        break;
+                    case FormatValueTypeCode.DateTime:
+                        try
+                        {
+                            _values.Add(new FormatValue(new DateTime(reader.ReadInt64(), DateTimeKind.Utc)));
+                            continue;
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            throw new InvalidDataException();
+                        }
+                    case FormatValueTypeCode.Int16:
+                    case FormatValueTypeCode.UInt16:
+                        buffer = DieFledermausStream.ReadBytes(reader, sizeof(short));
+                        break;
+                    case FormatValueTypeCode.Int32:
+                    case FormatValueTypeCode.UInt32:
+                    case FormatValueTypeCode.Single:
+                        buffer = DieFledermausStream.ReadBytes(reader, sizeof(int));
+                        break;
+                    case FormatValueTypeCode.Int64:
+                    case FormatValueTypeCode.UInt64:
+                    case FormatValueTypeCode.Double:
+                        buffer = DieFledermausStream.ReadBytes(reader, sizeof(long));
+                        break;
+                    default:
+                        throw new InvalidDataException();
+                }
+
+                _values.Add(new FormatValue(buffer, code));
+            }
         }
         #endregion
 
@@ -514,12 +626,10 @@ namespace DieFledermaus
         /// <summary>
         /// Gets a value indicating whether <see cref="Count"/> is equal to the maximum value of 65535.
         /// </summary>
-        public bool AtMaximumCapacity
+        public bool IsReadOnly
         {
             get { return _values.Count >= ushort.MaxValue; }
         }
-        bool ICollection<FormatValue>.IsReadOnly { get { return AtMaximumCapacity; } }
-        bool IList.IsReadOnly { get { return AtMaximumCapacity; } }
 
         /// <summary>
         /// Returns an array containing all elements in the new list.
@@ -539,7 +649,7 @@ namespace DieFledermaus
         /// The <see cref="FormatValue.Value"/> property is <see langword="null"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(FormatValue value)
         {
@@ -548,7 +658,7 @@ namespace DieFledermaus
 
         int IList.Add(object value)
         {
-            if (AtMaximumCapacity) return -1;
+            if (IsReadOnly) return -1;
             int newDex = _values.Count;
 
             ((IList)this).Insert(_values.Count, value);
@@ -566,7 +676,7 @@ namespace DieFledermaus
         /// <paramref name="value"/> has a length of 0 or greater than 65536.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(byte[] value)
         {
@@ -589,7 +699,7 @@ namespace DieFledermaus
         /// <paramref name="s"/> contains invalid characters.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(string s)
         {
@@ -601,7 +711,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(short value)
         {
@@ -613,7 +723,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(ushort value)
         {
@@ -625,7 +735,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(int value)
         {
@@ -637,7 +747,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(uint value)
         {
@@ -649,7 +759,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(long value)
         {
@@ -661,7 +771,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(ulong value)
         {
@@ -673,7 +783,7 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(float value)
         {
@@ -685,9 +795,36 @@ namespace DieFledermaus
         /// </summary>
         /// <param name="value">The value to add.</param>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Add(double value)
+        {
+            Add(new FormatValue(value));
+        }
+
+        /// <summary>
+        /// Adds the specified value to the list.
+        /// </summary>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
+        /// </exception>
+        public void Add(DateTime value)
+        {
+            Add(new FormatValue(value));
+        }
+
+        /// <summary>
+        /// Adds the specified value to the list.
+        /// </summary>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="value"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
+        /// </exception>
+        public void Add(Asn1Encodable value)
         {
             Add(new FormatValue(value));
         }
@@ -706,14 +843,14 @@ namespace DieFledermaus
         /// The <see cref="FormatValue.Value"/> property is <see langword="null"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, FormatValue value)
         {
             if (value.Value == null)
                 throw new ArgumentException(string.Format(TextResources.PropertyNull, nameof(FormatValue) + "." + nameof(FormatValue.Value)), nameof(value));
 
-            if (AtMaximumCapacity)
+            if (IsReadOnly)
                 throw new NotSupportedException(TextResources.ByteListAtMaximum);
 
             _values.Insert(index, value);
@@ -723,7 +860,7 @@ namespace DieFledermaus
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            if (AtMaximumCapacity)
+            if (IsReadOnly)
                 throw new NotSupportedException(TextResources.ByteListAtMaximum);
 
             ((IList)_values).Insert(index, value);
@@ -743,7 +880,7 @@ namespace DieFledermaus
         /// <paramref name="value"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, byte[] value)
         {
@@ -767,7 +904,7 @@ namespace DieFledermaus
         /// <paramref name="s"/> contains invalid characters.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, string s)
         {
@@ -783,7 +920,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, short value)
         {
@@ -799,7 +936,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, ushort value)
         {
@@ -815,7 +952,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, int value)
         {
@@ -831,7 +968,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, uint value)
         {
@@ -847,7 +984,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, long value)
         {
@@ -863,7 +1000,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, ulong value)
         {
@@ -879,7 +1016,7 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, float value)
         {
@@ -895,9 +1032,44 @@ namespace DieFledermaus
         /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// <see cref="AtMaximumCapacity"/> is <see langword="true"/>.
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
         public void Insert(int index, double value)
+        {
+            Insert(index, new FormatValue(value));
+        }
+
+        /// <summary>
+        /// Inserts the specified value into the list at the specified index.
+        /// </summary>
+        /// <param name="index">The index of the value to add.</param>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
+        /// </exception>
+        public void Insert(int index, DateTime value)
+        {
+            Insert(index, new FormatValue(value));
+        }
+
+        /// <summary>
+        /// Inserts the specified value into the list at the specified index.
+        /// </summary>
+        /// <param name="index">The index of the value to add.</param>
+        /// <param name="value">The value to add.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="value"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
+        /// </exception>
+        public void Insert(int index, Asn1Encodable value)
         {
             Insert(index, new FormatValue(value));
         }
@@ -974,7 +1146,18 @@ namespace DieFledermaus
                 + TextEncoding.GetByteCount(_key);
 
             for (int i = 0; i < _values.Count; i++)
-                total += 2L + _values[i].Value.Length;
+            {
+                total++; //1-byte code
+                switch (_values[i].TypeCode)
+                {
+                    case FormatValueTypeCode.ByteArray:
+                    case FormatValueTypeCode.StringUtf8:
+                    case FormatValueTypeCode.DerEncoded:
+                        total += sizeof(ushort);
+                        break;
+                }
+                total += _values[i].Value.Length;
+            }
 
             return total;
         }
@@ -1011,8 +1194,17 @@ namespace DieFledermaus
             var values = _values;
             for (int i = 0; i < count; i++)
             {
-                var curBytes = values[i].Value;
-                writer.Write((ushort)curBytes.Length);
+                var curVal = values[i];
+                var curBytes = curVal.Value;
+                writer.Write((byte)curVal.TypeCode);
+                switch (curVal.TypeCode)
+                {
+                    case FormatValueTypeCode.ByteArray:
+                    case FormatValueTypeCode.StringUtf8:
+                    case FormatValueTypeCode.DerEncoded:
+                        writer.Write((ushort)curBytes.Length);
+                        break;
+                }
                 writer.Write(curBytes);
             }
         }
@@ -1042,7 +1234,7 @@ namespace DieFledermaus
         /// <returns>A string representation of the current instance.</returns>
         public override string ToString()
         {
-            return string.Format("Key = {0}, Version = {1}, Count = {2}", _key, _version, Count);
+            return string.Format(CultureInfo.InvariantCulture, "Key = {0}, Version = {1}, Count = {2}", _key, _version, Count);
         }
 
         bool ICollection.IsSynchronized { get { return false; } }
@@ -1141,11 +1333,17 @@ namespace DieFledermaus
         /// <paramref name="value"/> has a length of 0 or greater than 65536.
         /// </exception>
         public FormatValue(byte[] value)
+            : this(value, FormatValueTypeCode.ByteArray)
+        {
+        }
+
+        internal FormatValue(byte[] value, FormatValueTypeCode typeCode)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
             if (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit)
                 throw new ArgumentOutOfRangeException(nameof(value), value, TextResources.OutOfRangeByteLength);
             _value = (byte[])value.Clone();
+            _typeCode = typeCode;
         }
 
         /// <summary>
@@ -1166,6 +1364,7 @@ namespace DieFledermaus
             if (FormatEntry.TextEncoding.GetByteCount(s) > DieFledermausStream.Max16Bit || s.Length == 0)
                 throw new ArgumentOutOfRangeException(nameof(s), s, TextResources.CommentLength);
             _value = FormatEntry.TextEncoding.GetBytes(s);
+            _typeCode = FormatValueTypeCode.StringUtf8;
         }
 
         /// <summary>
@@ -1175,6 +1374,7 @@ namespace DieFledermaus
         public FormatValue(short value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8) };
+            _typeCode = FormatValueTypeCode.Int16;
         }
 
         /// <summary>
@@ -1184,6 +1384,7 @@ namespace DieFledermaus
         public FormatValue(ushort value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8) };
+            _typeCode = FormatValueTypeCode.UInt16;
         }
 
         /// <summary>
@@ -1193,6 +1394,7 @@ namespace DieFledermaus
         public FormatValue(int value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
+            _typeCode = FormatValueTypeCode.Int32;
         }
 
         /// <summary>
@@ -1202,6 +1404,7 @@ namespace DieFledermaus
         public FormatValue(uint value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
+            _typeCode = FormatValueTypeCode.UInt32;
         }
 
         /// <summary>
@@ -1212,6 +1415,7 @@ namespace DieFledermaus
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) };
+            _typeCode = FormatValueTypeCode.Int64;
         }
 
         /// <summary>
@@ -1222,6 +1426,7 @@ namespace DieFledermaus
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
                 (byte)(value >> 32), (byte)(value >> 40), (byte)(value >> 48), (byte)(value >> 56) };
+            _typeCode = FormatValueTypeCode.UInt64;
         }
 
         /// <summary>
@@ -1231,6 +1436,17 @@ namespace DieFledermaus
         public FormatValue(float value)
             : this(BufferConvert<float, int>(value, sizeof(float)))
         {
+            _typeCode = FormatValueTypeCode.Single;
+        }
+
+        public FormatValue(Asn1Encodable value)
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            byte[] buffer = value.GetDerEncoded();
+            if (buffer == null || buffer.Length == 0 || buffer.Length > DieFledermausStream.Max16Bit)
+                throw new InvalidOperationException(); //TODO: Message
+            _value = buffer;
+            _typeCode = FormatValueTypeCode.DerEncoded;
         }
 
         /// <summary>
@@ -1240,6 +1456,17 @@ namespace DieFledermaus
         public FormatValue(double value)
             : this(BufferConvert<double, long>(value, sizeof(double)))
         {
+            _typeCode = FormatValueTypeCode.Double;
+        }
+
+        /// <summary>
+        /// Creates a new instance using the specified value.
+        /// </summary>
+        /// <param name="value">The value to set.</param>
+        public FormatValue(DateTime value)
+            : this(value.ToUniversalTime().Ticks)
+        {
+            _typeCode = FormatValueTypeCode.DateTime;
         }
 
         private static TOut BufferConvert<TIn, TOut>(TIn value, int size)
@@ -1250,6 +1477,9 @@ namespace DieFledermaus
             return outBuffer[0];
         }
         #endregion
+
+        private FormatValueTypeCode _typeCode;
+        public FormatValueTypeCode TypeCode { get { return _typeCode; } }
 
         #region Values
         private byte[] _value;
@@ -1266,129 +1496,145 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets the string representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/> contains invalid UTF-8 bytes.
+        /// Gets the UTF-8 string representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.StringUtf8"/>.
         /// </summary>
         public string ValueString
         {
             get
             {
-                if (_value == null) return null;
-                try
-                {
-                    return FormatEntry.TextEncoding.GetString(_value);
-                }
-                catch
-                {
-                    return null;
-                }
+                if (_typeCode == FormatValueTypeCode.StringUtf8) return FormatEntry.TextEncoding.GetString(_value);
+                return null;
             }
         }
+
         /// <summary>
-        /// Gets a signed 16 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 2.
+        /// Gets a signed 16-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.Int16"/>.
         /// </summary>
         public short? ValueInt16
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(short)) return null;
-                return (short)(_value[0] | _value[1] << 8);
+                if (_typeCode == FormatValueTypeCode.Int16) return GetValInt16();
+                return null;
             }
         }
 
         /// <summary>
-        /// Gets an unsigned 16 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 2.
+        /// Gets an unsigned 16-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.UInt16"/>.
         /// </summary>
         public ushort? ValueUInt16
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(ushort)) return null;
-                return (ushort)(_value[0] | _value[1] << 8);
+                if (_typeCode == FormatValueTypeCode.UInt16) return (ushort)GetValInt16();
+                return null;
             }
         }
 
+        private short GetValInt16() { return (short)(_value[0] | _value[1] << 8); }
+
         /// <summary>
-        /// Gets a signed 32 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 4.
+        /// Gets a signed 32-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.Int32"/>.
         /// </summary>
         public int? ValueInt32
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(int)) return null;
-                return _value[0] | _value[1] << 8 | _value[2] << 16 | _value[3] << 24;
+                if (_typeCode == FormatValueTypeCode.Int32) return GetValInt32();
+                return null;
             }
         }
-
         /// <summary>
-        /// Gets an unsigned 32 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 4.
+        /// Gets an unsigned 32-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.UInt32"/>.
         /// </summary>
         public uint? ValueUInt32
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(uint)) return null;
-                return _value[0] | ((uint)_value[1] << 8) | ((uint)_value[2] << 16) | ((uint)_value[3] << 24);
+                if (_typeCode == FormatValueTypeCode.UInt32) return (uint)GetValInt32();
+                return null;
             }
         }
 
+        private int GetValInt32() { return _value[0] | _value[1] << 8 | _value[2] << 16 | _value[3] << 24; }
+
         /// <summary>
-        /// Gets a signed 64 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 8.
+        /// Gets a signed 64-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.Int64"/>.
         /// </summary>
         public long? ValueInt64
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(long)) return null;
-                return _value[0] | ((long)_value[1] << 8) | ((long)_value[2] << 16) | ((long)_value[3] << 24) |
-                    ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56);
+                if (_typeCode == FormatValueTypeCode.Int64) return GetValInt64();
+                return null;
             }
         }
-
         /// <summary>
-        /// Gets an unsigned 64 integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 8.
+        /// Gets an unsigned 64-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.UInt64"/>.
         /// </summary>
         public ulong? ValueUInt64
         {
             get
             {
-                if (_value == null || _value.Length != sizeof(ulong)) return null;
-                return _value[0] | ((ulong)_value[1] << 8) | ((ulong)_value[2] << 16) | ((ulong)_value[3] << 24) |
-                    ((ulong)_value[4] << 32) | ((ulong)_value[5] << 40) | ((ulong)_value[6] << 48) | ((ulong)_value[7] << 56);
+                if (_typeCode == FormatValueTypeCode.UInt64) return (ulong)GetValInt64();
+                return null;
             }
         }
 
+        private long GetValInt64()
+        {
+            return _value[0] | ((long)_value[1] << 8) | ((long)_value[2] << 16) | ((long)_value[3] << 24) |
+                ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56);
+        }
+
         /// <summary>
-        /// Gets double-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 4.
+        /// Gets a single-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.Single"/>.
         /// </summary>
         public float? ValueSingle
         {
             get
             {
-                int? value = ValueInt32;
-                if (value == null) return null;
-                return BufferConvert<int, float>(value.Value, sizeof(float));
+                if (_typeCode == FormatValueTypeCode.Single)
+                    return BufferConvert<int, float>(GetValInt32(), sizeof(int));
+                return null;
             }
         }
 
         /// <summary>
-        /// Gets single-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="Value"/>
-        /// does not have a length of 8.
+        /// Gets a double-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
+        /// is not <see cref="FormatValueTypeCode.Double"/>.
         /// </summary>
         public double? ValueDouble
         {
             get
             {
-                long? value = ValueInt64;
-                if (value == null) return null;
-                return BufferConvert<long, double>(value.Value, sizeof(double));
+                if (_typeCode == FormatValueTypeCode.Double)
+                    return BufferConvert<long, double>(GetValInt64(), sizeof(int));
+                return null;
             }
+        }
+
+        public DateTime? ValueDateTime
+        {
+            get
+            {
+                if (_typeCode == FormatValueTypeCode.DateTime) return new DateTime(GetValInt64(), DateTimeKind.Utc);
+                return null;
+            }
+        }
+
+        public Asn1Object GetDerObject()
+        {
+            if (_typeCode == FormatValueTypeCode.DerEncoded) return Asn1Object.FromByteArray(_value);
+            return null;
         }
         #endregion
 
@@ -1399,25 +1645,33 @@ namespace DieFledermaus
         public override string ToString()
         {
             if (_value == null)
-                return base.ToString();
+                return string.Empty;
 
-            string s = ValueString;
-            if (s != null && ((_value.Length != sizeof(short) && _value.Length != sizeof(int) && _value.Length != sizeof(long)) || !s.Any(c => char.IsControl(c) && !char.IsWhiteSpace(c))))
-                return s;
-
-            short? valInt16 = ValueInt16;
-            if (valInt16.HasValue)
-                return valInt16.Value.ToString(NumberFormatInfo.InvariantInfo);
-
-            int? valInt32 = ValueInt32;
-            if (valInt32.HasValue)
-                return valInt32.Value.ToString(NumberFormatInfo.InvariantInfo);
-
-            long? valInt64 = ValueInt64;
-            if (valInt64.HasValue)
-                return valInt64.Value.ToString(NumberFormatInfo.InvariantInfo);
-
-            return string.Concat(_value.Select(i => i.ToString("x2", NumberFormatInfo.InvariantInfo)).ToArray());
+            switch (_typeCode)
+            {
+                default:
+                    return string.Concat(_value.Select(i => i.ToString("x2", NumberFormatInfo.InvariantInfo)).ToArray());
+                case FormatValueTypeCode.StringUtf8:
+                    return ValueString;
+                case FormatValueTypeCode.Int16:
+                    return ValueInt16.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.UInt16:
+                    return ValueUInt16.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.Int32:
+                    return ValueInt32.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.UInt32:
+                    return ValueUInt32.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.Int64:
+                    return ValueInt64.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.UInt64:
+                    return ValueUInt64.Value.ToString(NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.Single:
+                    return ValueSingle.Value.ToString("r", NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.Double:
+                    return ValueDouble.Value.ToString("r", NumberFormatInfo.InvariantInfo);
+                case FormatValueTypeCode.DateTime:
+                    return ValueDateTime.Value.ToString("o", CultureInfo.InvariantCulture);
+            }
         }
 
         #region Equality
@@ -1429,10 +1683,12 @@ namespace DieFledermaus
         public bool Equals(FormatValue other)
         {
             if (_value == other._value) return true;
-            int length = (_value == null) ? 0 : _value.Length;
+            if (_typeCode != other._typeCode) return false;
 
-            if ((length != 0 && other._value == null) || length != other._value.Length)
-                return false;
+            int length = (_value == null) ? 0 : _value.Length;
+            int otherLength = other._value == null ? 0 : other._value.Length;
+
+            if (length != otherLength) return false;
 
             for (int i = 0; i < length; i++)
             {
@@ -1459,8 +1715,8 @@ namespace DieFledermaus
         /// <returns>The hash code for the current value.</returns>
         public override int GetHashCode()
         {
-            if (_value == null) return 0;
-            int total = 0;
+            if (_value == null) return (byte)_typeCode;
+            int total = (byte)_typeCode;
             for (int i = 0; i < _value.Length; i++)
                 total += _value[i];
             return total;
@@ -1488,5 +1744,21 @@ namespace DieFledermaus
             return !b1.Equals(b2);
         }
         #endregion
+    }
+
+    internal enum FormatValueTypeCode : byte
+    {
+        ByteArray,
+        StringUtf8,
+        Int16,
+        UInt16,
+        Int32,
+        UInt32,
+        Int64,
+        UInt64,
+        Single,
+        Double,
+        DateTime,
+        DerEncoded
     }
 }

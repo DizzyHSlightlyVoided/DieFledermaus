@@ -8,6 +8,8 @@ Version 1.01
 
 An archive format, with the purpose of containing multiple files, based on the DieFledermaus single-file-compression format. Like the DieFledermaus format, it exists primarily to be a bilingual pun; however, it is also a fully-functioning archive format.
 
+*Note:* This format specification is currently not finalized.
+
 This document uses terminology found in [DieFledermaus Format.md](DieFledermaus Format.md), and assumes familiarity with the DieFledermaus file structure.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
@@ -27,10 +29,10 @@ The structure of a DieFledermauZ file is as follows:
 
 ### Options
 The following elements are specified for the **Options** field:
-* `Kom` - *1 parameter.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
-* `Ver` - *2 parameters.* Indicates that the archive is encrypted. Same format as in DieFledermaus; must be in plaintext.
-* `Hash` - *1 parameter.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
-* `RSAsch` - *1 parameter.* Indicates that the archive uses an RSA-encrypted key. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
+* `Kom`(byte[] *commentData*) - *version 1.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
+* `Ver`(string *format*, Int16 *keySize*) - *version 1.* Indicates that the archive is encrypted. Same format as in DieFledermaus; must be in plaintext.
+* `Hash`(string *hashID*) - *version 1.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
+* `RSAsch`(byte[] *encKey*) - *version 1.* Indicates that the archive uses an RSA-encrypted key. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
 
 Entry List
 ----------

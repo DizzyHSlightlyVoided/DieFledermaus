@@ -8,6 +8,8 @@ Version 1.01
 
 The DieFledermaus file format is simply a [DEFLATE](https://en.wikipedia.org/wiki/DEFLATE)- or [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and a magic number. It exists mostly to be a bilingual pun; however, it is also a fully-functioning archive format.
 
+*Note:* This format specification is currently not finalized.
+
 Terminology
 -----------
 * **decompressed file** or **decompressed data:** The file as it originally existed before compression.
@@ -32,36 +34,48 @@ A DieFledermaus stream contains the following fields:
 * **Version:** An unsigned 16-bit value containing the version number in fixed-point form; divide the integer value by 100.0 to get the actual version number, i.e. `65 00` (hex) = integer `101` (decimal) = version 1.01.
 * **Primary Format:** A collection of options specifying the format.
 * **Compressed Length:** A signed 64-bit integer containing the number of bytes in the **Data** field.
-* **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the decoder determines that the compressed data decodes to a length greater than this value, it must discard the extra data. This is just for error checking, however; an encoder should set this to the same length as the actual uncompressed length. The minimum length of the decompressed data must be 1 byte.
+* **Decompressed Length:** A signed 64-bit integer containing the number of bytes in the uncompressed data. If the decoder determines that the compressed data decodes to a length greater than this value, it must discard the extra data. This is just for error checking, however; an encoder should set this to the same length as the actual uncompressed length. The length of the decompressed data, and hence the value of this field, must be at least 1 byte.
 * **HMAC:** A hash of the **Secondary Format**, **Checksum**, and **Data** fields using the specified hash function.
 * **Secondary Format:**  A second collection of options.
 * **Checksum:** A hash of the decompressed data using the specified hash function.
 * **Data:** The compressed data itself.
 
 ### Format
-**Primary Format** and **Secondary Format** are used to specify information about the format of the encoded data. The field starts with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the collection; unlike length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements. Format elements are case-sensitive.
+**Primary Format** and **Secondary Format** are used to specify information about the format of the encoded data and/or the archive itself. Both of these fields start with the **Format Length**, an unsigned 16-bit integer specifying the number of elements in the collection; unlike length-prefixed strings, a 0-value in the **Format Length** means that there really are zero elements.
 
 Each element in **Format** has the following structure:
-* **Key:** A length-prefixed string of UTF-8 characters, indicating the name of the format element.
+* **Key:** A length-prefixed string of UTF-8 characters, indicating the name of the format element. This must be case-sensitive.
 * **Version:** A 16-bit unsigned integer indicating the version number.
 * **Parameter Count:** A 16-bit unsigned integer indicating the number of *parameters.* Some elements require further information; for example, `Ver` indicates that the archive is encrypted, but does not specify what type of encryption is used or the size of the key.
-* Zero or more **Parameters**, each one consisting of a length-prefixed string of binary data, though some of them might contain text.
+* Zero or more **Parameters**, each one consisting of the *parameter code*, which indicates the type of data therein, and the *parameter value*, which contains the actual value. The following parameter code values are defined:
+ - `00`: byte[]: an arbitrary length-prefixed string; a byte array.
+ - `01`: string: a length-prefixed string containing valid UTF-8 bytes.
+ - `02`: Int16: a 16-bit signed integer
+ - `03`: UInt16: a 16-bit unsigned integer
+ - `04`: Int32: a 32-bit signed integer
+ - `05`: UInt32: a 32-bit unsigned integer
+ - `06`: Int64: a 64-bit signed integer
+ - `07`: UInt64: a 64-bit unsigned integer
+ - `08`: single: an [IEEE single-precision floating-point number](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
+ - `09`: double: an [IEEE double-precision floating-point number](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+ - `0A`: DateTime: a signed 64-bit integer specifying a date and time in UTC. Specifies the number of "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z, excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
+ - `0B`: DER: An [X.690](https://en.wikipedia.org/wiki/X.690) DER-encoded value.
 
 The difference between **Primary Format** and **Secondary Format** is chiefly that **Secondary Format** is encrypted along with the rest of the file and is used to compute the **HMAC** field. Some elements must be in the **Primary Format** because they contain functional information about the encryption itself and/or the structure of the file, or contain values derived from the **HMAC** field. An encoder may include them in the **Secondary Format**, but only if they are also included in **Primary Format**. In general, anything which is not required to be in **Primary Format** should be placed in **Secondary Format** for the purpose of security, and for the purpose of ensuring that the **HMAC** field gets a complete picture of the file.
 
 If no element in either **Format** specifies the compression algorithm, the decoder must use the DEFLATE algorithm.
 
-The following values are defined for the default implementation:
-* `Name` - *version 1, one parameter.* Indicates that the compressed file has a filename, specified in the parameter. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifier "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension. A filename must be less than or equal to 256 UTF-8 bytes.
-* `NK` - *version 1, no parameters.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
-* `DEF` - *version 1, no parameters.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
-* `LZMA` - *version 1, no parameters.* Indicates that the file is compressed using [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size must be less than or equal to 64 megabytes.
-* `Ver` - *version 1, 2 parameters.* **Ver**schlüsselte ("encrypted"). The file is encrypted. The first parameter specifies the type of encryption, and must be one of the strings "[AES](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard)", "[Twofish](https://en.wikipedia.org/wiki/Twofish)", and "[Threefish](https://en.wikipedia.org/wiki/Threefish)" (case-sensitive). The second parameter indicates the number of bits in the key, as a 16-bit unsigned value; it must be one of 128, 192, or 256 for AES and Twofish, and 256, 512, or 1024 for Threefish. Must be in **Primary Format**.
-* `DeL` - *version 1, one parameter.* **De**compressed **L**ength, or **De**komprimierte **L**änge. The parameter is a signed 64-bit integer containing the number of bytes in the uncompressed data. If the archive is not encrypted, this value must be equal to **Decompressed Length**. Should be in **Secondary Format** only.
-* `Ers` - *version 1, one parameter.* **Ers**tellt ("created"). Indicates when the file to compress was originally created. The time is in UTC form, and is stored as a 64-bit integer containing the number of [.Net Framework "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z](https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx), excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
-* `Mod` - *version 1, one parameter.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified. Same format as `Ers`.
-* `Kom` - *version 1, one parameter.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder; it can either be treated as a raw binary value, or as UTF-8 string of text (or indeed any other text encoding).
-* `Hash` - *1 parameter.* Indicates the specified hash function. Must be in **Primary Format**. Valid values of the parameter are one of the following UTF-8 strings:
+The following values are defined for the default implementation, with the parameters listed in parentheses after the key:
+* `Name`(string *filename*) - *version 1.* A filename for the compressed file is transmitted. Filenames must not contain forward-slashes (`/`, hex `2f`), non-whitespace control characters (non-whitespace characters between `00` and `1f` inclusive or between `7f` and `9f` inclusive), or invalid surrogate characters. Filenames must contain at least one non-whitespace character, and cannot be the "current directory" identifier "." (a single period) or "parent directory" identifier ".." (two periods). If no filename is specified, the decoder should assume that the filename is the same as the DieFledermaus file without the ".maus" extension. A filename must be less than or equal to 256 UTF-8 bytes.
+* `NK`(no params) - *version 1.* **N**icht **K**omprimiert ("not compressed"). Indicates that the file is not compressed.
+* `DEF`(no params) - *version 1.* Indicates that the file is compressed using the [DEFLATE](http://en.wikipedia.org/wiki/DEFLATE) algorithm.
+* `LZMA`(no params) - *version 1.* Indicates that the file is compressed using [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm). Like DEFLATE, LZMA is based on the [LZ77 algorithm](https://en.wikipedia.org/wiki/LZ77_and_LZ78). The format of the LZMA stream is the 5-byte header, followed by every block in the stream. Due to the limitations of the .Net Framework implementation of LZMA, the dictionary size should be less than or equal to 64 megabytes.
+* `Ver`(string *format*, Int16 *keySize*) - *version 1.* **Ver**schlüsselte ("encrypted"). The file is encrypted. The *format* parameter specifies the type of encryption, and must be one of the strings "[AES](http://en.wikipedia.org/wiki/Advanced_Encryption_Standard)", "[Twofish](https://en.wikipedia.org/wiki/Twofish)", and "[Threefish](https://en.wikipedia.org/wiki/Threefish)" (case-sensitive). The second parameter indicates the number of bits in the key; it must be one of 128, 192, or 256 for AES and Twofish, and 256, 512, or 1024 for Threefish. Must be in **Primary Format**.
+* `DeL`(Int64 *length*) - *version 1.* **De**compressed **L**ength, or **De**komprimierte **L**änge. The *length* parameter contains the number of bytes in the uncompressed data. Obviously, this must be nonzero and positive. If the archive is not encrypted, this value must be equal to **Decompressed Length**. Should be in **Secondary Format** only.
+* `Ers`(DateTime *timestamp*) - *version 1.* **Ers**tellt ("created"). Indicates when the file to compress was originally created.
+* `Mod`(DateTime *timestamp*) - *version 1.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified.
+* `Kom`(byte[] *commentData*) - *version 1.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder. A decoder should accept the *commentData* parameter as a string, but an encoder should encode it as a byte array.
+* `Hash`(string *hashID*) - *version 1.* Specifies the specified hash function. Must be in **Primary Format**. Valid values of the *hashID* parameter are one of the following strings:
  - `SHA224`
  - `SHA256` (the default if nothing is specified)
  - `SHA384`
@@ -71,10 +85,10 @@ The following values are defined for the default implementation:
  - `SHA3/384`
  - `SHA3/512`
  - `Whirlpool`
-* `RSAsig` - *version 1, one or two parameters.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the value of the **HMAC** field. The signature may be verified using the corresponding RSA public key. The object ID of the specified hash function is included using [DER encoding](https://en.wikipedia.org/wiki/X.690), and [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding) is then also used. The first parameter contains the encrypted value; the optional second parameter contains a value (string or binary) which identifies the RSA public key an encoder should use to verify `RSAsig`. Must be in **Primary Format**.
-* `DSAsig` - *version 1, one or two parameters.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted using [DER encoding](https://en.wikipedia.org/wiki/X.690). The message value *k* should be generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Must be in **Primary Format**.
-* `ECDSAsig` - *version 1, one or two parameters.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm. As with DSA, *k* should be generated deterministically. Must be in **Primary Format**.
-* `RSAsch` - *version 1, one parameter.* "**RSA Sch**lüssel" ("RSA key"). The encoder encrypts the binary key using an RSA public key, and is transmitted as the parameter. The decoder then uses the corresponding RSA private key to decrypt the key. Must be in **Primary Format**, and must not be used unless the file is encrypted.
+* `RSAsig`(byte[] *signature*, optional byte[] *sigID*) - *version 1.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the value of the **HMAC** field. The signature may be verified using the corresponding RSA public key. The object ID of the specified hash function is included using [DER encoding](https://en.wikipedia.org/wiki/X.690), and [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding) is then also used. The *signature* parameter contains the encrypted value; the optional *sigID* parameter contains a value (string or binary) which identifies the RSA public key an encoder should use to verify `RSAsig`. Must be in **Primary Format**.
+* `DSAsig`(DER *signature*, optional byte[] *sigID*) - *version 1.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted as a [DER-encoded sequence](https://en.wikipedia.org/wiki/X.690) containing two integers. The message value *k* should be generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Must be in **Primary Format**.
+* `ECDSAsig`(DER *signature*, optional byte[] *sigID*) - *version 1.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm. As with DSA, *k* should be generated deterministically. Must be in **Primary Format**.
+* `RSAsch`(byte[] *encKey*) - *version 1.* "**RSA Sch**lüssel" ("RSA key"). The encoder encrypts the binary key using an RSA public key, and the encrypted value is transmitted as the *encKey* parameter. The decoder then uses the corresponding RSA private key to decrypt the key. Must be in **Primary Format**, and must not be used unless the file is encrypted.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it must stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.
 

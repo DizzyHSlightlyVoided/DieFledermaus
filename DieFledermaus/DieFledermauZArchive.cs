@@ -1359,6 +1359,8 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vHash)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
+                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                        throw new InvalidDataException(TextResources.FormatBadZ);
                     byte[] gotKey = curValue[0].Value;
 
                     if (_rsaEncKey == null)
@@ -1374,6 +1376,8 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vComment)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
+                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                        throw new InvalidDataException(TextResources.FormatBadZ);
                     byte[] comBytes = curValue[0].Value;
 
                     if (_comBytes == null)
