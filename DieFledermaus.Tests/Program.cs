@@ -37,6 +37,7 @@ namespace DieFledermaus.Tests
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
                     archive.RSASignParameters = archive.DefaultRSASignParameters = privateKeySig;
+                    archive.DefaultRSASignId = archive.RSASignId = "RSA";
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, publicKeyEnc);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, publicKeyEnc);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish, publicKeyEnc);
@@ -60,9 +61,11 @@ namespace DieFledermaus.Tests
                     else
                         Console.WriteLine("RSA signature NOT verified for the archive!");
 
+                    Console.WriteLine("Completed reading and signature-verification in {0}ms", sw.Elapsed.TotalMilliseconds);
+
                     foreach (DieFledermauZItem item in archive.Entries.ToArray().Where(i => i.EncryptionFormat != MausEncryptionFormat.None))
                     {
-                        Console.WriteLine(" - Decrypting file ...");
+                        Console.WriteLine(" - Decrypting archive entry ...");
                         if (item.IsRSAEncrypted)
                             item.RSAEncryptParameters = privateKeyEnc;
                         else

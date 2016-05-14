@@ -34,7 +34,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using DieFledermaus.Globalization;
 using Org.BouncyCastle.Asn1;
@@ -1624,40 +1623,59 @@ namespace DieFledermaus
         }
         #endregion
 
-        /// <summary>
-        /// Returns a string representation of the current value.
-        /// </summary>
-        /// <returns>A string representation of the current value.</returns>
         public override string ToString()
         {
             if (_value == null)
                 return string.Empty;
 
+            object value;
+            bool isFloat = false;
+
             switch (_typeCode)
             {
                 default:
-                    return string.Concat(_value.Select(i => i.ToString("x2", NumberFormatInfo.InvariantInfo)).ToArray());
+                    value = Convert.ToBase64String(_value);
+                    break;
                 case FormatValueTypeCode.StringUtf8:
-                    return ValueString;
+                    value = ValueString;
+                    break;
                 case FormatValueTypeCode.Int16:
-                    return ValueInt16.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueInt16.Value;
+                    break;
                 case FormatValueTypeCode.UInt16:
-                    return ValueUInt16.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueUInt16.Value;
+                    break;
                 case FormatValueTypeCode.Int32:
-                    return ValueInt32.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueInt32.Value;
+                    break;
                 case FormatValueTypeCode.UInt32:
-                    return ValueUInt32.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueUInt32.Value;
+                    break;
                 case FormatValueTypeCode.Int64:
-                    return ValueInt64.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueInt64.Value;
+                    break;
                 case FormatValueTypeCode.UInt64:
-                    return ValueUInt64.Value.ToString(NumberFormatInfo.InvariantInfo);
+                    value = ValueUInt64.Value;
+                    break;
                 case FormatValueTypeCode.Single:
-                    return ValueSingle.Value.ToString("r", NumberFormatInfo.InvariantInfo);
+                    value = ValueSingle.Value;
+                    isFloat = true;
+                    break;
                 case FormatValueTypeCode.Double:
-                    return ValueDouble.Value.ToString("r", NumberFormatInfo.InvariantInfo);
+                    value = ValueDouble.Value;
+                    isFloat = true;
+                    break;
                 case FormatValueTypeCode.DateTime:
-                    return ValueDateTime.Value.ToString("o", CultureInfo.InvariantCulture);
+                    value = ValueDateTime.Value.ToString("o", CultureInfo.InvariantCulture);
+                    break;
+#if DEBUG
+                case FormatValueTypeCode.DerEncoded:
+                    value = GetDerObject();
+                    break;
+#endif
             }
+
+            return string.Format(CultureInfo.InvariantCulture, isFloat ? "{0}: {1:r}" : "{0}: {1}", _typeCode, value);
         }
 
         #region Equality
