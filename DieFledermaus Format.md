@@ -74,7 +74,7 @@ The following values are defined for the default implementation, with the parame
 * `DeL`(Int64 *length*) - *version 1.* **De**compressed **L**ength, or **De**komprimierte **L**änge. The *length* parameter contains the number of bytes in the uncompressed data. Obviously, this must be nonzero and positive. If the archive is not encrypted, this value must be equal to **Decompressed Length**. Should be in **Secondary Format** only.
 * `Ers`(DateTime *timestamp*) - *version 1.* **Ers**tellt ("created"). Indicates when the file to compress was originally created.
 * `Mod`(DateTime *timestamp*) - *version 1.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified.
-* `Kom`(byte[] *commentData*) - *version 1.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder. A decoder should accept the *commentData* parameter as a string, but an encoder should encode it as a byte array.
+* `Kom`(byte[] *commentData*) - *version 1.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder.
 * `Hash`(string *hashID*) - *version 1.* Specifies the specified hash function. Must be in **Primary Format**. Valid values of the *hashID* parameter are one of the following strings:
  - `SHA224`
  - `SHA256` (the default if nothing is specified)
