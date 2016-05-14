@@ -3729,12 +3729,7 @@ namespace DieFledermaus
                     formats.Add(_kHash, _vHash, HashBDict[_hashFunc]);
 
                     if (_encFmt != MausEncryptionFormat.None)
-                    {
                         WriteEncFormat(_encFmt, _keySize, rsaKey, formats);
-
-                        if (rsaKey != null)
-                            formats.Add(_kEncRsa, _vEnc, rsaKey);
-                    }
 
                     WriteRsaSig(rsaSignature, dsaSignature, ecdsaSignature, formats);
 
