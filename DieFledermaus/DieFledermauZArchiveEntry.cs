@@ -292,31 +292,6 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] RSASignIdBytes
-        {
-            get { return MausStream.RSASignIdBytes; }
-            set
-            {
-                EnsureCanWrite();
-                MausStream.RSASignIdBytes = value;
-            }
-        }
-
-        /// <summary>
         /// Gets a value indicating whether the current instance is signed using an RSA private key.
         /// </summary>
         /// <remarks>
@@ -411,31 +386,6 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 MausStream.DSASignId = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DSASignIdBytes
-        {
-            get { return MausStream.DSASignIdBytes; }
-            set
-            {
-                EnsureCanWrite();
-                MausStream.DSASignIdBytes = value;
             }
         }
 
@@ -538,31 +488,6 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is deleted.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, <see cref="DieFledermauZItem.Archive"/> is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] ECDSASignIdBytes
-        {
-            get { return MausStream.ECDSASignIdBytes; }
-            set
-            {
-                EnsureCanWrite();
-                MausStream.ECDSASignIdBytes = value;
-            }
-        }
-
-        /// <summary>
         /// Gets a value indicating whether the current instance is signed using a ECDSA private key.
         /// </summary>
         /// <remarks>
@@ -605,7 +530,7 @@ namespace DieFledermaus
         }
         #endregion
 
-        internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
+        internal void SetSignatures(RsaKeyParameters rsaKey, string rsaKeyId, DsaKeyParameters dsaKey, string dsaKeyId, ECKeyParameters ecdsaKey, string ecdsaKeyId)
         {
             MausStream.SetSignatures(rsaKey, rsaKeyId, dsaKey, dsaKeyId, ecdsaKey, ecdsaKeyId);
         }

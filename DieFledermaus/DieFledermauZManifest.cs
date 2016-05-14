@@ -98,12 +98,6 @@ namespace DieFledermaus
             set { MausStream.RSASignId = value; }
         }
 
-        public byte[] RSASignIdBytes
-        {
-            get { return MausStream.RSASignIdBytes; }
-            set { MausStream.RSASignIdBytes = value; }
-        }
-
         public bool IsRSASigned { get { return MausStream.IsRSASigned; } }
 
         public bool IsRSASignVerified { get { return MausStream.IsRSASignVerified; } }
@@ -127,12 +121,6 @@ namespace DieFledermaus
             set { MausStream.DSASignId = value; }
         }
 
-        public byte[] DSASignIdBytes
-        {
-            get { return MausStream.DSASignIdBytes; }
-            set { MausStream.DSASignIdBytes = value; }
-        }
-
         public bool IsDSASigned { get { return MausStream.IsDSASigned; } }
 
         public bool IsDSASignVerified { get { return MausStream.IsDSASignVerified; } }
@@ -154,12 +142,6 @@ namespace DieFledermaus
         {
             get { return MausStream.ECDSASignId; }
             set { MausStream.ECDSASignId = value; }
-        }
-
-        public byte[] ECDSASignIdBytes
-        {
-            get { return MausStream.ECDSASignIdBytes; }
-            set { MausStream.ECDSASignIdBytes = value; }
         }
 
         public bool IsECDSASigned { get { return MausStream.IsECDSASigned; } }

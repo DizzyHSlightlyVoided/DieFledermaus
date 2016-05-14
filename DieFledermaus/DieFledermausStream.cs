@@ -795,7 +795,7 @@ namespace DieFledermaus
             }
         }
 
-        internal void SetSignatures(RsaKeyParameters rsaKey, byte[] rsaKeyId, DsaKeyParameters dsaKey, byte[] dsaKeyId, ECKeyParameters ecdsaKey, byte[] ecdsaKeyId)
+        internal void SetSignatures(RsaKeyParameters rsaKey, string rsaKeyId, DsaKeyParameters dsaKey, string dsaKeyId, ECKeyParameters ecdsaKey, string ecdsaKeyId)
         {
             _rsaSignParamBC = rsaKey;
             _rsaSignId = rsaKeyId;
@@ -1379,36 +1379,7 @@ namespace DieFledermaus
                 throw new ArgumentException(TextResources.RsaNeedPrivate, nameof(value));
         }
 
-        private byte[] _rsaSignId;
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] RSASignIdBytes
-        {
-            get { return _rsaSignId; }
-            set
-            {
-                _ensureCanWrite();
-                if (_rsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                _rsaSignId = value;
-            }
-        }
-
+        private string _rsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="RSASignParameters"/>.
         /// </summary>
@@ -1426,17 +1397,11 @@ namespace DieFledermaus
         /// </exception>
         public string RSASignId
         {
-            get
-            {
-                if (_rsaSignId == null) return null;
-                return _textEncoding.GetString(_rsaSignId);
-            }
+            get { return _rsaSignId; }
             set
             {
-                if (value == null)
-                    RSASignIdBytes = null;
-                else
-                    RSASignIdBytes = _textEncoding.GetBytes(value);
+                CheckComment(value);
+                _rsaSignId = value;
             }
         }
 
@@ -1550,36 +1515,7 @@ namespace DieFledermaus
             }
         }
 
-        private byte[] _dsaSignId;
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DSASignIdBytes
-        {
-            get { return _dsaSignId; }
-            set
-            {
-                _ensureCanWrite();
-                if (_dsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                _rsaSignId = value;
-            }
-        }
-
+        private string _dsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="DSASignParameters"/>.
         /// </summary>
@@ -1597,17 +1533,11 @@ namespace DieFledermaus
         /// </exception>
         public string DSASignId
         {
-            get
-            {
-                if (_dsaSignId == null) return null;
-                return _textEncoding.GetString(_dsaSignId);
-            }
+            get { return _dsaSignId; }
             set
             {
-                if (value == null)
-                    DSASignIdBytes = null;
-                else
-                    DSASignIdBytes = _textEncoding.GetBytes(value);
+                CheckComment(value);
+                _dsaSignId = value;
             }
         }
         #endregion
@@ -1719,36 +1649,7 @@ namespace DieFledermaus
             }
         }
 
-        private byte[] _ecdsaSignId;
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] ECDSASignIdBytes
-        {
-            get { return _ecdsaSignId; }
-            set
-            {
-                _ensureCanWrite();
-                if (_ecdsaSignParamBC == null)
-                    throw new InvalidOperationException(TextResources.RsaSigNone);
-                if (value != null && (value.Length == 0 || value.Length > Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
-                _rsaSignId = value;
-            }
-        }
-
+        private string _ecdsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="ECDSASignParameters"/>.
         /// </summary>
@@ -1766,17 +1667,11 @@ namespace DieFledermaus
         /// </exception>
         public string ECDSASignId
         {
-            get
-            {
-                if (_ecdsaSignId == null) return null;
-                return _textEncoding.GetString(_ecdsaSignId);
-            }
+            get { return _ecdsaSignId; }
             set
             {
-                if (value == null)
-                    ECDSASignIdBytes = null;
-                else
-                    ECDSASignIdBytes = _textEncoding.GetBytes(value);
+                CheckComment(value);
+                _ecdsaSignId = value;
             }
         }
         #endregion
@@ -1845,6 +1740,7 @@ namespace DieFledermaus
         }
         #endregion
 
+        private string _comment;
         /// <summary>
         /// Gets and sets a comment on the file.
         /// </summary>
@@ -1859,45 +1755,18 @@ namespace DieFledermaus
         /// </exception>
         public string Comment
         {
-            get
-            {
-                if (_comBytes == null) return null;
-                return _textEncoding.GetString(_comBytes);
-            }
-            set
-            {
-                _ensureCanWrite();
-                _comBytes = CheckComment(value);
-            }
-        }
-
-        private byte[] _comBytes;
-        /// <summary>
-        /// Gets and sets a binary representation of a comment on the file.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
-        /// </exception>
-        public byte[] CommentBytes
-        {
-            get { return _comBytes; }
+            get { return _comment; }
             set
             {
                 _ensureCanWrite();
                 CheckComment(value);
-                _comBytes = value;
+                _comment = value;
             }
         }
 
-        private MausSavingOptions _saveComBytes;
+        private MausSavingOptions _saveComment;
         /// <summary>
-        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// Gets and sets options for saving <see cref="Comment"/>.
         /// </summary>
         /// <exception cref="NotSupportedException">
         /// In a set operation, the current stream is in read-only mode.
@@ -1910,25 +1779,17 @@ namespace DieFledermaus
         /// </exception>
         public MausSavingOptions CommentSaving
         {
-            get { return _saveComBytes; }
+            get { return _saveComment; }
             set
             {
                 _ensureCanWrite();
-                _saveComBytes = SetSavingOption(value);
+                _saveComment = SetSavingOption(value);
             }
         }
 
-        internal static byte[] CheckComment(string value)
+        internal static void CheckComment(string value)
         {
-            if (value == null) return null;
-            byte[] bytes = _textEncoding.GetBytes(value);
-            CheckComment(bytes);
-            return bytes;
-        }
-
-        internal static void CheckComment(byte[] value)
-        {
-            if (value != null && value.Length == 0 || value.Length > Max16Bit)
+            if (value != null && (value.Length == 0 || _textEncoding.GetByteCount(value) > Max16Bit))
                 throw new ArgumentException(TextResources.CommentLength, nameof(value));
         }
 
@@ -2576,19 +2437,12 @@ namespace DieFledermaus
                     if (curValue.Count == 1)
                         continue;
 
-                    switch (curValue[1].TypeCode)
-                    {
-                        case FormatValueTypeCode.ByteArray:
-                        case FormatValueTypeCode.StringUtf8:
-                            break;
-                        default:
-                            throw new InvalidDataException(TextResources.FormatBad);
-                    }
-                    byte[] rsaId = curValue[1].Value;
+                    string rsaId = curValue[1].ValueString;
+                    if (rsaId == null) throw new InvalidDataException(TextResources.FormatBad);
 
                     if (_rsaSignId == null)
                         _rsaSignId = rsaId;
-                    else if (!CompareBytes(rsaId, _rsaSignId))
+                    else if (_rsaSignId != rsaId)
                         throw new InvalidDataException(TextResources.FormatBad);
 
                     continue;
@@ -2666,19 +2520,19 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != _vComment)
                         throw new NotSupportedException(TextResources.FormatUnknown);
 
-                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                    string comment = curValue[0].ValueString;
+                    if (comment == null)
                         throw new InvalidDataException(TextResources.FormatBad);
-                    byte[] comBytes = curValue[0].Value;
 
-                    if (_comBytes == null)
-                        _comBytes = comBytes;
-                    else if (!CompareBytes(comBytes, _comBytes))
+                    if (_comment == null)
+                        _comment = comment;
+                    else if (_comment != comment)
                         throw new InvalidDataException(TextResources.FormatBad);
 
                     if (fromEncrypted)
-                        _saveComBytes |= MausSavingOptions.SecondaryOnly;
+                        _saveComment |= MausSavingOptions.SecondaryOnly;
                     else
-                        _saveComBytes |= MausSavingOptions.PrimaryOnly;
+                        _saveComment |= MausSavingOptions.PrimaryOnly;
 
                     continue;
                 }
@@ -2747,7 +2601,7 @@ namespace DieFledermaus
             public readonly DerInteger S;
         }
 
-        private static void GetDsaValue(FormatEntry formatValue, ushort vDsa, ref DerIntegerPair existing, ref byte[] keyId)
+        private static void GetDsaValue(FormatEntry formatValue, ushort vDsa, ref DerIntegerPair existing, ref string keyId)
         {
             if ((formatValue.Count != 1 && formatValue.Count != 2) || formatValue.Version != vDsa)
                 throw new NotSupportedException(TextResources.FormatUnknown);
@@ -2765,12 +2619,13 @@ namespace DieFledermaus
 
             if (formatValue.Count == 2)
             {
-                if (formatValue[1].TypeCode != FormatValueTypeCode.ByteArray) throw new InvalidDataException(TextResources.FormatBad);
-                byte[] newId = formatValue[1].Value;
+                string newId = formatValue[1].ValueString;
+                if (newId == null)
+                    throw new InvalidDataException(TextResources.FormatBad);
 
                 if (keyId == null)
                     keyId = newId;
-                else if (!CompareBytes(keyId, newId))
+                else if (newId != keyId)
                     throw new InvalidDataException(TextResources.FormatBad);
             }
         }
@@ -3723,7 +3578,7 @@ namespace DieFledermaus
 #endif
             {
                 _saveCmpFmt = SetSavingOption(_saveCmpFmt);
-                _saveComBytes = SetSavingOption(_saveCmpFmt);
+                _saveComment = SetSavingOption(_saveCmpFmt);
                 _saveFilename = SetSavingOption(_saveFilename);
                 _saveTimeC = SetSavingOption(_saveTimeC);
                 _saveTimeM = SetSavingOption(_saveTimeM);
@@ -4020,7 +3875,7 @@ namespace DieFledermaus
             WriteRsaSig(ecdsaSignature, _ecdsaSignId, _kECDsaSig, _vECDsaSig, formats);
         }
 
-        private static void WriteRsaSig(DerSequence rsaSignature, byte[] rsaSignId, string kRsaSig, ushort vRsaSig, ByteOptionList formats)
+        private static void WriteRsaSig(DerSequence rsaSignature, string rsaSignId, string kRsaSig, ushort vRsaSig, ByteOptionList formats)
         {
             if (rsaSignature == null)
                 return;
@@ -4055,12 +3910,12 @@ namespace DieFledermaus
             }
         }
 
-        internal static void FormatSetComment(byte[] _comBytes, ByteOptionList formats)
+        internal static void FormatSetComment(string comment, ByteOptionList formats)
         {
-            if (_comBytes == null || _comBytes.Length == 0)
+            if (comment == null || comment.Length == 0)
                 return;
 
-            formats.Add(_kComment, _vComment, _comBytes);
+            formats.Add(_kComment, _vComment, comment);
         }
         #endregion
 

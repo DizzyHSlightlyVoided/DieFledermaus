@@ -269,7 +269,7 @@ namespace DieFledermaus
         event MausProgressEventHandler Progress;
 
         /// <summary>
-        /// Gets and sets a comment on the current instance. Also sets the value of <see cref="CommentBytes"/> using UTF-8.
+        /// Gets and sets a comment on the current instance.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// The current instance is disposed.
@@ -283,21 +283,7 @@ namespace DieFledermaus
         string Comment { get; set; }
 
         /// <summary>
-        /// Gets and sets a comment on the current instance. Also sets the value of <see cref="Comment"/> using UTF-8.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// The current instance is in read-only mode.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
-        /// </exception>
-        byte[] CommentBytes { get; set; }
-
-        /// <summary>
-        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// Gets and sets options for saving <see cref="Comment"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">
         /// The current instance is disposed.
@@ -351,23 +337,6 @@ namespace DieFledermaus
         /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         string RSASignId { get; set; }
-
-        /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
-        byte[] RSASignIdBytes { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the current instance is signed using RSA.
@@ -435,23 +404,6 @@ namespace DieFledermaus
         string DSASignId { get; set; }
 
         /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
-        byte[] DSASignIdBytes { get; set; }
-
-        /// <summary>
         /// Gets a value indicating whether the current instance is signed using DSA.
         /// If the current instance is in write-mode, returns <see langword="true"/> if and only if <see cref="DSASignParameters"/> is not <see langword="null"/>.
         /// </summary>
@@ -515,23 +467,6 @@ namespace DieFledermaus
         /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
         string ECDSASignId { get; set; }
-
-        /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
-        byte[] ECDSASignIdBytes { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the current instance is signed using ECDSA.

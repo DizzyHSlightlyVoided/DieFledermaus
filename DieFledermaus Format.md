@@ -49,7 +49,7 @@ Each element in **Format** has the following structure:
 * **Parameter Count:** A 16-bit unsigned integer indicating the number of *parameters.* Some elements require further information; for example, `Ver` indicates that the archive is encrypted, but does not specify what type of encryption is used or the size of the key.
 * Zero or more **Parameters**, each one consisting of the *parameter code*, which indicates the type of data therein, and the *parameter value*, which contains the actual value. The following parameter code values are defined:
  - `00`: byte[]: an arbitrary length-prefixed string; a byte array.
- - `01`: string: a length-prefixed string containing valid UTF-8 bytes.
+ - `01`: string: a length-prefixed string, which must contain valid UTF-8 bytes.
  - `02`: Int16: a 16-bit signed integer
  - `03`: UInt16: a 16-bit unsigned integer
  - `04`: Int32: a 32-bit signed integer
@@ -59,7 +59,7 @@ Each element in **Format** has the following structure:
  - `08`: single: an [IEEE single-precision floating-point number](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
  - `09`: double: an [IEEE double-precision floating-point number](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
  - `0A`: DateTime: a signed 64-bit integer specifying a date and time in UTC. Specifies the number of "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z, excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
- - `0B`: DER: An [X.690](https://en.wikipedia.org/wiki/X.690) DER-encoded value.
+ - `0B`: DER: A length-prefixed string containing an [X.690](https://en.wikipedia.org/wiki/X.690) DER-encoded value.
 
 The difference between **Primary Format** and **Secondary Format** is chiefly that **Secondary Format** is encrypted along with the rest of the file and is used to compute the **HMAC** field. Some elements must be in the **Primary Format** because they contain functional information about the encryption itself and/or the structure of the file, or contain values derived from the **HMAC** field. An encoder may include them in the **Secondary Format**, but only if they are also included in **Primary Format**. In general, anything which is not required to be in **Primary Format** should be placed in **Secondary Format** for the purpose of security, and for the purpose of ensuring that the **HMAC** field gets a complete picture of the file.
 
@@ -74,7 +74,7 @@ The following values are defined for the default implementation, with the parame
 * `DeL`(Int64 *length*) - *version 1.* **De**compressed **L**ength, or **De**komprimierte **L**änge. The *length* parameter contains the number of bytes in the uncompressed data. Obviously, this must be nonzero and positive. If the archive is not encrypted, this value must be equal to **Decompressed Length**. Should be in **Secondary Format** only.
 * `Ers`(DateTime *timestamp*) - *version 1.* **Ers**tellt ("created"). Indicates when the file to compress was originally created.
 * `Mod`(DateTime *timestamp*) - *version 1.* **Mod**ified, or **Mod**ifiziert. Indicates when the file to compress was last modified.
-* `Kom`(byte[] *commentData*) - *version 1.* **Kom**mentar ("comment"). A textual comment. This is not directly used or processed by any decoder.
+* `Kom`(string *commentText*) - *version 1.* **Kom**mentar ("comment"). Indicates a comment on the DieFledermaus file.
 * `Hash`(string *hashID*) - *version 1.* Specifies the specified hash function. Must be in **Primary Format**. Valid values of the *hashID* parameter are one of the following strings:
  - `SHA224`
  - `SHA256` (the default if nothing is specified)
@@ -85,9 +85,9 @@ The following values are defined for the default implementation, with the parame
  - `SHA3/384`
  - `SHA3/512`
  - `Whirlpool`
-* `RSAsig`(byte[] *signature*, optional byte[] *sigID*) - *version 1.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the value of the **HMAC** field. The signature may be verified using the corresponding RSA public key. The object ID of the specified hash function is included using [DER encoding](https://en.wikipedia.org/wiki/X.690), and [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding) is then also used. The *signature* parameter contains the encrypted value; the optional *sigID* parameter contains a value (string or binary) which identifies the RSA public key an encoder should use to verify `RSAsig`. Must be in **Primary Format**.
-* `DSAsig`(DER *signature*, optional byte[] *sigID*) - *version 1.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted as a [DER-encoded sequence](https://en.wikipedia.org/wiki/X.690) containing two integers. The message value *k* should be generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Must be in **Primary Format**.
-* `ECDSAsig`(DER *signature*, optional byte[] *sigID*) - *version 1.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm. As with DSA, *k* should be generated deterministically. Must be in **Primary Format**.
+* `RSAsig`(byte[] *signature*, optional string *sigID*) - *version 1.* "**RSA sig**niert", or "**RSA sig**ned". The stream is digitally signed with an RSA private key, using the value of the **HMAC** field. The signature may be verified using the corresponding RSA public key. The object ID of the specified hash function is included using [DER encoding](https://en.wikipedia.org/wiki/X.690), and [OAEP padding](https://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding) is then also applied. The *signature* parameter contains the encrypted value; the optional *sigID* parameter contains a value which identifies the RSA public key an encoder should use to verify `RSAsig`. Must be in **Primary Format**.
+* `DSAsig`(DER *signature*, optional string *sigID*) - *version 1.* Same as `RSAsig`, but using the [DSA](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) algorithm. The *r,s* signature values are transmitted as a [DER-encoded sequence](https://en.wikipedia.org/wiki/X.690) containing two integers. The message value *k* should be generated deterministically using an HMAC of the specified hash function, as described in [RFC 6979](https://tools.ietf.org/html/rfc6979). Must be in **Primary Format**.
+* `ECDSAsig`(DER *signature*, optional string *sigID*) - *version 1.* Same as `DSAsig`, but using the [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) algorithm. As with DSA, *k* should be generated deterministically. Must be in **Primary Format**.
 * `RSAsch`(byte[] *encKey*) - *version 1.* "**RSA Sch**lüssel" ("RSA key"). The encoder encrypts the binary key using an RSA public key, and the encrypted value is transmitted as the *encKey* parameter. The decoder then uses the corresponding RSA private key to decrypt the key. Must be in **Primary Format**, and must not be used unless the file is encrypted.
 
 If a decoder encounters contradictory values (i.e. both `LZMA` and `DEF`), it must stop attempting to decode the file rather than trying to guess what to use, and should inform the user of this error. If a decoder encounters redundant values (i.e. two `Name` items which are each followed by the same filename), the duplicates should be ignored.

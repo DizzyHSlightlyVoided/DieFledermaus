@@ -293,9 +293,6 @@ namespace DieFledermaus
         /// <para>-OR-</para>
         /// <para><paramref name="version"/> is 0.</para>
         /// </exception>
-        /// <exception cref="EncoderFallbackException">
-        /// <paramref name="s"/> contains invalid characters.
-        /// </exception>
         public FormatEntry(string key, ushort version, string s)
             : this(key, version)
         {
@@ -692,9 +689,6 @@ namespace DieFledermaus
         /// <exception cref="ArgumentNullException">
         /// <paramref name="s"/> is <see langword="null"/>.
         /// </exception>
-        /// <exception cref="EncoderFallbackException">
-        /// <paramref name="s"/> contains invalid characters.
-        /// </exception>
         /// <exception cref="NotSupportedException">
         /// <see cref="IsReadOnly"/> is <see langword="true"/>.
         /// </exception>
@@ -896,9 +890,6 @@ namespace DieFledermaus
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="s"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="EncoderFallbackException">
-        /// <paramref name="s"/> contains invalid characters.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// <see cref="IsReadOnly"/> is <see langword="true"/>.
@@ -1353,14 +1344,12 @@ namespace DieFledermaus
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="s"/> has a length of 0 or greater than 65536 UTF-8 bytes.
         /// </exception>
-        /// <exception cref="EncoderFallbackException">
-        /// <paramref name="s"/> contains invalid characters.
-        /// </exception>
         public FormatValue(string s)
         {
-            if (FormatEntry.TextEncoding.GetByteCount(s) > DieFledermausStream.Max16Bit || s.Length == 0)
+            byte[] bytes = DieFledermausStream._textEncoding.GetBytes(s);
+            if (bytes.Length > DieFledermausStream.Max16Bit || bytes.Length == 0)
                 throw new ArgumentOutOfRangeException(nameof(s), TextResources.CommentLength);
-            _value = FormatEntry.TextEncoding.GetBytes(s);
+            _value = bytes;
             _typeCode = FormatValueTypeCode.StringUtf8;
         }
 
@@ -1441,7 +1430,7 @@ namespace DieFledermaus
             if (value == null) throw new ArgumentNullException(nameof(value));
             byte[] buffer = value.GetDerEncoded();
             if (buffer == null || buffer.Length == 0 || buffer.Length > DieFledermausStream.Max16Bit)
-                throw new InvalidOperationException(); //TODO: Message
+                throw new ArgumentException(TextResources.OutOfRangeByteLength, nameof(value));
             _value = buffer;
             _typeCode = FormatValueTypeCode.DerEncoded;
         }

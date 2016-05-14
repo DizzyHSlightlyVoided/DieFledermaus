@@ -516,6 +516,7 @@ namespace DieFledermaus
             }
         }
 
+        private string _rsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="DefaultRSASignParameters"/> by default.
         /// </summary>
@@ -533,44 +534,10 @@ namespace DieFledermaus
         /// </exception>
         public string DefaultRSASignId
         {
-            get
-            {
-                if (_rsaSignId == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_rsaSignId);
-            }
-            set
-            {
-                if (value == null)
-                    DefaultRSASignIdBytes = null;
-                else
-                    DefaultRSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
-            }
-        }
-
-        private byte[] _rsaSignId;
-        /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultRSASignParameters"/> by default.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DefaultRSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DefaultRSASignIdBytes
-        {
             get { return _rsaSignId; }
             set
             {
-                EnsureCanWrite();
-                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                DieFledermausStream.CheckComment(_rsaSignId);
                 _rsaSignId = value;
             }
         }
@@ -602,6 +569,7 @@ namespace DieFledermaus
             }
         }
 
+        private string _dsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="DefaultDSASignParameters"/> by default.
         /// </summary>
@@ -619,44 +587,10 @@ namespace DieFledermaus
         /// </exception>
         public string DefaultDSASignId
         {
-            get
-            {
-                if (_dsaSignId == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_dsaSignId);
-            }
-            set
-            {
-                if (value == null)
-                    DefaultDSASignIdBytes = null;
-                else
-                    DefaultDSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
-            }
-        }
-
-        private byte[] _dsaSignId;
-        /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultDSASignParameters"/> by default.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DefaultDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DefaultDSASignIdBytes
-        {
             get { return _dsaSignId; }
             set
             {
-                EnsureCanWrite();
-                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                DieFledermausStream.CheckComment(value);
                 _dsaSignId = value;
             }
         }
@@ -688,6 +622,7 @@ namespace DieFledermaus
             }
         }
 
+        private string _ecdsaSignId;
         /// <summary>
         /// Gets and sets a string which is used to identify the value of <see cref="DefaultECDSASignParameters"/> by default.
         /// </summary>
@@ -705,44 +640,10 @@ namespace DieFledermaus
         /// </exception>
         public string DefaultECDSASignId
         {
-            get
-            {
-                if (_ecdsaSignId == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_ecdsaSignId);
-            }
-            set
-            {
-                if (value == null)
-                    DefaultECDSASignIdBytes = null;
-                else
-                    DefaultECDSASignIdBytes = DieFledermausStream._textEncoding.GetBytes(value);
-            }
-        }
-
-        private byte[] _ecdsaSignId;
-        /// <summary>
-        /// Gets and sets a binary value which is used to identify the value of <see cref="DefaultECDSASignParameters"/> by default.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is disposed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DefaultECDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DefaultECDSASignIdBytes
-        {
             get { return _ecdsaSignId; }
             set
             {
-                EnsureCanWrite();
-                if (value != null && (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit))
-                    throw new ArgumentException(TextResources.RsaIdLength, nameof(value));
+                DieFledermausStream.CheckComment(value);
                 _ecdsaSignId = value;
             }
         }
@@ -850,35 +751,6 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 _manifest.RSASignId = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="RSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
-        public byte[] RSASignIdBytes
-        {
-            get
-            {
-                if (_manifest == null) return null;
-                return _manifest.RSASignIdBytes;
-            }
-            set
-            {
-                EnsureCanWrite();
-                _manifest.RSASignIdBytes = value;
             }
         }
 
@@ -994,35 +866,6 @@ namespace DieFledermaus
         }
 
         /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="DSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] DSASignIdBytes
-        {
-            get
-            {
-                if (_manifest == null) return null;
-                return _manifest.DSASignIdBytes;
-            }
-            set
-            {
-                EnsureCanWrite();
-                _manifest.DSASignIdBytes = value;
-            }
-        }
-
-        /// <summary>
         /// Tests whether <see cref="DSASignParameters"/> is valid.
         /// </summary>
         /// <returns><see langword="true"/> if <see cref="DSASignParameters"/> is set to the correct public key; <see langword="false"/>
@@ -1130,35 +973,6 @@ namespace DieFledermaus
             {
                 EnsureCanWrite();
                 _manifest.ECDSASignId = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets and set a binary value which is used to identify the value of <see cref="ECDSASignParameters"/>.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-mode.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536.
-        /// </exception>
-        public byte[] ECDSASignIdBytes
-        {
-            get
-            {
-                if (_manifest == null) return null;
-                return _manifest.ECDSASignIdBytes;
-            }
-            set
-            {
-                EnsureCanWrite();
-                _manifest.ECDSASignIdBytes = value;
             }
         }
 
@@ -1373,19 +1187,19 @@ namespace DieFledermaus
                     if (curValue.Count != 1 || curValue.Version != DieFledermausStream._vComment)
                         throw new NotSupportedException(TextResources.FormatUnknownZ);
 
-                    if (curValue[0].TypeCode != FormatValueTypeCode.ByteArray)
+                    string comment = curValue[0].ValueString;
+                    if (comment == null)
                         throw new InvalidDataException(TextResources.FormatBadZ);
-                    byte[] comBytes = curValue[0].Value;
 
-                    if (_comBytes == null)
-                        _comBytes = comBytes;
-                    else if (!DieFledermausStream.CompareBytes(comBytes, _comBytes))
+                    if (_comment == null)
+                        _comment = comment;
+                    else if (comment != _comment)
                         throw new InvalidDataException(TextResources.FormatBadZ);
 
                     if (fromEncrypted)
-                        _saveComBytes |= MausSavingOptions.SecondaryOnly;
+                        _saveComment |= MausSavingOptions.SecondaryOnly;
                     else
-                        _saveComBytes |= MausSavingOptions.PrimaryOnly;
+                        _saveComment |= MausSavingOptions.PrimaryOnly;
 
                     continue;
                 }
@@ -1463,6 +1277,7 @@ namespace DieFledermaus
             }
         }
 
+        private string _comment;
         /// <summary>
         /// Gets and sets the comment on the current instance.
         /// </summary>
@@ -1478,52 +1293,18 @@ namespace DieFledermaus
         /// </exception>
         public string Comment
         {
-            get
-            {
-                if (_comBytes == null) return null;
-                return DieFledermausStream._textEncoding.GetString(_comBytes);
-            }
-            set
-            {
-                EnsureCanWrite();
-                _comBytes = DieFledermausStream.CheckComment(value);
-            }
-        }
-
-        private byte[] _comBytes;
-        /// <summary>
-        /// Gets and sets a binary representation of a comment on the file.
-        /// </summary>
-        /// <exception cref="ObjectDisposedException">
-        /// In a set operation, the current instance is closed.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// In a set operation, the current instance is in read-only mode.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536.
-        /// </exception>
-        public byte[] CommentBytes
-        {
-            get
-            {
-                if (_comBytes == null) return null;
-                return (byte[])_comBytes.Clone();
-            }
+            get { return _comment; }
             set
             {
                 EnsureCanWrite();
                 DieFledermausStream.CheckComment(value);
-                if (value == null)
-                    _comBytes = null;
-                else
-                    _comBytes = (byte[])value.Clone();
+                _comment = value;
             }
         }
 
-        private MausSavingOptions _saveComBytes;
+        private MausSavingOptions _saveComment;
         /// <summary>
-        /// Gets and sets options for saving <see cref="Comment"/>/<see cref="CommentBytes"/>.
+        /// Gets and sets options for saving <see cref="Comment"/>.
         /// </summary>
         /// <exception cref="NotSupportedException">
         /// <para>In a set operation, the current stream is in read-only mode.</para>
@@ -1538,14 +1319,14 @@ namespace DieFledermaus
         /// </exception>
         public MausSavingOptions CommentSaving
         {
-            get { return _saveComBytes; }
+            get { return _saveComment; }
             set
             {
                 EnsureCanWrite();
                 if (_encFmt == MausEncryptionFormat.None)
                     throw new NotSupportedException(TextResources.NotEncrypted);
 
-                _saveComBytes = DieFledermausStream.SetSavingOption(value);
+                _saveComment = DieFledermausStream.SetSavingOption(value);
             }
         }
 
@@ -2558,8 +2339,8 @@ namespace DieFledermaus
                 options.Add(DieFledermausStream._kHash, DieFledermausStream._vHash, DieFledermausStream.HashBDict[_hashFunc]);
             }
 
-            if (_encFmt == MausEncryptionFormat.None || (_saveComBytes & MausSavingOptions.PrimaryOnly) != 0)
-                DieFledermausStream.FormatSetComment(_comBytes, options);
+            if (_encFmt == MausEncryptionFormat.None || (_saveComment & MausSavingOptions.PrimaryOnly) != 0)
+                DieFledermausStream.FormatSetComment(_comment, options);
 
             long curOffset = BaseOffset;
             AddSize(options, ref length, ref curOffset);
@@ -2571,8 +2352,8 @@ namespace DieFledermaus
             else
             {
                 encryptedOptions = new ByteOptionList();
-                if ((_saveComBytes & MausSavingOptions.SecondaryOnly) != 0)
-                    DieFledermausStream.FormatSetComment(_comBytes, encryptedOptions);
+                if ((_saveComment & MausSavingOptions.SecondaryOnly) != 0)
+                    DieFledermausStream.FormatSetComment(_comment, encryptedOptions);
 
                 length += sizeof(long) + DieFledermausStream.GetHashLength(_hashFunc);
             }

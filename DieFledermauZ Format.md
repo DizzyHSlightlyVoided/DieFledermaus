@@ -29,7 +29,7 @@ The structure of a DieFledermauZ file is as follows:
 
 ### Options
 The following elements are specified for the **Options** field:
-* `Kom`(byte[] *commentData*) - *version 1.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
+* `Kom`(string *commentText*) - *version 1.* Indicates a comment on the DieFledermauZ archive. Same as in DieFledermaus.
 * `Ver`(string *format*, Int16 *keySize*) - *version 1.* Indicates that the archive is encrypted. Same format as in DieFledermaus; must be in plaintext.
 * `Hash`(string *hashID*) - *version 1.* Indicates the specified hash function for the archive. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.
 * `RSAsch`(byte[] *encKey*) - *version 1.* Indicates that the archive uses an RSA-encrypted key. Must not be used unless the archive is encrypted. Same parameter format as in DieFledermaus; must be in plaintext.

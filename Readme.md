@@ -1,8 +1,8 @@
 ﻿DieFledermaus (.maus file) and DiefledermauZ (.mauz file)
 =========================================================
-Version 0.3.9.0
+Version 0.3.10.0
 ----------------
-The DieFledermaus file format is simply a [DEFLATE](https://en.wikipedia.org/wiki/DEFLATE)- or [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and magic number `mAuS`; it has been extended with the DieFledermauZ [archive file](https://en.wikipedia.org/wiki/Archive_file) format, magic number `mAuZ`, which can contain multiple files. This project exists primarily to be a bilingual pun. Version 1.01 of each file formats is specified in [DieFledermaus Format.md](DieFledermaus Format.md) and [DieFledermauZ Format.md](DieFledermauZ Format.md).
+The DieFledermaus file format is simply a [DEFLATE](https://en.wikipedia.org/wiki/DEFLATE)- or [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and magic number `mAuS`; it has been extended with the DieFledermauZ [archive file](https://en.wikipedia.org/wiki/Archive_file) format, magic number `mAuZ`, which can contain multiple files. This project exists primarily to be a bilingual pun. Version 1.01 of each file format (not currently finalized) is specified in [DieFledermaus Format.md](DieFledermaus Format.md) and [DieFledermauZ Format.md](DieFledermauZ Format.md).
 
 The project has two components: the DieFledermaus class library, which is intended for programmers, and which allows the full range of capabilities when creating and consuming DieFledermaus and DieFledermauZ files; and the DieFlede command-line utility, which is intended for end users, and which is meant to more accurately reflect the "best practices" when encoding DieFledermaus and DieFledermauZ files.
 
