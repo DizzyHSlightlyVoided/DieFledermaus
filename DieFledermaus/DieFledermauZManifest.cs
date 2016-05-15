@@ -329,11 +329,7 @@ namespace DieFledermaus
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             DieFledermausStream.CheckStreamRead(stream);
 
-#if NOLEAVEOPEN
-            BinaryReader reader = new BinaryReader(stream, DieFledermausStream._textEncoding);
-#else
-            using (BinaryReader reader = new BinaryReader(stream, DieFledermausStream._textEncoding, true))
-#endif
+            using (Use7BinaryReader reader = new Use7BinaryReader(stream, true))
             {
                 if (reader.ReadInt32() != _sigAll)
                     throw new InvalidDataException(entries == null ? TextResources.ManifestCurBad : TextResources.ManifestBad);
@@ -574,11 +570,7 @@ namespace DieFledermaus
                 throw new ArgumentNullException(nameof(stream));
 
             DieFledermausStream.CheckStreamWrite(stream);
-#if NOLEAVEOPEN
-            BinaryWriter writer = new BinaryWriter(stream, DieFledermausStream._textEncoding);
-#else
-            using (BinaryWriter writer = new BinaryWriter(stream, DieFledermausStream._textEncoding, true))
-#endif
+            using (Use7BinaryWriter writer = new Use7BinaryWriter(stream, true))
             {
                 long length = _entries.Length;
                 writer.Write(_sigAll);
@@ -599,9 +591,6 @@ namespace DieFledermaus
                     writer.Write(curHash);
                 }
             }
-#if NOLEAVEOPEN
-            stream.Flush();
-#endif
         }
 
         #region Not Supported

@@ -73,6 +73,7 @@
     <Compile Include="MausProgressEventArgs.cs" />
     <Compile Include="MausSavingOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Use7BinaryReaderWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Globalization\TextResources.resx">

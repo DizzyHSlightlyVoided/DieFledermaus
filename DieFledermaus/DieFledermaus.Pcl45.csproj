@@ -79,6 +79,7 @@
     <Compile Include="PCLHelper\ExtensionMethods.cs" />
     <Compile Include="PCLHelper\MausInvalidEnumException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Use7BinaryReaderWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BouncyCastle\crypto\crypto.pcl2.csproj">

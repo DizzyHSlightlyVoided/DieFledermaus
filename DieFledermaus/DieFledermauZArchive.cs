@@ -237,11 +237,7 @@ namespace DieFledermaus
         #region Loading
         private void ReadHeader()
         {
-#if NOLEAVEOPEN
-            BinaryReader reader = new BinaryReader(_baseStream);
-#else
-            using (BinaryReader reader = new BinaryReader(_baseStream, DieFledermausStream._textEncoding, true))
-#endif
+            using (Use7BinaryReader reader = new Use7BinaryReader(_baseStream, true))
             {
                 int head = reader.ReadInt32();
 
@@ -295,7 +291,7 @@ namespace DieFledermaus
             }
         }
 
-        private void ReadDecrypted(BinaryReader reader, ref long curOffset)
+        private void ReadDecrypted(Use7BinaryReader reader, ref long curOffset)
         {
             _entriesRO = new EntryList(this);
             _headerGotten = true;
@@ -375,7 +371,7 @@ namespace DieFledermaus
                 _entries.RemoveAt(_entries.Count - 1);
         }
 
-        internal static string GetString(BinaryReader reader, ref long curOffset)
+        internal static string GetString(Use7BinaryReader reader, ref long curOffset)
         {
             byte[] bytes = DieFledermausStream.ReadBytes8Bit(reader);
             curOffset += bytes.Length + 1L;
@@ -1113,7 +1109,7 @@ namespace DieFledermaus
             _bufferStream.Reset();
 
             using (MausBufferStream newBufferStream = DieFledermausStream.Decrypt(this, _bufferStream, true))
-            using (BinaryReader reader = new BinaryReader(newBufferStream))
+            using (Use7BinaryReader reader = new Use7BinaryReader(newBufferStream))
             {
                 ReadOptions(reader, true);
                 long curOffset = newBufferStream.Position + sizeof(long) + sizeof(int); //Entry-count + "all entries"
@@ -1124,7 +1120,7 @@ namespace DieFledermaus
 
         private bool _gotHash;
 
-        internal void ReadOptions(BinaryReader reader, bool fromEncrypted)
+        internal void ReadOptions(Use7BinaryReader reader, bool fromEncrypted)
         {
             ByteOptionList optionList;
             try
@@ -2363,24 +2359,14 @@ namespace DieFledermaus
                 OnProgress(MausProgressState.ArchiveBuildingEntries);
                 if (_encFmt == MausEncryptionFormat.None)
                 {
-#if NOLEAVEOPEN
-                    BinaryWriter dataWriter = new BinaryWriter(dataStream);
-#else
-                    using (BinaryWriter dataWriter = new BinaryWriter(dataStream, DieFledermausStream._textEncoding, true))
-#endif
-                    {
+                    using (Use7BinaryWriter dataWriter = new Use7BinaryWriter(dataStream, true))
                         WriteFiles(entries, entryStreams, paths, dataWriter, curOffset);
-                    }
                 }
                 else
                 {
                     using (MausBufferStream cryptStream = new MausBufferStream())
                     {
-#if NOLEAVEOPEN
-                        BinaryWriter cryptWriter = new BinaryWriter(cryptStream);
-#else
-                        using (BinaryWriter cryptWriter = new BinaryWriter(cryptStream, DieFledermausStream._textEncoding, true))
-#endif
+                        using (Use7BinaryWriter cryptWriter = new Use7BinaryWriter(cryptStream, true))
                         {
                             encryptedOptions.Write(cryptWriter);
                             WriteFiles(entries, entryStreams, paths, cryptWriter, cryptStream.Position
@@ -2395,11 +2381,7 @@ namespace DieFledermaus
                 dataStream.Reset();
                 length += dataStream.Length;
 
-#if NOLEAVEOPEN
-                BinaryWriter writer = new BinaryWriter(_baseStream);
-#else
-                using (BinaryWriter writer = new BinaryWriter(_baseStream, DieFledermausStream._textEncoding, true))
-#endif
+                using (Use7BinaryWriter writer = new Use7BinaryWriter(_baseStream, true))
                 {
                     OnProgress(MausProgressState.WritingHead);
                     writer.Write(_mHead);
@@ -2416,9 +2398,6 @@ namespace DieFledermaus
                     }
                     dataStream.BufferCopyTo(_baseStream, false);
                 }
-#if NOLEAVEOPEN
-                writer.Flush();
-#endif
             }
             OnProgress(MausProgressState.CompletedWriting);
         }
@@ -2430,7 +2409,7 @@ namespace DieFledermaus
             curOffset += size;
         }
 
-        private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, BinaryWriter writer, long curOffset)
+        private static void WriteFiles(DieFledermauZItem[] entries, MausBufferStream[] entryStreams, byte[][] paths, Use7BinaryWriter writer, long curOffset)
         {
             long length = entries.Length;
             writer.Write(length);

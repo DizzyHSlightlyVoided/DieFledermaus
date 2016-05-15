@@ -2272,11 +2272,7 @@ namespace DieFledermaus
 
         private void _getHeader(bool readMagNum)
         {
-#if NOLEAVEOPEN
-            BinaryReader reader = new BinaryReader(_baseStream);
-#else
-            using (BinaryReader reader = new BinaryReader(_baseStream, _textEncoding, true))
-#endif
+            using (Use7BinaryReader reader = new Use7BinaryReader(_baseStream, true))
             {
                 if (readMagNum && reader.ReadInt32() != _head)
                     throw new InvalidDataException(TextResources.InvalidDataMaus);
@@ -2334,7 +2330,7 @@ namespace DieFledermaus
 
         #region ReadFormat
         bool gotFormat, gotULen, _gotHash;
-        private long ReadFormat(BinaryReader reader, bool fromEncrypted)
+        private long ReadFormat(Use7BinaryReader reader, bool fromEncrypted)
         {
             const long baseHeadSize = sizeof(short) + sizeof(ushort) + //Version, option count,
                 sizeof(long) + sizeof(long); //compressed length, uncompressed length
@@ -2859,14 +2855,8 @@ namespace DieFledermaus
             {
                 using (MausBufferStream bufferStream = Decrypt(this, _bufferStream, false))
                 {
-#if NOLEAVEOPEN
-                    BinaryReader reader = new BinaryReader(bufferStream);
-#else
-                    using (BinaryReader reader = new BinaryReader(bufferStream, _textEncoding, true))
-#endif
-                    {
+                    using (Use7BinaryReader reader = new Use7BinaryReader(bufferStream, true))
                         ReadFormat(reader, true);
-                    }
 
                     _bufferStream.Close();
                     _bufferStream = new MausBufferStream();
@@ -3571,11 +3561,7 @@ namespace DieFledermaus
             MausBufferStream secondaryStream = new MausBufferStream();
 
             #region Secondary Format
-#if NOLEAVEOPEN
-            BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding);
-#else
-            using (BinaryWriter secWriter = new BinaryWriter(secondaryStream, _textEncoding, true))
-#endif
+            using (Use7BinaryWriter secWriter = new Use7BinaryWriter(secondaryStream, true))
             {
                 _saveCmpFmt = SetSavingOption(_saveCmpFmt);
                 _saveComment = SetSavingOption(_saveCmpFmt);
@@ -3712,11 +3698,7 @@ namespace DieFledermaus
             }
             #endregion
 
-#if NOLEAVEOPEN
-            BinaryWriter writer = new BinaryWriter(_baseStream);
-#else
-            using (BinaryWriter writer = new BinaryWriter(_baseStream, _textEncoding, true))
-#endif
+            using (Use7BinaryWriter writer = new Use7BinaryWriter(_baseStream, true))
             {
                 OnProgress(MausProgressState.WritingHead);
                 writer.Write(_head);
@@ -3750,9 +3732,6 @@ namespace DieFledermaus
 
                 compressedStream.BufferCopyTo(_baseStream, false);
             }
-#if NOLEAVEOPEN
-            _baseStream.Flush();
-#endif
             OnProgress(new MausProgressEventArgs(MausProgressState.CompletedWriting, oldLength, compLength));
         }
 
