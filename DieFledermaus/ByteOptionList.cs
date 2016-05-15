@@ -217,9 +217,6 @@ namespace DieFledermaus
         }
     }
 
-    /// <summary>
-    /// Represents all elements in a format-list.
-    /// </summary>
     [DebuggerTypeProxy(typeof(DebugView))]
     internal class FormatEntry : IList<FormatValue>, IList
 #if IREADONLY
@@ -230,19 +227,6 @@ namespace DieFledermaus
         internal static readonly UTF8Encoding TextEncoding = new UTF8Encoding(false, true);
 
         #region Constructors
-        /// <summary>
-        /// Creates a new instance with the specified key and version.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or is greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
@@ -256,222 +240,66 @@ namespace DieFledermaus
             _values = new List<FormatValue>();
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> or <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="value"/> has a length of 0 or greater than 65536.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, byte[] value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="s">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> or <paramref name="s"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> or <paramref name="s"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, string s)
             : this(key, version)
         {
             Add(s);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, short value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, ushort value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, int value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, uint value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, long value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, ulong value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, float value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, double value)
             : this(key, version)
         {
             Add(value);
         }
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, DateTime value)
             : this(key, version)
         {
@@ -479,20 +307,6 @@ namespace DieFledermaus
         }
 
 
-        /// <summary>
-        /// Creates a new instance with the specified key, version, and initial value.
-        /// </summary>
-        /// <param name="key">The key to set.</param>
-        /// <param name="version">The current version of the byte value.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="key"/> or <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="key"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="version"/> is 0.</para>
-        /// </exception>
         public FormatEntry(string key, ushort version, Asn1Encodable value)
             : this(key, version)
         {
@@ -576,14 +390,6 @@ namespace DieFledermaus
         }
         #endregion
 
-        /// <summary>
-        /// Gets and sets the element at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the element to get or set.</param>
-        /// <returns>The element at <paramref name="index"/>.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than or equal to <see cref="Count"/>.
-        /// </exception>
         public FormatValue this[int index]
         {
             get { return _values[index]; }
@@ -597,53 +403,27 @@ namespace DieFledermaus
         }
 
         private string _key;
-        /// <summary>
-        /// Gets the key of the current entry.
-        /// </summary>
         public string Key { get { return _key; } }
 
         private ushort _version;
-        /// <summary>
-        /// Gets the version number of the current entry.
-        /// </summary>
         public ushort Version { get { return _version; } }
 
-        /// <summary>
-        /// Gets the number of elements contained in the list.
-        /// </summary>
         public int Count
         {
             get { return _values.Count; }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether <see cref="Count"/> is equal to the maximum value of 65535.
-        /// </summary>
         public bool IsReadOnly
         {
             get { return _values.Count >= ushort.MaxValue; }
         }
 
-        /// <summary>
-        /// Returns an array containing all elements in the new list.
-        /// </summary>
-        /// <returns>An array containing all elements in the new list.</returns>
         public FormatValue[] ToArray()
         {
             return _values.ToArray();
         }
 
         #region Add
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentException">
-        /// The <see cref="FormatValue.Value"/> property is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(FormatValue value)
         {
             Insert(_values.Count, value);
@@ -658,19 +438,6 @@ namespace DieFledermaus
             return newDex;
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="value"/> has a length of 0 or greater than 65536.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(byte[] value)
         {
             if (value == null)
@@ -678,142 +445,56 @@ namespace DieFledermaus
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="s">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="s"/> has a length of 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="s"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(string s)
         {
             Add(new FormatValue(s));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(short value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(ushort value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(int value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(uint value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(long value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(ulong value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(float value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(double value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(DateTime value)
         {
             Add(new FormatValue(value));
         }
 
-        /// <summary>
-        /// Adds the specified value to the list.
-        /// </summary>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Add(Asn1Encodable value)
         {
             Add(new FormatValue(value));
@@ -821,20 +502,6 @@ namespace DieFledermaus
         #endregion
 
         #region Insert
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// The <see cref="FormatValue.Value"/> property is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, FormatValue value)
         {
             if (value.Value == null)
@@ -856,217 +523,67 @@ namespace DieFledermaus
             ((IList)_values).Insert(index, value);
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="value"/> has a length of 0 or greater than 65536.</para>
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, byte[] value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="s">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <para><paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.</para>
-        /// <para>-OR-</para>
-        /// <para><paramref name="s"/> has a length of 0 or greater than 65536 UTF-8 bytes.</para>
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="s"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, string s)
         {
             Insert(index, new FormatValue(s));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, short value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, ushort value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, int value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, uint value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, long value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, ulong value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, float value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, double value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, DateTime value)
         {
             Insert(index, new FormatValue(value));
         }
 
-        /// <summary>
-        /// Inserts the specified value into the list at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the value to add.</param>
-        /// <param name="value">The value to add.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than <see cref="Count"/>.
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// <see cref="IsReadOnly"/> is <see langword="true"/>.
-        /// </exception>
         public void Insert(int index, Asn1Encodable value)
         {
             Insert(index, new FormatValue(value));
         }
         #endregion
 
-        /// <summary>
-        /// Removes the specified element from the list.
-        /// </summary>
-        /// <param name="value">The element to remove from the list.</param>
-        /// <returns><see langword="true"/> if <paramref name="value"/> was found and successfully removed; <see langword="false"/> otherwise.</returns>
         public bool Remove(FormatValue value)
         {
             return _values.Remove(value);
@@ -1077,11 +594,6 @@ namespace DieFledermaus
             ((IList)_values).Remove(value);
         }
 
-        /// <summary>
-        /// Gets a value indicating whether the specified element exists in the list.
-        /// </summary>
-        /// <param name="value">The element to search for in the list.</param>
-        /// <returns><see langword="true"/> if <paramref name="value"/> was found; <see langword="false"/> otherwise.</returns>
         public bool Contains(FormatValue value)
         {
             return _values.Contains(value);
@@ -1092,11 +604,6 @@ namespace DieFledermaus
             return ((IList)_values).Contains(value);
         }
 
-        /// <summary>
-        /// Returns the index in the list of the specified value.
-        /// </summary>
-        /// <param name="value">The value to search for in the list.</param>
-        /// <returns>The index of <paramref name="value"/>, if found; otherwise, -1.</returns>
         public int IndexOf(FormatValue value)
         {
             return _values.IndexOf(value);
@@ -1107,21 +614,11 @@ namespace DieFledermaus
             return ((IList)_values).IndexOf(value);
         }
 
-        /// <summary>
-        /// Removes the element at the specified index.
-        /// </summary>
-        /// <param name="index">The index of the element to remove.</param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> is less than 0 or is greater than or equal to <see cref="Count"/>.
-        /// </exception>
         public void RemoveAt(int index)
         {
             _values.RemoveAt(index);
         }
 
-        /// <summary>
-        /// Removes all elements in the list.
-        /// </summary>
         public void Clear()
         {
             _values.Clear();
@@ -1149,17 +646,6 @@ namespace DieFledermaus
             return total;
         }
 
-        /// <summary>
-        /// Copies all elements in the current instance to the specified array.
-        /// </summary>
-        /// <param name="array">The array to which the current instance will be copied.</param>
-        /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="array"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentException">
-        /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the number of elements in <paramref name="array"/>.
-        /// </exception>
         public void CopyTo(FormatValue[] array, int arrayIndex)
         {
             _values.CopyTo(array, arrayIndex);
@@ -1196,10 +682,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Returns an enumerator which iterates through the list.
-        /// </summary>
-        /// <returns>An enumerator which iterates through the list.</returns>
         public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
@@ -1215,10 +697,6 @@ namespace DieFledermaus
             return GetEnumerator();
         }
 
-        /// <summary>
-        /// Returns a string representation of the current instance.
-        /// </summary>
-        /// <returns>A string representation of the current instance.</returns>
         public override string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture, "Key = {0}, Version = {1}, Count = {2}", _key, _version, Count);
@@ -1228,9 +706,6 @@ namespace DieFledermaus
         object ICollection.SyncRoot { get { return ((ICollection)_values).SyncRoot; } }
         bool IList.IsFixedSize { get { return false; } }
 
-        /// <summary>
-        /// An enumerator which iterates through the list.
-        /// </summary>
         public struct Enumerator : IEnumerator<FormatValue>
         {
             private IEnumerator<FormatValue> _enum;
@@ -1242,9 +717,6 @@ namespace DieFledermaus
                 _current = default(FormatValue);
             }
 
-            /// <summary>
-            /// Gets the element at the current position in the enumerator.
-            /// </summary>
             public FormatValue Current
             {
                 get { return _current; }
@@ -1255,19 +727,11 @@ namespace DieFledermaus
                 get { return _current; }
             }
 
-            /// <summary>
-            /// Disposes of the current instance.
-            /// </summary>
             public void Dispose()
             {
                 this = default(Enumerator);
             }
 
-            /// <summary>
-            /// Advances the enumerator to the next position in the list.
-            /// </summary>
-            /// <returns><see langword="true"/> if the enumerator was successfully advanced; <see langword="false"/> if the
-            /// enumerator has passed the end of the collection.</returns>
             public bool MoveNext()
             {
                 if (_enum == null) return false;
@@ -1303,22 +767,9 @@ namespace DieFledermaus
         }
     }
 
-    /// <summary>
-    /// Represents a single element of a format value.
-    /// </summary>
     internal struct FormatValue : IEquatable<FormatValue>
     {
         #region Constructors
-        /// <summary>
-        /// Creates a new instance using the specified binary value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="value"/> has a length of 0 or greater than 65536.
-        /// </exception>
         public FormatValue(byte[] value)
             : this(value, FormatValueTypeCode.ByteArray)
         {
@@ -1333,16 +784,6 @@ namespace DieFledermaus
             _typeCode = typeCode;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="s">The value to set.</param>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="s"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="s"/> has a length of 0 or greater than 65536 UTF-8 bytes.
-        /// </exception>
         public FormatValue(string s)
         {
             byte[] bytes = DieFledermausStream._textEncoding.GetBytes(s);
@@ -1352,50 +793,30 @@ namespace DieFledermaus
             _typeCode = FormatValueTypeCode.StringUtf8;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(short value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8) };
             _typeCode = FormatValueTypeCode.Int16;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(ushort value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8) };
             _typeCode = FormatValueTypeCode.UInt16;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(int value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
             _typeCode = FormatValueTypeCode.Int32;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(uint value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) };
             _typeCode = FormatValueTypeCode.UInt32;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(long value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
@@ -1403,10 +824,6 @@ namespace DieFledermaus
             _typeCode = FormatValueTypeCode.Int64;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(ulong value)
         {
             _value = new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24),
@@ -1414,10 +831,6 @@ namespace DieFledermaus
             _typeCode = FormatValueTypeCode.UInt64;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(float value)
             : this(BufferConvert<float, int>(value, sizeof(float)))
         {
@@ -1434,20 +847,12 @@ namespace DieFledermaus
             _typeCode = FormatValueTypeCode.DerEncoded;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(double value)
             : this(BufferConvert<double, long>(value, sizeof(double)))
         {
             _typeCode = FormatValueTypeCode.Double;
         }
 
-        /// <summary>
-        /// Creates a new instance using the specified value.
-        /// </summary>
-        /// <param name="value">The value to set.</param>
         public FormatValue(DateTime value)
             : this(value.ToUniversalTime().Ticks)
         {
@@ -1468,9 +873,6 @@ namespace DieFledermaus
 
         #region Values
         private byte[] _value;
-        /// <summary>
-        /// Gets the binary value of the current instance.
-        /// </summary>
         public byte[] Value
         {
             get
@@ -1480,10 +882,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets the UTF-8 string representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.StringUtf8"/>.
-        /// </summary>
         public string ValueString
         {
             get
@@ -1493,10 +891,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets a signed 16-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.Int16"/>.
-        /// </summary>
         public short? ValueInt16
         {
             get
@@ -1506,10 +900,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets an unsigned 16-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.UInt16"/>.
-        /// </summary>
         public ushort? ValueUInt16
         {
             get
@@ -1521,10 +911,6 @@ namespace DieFledermaus
 
         private short GetValInt16() { return (short)(_value[0] | _value[1] << 8); }
 
-        /// <summary>
-        /// Gets a signed 32-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.Int32"/>.
-        /// </summary>
         public int? ValueInt32
         {
             get
@@ -1533,10 +919,6 @@ namespace DieFledermaus
                 return null;
             }
         }
-        /// <summary>
-        /// Gets an unsigned 32-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.UInt32"/>.
-        /// </summary>
         public uint? ValueUInt32
         {
             get
@@ -1548,10 +930,6 @@ namespace DieFledermaus
 
         private int GetValInt32() { return _value[0] | _value[1] << 8 | _value[2] << 16 | _value[3] << 24; }
 
-        /// <summary>
-        /// Gets a signed 64-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.Int64"/>.
-        /// </summary>
         public long? ValueInt64
         {
             get
@@ -1560,10 +938,6 @@ namespace DieFledermaus
                 return null;
             }
         }
-        /// <summary>
-        /// Gets an unsigned 64-bit integer representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.UInt64"/>.
-        /// </summary>
         public ulong? ValueUInt64
         {
             get
@@ -1579,10 +953,6 @@ namespace DieFledermaus
                 ((long)_value[4] << 32) | ((long)_value[5] << 40) | ((long)_value[6] << 48) | ((long)_value[7] << 56);
         }
 
-        /// <summary>
-        /// Gets a single-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.Single"/>.
-        /// </summary>
         public float? ValueSingle
         {
             get
@@ -1593,10 +963,6 @@ namespace DieFledermaus
             }
         }
 
-        /// <summary>
-        /// Gets a double-precision floating-point value representation of <see cref="Value"/>, or <see langword="null"/> if <see cref="TypeCode"/>
-        /// is not <see cref="FormatValueTypeCode.Double"/>.
-        /// </summary>
         public double? ValueDouble
         {
             get
@@ -1679,11 +1045,6 @@ namespace DieFledermaus
         }
 
         #region Equality
-        /// <summary>
-        /// Determines if the current value is equal to the specified other <see cref="FormatValue"/> object.
-        /// </summary>
-        /// <param name="other">The other <see cref="FormatValue"/> to compare.</param>
-        /// <returns><see langword="true"/> if the current instance is equal to <paramref name="other"/>; <see langword="false"/> otherwise.</returns>
         public bool Equals(FormatValue other)
         {
             if (_value == other._value) return true;
@@ -1702,21 +1063,11 @@ namespace DieFledermaus
             return true;
         }
 
-        /// <summary>
-        /// Determines if the current value is equal to the specified other object.
-        /// </summary>
-        /// <param name="obj">The other object to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="obj"/> is a <see cref="FormatValue"/> equal to the current instance;
-        /// <see langword="false"/> otherwise.</returns>
         public override bool Equals(object obj)
         {
             return obj is FormatValue && Equals((FormatValue)obj);
         }
 
-        /// <summary>
-        /// Returns the hash code for the current value.
-        /// </summary>
-        /// <returns>The hash code for the current value.</returns>
         public override int GetHashCode()
         {
             if (_value == null) return (byte)_typeCode;
@@ -1726,23 +1077,11 @@ namespace DieFledermaus
             return total;
         }
 
-        /// <summary>
-        /// Determines equality of two <see cref="FormatValue"/> objects.
-        /// </summary>
-        /// <param name="b1">A <see cref="FormatValue"/> to compare.</param>
-        /// <param name="b2">A <see cref="FormatValue"/> to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="b1"/> is equal to <paramref name="b2"/>; <see langword="false"/> otherwise.</returns>
         public static bool operator ==(FormatValue b1, FormatValue b2)
         {
             return b1.Equals(b2);
         }
 
-        /// <summary>
-        /// Determines inequality of two <see cref="FormatValue"/> objects.
-        /// </summary>
-        /// <param name="b1">A <see cref="FormatValue"/> to compare.</param>
-        /// <param name="b2">A <see cref="FormatValue"/> to compare.</param>
-        /// <returns><see langword="true"/> if <paramref name="b1"/> is not equal to <paramref name="b2"/>; <see langword="false"/> otherwise.</returns>
         public static bool operator !=(FormatValue b1, FormatValue b2)
         {
             return !b1.Equals(b2);
