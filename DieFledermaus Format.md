@@ -17,7 +17,8 @@ Terminology
 * **encoder:** Any application, library, or other software which encodes data to a DieFledermaus stream.
 * **decoder:** Any application, library, or other software which restores the data in a DieFledermaus file to its original form.
 * **re-encoder:** Any software which functions as both an encoder and a decoder.
-* **length-prefixed string:** In the DieFledermaus format, a length-prefixed string is a sequence of bytes, usually UTF-8 text, which is prefixed by the *length value*, an 8-bit or 16-bit unsigned integer indicating the length of the string (not including the length value itself). If the length value is 0, the actual length of the string is 256 for 8-bit length values and 65536 for 16-bit length values.
+* **length-prefixed string:** In the DieFledermaus format, a length-prefixed string is a sequence of bytes, usually UTF-8 text, which is prefixed by the *length value*, an 8-bit or 16-bit unsigned integer indicating the length of the string (not including the length value itself). If the length value is 0, the actual length of the string is 256 for 8-bit length values and 65536 for 16-bit length value.
+ - **varint-prefixed string:** Instead of a standard 8-bit or 16-bit integer, the length value is a [variable-length integer](https://en.wikipedia.org/wiki/Variable-length_quantity) in little-endian order. The value is encoded 7 bits at a time, with the most significant bit set to 0 (`0x00`) if this is the last byte in the file, or 1 (`0x80`) if there are more bytes to go. A zero value in this 
 * **the specified hash function:** A DieFledermaus file must use one of the following cryptographic hash functions for various purposes: [SHA-224, SHA-256, SHA-384, SHA-512](https://en.wikipedia.org/wiki/SHA-2), [SHA-3/224, SHA-3/256, SHA-3/384, or SHA-3/512](https://en.wikipedia.org/wiki/SHA-3). "The specified hash function" refers to whichever function the file is currently using. Within a DieFledermaus file, the same hash function is used in all contexts.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
@@ -48,18 +49,20 @@ Each element in **Format** has the following structure:
 * **Version:** A 16-bit unsigned integer indicating the version number.
 * **Parameter Count:** A 16-bit unsigned integer indicating the number of *parameters.* Some elements require further information; for example, `Ver` indicates that the archive is encrypted, but does not specify what type of encryption is used or the size of the key.
 * Zero or more **Parameters**, each one consisting of the *parameter code*, which indicates the type of data therein, and the *parameter value*, which contains the actual value. The following parameter code values are defined:
- - `00`: byte[]: an arbitrary length-prefixed string; a byte array.
- - `01`: string: a length-prefixed string, which must contain valid UTF-8 bytes.
- - `02`: Int16: a 16-bit signed integer
- - `03`: UInt16: a 16-bit unsigned integer
- - `04`: Int32: a 32-bit signed integer
- - `05`: UInt32: a 32-bit unsigned integer
- - `06`: Int64: a 64-bit signed integer
- - `07`: UInt64: a 64-bit unsigned integer
- - `08`: single: an [IEEE single-precision floating-point number](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
- - `09`: double: an [IEEE double-precision floating-point number](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
- - `0A`: DateTime: a signed 64-bit integer specifying a date and time in UTC. Specifies the number of "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z, excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
- - `0B`: DER: A length-prefixed string containing an [X.690](https://en.wikipedia.org/wiki/X.690) DER-encoded value.
+ - `0x00`: byte[]: an arbitrary varint-prefixed string; a byte array.
+ - `0x01`: string: a varint-prefixed string, which must contain valid UTF-8 bytes.
+ - `0x02`: Int16: a 16-bit signed integer
+ - `0x03`: UInt16: a 16-bit unsigned integer
+ - `0x04`: Int32: a 32-bit signed integer
+ - `0x05`: UInt32: a 32-bit unsigned integer
+ - `0x06`: Int64: a 64-bit signed integer
+ - `0x07`: UInt64: a 64-bit unsigned integer
+ - `0x08`: single: an [IEEE single-precision floating-point number](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
+ - `0x09`: double: an [IEEE double-precision floating-point number](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+ - `0x0A`: DateTime: a signed 64-bit integer specifying a date and time in UTC. Specifies the number of "ticks" (defined as 100 nanoseconds) since 0001-01-01T00:00:00Z, excluding leap seconds. The minimum value is 0 (or 0001-01-01T00:00:00Z), and the maximum value is 9999-12-31T23:59:59.9999999Z.
+ - `0x0B`: DER: A varint-prefixed string containing an [X.690](https://en.wikipedia.org/wiki/X.690) DER-encoded value.
+
+All variable-length integers must use at most three bytes; that is, the maximum allowed length is 2<sup>21</sup>-1, or 2097151. 64 kilobytes may not be enough for everyone, but 2 megabytes should be *plenty*.
 
 The difference between **Primary Format** and **Secondary Format** is chiefly that **Secondary Format** is encrypted along with the rest of the file and is used to compute the **HMAC** field. Some elements must be in the **Primary Format** because they contain functional information about the encryption itself and/or the structure of the file, or contain values derived from the **HMAC** field. An encoder may include them in the **Secondary Format**, but only if they are also included in **Primary Format**. In general, anything which is not required to be in **Primary Format** should be placed in **Secondary Format** for the purpose of security, and for the purpose of ensuring that the **HMAC** field gets a complete picture of the file.
 

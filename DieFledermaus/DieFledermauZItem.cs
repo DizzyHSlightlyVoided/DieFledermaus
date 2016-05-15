@@ -197,7 +197,7 @@ namespace DieFledermaus
         /// In a set operation, the current instance is in read-only mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string Comment
         {

@@ -61,6 +61,20 @@ namespace DieFledermaus
             }
         }
 #endif
+
+        internal static int ByteCount(int value)
+        {
+            if (value < 0 || value > (1 << 28) - 1)
+                return 5;
+            if (value > (1 << 21) - 1)
+                return 4;
+            if (value > (1 << 14) - 1)
+                return 3;
+            if (value > (1 << 7) - 1)
+                return 2;
+
+            return 1;
+        }
     }
 
     internal class Use7BinaryReader : BinaryReader
@@ -99,10 +113,10 @@ namespace DieFledermaus
             return base.Read7BitEncodedInt();
         }
 
-        public virtual byte[] ReadPrefixedBytes()
+        public virtual byte[] ReadPrefixedBytes(int maxValue)
         {
             int length = Read7BitEncodedInt();
-            if (length < 0) throw new InvalidDataException();
+            if (length < 0 || length > maxValue) throw new InvalidDataException();
             if (length == 0) return new byte[0];
             byte[] buffer = ReadBytes(length);
             if (buffer.Length < length) throw new EndOfStreamException();

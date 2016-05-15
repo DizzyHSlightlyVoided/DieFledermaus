@@ -242,6 +242,42 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The length must be greater than 0 and less than or equal to 65536 UTF-8 bytes..
+        /// </summary>
+        internal static string ByteLength16BitString {
+            get {
+                return ResourceManager.GetString("ByteLength16BitString", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The length must be less than or equal to 2097151 bytes..
+        /// </summary>
+        internal static string ByteLength21Bit {
+            get {
+                return ResourceManager.GetString("ByteLength21Bit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The object must encode to a non-null byte array with a length less than or equal to 2097151 bytes..
+        /// </summary>
+        internal static string ByteLength21BitDer {
+            get {
+                return ResourceManager.GetString("ByteLength21BitDer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The length must be less than or equal to 2097151 UTF-8 bytes..
+        /// </summary>
+        internal static string ByteLength21BitString {
+            get {
+                return ResourceManager.GetString("ByteLength21BitString", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The collection is at its maximum capacity of 65535..
         /// </summary>
         internal static string ByteListAtMaximum {
@@ -328,15 +364,6 @@ namespace DieFledermaus.Globalization {
         internal static string CollectReadOnly {
             get {
                 return ResourceManager.GetString("CollectReadOnly", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The length must be greater than 0 and less than or equal to 65536 UTF-8 bytes..
-        /// </summary>
-        internal static string CommentLength {
-            get {
-                return ResourceManager.GetString("CommentLength", resourceCulture);
             }
         }
         
@@ -755,15 +782,6 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The length must be greater than 0 and less than or equal to 65536..
-        /// </summary>
-        internal static string OutOfRangeByteLength {
-            get {
-                return ResourceManager.GetString("OutOfRangeByteLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The specified index is less than 0 or is greater than or equal to the length of the list..
         /// </summary>
         internal static string OutOfRangeIndex {
@@ -818,7 +836,7 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The specified value is less than 0 or is greater than 0 and greater than the maximum minus the minimum..
+        ///   Looks up a localized string similar to The specified value is less than 0 or is greater the maximum minus the minimum..
         /// </summary>
         internal static string OutOfRangeSkipSize {
             get {

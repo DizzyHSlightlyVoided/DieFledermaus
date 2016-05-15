@@ -172,7 +172,7 @@
   <data name="CollectReadOnly" xml:space="preserve">
     <value>The current collection is read-only.</value>
   </data>
-  <data name="CommentLength" xml:space="preserve">
+  <data name="ByteLength16BitString" xml:space="preserve">
     <value>The length must be greater than 0 and less than or equal to 65536 UTF-8 bytes.</value>
   </data>
   <data name="CurrentClosed" xml:space="preserve">
@@ -434,9 +434,6 @@
   <data name="NotLzma" xml:space="preserve">
     <value>The current stream is not compressed using LZMA.</value>
   </data>
-  <data name="OutOfRangeByteLength" xml:space="preserve">
-    <value>The length must be greater than 0 and less than or equal to 65536.</value>
-  </data>
   <data name="OutOfRangeVersion" xml:space="preserve">
     <value>The version must be greater than 0.</value>
   </data>
@@ -455,5 +452,14 @@
   </data>
   <data name="OutOfRangeSkipSize" xml:space="preserve">
     <value>The specified value is less than 0 or is greater the maximum minus the minimum.</value>
+  </data>
+  <data name="ByteLength21Bit" xml:space="preserve">
+    <value>The length must be less than or equal to 2097151 bytes.</value>
+  </data>
+  <data name="ByteLength21BitString" xml:space="preserve">
+    <value>The length must be less than or equal to 2097151 UTF-8 bytes.</value>
+  </data>
+  <data name="ByteLength21BitDer" xml:space="preserve">
+    <value>The object must encode to a non-null byte array with a length less than or equal to 2097151 bytes.</value>
   </data>
 </root>

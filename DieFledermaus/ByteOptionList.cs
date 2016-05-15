@@ -55,7 +55,7 @@ namespace DieFledermaus
             _items = new List<FormatEntry>();
         }
 
-        public ByteOptionList(BinaryReader reader)
+        public ByteOptionList(Use7BinaryReader reader)
         {
             int itemCount = reader.ReadUInt16();
 
@@ -180,7 +180,7 @@ namespace DieFledermaus
             return _items.GetEnumerator();
         }
 
-        public void Write(BinaryWriter writer)
+        public void Write(Use7BinaryWriter writer)
         {
             writer.Write((ushort)_items.Count);
             for (int i = 0; i < _items.Count; i++)
@@ -231,7 +231,7 @@ namespace DieFledermaus
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (key.Length == 0 || TextEncoding.GetByteCount(key) > DieFledermausStream.Max16Bit)
-                throw new ArgumentOutOfRangeException(nameof(key), TextResources.CommentLength);
+                throw new ArgumentOutOfRangeException(nameof(key), TextResources.ByteLength16BitString);
             if (version == 0)
                 throw new ArgumentOutOfRangeException(nameof(version), TextResources.OutOfRangeVersion);
 
@@ -313,11 +313,16 @@ namespace DieFledermaus
             Add(value);
         }
 
-        internal FormatEntry(BinaryReader reader)
+        internal FormatEntry(Use7BinaryReader reader)
         {
-            int strLen = reader.ReadUInt16();
-            if (strLen == 0) strLen = DieFledermausStream.Max16Bit;
-            _key = TextEncoding.GetString(DieFledermausStream.ReadBytes(reader, strLen));
+            try
+            {
+                _key = TextEncoding.GetString(DieFledermausStream.ReadBytes16Bit(reader));
+            }
+            catch (DecoderFallbackException)
+            {
+                throw new InvalidDataException();
+            }
             _version = reader.ReadUInt16();
             if (_version == 0)
                 throw new InvalidDataException();
@@ -333,10 +338,10 @@ namespace DieFledermaus
                 switch (code)
                 {
                     case FormatValueTypeCode.ByteArray:
-                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        buffer = reader.ReadPrefixedBytes(DieFledermausStream.Max21Bit);
                         break;
                     case FormatValueTypeCode.StringUtf8:
-                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        buffer = reader.ReadPrefixedBytes(DieFledermausStream.Max21Bit);
                         try
                         {
                             TextEncoding.GetString(buffer);
@@ -347,7 +352,7 @@ namespace DieFledermaus
                         }
                         break;
                     case FormatValueTypeCode.DerEncoded:
-                        buffer = DieFledermausStream.ReadBytes16Bit(reader);
+                        buffer = reader.ReadPrefixedBytes(DieFledermausStream.Max21Bit);
                         try
                         {
                             Asn1Object.FromByteArray(buffer);
@@ -632,15 +637,17 @@ namespace DieFledermaus
             for (int i = 0; i < _values.Count; i++)
             {
                 total++; //1-byte code
+                int length = _values[i].Value.Length;
+                total += length;
+
                 switch (_values[i].TypeCode)
                 {
                     case FormatValueTypeCode.ByteArray:
                     case FormatValueTypeCode.StringUtf8:
                     case FormatValueTypeCode.DerEncoded:
-                        total += sizeof(ushort);
+                        total += Use7BinaryWriter.ByteCount(length);
                         break;
                 }
-                total += _values[i].Value.Length;
             }
 
             return total;
@@ -656,7 +663,7 @@ namespace DieFledermaus
             ((ICollection)_values).CopyTo(array, index);
         }
 
-        internal void Write(BinaryWriter writer)
+        internal void Write(Use7BinaryWriter writer)
         {
             byte[] keyBytes = TextEncoding.GetBytes(_key);
             writer.Write((ushort)keyBytes.Length);
@@ -675,7 +682,7 @@ namespace DieFledermaus
                     case FormatValueTypeCode.ByteArray:
                     case FormatValueTypeCode.StringUtf8:
                     case FormatValueTypeCode.DerEncoded:
-                        writer.Write((ushort)curBytes.Length);
+                        writer.Write7BitEncodedInt(curBytes.Length);
                         break;
                 }
                 writer.Write(curBytes);
@@ -778,8 +785,8 @@ namespace DieFledermaus
         internal FormatValue(byte[] value, FormatValueTypeCode typeCode)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
-            if (value.Length == 0 || value.Length > DieFledermausStream.Max16Bit)
-                throw new ArgumentOutOfRangeException(nameof(value), TextResources.OutOfRangeByteLength);
+            if (value.Length > DieFledermausStream.Max21Bit)
+                throw new ArgumentOutOfRangeException(nameof(value), TextResources.ByteLength21Bit);
             _value = (byte[])value.Clone();
             _typeCode = typeCode;
         }
@@ -787,8 +794,8 @@ namespace DieFledermaus
         public FormatValue(string s)
         {
             byte[] bytes = DieFledermausStream._textEncoding.GetBytes(s);
-            if (bytes.Length > DieFledermausStream.Max16Bit || bytes.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(s), TextResources.CommentLength);
+            if (bytes.Length > DieFledermausStream.Max21Bit)
+                throw new ArgumentOutOfRangeException(nameof(s), TextResources.ByteLength21BitString);
             _value = bytes;
             _typeCode = FormatValueTypeCode.StringUtf8;
         }
@@ -841,8 +848,8 @@ namespace DieFledermaus
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
             byte[] buffer = value.GetDerEncoded();
-            if (buffer == null || buffer.Length == 0 || buffer.Length > DieFledermausStream.Max16Bit)
-                throw new ArgumentException(TextResources.OutOfRangeByteLength, nameof(value));
+            if (buffer == null || buffer.Length > DieFledermausStream.Max21Bit)
+                throw new ArgumentException(TextResources.ByteLength21BitDer, nameof(value));
             _value = buffer;
             _typeCode = FormatValueTypeCode.DerEncoded;
         }

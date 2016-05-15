@@ -279,7 +279,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string RSASignId
         {
@@ -377,7 +377,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string DSASignId
         {
@@ -475,7 +475,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string ECDSASignId
         {

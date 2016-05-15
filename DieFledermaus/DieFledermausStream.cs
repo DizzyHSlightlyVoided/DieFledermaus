@@ -78,7 +78,7 @@ namespace DieFledermaus
     /// </remarks>
     public partial class DieFledermausStream : Stream, IMausProgress, IMausStream
     {
-        internal const int Max16Bit = 65536;
+        internal const int Max16Bit = 65536, Max21Bit = 2097151;
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
         private const ushort _versionShort = 101, _minVersionShort = _versionShort;
 
@@ -1393,7 +1393,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="RSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string RSASignId
         {
@@ -1529,7 +1529,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="DSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string DSASignId
         {
@@ -1663,7 +1663,7 @@ namespace DieFledermaus
         /// In a set operation, <see cref="ECDSASignParameters"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/> and has a length equal to 0 or greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string ECDSASignId
         {
@@ -1751,7 +1751,7 @@ namespace DieFledermaus
         /// In a set operation, the current stream is in read-mode.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// In a set operation, the specified value is not <see langword="null"/>, and has a length which is equal to 0 or which is greater than 65536 UTF-8 bytes.
+        /// In a set operation, the specified value is not <see langword="null"/> and has a length which is greater than 2097151 UTF-8 bytes.
         /// </exception>
         public string Comment
         {
@@ -1789,8 +1789,8 @@ namespace DieFledermaus
 
         internal static void CheckComment(string value)
         {
-            if (value != null && (value.Length == 0 || _textEncoding.GetByteCount(value) > Max16Bit))
-                throw new ArgumentException(TextResources.CommentLength, nameof(value));
+            if (value != null && _textEncoding.GetByteCount(value) > Max21Bit)
+                throw new ArgumentException(TextResources.ByteLength21BitString, nameof(value));
         }
 
         private string _filename;
@@ -3541,6 +3541,9 @@ namespace DieFledermaus
 
             if ((savingOption & _saveTimeM) != 0 && _timeM.HasValue)
                 formats.Add(_kTimeM, _vTime, _timeM.Value);
+
+            if ((savingOption & _saveComment) != 0)
+                FormatSetComment(_comment, formats);
         }
 
         private void WriteFile()
@@ -3886,10 +3889,8 @@ namespace DieFledermaus
 
         internal static void FormatSetComment(string comment, ByteOptionList formats)
         {
-            if (comment == null || comment.Length == 0)
-                return;
-
-            formats.Add(_kComment, _vComment, comment);
+            if (comment != null && comment.Length != 0)
+                formats.Add(_kComment, _vComment, comment);
         }
         #endregion
 
