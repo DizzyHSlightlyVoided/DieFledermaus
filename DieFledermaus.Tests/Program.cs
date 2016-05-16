@@ -31,13 +31,21 @@ namespace DieFledermaus.Tests
                     publicKeyEnc = (RsaKeyParameters)keyPair.Public;
                     privateKeyEnc = (RsaKeyParameters)keyPair.Private;
                 }
+                ECKeyParameters publicKeyECDSA, privateKeyECDSA;
+                {
+                    var keyPair = GetKeyPair(Keys.ECDSA);
+                    publicKeyECDSA = (ECKeyParameters)keyPair.Public;
+                    privateKeyECDSA = (ECKeyParameters)keyPair.Private;
+                }
 
                 Console.WriteLine("Creating archive ...");
                 Stopwatch sw;
                 using (DieFledermauZArchive archive = new DieFledermauZArchive(ms, MauZArchiveMode.Create, true))
                 {
                     archive.RSASignParameters = archive.DefaultRSASignParameters = privateKeySig;
-                    archive.DefaultRSASignId = archive.RSASignId = "RSA";
+                    archive.RSASignId = archive.DefaultRSASignId = "RSA";
+                    archive.ECDSASignParameters = archive.DefaultECDSASignParameters = privateKeyECDSA;
+                    archive.ECDSASignId = archive.DefaultECDSASignId = "ECDSA";
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Deflate, MausEncryptionFormat.None, publicKeyEnc);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.Lzma, MausEncryptionFormat.Aes, publicKeyEnc);
                     SetEntry(archive, bigBuffer, MausCompressionFormat.None, MausEncryptionFormat.Threefish, publicKeyEnc);
@@ -60,6 +68,11 @@ namespace DieFledermaus.Tests
                         Console.WriteLine("RSA signature verified for the archive.");
                     else
                         Console.WriteLine("RSA signature NOT verified for the archive!");
+                    archive.ECDSASignParameters = publicKeyECDSA;
+                    if (archive.VerifyECDSASignature())
+                        Console.WriteLine("ECDSA signature verified for the archive.");
+                    else
+                        Console.WriteLine("ECDSA signature NOT verified for the archive!");
 
                     Console.WriteLine("Completed reading and signature-verification in {0}ms", sw.Elapsed.TotalMilliseconds);
 
@@ -80,14 +93,18 @@ namespace DieFledermaus.Tests
                     foreach (DieFledermauZArchiveEntry entry in archive.Entries.OfType<DieFledermauZArchiveEntry>())
                     {
                         entry.RSASignParameters = publicKeySig;
-                        entry.VerifyRSASignature();
+                        entry.ECDSASignParameters = publicKeyECDSA;
 
                         Console.WriteLine(" - Reading file: " + entry.Path);
                         Console.WriteLine("Hash: " + GetString(entry.ComputeHash()));
-                        if (entry.IsRSASignVerified)
+                        if (entry.VerifyRSASignature())
                             Console.WriteLine("RSA signature is verified.");
                         else
                             Console.WriteLine("RSA signature is NOT verified!");
+                        if (entry.VerifyECDSASignature())
+                            Console.WriteLine("ECDSA signature is verified.");
+                        else
+                            Console.WriteLine("ECDSA signature is NOT verified!");
                     }
                 }
             }

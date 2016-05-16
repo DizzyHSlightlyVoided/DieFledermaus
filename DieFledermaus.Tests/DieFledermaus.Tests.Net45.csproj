@@ -61,6 +61,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Keys.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="Resources\ECDSA.pem" />
     <None Include="Resources\Encryption.pem" />
     <None Include="Resources\Signature.pem" />
   </ItemGroup>
