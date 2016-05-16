@@ -353,14 +353,16 @@ namespace DieFledermaus
                         break;
                     case FormatValueTypeCode.DerEncoded:
                         buffer = reader.ReadPrefixedBytes(DieFledermausStream.Max21Bit);
+                        Asn1Object o;
                         try
                         {
-                            Asn1Object.FromByteArray(buffer);
+                            o = Asn1Object.FromByteArray(buffer);
                         }
                         catch
                         {
                             throw new InvalidDataException();
                         }
+                        if (o == null) throw new InvalidDataException();
                         break;
                     case FormatValueTypeCode.DateTime:
                         try
