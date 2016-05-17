@@ -32,22 +32,22 @@ Usage:
 ------
 Compress files into an archive:
 ```
-DieFled.exe -cf archive.maus file1 file2 file3
+DieFlede.exe -cf archive.maus file1 file2 file3
 ```
 
 Decompress files:
 ```
-DieFled.exe -xf archive.maus -o [output directory]
+DieFlede.exe -xf archive.maus -o [output directory]
 ```
 
 List files verbosely:
 ```
-DieFled.exe -lvf archive.maus
+DieFlede.exe -lvf archive.maus
 ```
 
 Show extended help:
 ```
-DieFled.exe --help
+DieFlede.exe --help
 ```
 
 On Unix and OSX systems, use `mono DieFlede.exe`. Make sure you have [Mono](http://www.mono-project.com/) installed.
