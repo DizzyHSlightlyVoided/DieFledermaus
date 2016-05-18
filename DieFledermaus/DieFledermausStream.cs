@@ -82,6 +82,31 @@ namespace DieFledermaus
         internal const int _head = 0x5375416d; //Little-endian "mAuS"
         private const ushort _versionShort = 101, _minVersionShort = _versionShort;
 
+        internal static int GetHashCode<T>(T[] array)
+        {
+            if (array == null) return 0;
+            int hash = 0;
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i] != null)
+                    hash += array[i].GetHashCode();
+            }
+            return hash;
+        }
+
+        internal static int GetStructHashCode<T>(T[] array)
+            where T : struct
+        {
+            if (array == null) return 0;
+            int hash = 0;
+
+            for (int i = 0; i < array.Length; i++)
+                hash += array[i].GetHashCode();
+
+            return hash;
+        }
+
         internal static readonly UTF8Encoding _textEncoding = new UTF8Encoding(false, false);
 
         private Stream _baseStream;

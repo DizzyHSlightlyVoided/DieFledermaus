@@ -433,9 +433,7 @@ namespace DieFledermaus
             get
             {
                 if (_syncRoot == null)
-                {
                     System.Threading.Interlocked.CompareExchange(ref _syncRoot, new object(), null);
-                }
                 return _syncRoot;
             }
 #else
@@ -583,7 +581,7 @@ namespace DieFledermaus
                     writer.Write(_sigCur);
                     writer.Write(i);
 
-                    byte[] curPath = curEntry.PathBytes;
+                    byte[] curPath = DieFledermausStream._textEncoding.GetBytes(curEntry.Path);
                     writer.Write((byte)curPath.Length);
                     writer.Write(curPath);
                     byte[] curHash = curEntry.Hash;
@@ -713,7 +711,7 @@ namespace DieFledermaus
     {
         internal MauZManifestEntry(byte[] path, byte[] hash)
         {
-            _path = path;
+            _path = DieFledermausStream._textEncoding.GetString(path);
             _hash = hash;
         }
 
@@ -724,10 +722,7 @@ namespace DieFledermaus
         /// <param name="hash">The compressed hash or HMAC of the manifest entry.</param>
         public MauZManifestEntry(string path, byte[] hash)
         {
-            if (path == null)
-                _path = null;
-            else
-                _path = DieFledermausStream._textEncoding.GetBytes(path);
+            _path = path;
 
             if (hash == null)
                 _hash = null;
@@ -742,13 +737,11 @@ namespace DieFledermaus
         /// </summary>
         public bool IsValid { get { return _path != null && _path.Length != 0 && _hash != null && _hash.Length != 0; } }
 
-        private byte[] _path;
+        private string _path;
         /// <summary>
         /// Gets the path or filename of the current manifest entry.
         /// </summary>
-        public string Path { get { return _path == null ? null : DieFledermausStream._textEncoding.GetString(_path); } }
-
-        internal byte[] PathBytes { get { return _path; } }
+        public string Path { get { return _path; } }
 
         private byte[] _hash;
         /// <summary>
@@ -763,7 +756,7 @@ namespace DieFledermaus
         /// <returns><see langword="true"/> if the current instance is equal to <paramref name="other"/>; <see langword="false"/> otherwise.</returns>
         public bool Equals(MauZManifestEntry other)
         {
-            return Path == other.Path && DieFledermausStream.CompareBytes(_hash, other._hash);
+            return _path == other._path && DieFledermausStream.CompareBytes(_hash, other._hash);
         }
 
         /// <summary>
@@ -785,10 +778,7 @@ namespace DieFledermaus
         {
             int hash = _path == null ? 0 : _path.GetHashCode();
 
-            if (_hash != null)
-                hash += _hash.GetHashCode();
-
-            return hash;
+            return hash + DieFledermausStream.GetStructHashCode(_hash);
         }
 
         /// <summary>

@@ -1079,11 +1079,7 @@ namespace DieFledermaus
 
         public override int GetHashCode()
         {
-            if (_value == null) return (byte)_typeCode;
-            int total = (byte)_typeCode;
-            for (int i = 0; i < _value.Length; i++)
-                total += _value[i];
-            return total;
+            return (byte)_typeCode + DieFledermausStream.GetStructHashCode(_value);
         }
 
         public static bool operator ==(FormatValue b1, FormatValue b2)
