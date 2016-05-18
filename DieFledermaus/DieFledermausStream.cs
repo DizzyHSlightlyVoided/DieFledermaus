@@ -2197,7 +2197,7 @@ namespace DieFledermaus
         /// </exception>
         public override long Length
         {
-            get { throw new NotSupportedException(); }
+            get { throw new NotSupportedException(TextResources.CurrentNotSeekable); }
         }
 
         /// <summary>
@@ -2209,8 +2209,8 @@ namespace DieFledermaus
         /// </exception>
         public override long Position
         {
-            get { throw new NotSupportedException(); }
-            set { throw new NotSupportedException(); }
+            get { throw new NotSupportedException(TextResources.CurrentNotSeekable); }
+            set { throw new NotSupportedException(TextResources.CurrentNotSeekable); }
         }
 
         /// <summary>
@@ -2223,7 +2223,7 @@ namespace DieFledermaus
         /// </exception>
         public override void SetLength(long value)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CurrentNotSeekable);
         }
 
         /// <summary>
@@ -2238,7 +2238,7 @@ namespace DieFledermaus
         /// </exception>
         public override long Seek(long offset, SeekOrigin origin)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CurrentNotSeekable);
         }
         #endregion
 
@@ -3179,7 +3179,8 @@ namespace DieFledermaus
             return _bufferStream;
         }
 
-        internal static bool CompareBytes(byte[] hashComputed, byte[] _hashExpected)
+        internal static bool CompareBytes<T>(T[] hashComputed, T[] _hashExpected)
+            where T : struct, IEquatable<T>
         {
             if ((hashComputed == null) != (_hashExpected == null))
                 return false;
@@ -3192,7 +3193,7 @@ namespace DieFledermaus
 
             for (int i = 0; i < hashComputed.Length; i++)
             {
-                if (hashComputed[i] != _hashExpected[i])
+                if (!hashComputed[i].Equals(_hashExpected[i]))
                     return false;
             }
             return true;

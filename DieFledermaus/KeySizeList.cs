@@ -259,17 +259,24 @@ namespace DieFledermaus
         /// <summary>
         /// Copies all elements in the current instance to the specified array.
         /// </summary>
-        /// <param name="destinationArray">The array to which the current instance will be copied.</param>
-        /// <param name="destinationIndex">The index in <paramref name="destinationArray"/> at which copying begins.</param>
+        /// <param name="array">The array to which the current instance will be copied.</param>
+        /// <param name="arrayIndex">The index in <paramref name="array"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="destinationArray"/> is <see langword="null"/>.
+        /// <paramref name="array"/> is <see langword="null"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="destinationIndex"/> plus <see cref="Count"/> is greater than the number of elements in <paramref name="destinationArray"/>.
+        /// <paramref name="arrayIndex"/> plus <see cref="Count"/> is greater than the number of elements in <paramref name="array"/>.
         /// </exception>
-        public void CopyTo(int[] destinationArray, int destinationIndex)
+        public void CopyTo(int[] array, int arrayIndex)
         {
-            Array.Copy(_items, 0, destinationArray, destinationIndex, _items.Length);
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (arrayIndex < 0)
+                throw new ArgumentOutOfRangeException(TextResources.OutOfRangeLessThanZero, nameof(arrayIndex));
+            if (arrayIndex + _items.Length > array.Length)
+                throw new ArgumentException(TextResources.BadIndexRange);
+
+            Array.Copy(_items, 0, array, arrayIndex, _items.Length);
         }
 
         void ICollection.CopyTo(Array array, int index)
@@ -345,7 +352,7 @@ namespace DieFledermaus
         bool IList.IsFixedSize { get { return true; } }
 
         bool ICollection.IsSynchronized { get { return true; } }
-#if PCL
+
         private object _syncRoot;
         object ICollection.SyncRoot
         {
@@ -356,9 +363,6 @@ namespace DieFledermaus
                 return _syncRoot;
             }
         }
-#else
-        object ICollection.SyncRoot { get { return ((ICollection)_items).SyncRoot; } }
-#endif
 
         /// <summary>
         /// Returns an enumerator which iterates through the list.

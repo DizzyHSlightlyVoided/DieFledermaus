@@ -278,29 +278,11 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The collection is at its maximum capacity of 65535..
+        ///   Looks up a localized string similar to The collection is at its maximum capacity of 65536..
         /// </summary>
         internal static string ByteListAtMaximum {
             get {
                 return ResourceManager.GetString("ByteListAtMaximum", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified array is invalid..
-        /// </summary>
-        internal static string CollectBadArray {
-            get {
-                return ResourceManager.GetString("CollectBadArray", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The specified array is the wrong type..
-        /// </summary>
-        internal static string CollectBadArrayType {
-            get {
-                return ResourceManager.GetString("CollectBadArrayType", resourceCulture);
             }
         }
         
@@ -382,6 +364,15 @@ namespace DieFledermaus.Globalization {
         internal static string CurrentClosed {
             get {
                 return ResourceManager.GetString("CurrentClosed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The current stream does not support seeking or getting position or length..
+        /// </summary>
+        internal static string CurrentNotSeekable {
+            get {
+                return ResourceManager.GetString("CurrentNotSeekable", resourceCulture);
             }
         }
         

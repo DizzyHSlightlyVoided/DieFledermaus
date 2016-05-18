@@ -80,7 +80,7 @@ namespace DieFledermaus
         public void Add(FormatEntry value)
         {
             if (IsReadOnly)
-                throw new NotSupportedException();
+                throw new NotSupportedException(TextResources.ByteListAtMaximum);
             _items.Add(value);
         }
 

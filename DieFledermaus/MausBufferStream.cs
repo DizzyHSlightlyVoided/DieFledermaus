@@ -85,7 +85,7 @@ namespace DieFledermaus
             get
             {
                 if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                if (Disposing != null) throw new NotSupportedException();
+                if (Disposing != null) throw new NotSupportedException(TextResources.CurrentNotSeekable);
                 return _length;
             }
         }
@@ -95,23 +95,23 @@ namespace DieFledermaus
             get
             {
                 if (_closed) throw new ObjectDisposedException(null, TextResources.CurrentClosed);
-                if (Disposing != null) throw new NotSupportedException();
+                if (Disposing != null) throw new NotSupportedException(TextResources.CurrentNotSeekable);
                 if (_reading) return _position;
                 return _length;
             }
-            set { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(TextResources.CurrentNotSeekable); }
         }
 
         private long _position = 0;
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CurrentNotSeekable);
         }
 
         public override void SetLength(long value)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CurrentNotSeekable);
         }
 
         public void Reset()

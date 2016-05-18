@@ -163,12 +163,6 @@
   <data name="BadKey" xml:space="preserve">
     <value>The key or password is incorrect.</value>
   </data>
-  <data name="CollectBadArray" xml:space="preserve">
-    <value>The specified array is invalid.</value>
-  </data>
-  <data name="CollectBadArrayType" xml:space="preserve">
-    <value>The specified array is the wrong type.</value>
-  </data>
   <data name="CollectReadOnly" xml:space="preserve">
     <value>The current collection is read-only.</value>
   </data>
@@ -438,7 +432,7 @@
     <value>The version must be greater than 0.</value>
   </data>
   <data name="ByteListAtMaximum" xml:space="preserve">
-    <value>The collection is at its maximum capacity of 65535.</value>
+    <value>The collection is at its maximum capacity of 65536.</value>
   </data>
   <data name="PropertyNull" xml:space="preserve">
     <value>The {0} property is null.</value>
@@ -461,5 +455,8 @@
   </data>
   <data name="ByteLength21BitDer" xml:space="preserve">
     <value>The object must encode to a non-null byte array with a length less than or equal to 2097151 bytes.</value>
+  </data>
+  <data name="CurrentNotSeekable" xml:space="preserve">
+    <value>The current stream does not support seeking or getting position or length.</value>
   </data>
 </root>

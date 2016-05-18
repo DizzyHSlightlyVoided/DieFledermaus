@@ -394,13 +394,13 @@ namespace DieFledermaus
         MauZManifestEntry IList<MauZManifestEntry>.this[int index]
         {
             get { return this[index]; }
-            set { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(TextResources.CollectReadOnly); }
         }
 
         object IList.this[int index]
         {
             get { return this[index]; }
-            set { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(TextResources.CollectReadOnly); }
         }
 
         /// <summary>
@@ -409,42 +409,24 @@ namespace DieFledermaus
         public int Count { get { return _entries.Length; } }
 
 
-        bool ICollection<MauZManifestEntry>.IsReadOnly
-        {
-            get { return true; }
-        }
+        bool ICollection<MauZManifestEntry>.IsReadOnly { get { return true; } }
 
-        bool IList.IsReadOnly
-        {
-            get { return true; }
-        }
+        bool IList.IsReadOnly { get { return true; } }
 
-        bool IList.IsFixedSize
-        {
-            get { return true; }
-        }
+        bool IList.IsFixedSize { get { return true; } }
 
-#if PCL
         private object _syncRoot;
-#endif
         object ICollection.SyncRoot
         {
-#if PCL
             get
             {
                 if (_syncRoot == null)
                     System.Threading.Interlocked.CompareExchange(ref _syncRoot, new object(), null);
                 return _syncRoot;
             }
-#else
-            get { return _entries.SyncRoot; }
-#endif
         }
 
-        bool ICollection.IsSynchronized
-        {
-            get { return true; }
-        }
+        bool ICollection.IsSynchronized { get { return true; } }
 
         /// <summary>
         /// Determines if the specified value exists in the list.
@@ -508,26 +490,7 @@ namespace DieFledermaus
 
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-            if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), TextResources.OutOfRangeLessThanZero);
-
-            if (array.Rank != 1 || array.GetLowerBound(0) != 0)
-                throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
-
-            if (index + _entries.Length > array.Length)
-                throw new ArgumentException(TextResources.BadIndexRange);
-
-            try
-            {
-                foreach (MauZManifestEntry entry in this)
-                    array.SetValue(entry, index++);
-            }
-            catch (InvalidCastException)
-            {
-                throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array));
-            }
+            _entries.CopyTo(array, index);
         }
 
         /// <summary>
@@ -594,52 +557,52 @@ namespace DieFledermaus
         #region Not Supported
         void IList<MauZManifestEntry>.Insert(int index, MauZManifestEntry item)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList<MauZManifestEntry>.RemoveAt(int index)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void ICollection<MauZManifestEntry>.Add(MauZManifestEntry item)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void ICollection<MauZManifestEntry>.Clear()
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         bool ICollection<MauZManifestEntry>.Remove(MauZManifestEntry item)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         int IList.Add(object value)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList.Clear()
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList.Insert(int index, object value)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList.Remove(object value)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
 
         void IList.RemoveAt(int index)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(TextResources.CollectReadOnly);
         }
         #endregion
 
