@@ -2648,8 +2648,6 @@ namespace DieFledermaus
             return ReadBytes(reader, len);
         }
 
-        private static readonly long maxTicks = DateTime.MaxValue.Ticks;
-
         private void GetDate(FormatEntry curValue, ref DateTime? curTime, bool fromEncrypted, ref MausSavingOptions savingOption)
         {
             if (curValue.Count != 1 || curValue.Version != _vTime)
