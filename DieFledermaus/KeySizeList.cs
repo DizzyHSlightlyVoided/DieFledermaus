@@ -58,14 +58,27 @@ namespace DieFledermaus
         /// <paramref name="source"/> is <see langword="null"/>.
         /// </exception>
         public KeySizeList(IEnumerable<int> source)
+            : this(source, false)
+        {
+        }
+
+        private KeySizeList(IEnumerable<int> source, bool preSorted)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
+            if (preSorted)
+            {
+                _items = source as int[];
+                if (_items == null) _items = source.ToArray();
+            }
+            else
+            {
 #if NOISET
-            _items = new HashSet<int>(source).ToArray();
-            Array.Sort(_items, 0, _items.Length);
+                _items = new HashSet<int>(source).ToArray();
+                Array.Sort(_items, 0, _items.Length);
 #else
-            _items = new SortedSet<int>(source).ToArray();
+                _items = new SortedSet<int>(source).ToArray();
 #endif
+            }
             if (_items.Length == 1)
                 _min = _max = _items[0];
             else if (_items.Length != 0)
@@ -83,7 +96,7 @@ namespace DieFledermaus
         /// <paramref name="source"/> is <see langword="null"/>.
         /// </exception>
         public KeySizeList(params int[] source)
-            : this((IEnumerable<int>)source)
+            : this(source, false)
         {
         }
 
@@ -121,16 +134,6 @@ namespace DieFledermaus
                 _items = new int[] { _min, _max };
         }
 
-        private KeySizeList(int minSize, int maxSize, int step)
-        {
-            _min = minSize;
-            _max = maxSize;
-            int[] _items = new int[1 + ((_max - _min) / step)];
-
-            for (int i = 0; i < _items.Length; i++)
-                _items[i] = minSize + i * step;
-        }
-
         /// <summary>
         /// Creates a new instance using the specified range of values.
         /// </summary>
@@ -157,14 +160,15 @@ namespace DieFledermaus
             int diff = maxSize - minSize;
 
             if (skipSize == 0)
-            {
-                if (maxSize == minSize) skipSize = 1;
-                else skipSize = diff;
-            }
+                return new KeySizeList(minSize, maxSize);
             else if (diff % skipSize != 0)
                 throw new ArgumentException(TextResources.BadSkipSize, nameof(skipSize));
 
-            return new KeySizeList(minSize, maxSize, skipSize);
+            int[] _items = new int[1 + ((maxSize - minSize) / skipSize)];
+            for (int i = 0; i < _items.Length; i++)
+                _items[i] = minSize + i * skipSize;
+
+            return new KeySizeList(_items, true);
         }
         #endregion
 
