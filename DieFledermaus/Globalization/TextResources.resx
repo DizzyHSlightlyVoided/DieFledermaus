@@ -163,6 +163,12 @@
   <data name="BadKey" xml:space="preserve">
     <value>The key or password is incorrect.</value>
   </data>
+  <data name="CollectBadArray" xml:space="preserve">
+    <value>The specified array is invalid.</value>
+  </data>
+  <data name="CollectBadArrayType" xml:space="preserve">
+    <value>The specified array is the wrong type.</value>
+  </data>
   <data name="CollectReadOnly" xml:space="preserve">
     <value>The current collection is read-only.</value>
   </data>

@@ -490,7 +490,18 @@ namespace DieFledermaus
 
         void ICollection.CopyTo(Array array, int index)
         {
-            _entries.CopyTo(array, index);
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (array.Rank != 1 || array.GetLowerBound(0) != 0)
+                throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
+            try
+            {
+                _entries.CopyTo(array, index);
+            }
+            catch (ArrayTypeMismatchException)
+            {
+                throw new ArgumentException(TextResources.CollectBadArrayType, nameof(array));
+            }
         }
 
         /// <summary>

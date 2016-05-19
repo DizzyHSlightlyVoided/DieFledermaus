@@ -286,6 +286,24 @@ namespace DieFledermaus.Globalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified array is invalid..
+        /// </summary>
+        internal static string CollectBadArray {
+            get {
+                return ResourceManager.GetString("CollectBadArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified array is the wrong type..
+        /// </summary>
+        internal static string CollectBadArrayType {
+            get {
+                return ResourceManager.GetString("CollectBadArrayType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified collection contains a null value..
         /// </summary>
         internal static string CollectContainsNull {
