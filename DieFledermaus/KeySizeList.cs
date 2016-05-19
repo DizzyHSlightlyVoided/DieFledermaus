@@ -285,6 +285,10 @@ namespace DieFledermaus
                 throw new ArgumentNullException(nameof(array));
             if (array.Rank != 1 || array.GetLowerBound(0) != 0)
                 throw new ArgumentException(TextResources.CollectBadArray, nameof(array));
+            if (index < 0)
+                throw new ArgumentOutOfRangeException(TextResources.OutOfRangeLessThanZero, nameof(index));
+            if (index + _items.Length > array.Length)
+                throw new ArgumentException(TextResources.BadIndexRange);
             try
             {
                 _items.CopyTo(array, index);
