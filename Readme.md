@@ -1,5 +1,9 @@
 ﻿DieFledermaus (.maus file) and DiefledermauZ (.mauz file)
 =========================================================
+Disclaimer
+----------
+**This project is *depreciated and no longer supported or in development.***
+
 Version 0.3.11.0
 ----------------
 The DieFledermaus file format is simply a [DEFLATE](https://en.wikipedia.org/wiki/DEFLATE)- or [LZMA](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm)-compressed file, with metadata and magic number `mAuS`; it has been extended with the DieFledermauZ [archive file](https://en.wikipedia.org/wiki/Archive_file) format, magic number `mAuZ`, which can contain multiple files. This project exists primarily to be a bilingual pun. Version 1.01 of each file format (not currently finalized) is specified in [DieFledermaus Format.md](DieFledermaus Format.md) and [DieFledermauZ Format.md](DieFledermauZ Format.md).
@@ -59,7 +63,3 @@ The DieFledermaus library contains a public type, `DieFledermaus.DieFledermausSt
 It also contains `DieFledermaus.DieFledermauZArchive`, which is more or less modelled after [`System.IO.Compression.ZipArchive`](https://msdn.microsoft.com/en-us/library/system.io.compression.ziparchive.aspx).
 
 The DieFledermaus library computes SHA-3 data using the [C# Bouncy Castle library](http://www.bouncycastle.org/). For information on third-party licenses, see [LICENSE-ThirdParty.md](LICENSE-ThirdParty.md).
-
-Disclaimer
-==========
-**This project is currently in-development. Features and functionality may be changed or removed without warning.**
